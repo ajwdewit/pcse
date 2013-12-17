@@ -1,0 +1,10 @@
+import abioticdamage
+import assimilation
+import evapotranspiration
+import partitioning
+import phenology
+import respiration
+import root_dynamics
+import stem_dynamics
+import storage_organ_dynamics
+import leaf_dynamics

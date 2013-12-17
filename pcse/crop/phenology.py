@@ -1,0 +1,492 @@
+"""Implementation of a models for phenological development in WOFOST
+
+Classes defined here:
+- DVS_Phenology: Implements the algorithms for phenologic development
+- Vernalisation: 
+"""
+import os, os.path
+from collections import deque
+import datetime
+import logging
+
+from ..traitlets import Float, Int, Instance, Enum, Bool, AfgenTrait
+from ..decorators import prepare_rates, prepare_states
+from ..pydispatch import dispatcher
+
+from ..util import limit, daylength
+from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+     SimulationObject, VariableKiosk
+from .. import signals
+from .. import exceptions as exc
+
+#-------------------------------------------------------------------------------
+class Vernalisation(SimulationObject):
+    """ Modification of phenological development due to vernalisation.
+    
+    The vernalization approach here is based on the work of Lenny van Bussel
+    (2011), which in turn is based on Wang and Engel (1998). The basic
+    principle is that winter wheat needs a certain number of days with temperatures
+    within an optimum temperature range to complete its vernalisation
+    requirement. Until the vernalisation requirement is fulfilled, the crop
+    development is delayed.
+    
+    The rate of vernalization (VERNR) is defined by the temperature response
+    function VERNRTB. Within the optimal temperature range 1 day is added
+    to the vernalisation state (VERN). The reduction on the phenological
+    development is calculated from the base and saturated vernalisation
+    requirements (VERNBASE and VERNSAT). the reduction factor (VERNFAC) is
+    scaled linearly between VERNBASE and VERNSAT.
+    
+    A critical development stage (VERNDVS) is used to stop the effect of
+    vernalisation when this DVS is reached. This is done to improve model
+    stability in order to avoid that Anthesis is never reached due to a
+    somewhat too high VERNSAT. Nevertheless, a warning is written to the log
+    file, if this happens.   
+    
+    * Van Bussel, 2011. From field to globe: Upscaling of crop growth modelling.
+      Wageningen PhD thesis. http://edepot.wur.nl/180295
+    * Wang and Engel, 1998. Simulation of phenological development of wheat
+      crops. Agric. Systems 58:1 pp 1-24
+
+    *Simulation parameters* (provide in cropdata dictionary)
+    
+    ======== ============================================= =======  ============
+     Name     Description                                   Type     Unit
+    ======== ============================================= =======  ============
+    VERNSAT  Saturated vernalisation requirements           SCr        days
+    VERNBASE Base vernalisation requirements                SCr        days
+    VERNRTB  Rate of vernalisation as a function of daily   TCr        -
+             mean temperature.
+    VERNDVS  Critical development stage after which the     SCr        -
+             effect of vernalisation is halted
+    ======== ============================================= =======  ============
+
+    **State variables**
+
+    ============ ================================================= ==== ========
+     Name        Description                                       Pbl   Unit
+    ============ ================================================= ==== ========
+    VERN         Vernalisation state                                N    days
+    VERNFAC      Reduction factor on development rate due to        Y    -
+                 vernalisation effect.
+    DOV          Day when vernalisation requirements are            N    -
+                 fulfilled.
+    ISVERNALISED Flag indicated that vernalisation                  Y    -
+                 requirements have been reached
+    ============ ================================================= ==== ========
+
+
+    **Rate variables**
+
+    =======  ================================================= ==== ============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================= ==== ============
+    VERNR    Rate of vernalisation                              N    -
+    =======  ================================================= ==== ============
+
+    
+    **External dependencies:**
+    
+    None    
+
+    """
+
+    class Parameters(ParamTemplate):
+        VERNSAT  = Float(-99.)     # Saturated vernalisation requirements
+        VERNBASE = Float(-99.)     # Base vernalisation requirements
+        VERNRTB  = AfgenTrait()    # Vernalisation temperature response
+        VERNDVS  = Float(-99.)     # Critical DVS for vernalisation fulfillment
+
+    class RateVariables(RatesTemplate):
+        VERNR = Float(-99.)        # Rate of vernalisation
+
+    class StateVariables(StatesTemplate):
+        VERN     = Float(-99.)              # Vernalisation state
+        VERNFAC  = Float(-99.)              # Red. factor for phenol. devel.
+        DOV      = Instance(datetime.date)  # Day when vernalisation 
+                                            # requirements are fulfilled
+        ISVERNALISED =  Bool()              # True when VERNSAT is reached and
+                                            # Forced when DVS > VERNDVS
+
+    #---------------------------------------------------------------------------
+    def initialize(self, day, kiosk, cropdata):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+
+        """
+        self.params = self.Parameters(cropdata)
+        self.rates = self.RateVariables(kiosk)
+        self.kiosk = kiosk
+
+        # Define initial states
+        self.states = self.StateVariables(kiosk, VERN=0., VERNFAC=0.,
+                                          DOV=None, ISVERNALISED=False,
+                                          publish=["ISVERNALISED", "VERNFAC"])
+    #---------------------------------------------------------------------------
+    @prepare_rates
+    def calc_rates(self, day, drv):
+        rates = self.rates
+        states = self.states
+        params = self.params
+        
+        if not states.ISVERNALISED:
+            rates.VERNR = params.VERNRTB(drv.TEMP)
+        else:
+            rates.VERNR = 0.
+    #---------------------------------------------------------------------------
+    @prepare_states
+    def integrate(self, day):
+        states = self.states
+        rates  = self.rates
+        params = self.params
+        
+        states.VERN += rates.VERNR
+        
+        if not states.ISVERNALISED:
+            DVS = self.kiosk["DVS"]
+            if states.VERN >= params.VERNSAT: # Vernalisation requirements reached
+    
+                states.DOV = day
+                states.ISVERNALISED = True
+                states.VERNFAC = 1.0
+                
+                msg = "Vernalization requirements reached at day %s."
+                self.logger.info(msg % day)
+                
+            elif DVS > params.VERNDVS: # Critical DVS for vernalisation reached
+                
+                # Force vernalisation, but do not set DOV
+                states.ISVERNALISED = True
+                states.VERNFAC = 1.0
+                
+                # Write log message to warn about forced vernalisation
+                msg = "Critical DVS for vernalization (VERNDVS) reached "+\
+                      "at day %s, "+\
+                      "but vernalization requirements not yet fulfilled. "+\
+                      "Forcing vernalization now (VERN=%f)."
+                self.logger.warning(msg % (day, states.VERN))
+    
+            else: # Reduction factor for phenologic development
+    
+                r = (states.VERN - params.VERNBASE)/(params.VERNSAT-params.VERNBASE)
+                states.VERNFAC = limit(0., 1., r)
+                states.ISVERNALISED = False
+        else:
+            states.VERNFAC = 1.0
+        
+#-------------------------------------------------------------------------------
+class DVS_Phenology(SimulationObject):
+    """Implements the algorithms for phenologic development in WOFOST.
+    
+    Phenologic development in WOFOST is expresses using a unitless scale which
+    takes the values 0 at emergence, 1 at Anthesis (flowering) and 2 at
+    maturity. This type of phenological development is mainly representative
+    for cereal crops. All other crops that are simulated with WOFOST are
+    forced into this scheme as well, although this may not be appropriate for
+    all crops. For example, for potatoes development stage 1 represents the
+    start of tuber formation rather than flowering.
+    
+    Phenological development is mainly governed by temperature and can be
+    modified by the effects of day length and vernalization 
+    during the period before Anthesis. After Anthesis, only temperature
+    influences the development rate.
+
+
+    **Simulation parameters**
+    
+    =======  ============================================= =======  ============
+     Name     Description                                   Type     Unit
+    =======  ============================================= =======  ============
+    TSUMEM   Temperature sum from sowing to emergence       SCr        |C| day
+    TBASEM   Base temperature for emergence                 SCr        |C|
+    TEFFMX   Maximum effective temperature for emergence    SCr        |C|
+    TSUM1    Temperature sum from emergence to anthesis     SCr        |C| day
+    TSUM2    Temperature sum for anthesis to maturity       SCr        |C| day
+    IDSL     Switch for phenological development options    SCr        -
+             temperature only (IDSL=0), including           SCr
+             daylength (IDSL=1) and including               
+             vernalization (IDSL>=2)
+    DLO      Optimal daylength for phenological             SCr        hr
+             development
+    DLC      Critical daylength for phenological            SCr        hr
+             development
+    DVSI     Initial development stage at emergence.        SCr        -
+             Usually this is zero, but it can be higher
+             for crops that are transplanted (e.g. paddy
+             rice)
+    DVSEND   Final development stage                        SCr        -
+    DTSMTB   Daily increase in temperature sum as a         TCr        |C|
+             function of daily mean temperature.
+    =======  ============================================= =======  ============
+
+    **State variables**
+
+    =======  ================================================= ==== ============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================= ==== ============
+    DVS      Development stage                                  Y    - 
+    TSUM     Temperature sum                                    N    |C| day
+    TSUME    Temperature sum for emergence                      N    |C| day
+    DOS      Day of sowing                                      N    - 
+    DOE      Day of emergence                                   N    - 
+    DOA      Day of Anthesis                                    N    - 
+    DOM      Day of maturity                                    N    - 
+    STAGE    Current phenological stage, can take the           N    - 
+             folowing values:
+             `emerging|vegetative|reproductive|mature`
+    =======  ================================================= ==== ============
+
+    **Rate variables**
+
+    =======  ================================================= ==== ============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================= ==== ============
+    DTSUME   Increase in temperature sum for emergence          N    |C|
+    DTSUM    Increase in temperature sum for anthesis or        N    |C|
+             maturity
+    DVR      Development rate                                   Y    |day-1|
+    =======  ================================================= ==== ============
+    
+    **External dependencies:**
+
+    None    
+
+    **Signals sent or handled**
+    
+    `DVS_Phenology` sends the `crop_finish` signal when maturity is
+    reached and the `end_type` is 'maturity' or 'earliest'.
+    
+    """
+    # Placeholder for start/stop types and vernalisation module
+    vernalisation = Instance(Vernalisation)
+    start_type = Enum(["sowing", "emergence"])
+    stop_type  = Enum(["maturity","harvest","earliest"])
+
+    class Parameters(ParamTemplate):
+        TSUMEM = Float(-99.)  # Temp. sum for emergence
+        TBASEM = Float(-99.)  # Base temp. for emergence
+        TEFFMX = Float(-99.)  # Max eff temperature for emergence
+        TSUM1  = Float(-99.)  # Temperature sum emergence to anthesis
+        TSUM2  = Float(-99.)  # Temperature sum anthesis to maturity
+        IDSL   = Float(-99.)  # Switch for photoperiod (1) and vernalisation (2)
+        DLO    = Float(-99.)  # Optimal day length for phenol. development
+        DLC    = Float(-99.)  # Critical day length for phenol. development
+        DVSI   = Float(-99.)  # Initial development stage
+        DVSEND = Float(-99.)  # Final development stage
+        DTSMTB = AfgenTrait() # Temperature response function for phenol.
+                              # development.
+
+    #-------------------------------------------------------------------------------
+    class RateVariables(RatesTemplate):
+        DTSUME = Float(-99.)  # increase in temperature sum for emergence
+        DTSUM  = Float(-99.)  # increase in temperature sum
+        DVR    = Float(-99.)  # development rate
+
+    #-------------------------------------------------------------------------------
+    class StateVariables(StatesTemplate):
+        DVS   = Float(-99.)  # Development stage
+        TSUM  = Float(-99.)  # Temperature sum state
+        TSUME = Float(-99.)  # Temperature sum for emergence state
+        # States which register phenological events
+        DOS = Instance(datetime.date) # Day of sowing
+        DOE = Instance(datetime.date) # Day of emergence
+        DOA = Instance(datetime.date) # Day of anthesis
+        DOM = Instance(datetime.date) # Day of maturity
+        STAGE  = Enum([None, "emerging", "vegetative", "reproductive", "mature"])
+
+    #---------------------------------------------------------------------------
+    def initialize(self, day, kiosk, cropdata, start_type="sowing",
+                    stop_type="maturity"):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        :keyword start_type: Defines the start of the phenology algorithm:
+         `sowing|emergence`. The default value is `sowing`
+        :keyword end_type: Defines the end of the phenology algorithm:
+         `maturity|harvest|earliest`. The default value is `maturity`
+        """
+
+        self.params = self.Parameters(cropdata)
+        self.rates = self.RateVariables(kiosk)
+        self.kiosk = kiosk
+
+        # Define initial states
+        DVS = self.params.DVSI
+        DOS, DOE, STAGE = self._get_initial_stage(day, start_type, stop_type)
+        self.states = self.StateVariables(kiosk, publish="DVS",
+                                          TSUM=0., TSUME=0., DVS=DVS,
+                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
+                                          STAGE=STAGE)
+
+        # initialize vernalisation for IDSL=2
+        if self.params.IDSL == 2:
+            self.vernalisation = Vernalisation(day, kiosk, cropdata)
+    
+    #---------------------------------------------------------------------------
+    def _get_initial_stage(self, day, start_type, stop_type):
+        """"""
+        # Register start_type
+        self.start_type = start_type
+        # Register stop_type
+        self.stop_type = stop_type
+        
+        # Define initial stage type (emergence/sowing) and fill the
+        # respective day of sowing/emergence (DOS/DOE)
+        if self.start_type == "emergence":
+            STAGE = "vegetative"
+            DOE = day
+            DOS = None
+
+            # send signal to indicate crop emergence
+            self._send_signal(signals.crop_emerged)
+
+        elif self.start_type == "sowing":
+            STAGE = "emerging"
+            DOS = day
+            DOE = None
+            
+        return (DOS, DOE, STAGE)
+
+    #---------------------------------------------------------------------------
+    @prepare_rates
+    def calc_rates(self, day, drv):
+        """Calculates the rates for phenological development
+        """
+        p = self.params
+        r = self.rates
+        s = self.states
+        
+        if s.STAGE == "emerging":
+
+            r.DTSUME = limit(0., (p.TEFFMX - p.TBASEM), (drv.TEMP - p.TBASEM))
+            
+        elif s.STAGE == 'vegetative':
+
+            # Temperature sum increase
+            DTSUM = p.DTSMTB(drv.TEMP)
+
+            # Day length sensitivity
+            DVRED = 1.
+            if p.IDSL >= 1: 
+                DAYLP = daylength(day, drv.LAT)
+                DVRED = limit(0., 1., (DAYLP - p.DLC)/(p.DLO - p.DLC))
+            
+            # Vernalisation
+            VERNFAC = 1.
+            if p.IDSL >= 2: 
+                self.vernalisation.calc_rates(day, drv)
+                VERNFAC = self.kiosk["VERNFAC"]
+
+            # Development rate
+            r.DTSUM = DTSUM * VERNFAC * DVRED
+            r.DVR = r.DTSUM/p.TSUM1
+
+        elif s.STAGE == 'reproductive':
+
+            # Temperature sum increase
+            r.DTSUM = p.DTSMTB(drv.TEMP)
+
+            # Development rate
+            r.DVR = r.DTSUM/p.TSUM2
+            
+        elif s.STAGE == 'mature':
+
+            # Temperature sum increase
+            r.DTSUM = p.DTSMTB(drv.TEMP)
+
+            # Development rate
+            r.DVR = r.DTSUM/p.TSUM2
+            
+        else: # Problem: no stage defined
+            msg = "No STAGE defined in phenology submodule"
+            raise exc.PCSEError(msg)
+        
+        msg = "Finished rate calculation for %s"
+        self.logger.debug(msg % day)
+        
+    #---------------------------------------------------------------------------
+    @prepare_states
+    def integrate(self, day):
+        """Updates the state variable and checks for phenologic stages
+        """
+
+        p = self.params
+        r = self.rates
+        s = self.states
+        
+        if s.STAGE == "emerging":
+
+            s.TSUME += r.DTSUME
+            if s.TSUME >= p.TSUMEM:
+                self._next_stage(day)
+                
+        elif s.STAGE == 'vegetative':
+
+            s.DVS += r.DVR
+            s.TSUM += r.DTSUM
+            if p.IDSL >= 2: 
+                self.vernalisation.integrate(day)
+            
+            if s.DVS >= 1.0:
+                self._next_stage(day)
+                s.DVS = 1.0
+                
+        elif s.STAGE == 'reproductive':
+
+            s.DVS += r.DVR
+            s.TSUM += r.DTSUM
+            if s.DVS >= p.DVSEND:
+                self._next_stage(day)
+                
+        elif s.STAGE == 'mature':
+            s.DVS += r.DVR
+            s.TSUM += r.DTSUM
+            
+        else: # Problem no stage defined
+            msg = "No STAGE defined in phenology submodule"
+            raise exc.PCSEError(msg)
+            
+        msg = "Finished state integration for %s"
+        self.logger.debug(msg % day)
+
+    #---------------------------------------------------------------------------
+    def _next_stage(self, day):
+        """Moves states.STAGE to the next phenological stage"""
+        
+        this_stage = self.states.STAGE
+        if this_stage == "emerging":
+
+            self.states.STAGE = "vegetative"
+            self.states.DOE = day
+
+            # send signal to indicate crop emergence
+            self._send_signal(signals.crop_emerged)
+            
+        elif this_stage == "vegetative":
+
+            self.states.STAGE = "reproductive"
+            self.states.DOA = day
+                        
+        elif this_stage == "reproductive":
+
+            self.states.STAGE = "mature"
+            self.states.DOM = day
+            if self.stop_type in ["maturity","earliest"]:
+                self._send_signal(signal=signals.crop_finish,
+                                  day=day, finish="maturity")
+                
+        elif this_stage == "mature":
+
+            msg = "Cannot move to next phenology stage: maturity already reached!"
+            raise exc.PCSEError(msg)
+
+        else: # Problem no stage defined
+
+            msg = "No STAGE defined in phenology submodule."
+            raise exc.PCSEError(msg)
+        
+        msg = "Changed phenological stage '%s' to '%s' on %s"
+        self.logger.info(msg % (this_stage, self.states.STAGE, day))
