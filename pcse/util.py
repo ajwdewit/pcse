@@ -139,6 +139,34 @@ def wind10to2(wind10):
     return wind2
 
 #-------------------------------------------------------------------------------
+def ea_from_tdew(tdew):
+    """
+    Calculates actual vapour pressure, ea [kPa] from the dewpoint temperature
+    using equation (14) in the FAO paper. As the dewpoint temperature is the
+    temperature to which air needs to be cooled to make it saturated, the
+    actual vapour pressure is the saturation vapour pressure at the dewpoint
+    temperature. This method is preferable to calculating vapour pressure from
+    minimum temperature.
+
+    Taken from fao_et0.py written by Mark Richards
+
+    Reference:
+    Allen, R.G., Pereira, L.S., Raes, D. and Smith, M. (1998) Crop
+        evapotranspiration. Guidelines for computing crop water requirements,
+        FAO irrigation and drainage paper 56)
+
+    Arguments:
+    tdew - dewpoint temperature [deg C]
+    """
+    # Raise exception:
+    if (tdew < -95.0 or tdew > 65.0):
+        # Are these reasonable bounds?
+        raise ValueError, 'tdew=%g is not in range -95 to +60 deg C' % tdew
+
+    tmp = (17.27 * tdew) / (tdew + 237.3)
+    ea = 0.6108 * exp(tmp)
+    return ea
+#-------------------------------------------------------------------------------
 def angstrom(day, latitude, ssd, cA, cB):
     """Compute global radiation using the Angstrom equation.
     

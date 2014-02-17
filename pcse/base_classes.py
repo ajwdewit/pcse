@@ -353,8 +353,8 @@ class StatesRatesCommon(HasTraits):
 
         # Make sure that the variable kiosk is provided
         if not isinstance(kiosk, VariableKiosk):
-            msg = "Variable Kiosk must be provided when instantiating rate " +\
-                  "variables." 
+            msg = ("Variable Kiosk must be provided when instantiating rate " +
+                   "variables.")
             raise RuntimeError(msg)
         self._kiosk = kiosk
         
@@ -381,7 +381,7 @@ class StatesRatesCommon(HasTraits):
 
         Here several operations are carried out:
          1. Register the  variable with the kiosk, if rates/states are
-            registered twice an error will be raised, this ensureness 
+            registered twice an error will be raised, this ensures
             uniqueness of rate/state variables across the entire model.
          2 If the  variable name is included in the list set by publish
            keyword then set a trigger on that variable to update its value 
@@ -672,13 +672,13 @@ class SimulationObject(HasTraits, DispatcherObject):
         # Check that day variable is specified
         if not isinstance(day, date):
             msg = ("%s should be instantiated with the simulation start " +
-                  "day as first argument!")
+                   "day as first argument!")
             raise exc.PCSEError(msg % loggername)
 
         # Check that kiosk variable is specified and assign to self
         if not isinstance(kiosk, VariableKiosk):
-            msg = "%s should be instantiated with the VariableKiosk "+\
-                  "as second argument!"
+            msg = ("%s should be instantiated with the VariableKiosk " +
+                   "as second argument!")
             raise exc.PCSEError(msg % loggername)
         self.kiosk = kiosk
 
@@ -1029,13 +1029,18 @@ class WeatherDataProvider(object):
         
         if self.supports_ensembles is False:
             msg = "Retrieving weather data for day %s" % keydate
-            self.logger.info(msg)
+            self.logger.debug(msg)
             try:
                 return self.store[(keydate, 0)]
-            except Exception, e:
-                print "fail"
+            except KeyError, e:
+                msg = "No weather data for %s." % keydate
+                raise exc.WeatherDataProviderError(msg)
         else:
             msg = "Retrieving ensemble weather data for day %s member %i" % \
                   (keydate, member_id)
-            self.logger.info(msg)
-            return self.store[(keydate, member_id)]
+            self.logger.debug(msg)
+            try:
+                return self.store[(keydate, member_id)]
+            except KeyError, e:
+                msg = "No weather data for (%s, %i)." % (keydate,member_id)
+                raise exc.WeatherDataProviderError(msg)

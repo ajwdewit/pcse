@@ -8,3 +8,4 @@ for crop simulation models in FORTRAN and FST:
 import pcse
 import cgms9
 import cgms11
+from nasapower import NASAPowerWeatherDataProvider
