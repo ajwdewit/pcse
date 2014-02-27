@@ -5,7 +5,6 @@ import numpy as np
 import datetime as dt
 import copy
 import warnings
-import cPickle
 
 from ..base_classes import WeatherDataContainer, WeatherDataProvider
 from ..util import penman, angstrom, check_angstromAB
@@ -65,27 +64,18 @@ class CABOWeatherDataProvider(WeatherDataProvider):
     Alternatively the date in the print command above can be specified as
     string with format YYYYMMDD or YYYYDDD.
     """
-    # Location parameters
-    angstA = None
-    angstB = None
-    longitude = None
-    latitude  = None
-    elevation = None
     # Order, name and conversion factor of weather variables
     variables = [("IRRAD",1e3, "J/m2/day"),("TMIN",1,"Celsius"),
                  ("TMAX",1,"Celsius"),("VAP",10,"hPa"),
                  ("WIND",1,"m/sec"), ("RAIN",0.1,"cm/day")]
     # Radiation in Kj/m2/day or Sunshine duration
     has_sunshine = False
-    # String header
-    header = None
     # Status line and observation no data value
     status_no_data = -999.
     weather_no_data = -99.
-    # available years, start and end year
+    #  start and end year
     firstyear = None
     lastyear = None
-    first_date = None
     # temporary array for storing data
     potential_records = None
     tmp_data = None
@@ -108,8 +98,8 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             for yr, cb_file in zip(available_years, CABOWE_files):
                 header, loc_par, records = self._read_file(cb_file)
                 # header info is taken from the first CABOWE file
-                if self.header is None:
-                    self.header = header
+                if self.description is None:
+                    self.description = header
                 self._set_location_parameters(loc_par, cb_file, prev_cb_file)
 
                 for rec in records:
@@ -159,21 +149,14 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             return False
 
         # Else load data from cache file and store internally
-        with open(cache_file, "rb") as fp:
-            r = cPickle.load(fp)
-        self.store.update(r)
+        self._load(cache_file)
         return True
 
     def _write_cache_file(self, search_path):
         """Write the data loaded from the CABOWE files to a binary file using cPickle
         """
-        cache_fname = search_path+ ".cache"
-        try:
-            with open(cache_fname, "wb") as fp:
-                cPickle.dump(self.store, fp)
-        except EnvironmentError, exc:
-            msg = "Failed to write cache file '%s' due to: %s" % (cache_fname, exc)
-            warnings.warn(msg)
+        cache_fname = search_path + ".cache"
+        self._dump(cache_fname)
 
     def _construct_search_path(self, fname, fpath):
         """Construct the path where to look for files"""
@@ -348,7 +331,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             msg = "Did not find 5 values on location parameter line of file %s"
             raise PCSEError(msg % file)
         
-        parnames = ["longitude", "latitude", "elevation","angstA","angstB"]
+        parnames = ["longitude", "latitude", "elevation", "angstA", "angstB"]
         for parname, strvalue in zip(parnames, strvalues):
             try:
                 fvalue = float(strvalue)

@@ -12,6 +12,7 @@ from .traitlets import (HasTraits, Any, Float, Int, Instance, Dict, Bool,
 from .pydispatch import dispatcher
 from .util import Afgen
 from . import exceptions as exc
+import cPickle
 from .decorators import prepare_states
 
 
@@ -964,6 +965,16 @@ class WeatherDataProvider(object):
     """
     supports_ensembles = False
 
+    # Descriptive items for a WeatherDataProvider
+    longitude = None
+    latitude = None
+    elevation = None
+    description = None
+    first_date = None
+    last_date = None
+    angstA = None
+    angstB = None
+
     def __init__(self):
         self.store = {}
 
@@ -971,6 +982,28 @@ class WeatherDataProvider(object):
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
         self.logger = logging.getLogger(loggername)
+
+    def _dump(self, cache_fname):
+        """Dumps the contents into cache_fname using cPickle.
+
+        Dumps the values of self.store, longitude, latitude, elevation and description
+        """
+        with open(cache_fname, "wb") as fp:
+            dmp = (self.store, self.elevation, self.longitude, self.latitude, self.description)
+            cPickle.dump(dmp, fp)
+
+    def _load(self, cache_fname):
+        """Loads the contents from cache_fname using cPickle.
+
+        Loads the values of self.store, longitude, latitude, elevation and description
+        from cache_fname and also sets the self.first_date, self.last_date
+        """
+
+        with open(cache_fname, "rb") as fp:
+            (store, self.elevation, self.longitude, self.latitude, self.description) = cPickle.load(fp)
+        self.store.update(store)
+        self.first_date = min(self.store)[0]
+        self.last_date = max(self.store)[0]
 
     def check_keydate(self, key):
         """Check representations of date for storage/retrieval of weather data.
@@ -1016,13 +1049,18 @@ class WeatherDataProvider(object):
             msg = "Storing ensemble weather is not supported."
             raise exc.WeatherDataProviderError(msg)
 
-        self.store[(keydate, member_id)] = wdc
+        kd = self.check_keydate(keydate)
+        if not (isinstance(member_id, int) and member_id >= 0):
+            msg = "Member id should be a positive integer, found %s" % member_id
+            raise exc.WeatherDataProviderError(msg)
+
+        self.store[(kd, member_id)] = wdc
     
     def __call__(self, day, member_id=0):
         
         if self.supports_ensembles is False and member_id != 0:
-            msg = "Retrieving ensemble weather is not supported by this "+\
-                  "WeatherDataProvider" 
+            msg = ("Retrieving ensemble weather is not supported by this " +
+                   "WeatherDataProvider")
             raise exc.WeatherDataProviderError(msg)
 
         keydate = self.check_keydate(day)
@@ -1044,3 +1082,25 @@ class WeatherDataProvider(object):
             except KeyError, e:
                 msg = "No weather data for (%s, %i)." % (keydate,member_id)
                 raise exc.WeatherDataProviderError(msg)
+
+    def __str__(self):
+
+        if self.first_date is None:
+            self.first_date = min(self.store)[0]
+        if self.last_date is None:
+            self.last_date = max(self.store)[0]
+        missing = (self.last_date - self.first_date).days - len(self.store)
+
+        msg = "Weather data provided by: %s\n" % self.__class__.__name__
+        msg += "--------Description---------\n"
+        for l in self.description:
+            msg += ("%s\n" % str(l))
+        msg += "----Site characteristics----\n"
+        msg += "Elevation: %6.1f\n" % self.elevation
+        msg += "Latitude:  %6.3f\n" % self.latitude
+        msg += "Longitude: %6.3f\n" % self.longitude
+        msg += "Data available for %s - %s\n" % (self.first_date, self.last_date)
+        msg += "Number of missing days: %i\n" % missing
+        return msg
+
+
