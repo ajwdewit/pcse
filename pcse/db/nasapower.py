@@ -95,10 +95,6 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         # Start building the weather data containers
         self._make_WeatherDataContainers(recs)
 
-        # Add the descriptive data
-        self.first_date = min(self.store)[0]
-        self.last_date = max(self.store)[0]
-
         # dump contents to a cache file
         cache_filename = self._get_cache_filename(latitude, longitude)
         self._dump(cache_filename)
@@ -144,7 +140,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     def _get_cache_filename(self, latitude, longitude):
         """Constructs the filename used for cache files given latitude longitude
         """
-        fname = "NASAPower_LAT%04i_LON%04i.cache" % (int(latitude), int(longitude))
+        fname = "%s_LAT%04i_LON%04i.cache" % (self.__class__.__name__,
+                                              int(latitude), int(longitude))
         cache_filename = os.path.join(global_settings.METEO_CACHE_DIR, fname)
         return cache_filename
 
@@ -227,12 +224,12 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         # Now start parsing meteo records
         recs = []
         for line in powerdata:
-            rec = self.parse_raw_power_record(line)
+            rec = self._parse_raw_power_record(line)
             if rec is not None:
                 recs.append(rec)
         return recs
 
-    def parse_raw_power_record(self, line):
+    def _parse_raw_power_record(self, line):
         """Parse each record and return as a dict, return None if parsing fails due to a missing variable
         """
         r = line.split()

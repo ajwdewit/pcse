@@ -645,7 +645,7 @@ class SimulationObject(HasTraits, DispatcherObject):
     """Base class for PCSE simulation objects.
     
     :param day: start date of the simulation
-    :param kiosk: variable kiosk of this PyWOFOST instance
+    :param kiosk: variable kiosk of this PCSE instance
     
     The day and kiosk are mandatory variables and must be passed when
     instantiating a SimulationObject. 
@@ -759,6 +759,56 @@ class SimulationObject(HasTraits, DispatcherObject):
                 if value is not None:
                     break
         return value
+
+    #---------------------------------------------------------------------------
+    def set_variable(self, varname, value):
+        """ Sets the value of the specified state or rate variable.
+
+        :param varname: Name of the variable to be updated (string).
+        :param value: Value that it should be updated to (float)
+
+        :returns: either the increment of the variable (new - old) or `None`
+          if the call was unsuccessful in finding the class method (see below).
+
+        Note that 'setting'  a variable (e.g. updating a model state) is much more
+        complex than just `getting` a variable, because often some other
+        internal variables (checksums, related state variables) must be updated
+        as well. As there is no generic rule to 'set' a variable it is up to
+        the model designer to implement the appropriate code to do the update.
+
+        The implementation of `set_variable()` works as follows. First it will
+        recursively search for a class method on the simulationobjects with the
+        name `_set_variable_<varname>` (case sensitive). If the method is found,
+        it will called by providing the value as input.
+
+        So for updating the crop leaf area index (varname 'LAI') to value '5.0',
+        the call will be: `set_variable('LAI', 5.0)`. Internally, this call will
+        search for a class method `_set_variable_LAI` which will be executed
+        with the value '5.0' as input.
+        """
+        method_name = "_set_variable_%s" % varname.strip()
+        try:
+            method_obj = getattr(self, method_name)
+            rv = method_obj(value)
+            if rv is None:
+                msg = ("Method %s on '%s' should return the increment of the update;" +
+                       " got None instead!") % (method_name, self.__class__.__name__)
+                raise exc.PCSEError(msg)
+            return rv
+        except AttributeError: # method is not present: just continue
+            pass
+        except TypeError: # method is present but is not callable: error!
+            msg = ("Method '%s' on '%s' could not be called by 'set_variable()': " +
+                   "check your code!") % (method_name, self.__class__.__name__)
+            raise exc.PCSEError(msg)
+
+        rv = None
+        for simobj in self.subSimObjects:
+            rv = simobj.set_variable(varname, value)
+            if rv is not None:
+                break
+
+        return rv
 
     #---------------------------------------------------------------------------
     def _delete(self):
@@ -951,7 +1001,7 @@ class WeatherDataProvider(object):
     """Base class for all weather data providers.
     
     Support for weather ensembles in a WeatherDataProvider has to be indicated
-    by setting the class variable `supports_ensembles = False`
+    by setting the class variable `supports_ensembles = True`
     
     Example::
     
@@ -970,8 +1020,8 @@ class WeatherDataProvider(object):
     latitude = None
     elevation = None
     description = None
-    first_date = None
-    last_date = None
+    _first_date = None
+    _last_date = None
     angstA = None
     angstB = None
 
@@ -1002,8 +1052,27 @@ class WeatherDataProvider(object):
         with open(cache_fname, "rb") as fp:
             (store, self.elevation, self.longitude, self.latitude, self.description) = cPickle.load(fp)
         self.store.update(store)
-        self.first_date = min(self.store)[0]
-        self.last_date = max(self.store)[0]
+
+    @property
+    def first_date(self):
+        try:
+            self._first_date = min(self.store)[0]
+        except ValueError:
+            pass
+        return self._first_date
+
+    @property
+    def last_date(self):
+        try:
+            self._last_date = max(self.store)[0]
+        except ValueError:
+            pass
+        return self._last_date
+
+    @property
+    def missing(self):
+        missing = (self.last_date - self.first_date).days - len(self.store) + 1
+        return missing
 
     def check_keydate(self, key):
         """Check representations of date for storage/retrieval of weather data.
@@ -1059,8 +1128,7 @@ class WeatherDataProvider(object):
     def __call__(self, day, member_id=0):
         
         if self.supports_ensembles is False and member_id != 0:
-            msg = ("Retrieving ensemble weather is not supported by this " +
-                   "WeatherDataProvider")
+            msg = "Retrieving ensemble weather is not supported by %s" % self.__class__.__name__
             raise exc.WeatherDataProviderError(msg)
 
         keydate = self.check_keydate(day)
@@ -1079,17 +1147,11 @@ class WeatherDataProvider(object):
             self.logger.debug(msg)
             try:
                 return self.store[(keydate, member_id)]
-            except KeyError, e:
+            except KeyError:
                 msg = "No weather data for (%s, %i)." % (keydate,member_id)
                 raise exc.WeatherDataProviderError(msg)
 
     def __str__(self):
-
-        if self.first_date is None:
-            self.first_date = min(self.store)[0]
-        if self.last_date is None:
-            self.last_date = max(self.store)[0]
-        missing = (self.last_date - self.first_date).days - len(self.store)
 
         msg = "Weather data provided by: %s\n" % self.__class__.__name__
         msg += "--------Description---------\n"
@@ -1100,7 +1162,7 @@ class WeatherDataProvider(object):
         msg += "Latitude:  %6.3f\n" % self.latitude
         msg += "Longitude: %6.3f\n" % self.longitude
         msg += "Data available for %s - %s\n" % (self.first_date, self.last_date)
-        msg += "Number of missing days: %i\n" % missing
+        msg += "Number of missing days: %i\n" % self.missing
         return msg
 
 
