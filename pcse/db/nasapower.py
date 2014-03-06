@@ -6,7 +6,7 @@ import time
 from ..base_classes import WeatherDataProvider, WeatherDataContainer
 from ..util import wind10to2, ea_from_tdew, penman
 from ..exceptions import PCSEError
-from .. import global_settings
+from ..settings import settings
 
 # Define some lambdas to take care of unit conversions.
 MJ_to_J = lambda x: x * 1e6
@@ -116,7 +116,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         req = urllib.urlopen(url)
 
         if req.getcode() != self.HTTP_OK:
-            msg = "Failed retrieving POWER data from %s" % server
+            msg = ("Failed retrieving POWER data from %s. Server returned HTTP " +
+                   "code: %i") % (server, req.getcode())
             self.logger.error(msg)
             raise PCSEError(msg)
 
@@ -142,7 +143,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         """
         fname = "%s_LAT%04i_LON%04i.cache" % (self.__class__.__name__,
                                               int(latitude), int(longitude))
-        cache_filename = os.path.join(global_settings.METEO_CACHE_DIR, fname)
+        cache_filename = os.path.join(settings.METEO_CACHE_DIR, fname)
         return cache_filename
 
     def _write_cache_file(self):
