@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os, sys
 import importlib
+import inspect
 
 from . import default_settings
 
@@ -15,6 +16,9 @@ class Settings(object):
 
     def __setattr__(self, name, value):
         if name == "METEO_CACHE_DIR":
+            if not os.path.exists(value):
+                os.mkdir(value)
+        if name == "LOG_DIR":
             if not os.path.exists(value):
                 os.mkdir(value)
         object.__setattr__(self, name, value)

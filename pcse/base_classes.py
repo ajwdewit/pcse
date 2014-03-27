@@ -6,15 +6,15 @@ when creating PCSE simulation units.
 import types
 import logging
 from datetime import date
+import cPickle
 
 from .traitlets import (HasTraits, Any, Float, Int, Instance, Dict, Bool,
                         Enum, AfgenTrait)
 from .pydispatch import dispatcher
 from .util import Afgen
 from . import exceptions as exc
-import cPickle
 from .decorators import prepare_states
-
+from .settings import settings
 
 class VariableKiosk(dict):
     """VariableKiosk for registering and publishing state variables in PCSE.
@@ -779,7 +779,7 @@ class SimulationObject(HasTraits, DispatcherObject):
         The implementation of `set_variable()` works as follows. First it will
         recursively search for a class method on the simulationobjects with the
         name `_set_variable_<varname>` (case sensitive). If the method is found,
-        it will called by providing the value as input.
+        it will be called by providing the value as input.
 
         So for updating the crop leaf area index (varname 'LAI') to value '5.0',
         the call will be: `set_variable('LAI', 5.0)`. Internally, this call will
@@ -878,7 +878,11 @@ class SimulationObject(HasTraits, DispatcherObject):
     #---------------------------------------------------------------------------
     def zerofy(self):
         """Zerofy the value of all rate variables of this and any sub-SimulationObjects.
+
+        Note that this step is skipped when settings.ZEROFY is False.
         """
+        if settings.ZEROFY is False:
+            return
         
         if self.rates is not None:
             self.rates.zerofy()
