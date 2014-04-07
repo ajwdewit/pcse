@@ -1,7 +1,6 @@
 import sys, os
 import urllib
 from datetime import date, timedelta
-import time
 
 from ..base_classes import WeatherDataProvider, WeatherDataContainer
 from ..util import wind10to2, ea_from_tdew, penman
@@ -12,13 +11,50 @@ from ..settings import settings
 MJ_to_J = lambda x: x * 1e6
 no_conv = lambda x: x
 mm_to_cm = lambda x: x / 10.
-tdew_to_hpa = lambda x: ea_from_tdew(x) * 10
+tdew_to_hpa = lambda x: ea_from_tdew(x) * 10.
 
 
 class NASAPowerWeatherDataProvider(WeatherDataProvider):
-    """
-    """
+    """WeatherDataProvider for using the NASA POWER database with PCSE
 
+    :param latitude: latitude to request weather data for
+    :param longitude: longitude to request weather data for
+    :param force_update: Force to request fresh data from POWER website
+
+    The NASA POWER database is a global database of daily weather data
+    specifically designed for agrometeorological applications. The spatial
+    resolution of the database is 1x1 degrees. It is derived from weather
+    station observations in combination with satellite data for parameters
+    like radiation.
+
+    The weather data is updated with a delay of about 3 months which makes
+    the database unsuitable for real-time monitoring, nevertheless the
+    POWER database is useful for many other studies and it is a major
+    improvement compared to the monthly weather data that were used with
+    WOFOST in the past.
+
+    For more information on the NASA POWER database see the documentation
+    at: http://power.larc.nasa.gov/common/AgroclimatologyMethodology/Agro_Methodology_Content.html
+
+    The `NASAPowerWeatherDataProvider` retrieves the weather from the
+    th NASA POWER website and does the necessary conversions to be compatible
+    with PCSE. After the data has been retrieved and stored, the contents
+    are dumped to a binary cache file. If another request is made for the
+    same location, the cache file is loaded instead of a full request to the
+    NASA Power server.
+
+    Cache files are used until they are older then 90 days. After 90 days
+    the NASAPowerWeatherDataProvider will make a new request to obtain
+    more recent data from the NASA POWER server. If this request fails
+    it will fall back to the existing cache file. The update of the cache
+    file can be forced by setting `force_update=True`.
+
+    Finally, note that any latitude/longitude within a 1x1 degrees grid box
+    will yield the same weather data, e.g. there is no difference between
+    lat/lon 5.3/52.1 and lat/lon 5.9/52.8. Nevertheless slight differences
+    in PCSE simulations may occur due to small differences in day length.
+
+    """
     # Variable names in POWER data
     power_variables = ["toa_dwn", "swv_dwn", "lwv_dwn", "T2M", "T2MN", "T2MX", "RH2M", "DFP2M", "RAIN", "WS10M"]
 
@@ -35,8 +71,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     angstA = 0.25
     angstB = 0.5
 
-    def __init__(self, latitude=None, longitude=None, cache_path=None,
-                 force_update=False):
+    def __init__(self, latitude=None, longitude=None, force_update=False):
         """
         """
         WeatherDataProvider.__init__(self)
@@ -139,10 +174,15 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             return None
 
     def _get_cache_filename(self, latitude, longitude):
-        """Constructs the filename used for cache files given latitude longitude
+        """Constructs the filename used for cache files given latitude and longitude
+
+        The latitude and longitude is coded into the filename by truncating on
+        0.1 degree. So the cache filename for a point with lat/lon 52.56/-124.78 will be:
+        NASAPowerWeatherDataProvider_LAT00525_LON-1247.cache
         """
-        fname = "%s_LAT%04i_LON%04i.cache" % (self.__class__.__name__,
-                                              int(latitude), int(longitude))
+
+        fname = "%s_LAT%05i_LON%05i.cache" % (self.__class__.__name__,
+                                              int(latitude*10), int(longitude*10))
         cache_filename = os.path.join(settings.METEO_CACHE_DIR, fname)
         return cache_filename
 
