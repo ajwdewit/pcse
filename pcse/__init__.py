@@ -45,7 +45,12 @@ def setup():
                 else:
                     cline = "# " + line
                 fp.write(cline)
+
 setup()
+
+import logging.config
+from .settings import settings
+logging.config.dictConfig(settings.LOG_CONFIG)
 
 from . import examples
 from . import util
@@ -57,6 +62,7 @@ from . import soil
 from . import crop
 from .pywofost import PyWofost
 from .start_wofost import start_wofost
+from .start_pcse import start_pcse
 
 def test(dsn=None):
     """Run all available tests for PCSE."""

@@ -23,7 +23,7 @@ class WaterbalancePP(SimulationObject):
     class StateVariables(StatesTemplate):
         SM = Float(-99.)
 
-    def initialize(self, day, kiosk, soildata):
+    def initialize(self, day, kiosk, cropdata, soildata, sitedata):
         """    
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance

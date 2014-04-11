@@ -125,4 +125,5 @@ crop_emerged = "CROP_EMERGED"
 crop_finish = "CROP_FINISH"
 terminate = "TERMINATE"
 output = "OUTPUT"
+summary_output = "SUMMARY_OUTPUT"
 
