@@ -1,9 +1,10 @@
 import sys, os
 import urllib
 from datetime import date, timedelta
+import numpy as np
 
 from ..base_classes import WeatherDataProvider, WeatherDataContainer
-from ..util import wind10to2, ea_from_tdew, penman
+from ..util import wind10to2, ea_from_tdew, penman, check_angstromAB
 from ..exceptions import PCSEError
 from ..settings import settings
 
@@ -56,7 +57,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
     """
     # Variable names in POWER data
-    power_variables = ["toa_dwn", "swv_dwn", "lwv_dwn", "T2M", "T2MN", "T2MX", "RH2M", "DFP2M", "RAIN", "WS10M"]
+    power_variables = ["toa_dwn", "swv_dwn", "lwv_dwn", "T2M", "T2MN",
+                       "T2MX", "RH2M", "DFP2M", "RAIN", "WS10M"]
 
     # Mapping PCSE name to power name, conversion factor and unit of weather variables
     pcse_variables = [("IRRAD", "swv_dwn", MJ_to_J, "J/m2/day"),
@@ -72,13 +74,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     angstB = 0.5
 
     def __init__(self, latitude=None, longitude=None, force_update=False):
-        """
-        """
-        WeatherDataProvider.__init__(self)
 
-        # Warning for using default Angstrom A/B values
-        if (self.angstA, self.angstB) == (0.25, 0.5):
-            self.logger.warning("Warning: using default values for Angstrom A/B (0.25, 0.5)!")
+        WeatherDataProvider.__init__(self)
 
         if latitude < -90 or latitude > 90:
             msg = "Latitude should be between -90 and 90 degrees."
@@ -89,10 +86,14 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
         self.latitude = float(latitude)
         self.longitude = float(longitude)
+        msg = "Retrieving weather data from NASA Power for lat/lon: (%f, %f)."
+        self.logger.info(msg % (self.latitude, self.longitude))
 
         # Check for existence of a cache file
         cache_file = self._find_cache_file(self.latitude, self.longitude)
-        if cache_file is None:
+        if cache_file is None or force_update is True:
+            msg = "No cache file or forced update, getting data from NASA Power."
+            self.logger.debug(msg)
             # No cache file, we really have to get the data from the NASA server
             self._get_and_process_NASAPower(self.latitude, self.longitude)
             return
@@ -103,19 +104,29 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         cache_file_date = date.fromtimestamp(r.st_mtime)
         age = (date.today() - cache_file_date).days
         if age < 90:
+            msg = "Start loading weather data from cache file: %s" % cache_file
+            self.logger.debug(msg)
+
             status = self._load_cache_file()
             if status is not True:
+                msg = "Loading cache file failed, reloading data from NASA Power."
+                self.logger.debug(msg)
                 # Loading cache file failed!
                 self._get_and_process_NASAPower(self.latitude, self.longitude)
         else:
             # Cache file is too old. Try loading new data from NASA
             try:
+                msg = "Cache file older then 90 days, reloading data from NASA Power."
+                self.logger.debug(msg)
                 self._get_and_process_NASAPower(self.latitude, self.longitude)
             except Exception, e:
-                msg1 = "Failed updating weather data from NASA Power due to: %s" % e
-                msg2 = "Falling back on outdated cache file '%s'" % cache_file
-                self.logger.warning([msg1, msg2])
-
+                msg = ("Reloading data from NASA failed, reverting to (outdated) "+\
+                      "cache file")
+                self.logger.debug(msg)
+                status = self._load_cache_file()
+                if status is not True:
+                    msg = "Outdated cache file failed loading."
+                    raise PCSEError(msg)
 
     def _get_and_process_NASAPower(self, latitude, longitude):
         """Handles the retrieval and processing of the NASA Power data
@@ -127,12 +138,60 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         self.elevation = self._parse_elevation(powerdata)
         recs = self._process_power_records(powerdata)
 
+        # Determine Angstrom A/B parameters
+        self.AngstA, self.AngstB = self._estimate_AngstAB(recs)
+
         # Start building the weather data containers
         self._make_WeatherDataContainers(recs)
 
         # dump contents to a cache file
         cache_filename = self._get_cache_filename(latitude, longitude)
         self._dump(cache_filename)
+
+    def _estimate_AngstAB(self, power_records):
+        """Determine Angstrom A/B parameters from Top-of-Atmosphere (toa_dwn) and
+        top-of-Canopy (swv_dwn) radiation values.
+
+        :param power_records: rows of parsed power records (see self.power_variables)
+        :return: tuple of Angstrom A/B values
+
+        The Angstrom A/B parameters are determined by dividing swv_dwn by toa_dwn
+        and taking the 0.05 percentile for Angstrom A and the 0.98 percentile for
+        Angstrom A+B: toa_dwn*(A+B) approaches the upper envelope while
+        toa_dwn*A approaches the lower envelope of the records of swv_dwn
+        values.
+        """
+
+        msg = "Start estimation of Angstrom A/B values from POWER data."
+        self.logger.debug(msg)
+
+        # check if sufficient data is available to make a reasonable estimate:
+        # As a rule of thumb we want to have at least 200 days available
+        if len(power_records) < 200:
+            msg = ("Less then 200 days of data available. Reverting to " +
+                   "default Angstrom A/B coefficients (%f, %f)")
+            self.logger.warn(msg % (self.AngstA, self.AngstB))
+            return self.angstA, self.angstB
+
+        # calculate relative radiation (swv_dwn/toa_dwn) and percentiles
+        relative_radiation = np.array([rec["swv_dwn"]/rec["toa_dwn"] for rec in power_records])
+        angstrom_a = float(np.percentile(relative_radiation, 5))
+        angstrom_ab = float(np.percentile(relative_radiation, 98))
+        angstrom_b = angstrom_ab - angstrom_a
+
+        try:
+            check_angstromAB(angstrom_a, angstrom_b)
+        except PCSEError, e:
+            msg = ("Angstrom A/B values (%f, %f) outside valid range: %s. " +
+                   "Reverting to default values.")
+            msg = msg % (angstrom_a, angstrom_b, e)
+            self.logger.warn(msg)
+            return self.angstA, self.angstB
+
+        msg = "Angstrom A/B values estimated: (%f, %f)." % (angstrom_a, angstrom_b)
+        self.logger.debug(msg)
+
+        return angstrom_a, angstrom_b
 
     def _query_NASAPower_server(self, latitude, longitude):
         """Query the NASA Power server for data on given latitude/longitude
@@ -148,16 +207,20 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         d = date.today()
         url = t_url.format(server=server, lat=latitude, lon=longitude, year=d.year,
                            month=d.month, day=d.day)
+        msg = "Starting retrieval from NASA Power with URL: %s" % url
+        self.logger.debug(msg)
         req = urllib.urlopen(url)
 
         if req.getcode() != self.HTTP_OK:
             msg = ("Failed retrieving POWER data from %s. Server returned HTTP " +
                    "code: %i") % (server, req.getcode())
-            self.logger.error(msg)
             raise PCSEError(msg)
 
         powerdata = req.readlines()
         req.close()
+
+        msg = "Successfully retrieved data from NASA Power"
+        self.logger.debug(msg)
 
         return powerdata
 
@@ -192,8 +255,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         cache_filename = self._get_cache_filename(self.latitude, self.longitude)
         try:
             self._dump(cache_filename)
-        except (IOError), excp:
-            msg = "Failed to write cache to file: %s" % cache_filename
+        except (IOError, EnvironmentError), e:
+            msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
 
     def _load_cache_file(self):
@@ -202,8 +265,10 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         cache_filename = self._get_cache_filename(self.latitude, self.longitude)
         try:
             self._load(cache_filename)
+            msg = "Cache file successfully loaded."
+            self.logger.debug(msg)
             return True
-        except (EnvironmentError, EOFError), e:
+        except (IOError, EnvironmentError, EOFError), e:
             msg = "Failed to load cache from file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
             return False
@@ -254,10 +319,12 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     def _process_power_records(self, powerdata):
         """Process the meteorological records returned by NASA POWER
         """
+        msg = "Start parsing of POWER records from URL retrieval."
+        self.logger.debug(msg)
 
         # First strip off the header by searching for '-END HEADER'
         is_header = True
-        while is_header == True:
+        while is_header:
             line = powerdata.pop(0)
             if line.startswith("-END HEADER"):
                 is_header = False
@@ -268,6 +335,13 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             rec = self._parse_raw_power_record(line)
             if rec is not None:
                 recs.append(rec)
+
+        nrecs = len(powerdata)
+        nsuccess = len(recs)
+        nfail = nrecs - nsuccess
+        msg = "Parsed %i POWER records: %i success, %i failures" % (nrecs, nsuccess, nfail)
+        self.logger.debug(msg)
+
         return recs
 
     def _parse_raw_power_record(self, line):
@@ -283,6 +357,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                 rec[name] = float(r[i])
             return rec
         except ValueError:
+            msg = "POWER record for day '%s' failed to parse (probably incomplete)" % rec["day"]
+            self.logger.debug(msg)
             return None
 
 
