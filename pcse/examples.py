@@ -15,7 +15,7 @@ import logging.config
 from sqlalchemy import create_engine, MetaData, Table
 import numpy
 
-from .run_pywofost import run_pywofost
+from .run_wofost import run_wofost
 
 def run_example1(dsn=None):
     """Simple example for running PyWOFOST
@@ -56,10 +56,10 @@ def run_example1(dsn=None):
            print "SIMULATING GRID: %s, CROP: %s, YEAR: %s" % (grid, crop, year)
            
            # Simulate potential production
-           run_pywofost(dsn, crop, grid, year, mode='PP')
+           run_wofost(dsn, crop, grid, year, mode='PP')
            
            # Simulate water-limited production
-           run_pywofost(dsn, crop, grid, year, mode='WLP')
+           run_wofost(dsn, crop, grid, year, mode='WLP')
            
     logging.shutdown()
     print "Time elapsed: %7.1f seconds" % (time.time() - t1)

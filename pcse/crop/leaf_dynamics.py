@@ -332,7 +332,7 @@ class CSDM_Leaf_Dynamics(SimulationObject):
     class StateVariable(StatesTemplate):
         LAI = Float()
         DAYNR = Int()
-        MAXLAI = Float()
+        LAIMAX = Float()
             
     def _CSDM(self, daynr):
         """Returns the LAI value depending on the day number (daynr)
@@ -359,7 +359,7 @@ class CSDM_Leaf_Dynamics(SimulationObject):
         # calculate LAI on day 1 from CSDM
         LAI = self._CSDM(1)
         self.states = self.StateVariable(kiosk, LAI=LAI, DAYNR=1,
-                                         MAXLAI=self.params.CSDM_MIN,
+                                         LAIMAX=self.params.CSDM_MIN,
                                          publish="LAI")
     
     @prepare_rates
@@ -371,8 +371,8 @@ class CSDM_Leaf_Dynamics(SimulationObject):
         
         self.states.DAYNR += 1
         self.states.LAI = self._CSDM(self.states.DAYNR)
-        if self.states.LAI > self.states.MAXLAI:
-            self.states.MAXLAI = self.states.LAI
+        if self.states.LAI > self.states.LAIMAX:
+            self.states.LAIMAX = self.states.LAI
         
         if self.states.DAYNR > self.params.CSDM_T2:
             self._send_signal(signal=signals.crop_finish, day=day,

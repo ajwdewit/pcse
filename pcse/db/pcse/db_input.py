@@ -595,6 +595,9 @@ def fetch_timerdata(metadata, grid, year, crop):
             errstr = "Unknown crop_end_type: not maturity|harvest|earliest!"
             raise RuntimeError(errstr)
 
+        # End date of the simulation. This could be different for rotations of crops.
+        timerdata["END_DATE"] = timerdata["CROP_END_DATE"]
+
     except RuntimeError, exc:
         errstr = "Failed to retrieve timer data from crop_calendar for "+\
                  "grid %i, year %i, crop %i: " + str(exc)

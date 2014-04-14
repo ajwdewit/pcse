@@ -74,7 +74,7 @@ class Timer(AncillaryObject):
         else:
             self.current_date += self.time_step
             self.day_counter += 1
-            self.logger.info("Model time updated to: %s" % self.current_date)
+            self.logger.debug("Model time updated to: %s" % self.current_date)
 
         # Check if output should be generated
         output = False

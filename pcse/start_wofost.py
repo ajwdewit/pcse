@@ -5,8 +5,7 @@ import logging
 from sqlalchemy import create_engine, MetaData, Table
 
 from . import db
-from . import util
-from .pywofost import PyWofost
+from .models import Wofost71_PP, Wofost71_WLP_FD
 
 def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
                    dsn=None):
@@ -33,18 +32,17 @@ def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
         ...   mode='wlp')
         >>> 
         >>> wofsim
-        <pywofost.pywofost.PyWofost object at 0x228c390>
+        <pcse.models.Wofost71_WLP_FD at 0x35f2550>
         >>> wofsim.run(days=300)
         >>> wofsim.get_variable('tagp')
         15261.752187075261
         
     """
 
-
     installdir = os.path.dirname(os.path.abspath(__file__))
 
     if dsn is None: # Assume SQlite demo DB
-        db_location = os.path.join(installdir, "db","pcse","pywofost.db")
+        db_location = os.path.join(installdir, "db","pcse","pcse.db")
         dsn = "sqlite:///" + db_location
     
     # Open database connections
@@ -58,11 +56,17 @@ def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
     soildata = db.pcse.fetch_soildata(pywofost_metadata, grid)
 
     startdate = timerdata["START_DATE"]
-    enddate = startdate + datetime.timedelta(days=365)
+    enddate = timerdata["END_DATE"]
     meteof = db.pcse.GridWeatherDataProvider(pywofost_metadata, grid_no=grid,
                 startdate=startdate, enddate=enddate)
                              
-    # Initialize PyWofost
-    wofsim = PyWofost(startdate, sitedata, timerdata, soildata, cropdata, meteof,
-                      mode=mode, metadata=pywofost_metadata)
+    # Initialize PCSE/WOFOST
+    mode = mode.strip().lower()
+    if mode == 'pp':
+        wofsim = Wofost71_PP(sitedata, timerdata, soildata, cropdata, meteof)
+    if mode == 'wlp':
+        wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, meteof)
+    else:
+        msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'"
+        raise RuntimeError(msg)
     return wofsim

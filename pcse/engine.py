@@ -123,7 +123,7 @@ class Engine(BaseEngine):
 
         # Timer: starting day, final day and model output
         start_date = timerdata["START_DATE"]
-        end_date = start_date + datetime.timedelta(days=300)
+        end_date = timerdata["END_DATE"]
         self.timer = Timer(start_date, self.kiosk, end_date, self.mconf)
         self.day = self.timer()
 
@@ -142,8 +142,6 @@ class Engine(BaseEngine):
         # Placeholder for variables to be saved during a model run
         self._saved_variables = list()
 
-        #self._do_some_printing('ini')
-        
         # Calculate initial rates
         self.calc_rates(self.day, self.drv)
 
@@ -153,8 +151,8 @@ class Engine(BaseEngine):
         # Start rate calculation on individual components
         if self.cropsimulation is not None:
             self.cropsimulation.calc_rates(day, drv)
-        if self.waterbalance is not None:
-            self.waterbalance.calc_rates(day, drv)
+
+        self.waterbalance.calc_rates(day, drv)
 
         # Save state variables of the model
         if self.flag_output:
