@@ -1,4 +1,6 @@
-# Alternative approach which does not use REs but string methods
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 import re
 
 from ..exceptions import PCSEError

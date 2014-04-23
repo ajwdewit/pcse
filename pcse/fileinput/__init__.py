@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 """Tools for reading  weather and parameter files.
 
 For reading files in the CABO formats used by crop simulation models in FORTRAN and FST:

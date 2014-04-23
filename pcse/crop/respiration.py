@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 from ..traitlets import Float, Int, Instance, Dict, AfgenTrait
 from ..decorators import prepare_rates, prepare_states
 from ..base_classes import ParamTemplate, SimulationObject

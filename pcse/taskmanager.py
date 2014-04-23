@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 """Taskmanager which reads tasks from a database table and updates the status
 when the tasks is finished.
 

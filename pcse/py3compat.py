@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 """Compatibility tricks for Python 3. Mainly to do with unicode."""
 import __builtin__
 import functools

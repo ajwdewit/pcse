@@ -1,4 +1,6 @@
-﻿# -*- coding: utf-8 -*- 
+﻿# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 """
 Components for modelling of abiotic damage to crops. 
 

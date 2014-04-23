@@ -1,4 +1,5 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+# Modified by Allard de Wit (allard.dewit@wur.nl), April 2014
 """
 A lightweight Traits like module.
 

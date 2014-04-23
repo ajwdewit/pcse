@@ -1,8 +1,26 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 """
-Copyright (c) 2004-2012 Alterra, Wageningen-UR
+Copyright (c) 2004-2014 Alterra, Wageningen-UR
 
-This module provides an implementation of the WOFOST crop model in the
-python interpreter.
+The Python Crop Simulation Environment (PCSE) has been developed
+to facilitate implementing crop simulation models that were 
+developed in Wageningen. PCSE provides a set of building blocks
+that on the one hand facilitate implementing the crop simulation 
+models themselves and other hand allow to interface these models with 
+external inputs and outputs (files, databases, webservers) 
+
+PCSE builds on existing ideas implemented in the FORTRAN
+Translator (FST) and its user interface FSE. It inherits ideas
+regarding the rigid distinction between rate calculation
+and state integration and the initialization of parameters
+in a PCSE model. Moreover PCSE provides support for reusing
+input files and weather files that are used by FST models.
+
+PCSE currently provides an implementation of the WOFOST crop 
+simulation model and variants of WOFOST with extended
+capabilities.
 
 See Also
 --------
@@ -11,7 +29,7 @@ See Also
 """
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
-__version__ = "5.0.0"
+__version__ = "0.9.0"
 
 import sys, os
 

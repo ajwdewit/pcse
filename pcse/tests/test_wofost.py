@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 """Module defines code for running unittests on the complete PyWofost model.
 
 Unit tests for individual components are included in the sources files of these

@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 """This module defines and describes the signals used by PyWOFOST
 
 Signals are used by PyWOFOST to notify components of events such as sowing,

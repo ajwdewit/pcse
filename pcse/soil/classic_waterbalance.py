@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2014
 """Python implementations of the WOFOST waterbalance modules for simulation
 of potential production (`WaterbalancePP`) and water-limited production
 (`WaterbalanceFD`)under freely draining conditions.
