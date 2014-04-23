@@ -2,7 +2,7 @@ from ..traitlets import Float, Int, Instance, Dict, AfgenTrait
 from ..decorators import prepare_rates, prepare_states
 from ..base_classes import ParamTemplate, SimulationObject
 
-class WOFOSTMaintenanceRespiration(SimulationObject):
+class WOFOST_Maintenance_Respiration(SimulationObject):
     """Maintenance respiration in WOFOST
     
     WOFOST calculates the maintenance respiration as proportional to the dry

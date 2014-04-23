@@ -12,11 +12,10 @@ List of routines:
 
 import datetime
 
-from .decorators import prepare_states
 from .base_classes import StatesTemplate, AncillaryObject, ParamTemplate
 from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool
 from . import signals
-from .cropsimulation import Wofost as CropSimulation
+from .crop.wofost import Wofost as CropSimulation
 from . import exceptions as exc
 
 class AgroManagementSingleCrop(AncillaryObject):

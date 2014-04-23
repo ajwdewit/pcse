@@ -2,24 +2,22 @@
 
 import datetime
 
-from .pydispatch import dispatcher
-from .traitlets import Float, Int, Instance, Enum, Unicode
-from .decorators import prepare_rates, prepare_states
-from .util import limit
-from .base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..traitlets import Float, Int, Instance, Enum, Unicode
+from ..decorators import prepare_rates, prepare_states
+from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
-from . import signals
-from . import exceptions as exc
+from .. import signals
+from .. import exceptions as exc
 
-from .crop.phenology   import DVS_Phenology as Phenology
-from .crop.assimilation import WOFOST_Assimilation as Assimilation
-from .crop.partitioning import DVS_Partitioning as Partitioning
-from .crop.respiration  import WOFOSTMaintenanceRespiration as MaintenanceRespiration
-from .crop.evapotranspiration import Evapotranspiration
-from .crop.stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
-from .crop.root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .crop.leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
-from .crop.storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
+from .phenology import DVS_Phenology as Phenology
+from .assimilation import WOFOST_Assimilation as Assimilation
+from .partitioning import DVS_Partitioning as Partitioning
+from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
+from .evapotranspiration import Evapotranspiration
+from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
+from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
+from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
+from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
      Storage_Organ_Dynamics
 
 #-------------------------------------------------------------------------------
@@ -180,9 +178,9 @@ class Wofost(SimulationObject):
                     1./(max(0.0001,GASS))
         if abs(checksum) >= 0.0001:
             msg = "Carbon flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, GASS: %f, MRES: %f\n"  (checksum, GASS, MRES)
+            msg += "Checksum: %f, GASS: %f, MRES: %f\n" % (checksum, GASS, MRES)
             msg += "FR,L,S,O: %5.3f,%5.3f,%5.3f,%5.3f, DMI: %f, CVF: %f\n" % \
-                   (FR,FL,FS,FO,DMI,CVF)
+                   (FR, FL, FS, FO, DMI, CVF)
             raise exc.CarbonBalanceError(msg)
 
     #---------------------------------------------------------------------------

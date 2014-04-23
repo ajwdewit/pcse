@@ -4,7 +4,7 @@ import unittest
 from datetime import date
 
 from ..base_classes import VariableKiosk
-from ..crop.respiration import WOFOSTMaintenanceRespiration
+from ..crop.respiration import WOFOST_Maintenance_Respiration
 from .test_data import respiration_testdata
 
 
@@ -22,7 +22,7 @@ class Test_WOFOSTMaintenanceRespiration(unittest.TestCase):
         self.kiosk.register_variable(0, "DVS", type="S", publish=True)
         # initialize respiration model
         dummyday = date(2000,1,1)
-        self.respiration = WOFOSTMaintenanceRespiration(dummyday, self.kiosk,
+        self.respiration = WOFOST_Maintenance_Respiration(dummyday, self.kiosk,
                                                         self.cropdata)
 
     def runTest(self):

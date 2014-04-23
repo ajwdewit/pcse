@@ -6,7 +6,7 @@ import logging
 from sqlalchemy import create_engine, MetaData, Table
 
 from . import db
-from .models import Wofost71_PP, Wofost71_WLP_FD
+from .models import Wofost71_WLP_FD,Wofost71_PP
 
 def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     """Provides a convenient interface for running PCSE/WOFOST
@@ -43,12 +43,16 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     meteof = db.pcse.GridWeatherDataProvider(db_metadata, grid_no=grid,
                 startdate=startdate, enddate=enddate)
                              
-    # Run simulation
+    # Initialize PCSE/WOFOST
+    mode = mode.strip().lower()
     if mode == 'pp':
         wofsim = Wofost71_PP(sitedata, timerdata, soildata, cropdata, meteof)
-    else:
+    elif mode == 'wlp':
         wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, meteof)
-    
+    else:
+        msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'"
+        raise RuntimeError(msg, mode)
+
     wofsim.run(days=365)
     
     runid = {"grid_no":grid, "crop_no":crop, "year":year, "member_id":0,

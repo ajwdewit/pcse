@@ -59,8 +59,8 @@ class Engine(BaseEngine):
     mconf = Instance(ConfigurationLoader)
 
     # sub components for simulation
-    cropsimulation = Instance(SimulationObject)
-    waterbalance = Instance(SimulationObject)
+    crop = Instance(SimulationObject)
+    soil = Instance(SimulationObject)
     agromanagement = Instance(AncillaryObject)
     weatherdataprovider = Instance(WeatherDataProvider)
     drv = Instance(WeatherDataContainer)
@@ -131,12 +131,13 @@ class Engine(BaseEngine):
         self.weatherdataprovider = weatherdataprovider
         self.drv = self._get_driving_variables(self.day)
 
-        # Waterbalance
-        self.waterbalance = self.mconf.SOIL(self.day, self.kiosk, cropdata, soildata, sitedata)
+        # Component for simulation of soil processes
+        self.soil = self.mconf.SOIL(self.day, self.kiosk, cropdata, soildata, sitedata)
 
-        # Call AgroManagement module for management actions at initialization
+        # Component for agromanagement
         self.agromanagement = self.mconf.AGROMANAGEMENT(self.day, self.kiosk, timerdata, soildata,
                                                         sitedata, cropdata)
+        # Call AgroManagement module for management actions at initialization
         self.agromanagement(self.day, self.drv)
 
         # Placeholder for variables to be saved during a model run
@@ -149,10 +150,10 @@ class Engine(BaseEngine):
     def calc_rates(self, day, drv):
 
         # Start rate calculation on individual components
-        if self.cropsimulation is not None:
-            self.cropsimulation.calc_rates(day, drv)
+        if self.crop is not None:
+            self.crop.calc_rates(day, drv)
 
-        self.waterbalance.calc_rates(day, drv)
+        self.soil.calc_rates(day, drv)
 
         # Save state variables of the model
         if self.flag_output:
@@ -168,10 +169,10 @@ class Engine(BaseEngine):
         # Flush state variables from the kiosk before state updates
         self.kiosk.flush_states()
 
-        if self.cropsimulation is not None:
-            self.cropsimulation.integrate(day)
+        if self.crop is not None:
+            self.crop.integrate(day)
 
-        self.waterbalance.integrate(day)
+        self.soil.integrate(day)
 
         # Set all rate variables to zero
         if settings.ZEROFY:
@@ -204,7 +205,7 @@ class Engine(BaseEngine):
             self.calc_rates(self.day, self.drv)
         
         if self.flag_terminate is True:
-            self.waterbalance.finalize(self.day)
+            self.soil.finalize(self.day)
 
     #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, crop_delete=False):
@@ -230,13 +231,13 @@ class Engine(BaseEngine):
         """
         self.logger.debug("Received signal 'CROP_START' on day %s" % day)
 
-        if self.cropsimulation is not None:
+        if self.crop is not None:
             msg = ("A CROP_START signal was received while self.cropsimulation "+
                    "still holds a valid cropsimulation object. It looks like " +
                    "you forgot to send a CROP_FINISH signal with option" +
                    "crop_delete=True")
             raise exc.PCSEError(msg)
-        self.cropsimulation = cropsimulation
+        self.crop = cropsimulation
     
     #---------------------------------------------------------------------------
     def _on_TERMINATE(self):
@@ -268,14 +269,14 @@ class Engine(BaseEngine):
         self.flag_crop_finish = False
 
         # Run the finalize section of the cropsimulation and sub-components
-        self.cropsimulation.finalize(day)
+        self.crop.finalize(day)
 
         # Only remove the crop simulation object from the system when the crop
         # is finished, when explicitly asked to do so.
         if self.flag_crop_delete:
             self.flag_crop_delete = False
-            self.cropsimulation._delete()
-            self.cropsimulation = None
+            self.crop._delete()
+            self.crop = None
 
     #---------------------------------------------------------------------------
     def _get_driving_variables(self, day):

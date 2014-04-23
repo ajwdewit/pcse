@@ -24,6 +24,9 @@ class _Wofost71Base(Engine):
     member_id = 0
     simulation_mode = Enum(["wlp", "pp"])
 
+    # config should be overwritten by superclass
+    config = None
+
     def __init__(self, sitedata, timerdata, soildata, cropdata,
                  weatherdataprovider):
         Engine.__init__(self, sitedata, timerdata, soildata, cropdata,
