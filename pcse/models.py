@@ -87,7 +87,7 @@ class _Wofost71Base(Engine):
         """
 
         sep = "--------------------------------------------------------------\n"
-        tmsg = "PCSE/WOFOST71_PP OUTPUT FILE FOR: \n" +\
+        tmsg = "PCSE/WOFOST OUTPUT FILE FOR: \n" +\
                "crop name: %s\n" +\
                "year: %4i\n" +\
                "mode: '%s'\n"

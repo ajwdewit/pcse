@@ -85,7 +85,7 @@ the version of python, numpy and SQLAlchemy that were used to develop PCSE::
 Limitations of PCSE
 ===================
 
-As usual PCSE as its  limitations, in fact there are several:
+PCSE als has its limitations, in fact there are several:
 
 * Speed: flexibility comes a at a price; PCSE is considerably slower than equivalent models written in FORTRAN or
   another compiled language.
@@ -93,7 +93,10 @@ As usual PCSE as its  limitations, in fact there are several:
 * The simulation approach in PCSE is currently limited to rectangular (Euler) integration with a fixed daily
   time-step. Although the internal time-step of modules can be made more fine-grained if needed.
 
-* No graphical user interface
+* No graphical user interface. However the lack of a user interface is partly compensated by using PCSE with the
+  `pandas <http://pandas.pydata.org/>`_ package and the `IPython notebook <http://ipython.org/notebook.html>`_.
+  PCSE output can be easily converted to a pandas `DataFrame` which can be used to display charts in an IPython
+  notebook.
 
 License
 =======

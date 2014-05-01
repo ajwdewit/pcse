@@ -1,24 +1,26 @@
 *****************************
-Getting started with PyWOFOST
+Getting started with PCSE
 *****************************
 
-This tutorial gives some examples to get you started with the PyWOFOST
-package. Moreover, it gives some information on how to define your own
-data sources and/or parameter files. 
-All tests and examples are developed with the Enthought Python Distribution
-(http://www.enthought.com/products/epd.php) under windows7 (EPD 32bit).
+This quickstart guide gives some examples to get you started with the Python
+Crop Simulation Environment. All examples are currently focused on applying
+the WOFOST crop simulation model, although other crop simulations may
+become available within PCSE in the future.
+All tests and examples were developed with the Enthought Python Distribution
+(http://www.enthought.com/products/epd.php) under windows7 (EPD 32bit). This
+product is now superseeded by Enthought Canopy.
 
-Testing the PyWOFOST package
-============================
-To guarantee its integrity, the PyWOFOST package includes a number of self
+Testing the PCSE package
+========================
+To guarantee its integrity, the PCSE package includes a number of self
 tests that test individual components as well as the entire chain. These tests
 verify that the output produced by the different components matches with the
 expected outputs. Test data for the individual components can be found
-in the `pywofost.test_data` package, while the test data for the entire chain
-is stored in a database (pywofost.db) that can be found under
-`pywofost.database`.
+in the `pcse.tests.test_data` package, while the test data for the entire chain
+is stored in an SQLite database (pcse.db) that can be found under
+`pcse.db.pcse`.
 
-We assume here that PyWOFOST is installed under 'D:\\USERDATA\\pylib\\' and
+We assume here that PCSE is installed under 'D:\\USERDATA\\pylib\\' and
 this location needs to be added to the search path of python::
 
     E:\temp>python
@@ -30,58 +32,60 @@ this location needs to be added to the search path of python::
     >>> import sys
     >>> import sys.path.append(r"D:\USERDATA\pylib\")
 
-Next, PyWOFOST can be imported and the tests can be executed by calling
+Next, PCSE can be imported and the tests can be executed by calling
 the `test()` function at the top of the package::
 
-    >>> import pywofost
-    >>> pywofost.test()
-    runTest (pywofost.tests.test_abioticdamage.Test_FROSTOL) ... ok
-    runTest (pywofost.tests.test_assimilation.Test_WOFOST_Assimilation) ... ok
-    runTest (pywofost.tests.test_partitioning.Test_DVS_Partitioning) ... ok
-    runTest (pywofost.tests.test_evapotranspiration.Test_PotentialEvapotranspiration) ... ok
-    runTest (pywofost.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration1) ... ok
-    runTest (pywofost.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration2) ... ok
-    runTest (pywofost.tests.test_respiration.Test_WOFOSTMaintenanceRespiration) ... ok
-    runTest (pywofost.tests.test_pywofost.TestPotentialPotato) ... ok
-    runTest (pywofost.tests.test_pywofost.TestWaterlimitedSunflower) ... ok
-    runTest (pywofost.tests.test_pywofost.TestWaterlimitedSpringBarley) ... ok
-    runTest (pywofost.tests.test_pywofost.TestWaterlimitedPotato) ... ok
-    runTest (pywofost.tests.test_pywofost.TestPotentialWinterRapeseed) ... ok
-    runTest (pywofost.tests.test_pywofost.TestPotentialGrainMaize) ... ok
-    runTest (pywofost.tests.test_pywofost.TestPotentialWinterWheat) ... ok
-    runTest (pywofost.tests.test_pywofost.TestWaterlimitedWinterWheat) ... ok
-    runTest (pywofost.tests.test_pywofost.TestWaterlimitedGrainMaize) ... ok
-    runTest (pywofost.tests.test_pywofost.TestPotentialSpringBarley) ... ok
-    runTest (pywofost.tests.test_pywofost.TestWaterlimitedWinterRapeseed) ... ok
-    runTest (pywofost.tests.test_pywofost.TestPotentialSunflower) ... ok
+    >>> import pcse
+    >>> pcse.test()
+    runTest (pcse.tests.test_abioticdamage.Test_FROSTOL) ... ok
+    runTest (pcse.tests.test_assimilation.Test_WOFOST_Assimilation) ... ok
+    runTest (pcse.tests.test_partitioning.Test_DVS_Partitioning) ... ok
+    runTest (pcse.tests.test_evapotranspiration.Test_PotentialEvapotranspiration) ... ok
+    runTest (pcse.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration1) ... ok
+    runTest (pcse.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration2) ... ok
+    runTest (pcse.tests.test_respiration.Test_WOFOSTMaintenanceRespiration) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedPotato) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialGrainMaize) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialSpringBarley) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterWheat) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialSunflower) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialWinterRapeseed) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterRapeseed) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedSpringBarley) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedSunflower) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialWinterWheat) ... ok
 
     ----------------------------------------------------------------------
-    Ran 19 tests in 24.195s
+    Ran 19 tests in 29.748s
 
     OK
+    >>>
 
 If the model output matches the expected output the test will report 'OK',
 otherwise an error will be produced with a detailed traceback on where the
 problem occurred.
 
-An interactive PyWOFOST session
-===============================
-The easiest way to demonstrate PyWOFOST is to run it from an interactive
-Python session using the built-in demo database which contains
+An interactive PCSE/WOFOST session
+==================================
+The easiest way to demonstrate PCSE is to import WOFOST from PCSE and run it from
+an interactive Python session using the built-in demo database which contains
 meteorologic data, soil data and crop data for a grid location in South-Spain.
+We will use a
 
-Initializing PyWOFOST and advancing model state
------------------------------------------------
-Let's start a PyWOFOST object for modelling winter-wheat (crop=1) on a
+Initializing PCSE/WOFOST and advancing model state
+--------------------------------------------------
+Let's start a WOFOST object for modelling winter-wheat (crop=1) on a
 location in South-Spain (grid 31031) for the year 2000 under water-limited
-conditions (mode='wlp')::
+conditions for a freely draining soil (mode='wlp')::
 
-    >>> wofost_object = pywofost.start_pywofost(grid=31031, crop=1, year=2000, mode='wlp')
+    >>> wofost_object = pcse.start_wofost(grid=31031, crop=1, year=2000, mode='wlp')
     >>> type(wofost_object)
-    <class 'pywofost.pywofost.PyWofost'>
+    <class 'pcse.models.Wofost71_WLP_FD'>
 
-You have just succesfully initialized a WOFOST object in the python interpreter,
-which is in its initial state and waiting to do some modelling. We
+You have just successfully initialized a PCSE/WOFOST object in the python
+interpreter, which is in its initial state and waiting to do some simulation. We
 can now advance the model state for example with 1 day::
 
     >>> wofost_object.run()
@@ -98,56 +102,59 @@ can be done with the `get_variable()` method on a PyWOFOST object.
 For example, to retrieve the leaf area index value in the current
 model state you can do::
 
-    >>> wofost_object.get_variable('lai')
+    >>> wofost_object.get_variable('LAI')
     0.28708095263317146 
     >>> wofost_object.run(days=25)
-    >>> wofost_object.get_variable('lai')
+    >>> wofost_object.get_variable('LAI')
     1.5281215808337203
 
 Showing that after 11 days the LAI value is 0.287. When we increase time
 with another 25 days, the LAI increases to 1.528. The `get_variable` method
-can retrieve any state or rate variable that is defined somewhere in a
-SimulationObject. 
+can retrieve any state or rate variable that is defined somewhere in the
+model.
 
 Finally, we can finish the crop season by simply specifying sufficient days
 and store the results to a file 'myresults.csv'::
 
     >>> wofost_object.run(days=300)
-    >>> wofost_object.store_to_file("myresults.csv")
+    >>> wofost_object.store_to_file("myresults.txt")
 
-Which should look like this :download:`myresults.csv`
+Which should look like this :download:`myresults.txt`
 
-Alternatively, you can store the simulation results into a database using the
-`store_to_database()` method.  
-
-Using PyWOFOST with your own data
-=================================
+Getting input data for PCSE/WOFOST
+==================================
 
 After running the examples you may be wondering where the data come
-from that are used to run PyWOFOST. In fact, these data are retrieved from
-an SQLite database 'pywofost.db' that is included with the source distribution
-and can be found in the database folder.
+from that are used to run WOFOST. In fact, these data are retrieved from
+an SQLite database 'pcse.db' that is included with the source distribution
+and can be found in the pcse.db.pcse folder.
 
-For setting up PyWOFOST with your
-own datasources you should understand that WOFOST uses 5 different types of
+For setting up PCSE/WOFOST with your
+own data sources you should understand that WOFOST uses 5 different types of
 inputs: `cropdata`, `soildata`, `timerdata`, `sitedata` and driving variables
-(i.e. weather data). The fact that these are called `\*data` is a bit of
+(e.g. weather data). The fact that these are called `\*data` is a bit of
 misnomer as they contain a mixture of parameter values, boundary conditions
 and events rather than data. Except for the driving variables which 
 can be considered as (observed) data. This terminology was inherited from the 
 previous WOFOST versions and it was kept because changing it would
 cause more confusion.
 
-All the input data types must be provided as python dictionaries
-storing key/value pairs and several tools are available in the PyWOFOST
-distribution to read these from a file or a database.
+All the input `\*data` must be provided as python dictionaries
+storing key/value pairs and several tools are available in the PCSE
+distribution to read these from a file or a database. Moreover,
+there are several tools available for reading weather data.
+
+For the second example we will run a simulation for sugar beet in
+Wageningen (Netherlands) and we will read the input data step by step from
+several different sources instead of using the pre-configured `start_wofost`
+script.
 
 Cropdata
 --------
 
 Cropdata consist of parameter names (dictionary keys) and the
 corresponding parameter values that are needed to parameterize the
-components (SimulationObjects) for running the crop simulation. These are
+components of the model for running the crop simulation. These are
 crop-specific values regarding phenology, assimilation, respiration,
 biomass partitioning, etc. Within the PyWOFOST distribution there are two
 ways of setting up the cropdata:
@@ -155,7 +162,7 @@ ways of setting up the cropdata:
     1. The WOFOST crop definition files are provided with the WOFOST Control Centre
        available from http://www.wofost.wur.nl. These files can be read with
        the `CABOFileReader` in the cabo package. The CABOFileReader will
-       return a dictionary object that is directly useable by PyWOFOST.
+       return a dictionary object that is directly usable by PyWOFOST.
     2. The WOFOST crop parameter values can be read from a database. The
        database structure that is used is similar to the database structure of
        the European Crop Growth Monitoring System (CGMS). Information about
@@ -353,7 +360,7 @@ changed during state updates.
     - are *case sensitive*, as are all variables in python.
 
 The initialize() section
--------------------------
+------------------------
 
 In the `initialize` section preparations for the simulation take place.
 The first compulsary positional argument is the
