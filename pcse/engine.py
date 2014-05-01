@@ -79,7 +79,8 @@ class Engine(BaseEngine):
     flag_summary_output = Bool(False)
     
     # placeholders for variables saved during model execution
-    _saved_variables = Instance(list)
+    _saved_output = Instance(list)
+    _saved_summary_output = Instance(list)
 
     # Helper variables
     TMNSAV = Instance(deque)
@@ -143,7 +144,8 @@ class Engine(BaseEngine):
         self.agromanagement(self.day, self.drv)
 
         # Placeholder for variables to be saved during a model run
-        self._saved_variables = list()
+        self._saved_output = list()
+        self._saved_summary_output = list()
 
         # Calculate initial rates
         self.calc_rates(self.day, self.drv)
@@ -159,7 +161,9 @@ class Engine(BaseEngine):
 
         # Save state variables of the model
         if self.flag_output:
-            self._save_variables(day)
+            self._save_output(day)
+        if self.flag_summary_output:
+            self._save_summary_output()
 
         # Check if flag is present to finish crop simulation
         if self.flag_crop_finish:
@@ -219,10 +223,14 @@ class Engine(BaseEngine):
         _finish_cropsimulation().
         
         If crop_delete=True the CropSimulation object will be deleted from the
-        hierarchy in _finish_cropsimulation(). 
+        hierarchy in _finish_cropsimulation().
+
+        Finally, summary output will be generated depending on
+        conf.SUMMARY_OUTPUT_VARS
         """
         self.flag_crop_finish = True
         self.flag_crop_delete = crop_delete
+        self.flag_summary_output = True
         
     #---------------------------------------------------------------------------
     def _on_CROP_START(self, day, cropsimulation):
@@ -312,14 +320,61 @@ class Engine(BaseEngine):
         return sum(self.TMNSAV)/len(self.TMNSAV)
     
     #---------------------------------------------------------------------------
-    def _save_variables(self, day):
-        """Appends selected model variables to self._saved_variables for this day.
+    def _save_output(self, day):
+        """Appends selected model variables to self._saved_output for this day.
         """
         # Switch off the flag for generating output
         self.flag_output = False
-        
+
         # find current value of variables to are to be saved
         states = {"day":day}
         for var in self.mconf.OUTPUT_VARS:
             states[var] = self.get_variable(var)
-        self._saved_variables.append(states)
+        self._saved_output.append(states)
+
+    #---------------------------------------------------------------------------
+    def _save_summary_output(self):
+        """Appends selected model variables to self._saved_summary_output.
+        """
+        # Switch off the flag for generating output
+        self.flag_summary_output = False
+
+        # find current value of variables to are to be saved
+        states = {}
+        for var in self.mconf.SUMMARY_OUTPUT_VARS:
+            states[var] = self.get_variable(var)
+        self._saved_summary_output.append(states)
+
+    #---------------------------------------------------------------------------
+    def set_variable(self, varname, value):
+        """ Sets the value of the specified state or rate variable.
+
+        :param varname: Name of the variable to be updated (string).
+        :param value: Value that it should be updated to (float)
+
+        :returns: a dict containing the increments of the variables
+        that were updated (new - old). If the call was unsuccessful
+        in finding the class method (see below) it will return an empty dict.
+
+        Note that 'setting' a variable (e.g. updating a model state) is much more
+        complex than just `getting` a variable, because often some other
+        internal variables (checksums, related state variables) must be updated
+        as well. As there is no generic rule to 'set' a variable it is up to
+        the model designer to implement the appropriate code to do the update.
+
+        The implementation of `set_variable()` works as follows. First it will
+        recursively search for a class method on the simulationobjects with the
+        name `_set_variable_<varname>` (case sensitive). If the method is found,
+        it will be called by providing the value as input.
+
+        So for updating the crop leaf area index (varname 'LAI') to value '5.0',
+        the call will be: `set_variable('LAI', 5.0)`. Internally, this call will
+        search for a class method `_set_variable_LAI` which will be executed
+        with the value '5.0' as input.
+        """
+        increments = {}
+        self.soil.set_variable(varname, value, increments)
+        if self.crop is not None:
+            self.crop.set_variable(varname, value, increments)
+
+        return increments

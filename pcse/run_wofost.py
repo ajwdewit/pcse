@@ -32,8 +32,11 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     db_metadata = MetaData(db_engine)
     table_sim_results_ts = Table('sim_results_timeseries', db_metadata,
                                  autoload=True)
+    table_sim_results_smry = Table('sim_results_summary', db_metadata,
+                                 autoload=True)
     if clear_table is True:
         table_sim_results_ts.delete().execute()
+        table_sim_results_smry.delete().execute()
     
     # Get input data from database
     sitedata  = db.pcse.fetch_sitedata(db_metadata, grid, year)

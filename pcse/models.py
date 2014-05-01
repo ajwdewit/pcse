@@ -19,7 +19,8 @@ class _Wofost71Base(Engine):
     `WOFOST71_WLP_FD`
 
     Moreover, it provides the methods `store_to_database` for sending
-    the WOFOST simulation results to the table 'sim_results_timeseries'
+    the WOFOST simulation results to the tables 'sim_results_timeseries'
+    and 'sim_results_summary'.
     """
     # Definition of run identifiers
     crop_name = Unicode()
@@ -60,18 +61,25 @@ class _Wofost71Base(Engine):
             msg = ("Keyword 'runid' should provide the database columns "+
                    "describing the WOFOST run.")
             raise exc.PCSEError(msg)
-        # Merge records with model state variables with the PCSE run ID
-        recs = [merge_dict(rec, runid) for rec in self._saved_variables]
 
-        if isinstance(metadata, sa.schema.MetaData):
-            table_sim_results_ts = sa.Table('sim_results_timeseries', metadata,
-                                            autoload=True)
-            i = table_sim_results_ts.insert()
-            i.execute(recs)
-        else:
+        if not isinstance(metadata, sa.schema.MetaData):
             msg = ("Keyword metadata should provide an SQLAlchemy " +
                    "MetaData object.")
-            raise RuntimeError(msg)
+            raise exc.PCSEError(msg)
+
+        # Merge records with output ad summary_output variables with the run_id
+        recs_output = [merge_dict(rec, runid) for rec in self._saved_output]
+        recs_summary_output = [merge_dict(rec, runid) for rec in self._saved_summary_output]
+
+        table_sim_results_ts = sa.Table('sim_results_timeseries', metadata,
+                                        autoload=True)
+        i = table_sim_results_ts.insert()
+        i.execute(recs_output)
+
+        table_sim_results_smry = sa.Table('sim_results_summary', metadata,
+                                          autoload=True)
+        i = table_sim_results_smry.insert()
+        i.execute(recs_summary_output)
 
     #---------------------------------------------------------------------------
     def store_to_file(self, outputfile=None):
@@ -105,7 +113,7 @@ class _Wofost71Base(Engine):
         msg += sep
 
         # Find variables available in daily records
-        if len(self._saved_variables) == 0:
+        if len(self._saved_output) == 0:
             print "No simulation results available yet."
             return
 
@@ -117,7 +125,7 @@ class _Wofost71Base(Engine):
         tmsg += header
         msg += tmsg
 
-        for rec in self._saved_variables:
+        for rec in self._saved_output:
             tmsg = "%8s" % rec["day"]
             for varname in self.mconf.OUTPUT_VARS:
                 value = rec[varname]

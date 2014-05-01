@@ -764,11 +764,13 @@ class SimulationObject(HasTraits, DispatcherObject):
         return value
 
     #---------------------------------------------------------------------------
-    def set_variable(self, varname, value):
+    def set_variable(self, varname, value, incr):
         """ Sets the value of the specified state or rate variable.
 
         :param varname: Name of the variable to be updated (string).
         :param value: Value that it should be updated to (float)
+        :param incr: dict that will receive the increments to the updated state
+            variables.
 
         :returns: either the increment of the variable (new - old) or `None`
           if the call was unsuccessful in finding the class method (see below).
@@ -793,11 +795,11 @@ class SimulationObject(HasTraits, DispatcherObject):
         try:
             method_obj = getattr(self, method_name)
             rv = method_obj(value)
-            if rv is None:
-                msg = ("Method %s on '%s' should return the increment of the update;" +
-                       " got None instead!") % (method_name, self.__class__.__name__)
+            if not isinstance(rv, dict):
+                msg = ("Method %s on '%s' should return a dict with the increment of the " +
+                       "updated state variables!") % (method_name, self.__class__.__name__)
                 raise exc.PCSEError(msg)
-            return rv
+            incr.update(rv)
         except AttributeError: # method is not present: just continue
             pass
         except TypeError: # method is present but is not callable: error!
@@ -805,13 +807,8 @@ class SimulationObject(HasTraits, DispatcherObject):
                    "check your code!") % (method_name, self.__class__.__name__)
             raise exc.PCSEError(msg)
 
-        rv = None
         for simobj in self.subSimObjects:
-            rv = simobj.set_variable(varname, value)
-            if rv is not None:
-                break
-
-        return rv
+            simobj.set_variable(varname, value, incr)
 
     #---------------------------------------------------------------------------
     def _delete(self):
