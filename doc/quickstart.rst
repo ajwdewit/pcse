@@ -70,9 +70,8 @@ problem occurred.
 An interactive PCSE/WOFOST session
 ==================================
 The easiest way to demonstrate PCSE is to import WOFOST from PCSE and run it from
-an interactive Python session using the built-in demo database which contains
-meteorologic data, soil data and crop data for a grid location in South-Spain.
-We will use a
+an interactive Python session. We will be using the built-in demo database which
+contains meteorologic data, soil data and crop data for a grid location in South-Spain.
 
 Initializing PCSE/WOFOST and advancing model state
 --------------------------------------------------
@@ -98,7 +97,7 @@ number of days to simulate can be specified as well::
 Getting information about state and rate variables
 --------------------------------------------------
 Retrieving information about the calculated model states or rates 
-can be done with the `get_variable()` method on a PyWOFOST object.
+can be done with the `get_variable()` method on a PCSE object.
 For example, to retrieve the leaf area index value in the current
 model state you can do::
 
@@ -111,9 +110,7 @@ model state you can do::
 Showing that after 11 days the LAI value is 0.287. When we increase time
 with another 25 days, the LAI increases to 1.528. The `get_variable` method
 can retrieve any state or rate variable that is defined somewhere in the
-model.
-
-Finally, we can finish the crop season by simply specifying sufficient days
+model. Finally, we can finish the crop season by simply specifying sufficient days
 and store the results to a file 'myresults.csv'::
 
     >>> wofost_object.run(days=300)
@@ -126,15 +123,15 @@ Getting input data for PCSE/WOFOST
 
 After running the examples you may be wondering where the data come
 from that are used to run WOFOST. In fact, these data are retrieved from
-an SQLite database 'pcse.db' that is included with the source distribution
-and can be found in the pcse.db.pcse folder.
+an SQLite database `pcse.db` that is included with the source distribution
+and can be found in the `pcse/db/pcse` folder.
 
 For setting up PCSE/WOFOST with your
 own data sources you should understand that WOFOST uses 5 different types of
-inputs: `cropdata`, `soildata`, `timerdata`, `sitedata` and driving variables
-(e.g. weather data). The fact that these are called `\*data` is a bit of
+inputs: `cropdata`, `soildata`, `timerdata`, `sitedata` and `driving variables`
+(e.g. weather data). The fact that these names end with 'data' is a bit of
 misnomer as they contain a mixture of parameter values, boundary conditions
-and events rather than data. Except for the driving variables which 
+and events rather than data, except for the driving variables which
 can be considered as (observed) data. This terminology was inherited from the 
 previous WOFOST versions and it was kept because changing it would
 cause more confusion.
@@ -146,8 +143,14 @@ there are several tools available for reading weather data.
 
 For the second example we will run a simulation for sugar beet in
 Wageningen (Netherlands) and we will read the input data step by step from
-several different sources instead of using the pre-configured `start_wofost`
-script.
+several different sources instead of using the pre-configured `start_wofost()`
+script. For the example we will assume that data files are in the directory
+`D:\userdata\pcse_examples`. First we will import the necessary modules and
+import set the data directory::
+
+    >>> import os
+    >>> import pcse
+    >>> data_dir = r'D:\userdata\pcse_examples'
 
 Cropdata
 --------
@@ -157,8 +160,10 @@ corresponding parameter values that are needed to parameterize the
 components of the crop simulation model. These are
 crop-specific values regarding phenology, assimilation, respiration,
 biomass partitioning, etc. The parameter file for sugar beet can be
-downloaded here :download:`sug0601.cab` and is taken from the
-crop files in the `WOFOST Control Centre`.
+downloaded here: :download:`sug0601.crop` and is taken from the
+crop files in the `WOFOST Control Centre`_.
+
+.. _WOFOST Control Centre: http://www.wageningenur.nl/wofost
 
 The crop parameter values for many models in
 Wageningen are often provided in the CABO format that could be read
@@ -166,9 +171,9 @@ with the `TTUTIL <http://edepot.wur.nl/17847>`_ FORTRAN library. PCSE
 tries to be backward compatible as much as possible and provides a
 tool for reading parameter files in CABO format::
 
-    >>> import pcse
     >>> from pcse.fileinput import CABOFileReader
-    >>> cropdata = CABOFileReader('sug0601.crop')
+    >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
+    >>> cropdata = CABOFileReader(cropfile)
     >>> print cropdata
 
 printing the cropdata dictionary gives you an listing of the header and
@@ -181,10 +186,11 @@ The soildata dictionary must provide the parameter name/value pairs related
 to the soil type and soil physical properties. The number of parameters is
 variable depending on the soil water balance type that is used for the
 simulation. For this example, we will use the water balance for freely
-draining soils and use the soil file for medium fine sand from the soil
-files in the `WOFOST Control Centre` :download:`ec3.soil`::
+draining soils and use the soil file for medium fine sand: :download:`ec3.soil`.
+This file is also taken from the soil files in the `WOFOST Control Centre`_ ::
 
-    >>> soildata = CABOFileReader('ec3.soil')
+    >>> soilfile = os.path.join(data_dir, 'ec3.soil')
+    >>> soildata = CABOFileReader(soilfile)
 
 Timerdata
 ---------
@@ -215,7 +221,8 @@ developed that does allow to use dates. The crop calendar file for sugar beet
 in Wageningen can be downloaded here: :download:`sugarbeet_calendar.pcse`::
 
     >>> from pcse.fileinput import PCSEFileReader
-    >>> timerdata = PCSEFileReader('sugarbeet_calendar.pcse')
+    >>> crop_calendar_file = os.path.join(data_dir, 'sugarbeet_calendar.pcse')
+    >>> timerdata = PCSEFileReader(crop_calendar_file)
     >>> print timerdata
     PCSE parameter file contents loaded from:
     /home/allard/Sources/python/pcse/doc/sugarbeet_calendar.pcse
@@ -234,244 +241,78 @@ Sitedata
 
 The sitedata dictionary provides ancillary parameters that are not related to
 the crop, the soil or the agromanagement. Examples are the initial conditions of
-the water balance such as the initial soil water in amount (WAV) and
+the water balance such as the initial soil moisture content (WAV) and
 the initial and maximum surface storage (SSI, SSMAX). For the moment, we will
 define these parameters directly on the python commandline::
 
-        >>> sitedata = {'SSMAX'  = 0.,
-                        'IFUNRN' = 0,
-                        'NOTINF' = 0,
-                        'SSI'    = 0,
-                        'WAV'    = 100,
-                        'SMLIM'  = 0.03}
+    >>> sitedata = {'SSMAX'  : 0.,
+                    'IFUNRN' : 0,
+                    'NOTINF' : 0,
+                    'SSI'    : 0,
+                    'WAV'    : 100,
+                    'SMLIM'  : 0.03}
 
 Driving variables (weather data)
 --------------------------------
 
 Daily weather variables are needed for running the simulation, see the section
-on :ref:`DrivingVar` for reference. Currently, two options are available in
-PyWOFOST for storing and retrieving weather data:
+on :ref:`DrivingVar` for reference. Currently, three options are available in
+PCSE for storing and retrieving weather data:
 
     1. The database structure as provided by the Crop Growth Monitoring
        System. Weather data will be read from the GRID_WEATHER table which
-       is implemented using `db_util.GridWeatherDataProvider`.
-    2. The file structure as defined by the CABO Weather System which is
-       implemented using `cabo.CABOWeatherDataProvider`. For more details see
-       :ref:`TheCABOtools`.
+       is implemented using `pcse.db.pcse.GridWeatherDataProvider`.
+    2. The file structure as defined by the `CABO Weather System`_ which is
+       implemented using `pcse.fileinput.CABOWeatherDataProvider`. For more
+       details see :ref:`TheCABOtools`.
+    3. The global weather data provided by the agroclimatology from the
+       `NASA Power database`_ at a resolution of 1x1 degree. PCSE
+       provides the `pcse.db.NASAPowerWeatherDataProvider' which retrieves
+       the NASA Power data from the internet for a given latitude and
+       longitude.
 
-Additional WeatherDataProviders may be implemented as needed. Obvious
-candidates are a WeatherDataProvider that can read the NASA POWER database for
-agrometeorological modelling (http://power.larc.nasa.gov).
+.. _CABO Weather System: http://edepot.wur.nl/43010
+.. _NASA Power database: http://power.larc.nasa.gov
 
-.. note::
-    
-    Recent CGMS versions (9 & 10) use the FAO Penman-Monteith approach to
-    calculate reference evapotranspiration (`FAO56`_). However, the 
-    `cabo.CABOWeatherDataProvider` still uses the classic modified Penman
-    approach (`FAO24`_) which may result in slightly different reference
-    evapotranspiration values. Future extensions to the 
-    `cabo.CABOWeatherDataProvider` will most likely include the FAO56 method
-    for estimating reference evapotranspiration.
-    
-.. _FAO56: http://www.fao.org/docrep/X0490E/x0490e00.htm#Contents
-.. _FAO24: http://www4.fao.org/cgi-bin/faobib.exe?rec_id=131493&database=faobib&search_type=link&table=mona&back_path=/faobib/mona&lang=eng&format_name=EFMON
+For this example we will use the weather data from the NASA Power database
+for the location of Wageningen. Note that it can take around 30 seconds
+to retrieve the weather data from the NASA Power server the first time::
 
+    >>> from pcse.db import NASAPowerWeatherDataProvider
+    >>> wdp = NASAPowerWeatherDataProvider(latitude=52, longitude=5)
+    >>> print wdp
+    Weather data provided by: NASAPowerWeatherDataProvider
+    --------Description---------
+    NASA/POWER Agroclimatology Daily Averaged Data
+    Dates (month/day/year): 01/01/1984 through 05/10/2014
+    Location: Latitude 52   Longitude 5
+    Location clarification: Integer values may indicate the lower left (south and west)
+    corner of the one degree lat/lon region that includes the requested locations
+    Elevation (meters): Average for one degree lat/lon region = 5
+    Methodology Documentation:
+    *Vegetation type: "Airport": flat rough grass
+    ----Site characteristics----
+    Elevation:    5.0
+    Latitude:  52.000
+    Longitude:  5.000
+    Data available for 1997-01-01 - 2014-01-31
+    Number of missing days: 47
 
-Building your own SimulationObjects
-===================================
+Importing, initializing and running a PCSE model
+------------------------------------------------
 
-Often new modelling ideas need to be implemented and tested. Defining
-new SimulationObjects is fairly simple and 
-we will walk through an example SimulationObject (see :ref:`SimObjExample`)
-line by line to understand the workings and the implementation details.
+Internally, PCSE uses a simulation `engine` to run a crop simulation. This
+engine takes a configuration file that specifies the components for the crop,
+the soil and the agromanagement that need to be used for the simulation.
+So any PCSE model can be started by importing the `engine` and initializing
+it with a given configuration file and the corresponding sitedata, cropdata,
+soildata, timerdata and weather data.
 
-importing the base classes
---------------------------
-First of all you need to make sure that the functionality needed is available
-within your module. This is accomplished by importing the necessary
-components from the pyWOFOST source distribution. This includes the template
-classes for parameters, rate variables and state variables as well as the
-base class `SimulationObject`. Finally, some decorators need to be imported as
-well as the type definitions (in this case a Float) from the traitlets module.
+However, as many users of PCSE only need a particular configuration (for
+example the WOFOST model for potential production), preconfigured Engines
+are provided in `pcse.models`. For the sugarbeet example we will import
+the WOFOST model for water-limited simulation under freely draining soils::
 
-The tutorial assumes that your new module is located inside the 'pywofost/'
-folder otherwise you need to specify your imports like this::
-
-    from pywofost.base_classes import ParamTemplate, StatesTemplate,
-         RatesTemplate, SimulationObject
-    from pywofost.decorators import prepare_rates, prepare_states
-    from pywofost.traitlets import Float
-
-Defining your SimulationObject
-------------------------------
-Defining a SimulationObject is demonstrated in line 6 and can be named any
-valid python identifier with the base class `SimulationObject` between the
-brackets. In this example, the SimulationObject is named `CropProcess`.
-PyWOFOST does not enfore the use of a SimulationObject as base class
-(you could to without it) but as much of the underlying logic is already
-defined in your SimulationObject it would give you a hard time to do otherwise.
-
-Next, the Parameters of the SimulationObject are defined, then the
-StateVariables and the RateVariables in arbitrary order. Note that these
-definitions are also class definitions, so we are defining here a class within
-a class. This is nothing scary in python, it simply means that this definition
-of `Parameters` is only known with the class `CropProcess`.
-
-Defining parameters
--------------------
-The Parameters section is where the simulation parameters are defined. The
-parameter names are case sensitive and can be any valid python identifier,
-except that it should not start with an underscore (_) or with the name 'trait'
-as these will be ignored when assigning values. Various data types can
-be used such as Float, Integer, Str or Instance (the
-latter defines an instance of a certain class, for example a date).
-
-A dummy value can be provided to indicate that the parameter value has not yet been
-initialized (-99. in this case). The system enforces that all
-parameters receive a value before the simulation can start. 
-
-Defining rate and state variables
----------------------------------
-The `StateVariables` section is where the variables are defined that describe
-the state of the system at a certain time step. Similarly the `RateVariables`
-section is
-where the variables are defined that describe the rate of change from one time
-step to the next. Regarding variable names, the same restrictions apply
-as for the Parameters section.
-
-Rate and state variables are *protected* in the sense that there value cannot
-be changed outside the program sections where their values are updated. Thus,
-state values cannot be changed during rate calculation and similarly, rates cannot be
-changed during state updates.
-
-.. note::
-
-    Names of parameters, state variables and rate variables:
-    
-    - should *not* start with '_' or 'trait' 
-      
-    - are *case sensitive*, as are all variables in python.
-
-The initialize() section
-------------------------
-
-In the `initialize` section preparations for the simulation take place.
-The first compulsary positional argument is the
-simulation day at which the object gets initialized. Secondly the VariableKiosk
-must be specified. Next an arbitrary number of positional and keyword arguments
-can be specified.
-
-At the initialization step, first of all the kiosk is assigned to the
-SimulationObject in order to have a reference to the kiosk available. Next,
-the parameter values are initialized with the parvalues argument and assigned
-to `self.params`. The parvalues argument is a dictionary specifying key/value
-pairs where the keys are matched to parameter names. If a parameter cannot
-be found in the dictionary, an error is raised. The dictionary can contain
-more parameters than needed however this is ignored as these parameters may be
-needed by other SimulationObjects. After initialization the `Parameters`
-object is read-only and the parameter values cannot be changed anymore.
-
-Next, the state variables must be assigned an initial value. This is done within
-the `self.states = self.StateVariables(...)` section. The kiosk must be given
-as first argument, furthermore an initial value must be provide for all state
-variables as keywords. Neglecting this will results in
-an errror. Finally, one can choose to publish one or more state variables,
-which will make them available in the kiosk for other project sections.
-
-Usually the last step is to initialize the rate variables, which is done with
-`self.rates = self.RateVariables(kiosk)`. The initial value of a rate variable
-does not need to be specified, it will be calculated at each time step.
-
-The calc_rates() section
-------------------------
-
-In the `calc_rates()` section the rates of change are calculated for the
-current `day` given current state variables and driving variables `drv` for the
-current day. The definition `def calc_rates(day, drv)` **must** be
-preceeded with the decorator `@prepare_rates` on the previous line. This
-decorator prepares the rates object for updates, otherwise
-you will not be able to assign new values to rate variables.
-
-The variable `drv` is a container variable which contains the
-different meteorological driving variables  which can
-be accessed with a dotted notation. So `drv.TEMP` returns the daily mean
-temperature (see :ref:`DrivingVar` for available driving variables).
-
-In the rate variables section, the rates of change must be calculated
-and assigned to the rate variables that are stored in `self.rates`. In
-the example the rate variable RATE1 is calculated as function of PAR1 and
-drv.IRRAD (radiation), while the rate variable RATE2 is calculated as a
-function of PAR2 and the square of drv.TEMP.
-
-Currently, the system does not check if all rate variables have been assigned
-a value in the current time step. Although such checks could be implemented in
-future versions.
-
-The integrate() section
------------------------
-
-In the `integrate()` section the rates of change (that were calculated in the
-prevous time step) are added to the state variables. Also here, the definition
-`integrate(day)` **must** be preceeded with the decorator `@prepare_states`
-in order to prepare `self.states` for states updates.
-
-Since PyWOFOST works with daily time-steps and all rates of change are
-calculated as <unit>/day, the rates of change can simply be added up to the
-state variables without taking the size of the time step into account.
-Similar to `calc_rates()`, there is no check that all state variables get
-updated at each time step.
-
-
-The finalize() section
-----------------------
-The `finalize()` section is optional. It can be defined when a
-SimulationObject needs to 'wrap-up' calculations. Examples are the
-water balance closure checks or the calculation of a harvest
-index after the crop has finished. In the example, a ratio between the
-state variables STATE1 and STATE2 is calculated which is assigned to the
-state variable RATIO.
-
-A definition of a finalize section must also be preceeded by the
-`@prepare_states` at the preceeding line. This also implies that variables
-that are calculated during the `finalize()` call *must* be defined in
-StateVariables section.
-
-When a `finalize()` section is defined the
-`finalize` method on the superclass `SimulationObject` has to be called
-because SimulationObjects
-that are embedded in the current one need to be finalized as well. The
-underlying logic is that a SimulationObject always receives a `finalize()`
-method inherited from `SimulationObject`. The last line in the example
-calls the `finalize()` of the base class to propagate the call to objects
-lower in the hierarchy.
-
-An alternative for finalize()
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Defining a `finalize()` section can sometimes be tedious, particularly if there
-is nothing to calculate and only some assignments need to be done. This occurs
-when some information needs to be stored in `self.states` but you are not
-inside the `integrate()` section so you are unable to assign to variables
-in `self.states`.
-
-For such simple cases a `finalize()` section is not needed.
-Instead, each SimulationObject contains a dictionary variable
-`self._for_finalize`. All key/value pairs that are added to this dictionary
-will be assigned to the corresponding variable in `self.states` at the end of
-the simulation.
-
-For an example of the use of `self._for_finalize` see the `_on_CROP_FINISH`
-method in cropsimulation.py
-
-.. _SimObjExample:
-
-An example SimulationObject
----------------------------
-
-.. literalinclude:: example_simobj.py
-   :linenos:
-   :language: python
-
-Embedding a new SimulationObject in PyWOFOST
---------------------------------------------
-
-
+    >>> from pcse.models import Wofost71_WLP_FD
+    >>> Wofost71_WLP_FD
+    pcse.models.Wofost71_WLP_FD

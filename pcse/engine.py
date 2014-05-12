@@ -378,3 +378,9 @@ class Engine(BaseEngine):
             self.crop.set_variable(varname, value, increments)
 
         return increments
+
+    def get_results(self):
+        return self._saved_output
+
+    def get_summary_results(self):
+        return self._saved_summary_output
