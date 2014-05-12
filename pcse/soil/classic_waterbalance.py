@@ -14,6 +14,7 @@ from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
+from .snowmaus import SnowMAUS
 
 
 class WaterbalancePP(SimulationObject):
@@ -562,3 +563,30 @@ class WaterbalanceFD(SimulationObject):
         
     def _on_CROP_FINISH(self):
         self.in_crop_cycle = False
+
+
+class WaterbalanceFDSnow(SimulationObject):
+    """SimulationObject combining the SnowMAUS and WaterbalanceFD objects.
+
+    Note that the snow module and the water balance are currently treated as
+    independent simulations: we are just accumulating a snow pack while
+    the soil water balance accumulates the rainfall as if there is no snow.
+    This needs to be changed, but the snow module then needs to be integrated
+    in a more generic surface storage simulation object that includes all the
+    options for storing water on the soil surface: water (ponding), snow and
+    also maybe interception by the canopy which is currently lacking.
+    """
+    waterbalance = Instance(SimulationObject)
+    snowcover = Instance(SimulationObject)
+
+    def initialize(self, day, kiosk, cropdata, soildata, sitedata):
+        self.waterbalance = WaterbalanceFD(day, kiosk, cropdata, soildata, sitedata)
+        self.snowcover = SnowMAUS(day, kiosk, sitedata)
+
+    def calc_rates(self, day, drv):
+        self.waterbalance.calc_rates(day, drv)
+        self.snowcover.calc_rates(day, drv)
+
+    def integrate(self, day):
+        self.waterbalance.integrate(day)
+        self.snowcover.integrate(day)

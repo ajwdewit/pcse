@@ -79,6 +79,8 @@ class CABOWeatherDataProvider(WeatherDataProvider):
     #  start and end year
     firstyear = None
     lastyear = None
+    # First date when CABO files start
+    first_date = None
     # temporary array for storing data
     potential_records = None
     tmp_data = None
@@ -130,6 +132,8 @@ class CABOWeatherDataProvider(WeatherDataProvider):
 
         Also checks if any of the CABOWE files have modification/creation date more recent then the cache_file.
         In that case reload the weather data from the original CABOWE files.
+        
+        Returns True if loading succeeded, False otherwise
         """
         # If no cache_file defined return False directly
         if cache_file is None:
@@ -150,10 +154,15 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                 msg = "Failed to remove cache file '%s' due to: %s" % (cache_file, exc)
                 warnings.warn(msg)
             return False
-
-        # Else load data from cache file and store internally
-        self._load(cache_file)
-        return True
+        else:
+            # Else load data from cache file and store internally
+            try:
+                self._load(cache_file)
+                return True
+            except Exception, e:
+                msg = "Cache file failed loading! Try to delete cache file: %s"
+                self.logger.warn(msg, cache_file)
+                return False
 
     def _write_cache_file(self, search_path):
         """Write the data loaded from the CABOWE files to a binary file using cPickle

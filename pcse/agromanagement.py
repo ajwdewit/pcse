@@ -17,8 +17,8 @@ import datetime
 from .base_classes import StatesTemplate, AncillaryObject, ParamTemplate
 from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool
 from . import signals
-from .crop.wofost import Wofost as CropSimulation
 from . import exceptions as exc
+from .util import ConfigurationLoader
 
 class AgroManagementSingleCrop(AncillaryObject):
     """Agromanagement for running a single crop season.
@@ -55,6 +55,8 @@ class AgroManagementSingleCrop(AncillaryObject):
     * "CROP_FINISH": sent when `day == CROP_END_DATE`
     * "TERMINATE": sent when a "CROP_FINISH" signal is received.
     """
+    # system configuration
+    mconf = Instance(ConfigurationLoader)
 
     # Placeholders for the parameters that are needed to start the crop
     timerdata = Instance(dict)
@@ -65,16 +67,17 @@ class AgroManagementSingleCrop(AncillaryObject):
     in_crop_cycle = Bool(False)
     
     class Parameters(ParamTemplate):
-        MAX_DURATION    = Int(-99)
+        MAX_DURATION = Int(-99)
         CROP_START_DATE = Instance(datetime.date)
-        CROP_START_TYPE = Enum(["sowing","emergence"])
-        CROP_END_DATE   = Instance(datetime.date)
-        CROP_END_TYPE   = Enum(["maturity","harvest","earliest"])
+        CROP_START_TYPE = Enum(["sowing", "emergence"])
+        CROP_END_DATE = Instance(datetime.date)
+        CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"])
                  
-    def initialize(self, day, kiosk, timerdata, soildata, sitedata, cropdata):
+    def initialize(self, day, kiosk, mconf, timerdata, soildata, sitedata, cropdata):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
+        :param mconf: ConfigurationLoader instance
         :param timerdata: dictionary with WOFOST timerdata key/value pairs
         :param soildata: idem for soildata
         :param sitedata: idem for sitedata
@@ -82,6 +85,7 @@ class AgroManagementSingleCrop(AncillaryObject):
         """
         self.params = self.Parameters(timerdata)
         self.kiosk = kiosk
+        self.mconf = mconf
         self.duration = 0
         
         self.timerdata = timerdata
@@ -113,7 +117,7 @@ class AgroManagementSingleCrop(AncillaryObject):
         # Check if crop sowing/emergence date is reached.
         if day == self.params.CROP_START_DATE:
             if self.in_crop_cycle:
-                msg = ("Crop sowing/emergence date reached while existing "+
+                msg = ("Crop sowing/emergence date reached while existing " +
                        "crop still active!")
                 raise exc.PCSEError(msg)
 
@@ -121,9 +125,9 @@ class AgroManagementSingleCrop(AncillaryObject):
             # combined soil/crop system using the CROP_START signal.
             start_type = self.timerdata["CROP_START_TYPE"]
             stop_type  = self.timerdata["CROP_END_TYPE"]
-            cropsimulation = CropSimulation(day, self.kiosk, self.cropdata,
-                                            self.soildata, start_type,
-                                            stop_type)
+            cropsimulation = self.mconf.CROP(day, self.kiosk, self.cropdata,
+                                             self.soildata, self.sitedata,
+                                             start_type, stop_type)
             self._start_new_crop(day, cropsimulation)
         
         finish_cropsimulation = False

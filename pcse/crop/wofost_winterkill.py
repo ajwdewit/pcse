@@ -16,6 +16,7 @@ from .assimilation import WOFOST_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .evapotranspiration import Evapotranspiration
+from .abioticdamage import FROSTOL
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
 from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
@@ -23,9 +24,9 @@ from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
      Storage_Organ_Dynamics
 
 #-------------------------------------------------------------------------------
-class Wofost(SimulationObject):
+class Wofost_winterkill(SimulationObject):
     """Top level object organizing the different components of the WOFOST crop
-    simulation.
+    simulation including winterkill.
             
     The CropSimulation object organizes the different processes of the crop
     simulation. Moreover, it contains the parameters, rate and state variables
@@ -37,10 +38,11 @@ class Wofost(SimulationObject):
         3. Assimilation (self.assim)
         4. Maintenance respiration (self.mres)
         5. Evapotranspiration (self.evtra)
-        6. Leaf dynamics (self.lv_dynamics)
-        7. Stem dynamics (self.st_dynamics)
-        8. Root dynamics (self.ro_dynamics)
-        9. Storage organ dynamics (self.so_dynamics)
+        6. Frost Tolerance (self.frostol)
+        7. Leaf dynamics (self.lv_dynamics)
+        8. Stem dynamics (self.st_dynamics)
+        9. Root dynamics (self.ro_dynamics)
+       10. Storage organ dynamics (self.so_dynamics)
 
     **Simulation parameters:**
     
@@ -97,6 +99,7 @@ class Wofost(SimulationObject):
     assim = Instance(SimulationObject)
     mres  = Instance(SimulationObject)
     evtra = Instance(SimulationObject)
+    frostol = Instance(SimulationObject)
     lv_dynamics = Instance(SimulationObject)
     st_dynamics = Instance(SimulationObject)
     ro_dynamics = Instance(SimulationObject)
@@ -129,20 +132,18 @@ class Wofost(SimulationObject):
         ADMI  = Float(-99.)
 
     def initialize(self, day, kiosk, cropdata, soildata, sitedata,
-                    start_type, stop_type):
+                   start_type, stop_type):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param soildata: dictionary with WOFOST soildata key/value pairs
-        :param sitedata: dictionary with WOFOST sitedata key/value pairs
         :param start_type: Start type of the simulation: "sowing"|"emergence"
         :param stop_type: Stop type of the simulation:
             "harvest"|"maturity"|"earliest"
         """
         
         self.params = self.Parameters(cropdata)
-        self.rates  = self.RateVariables(kiosk, publish=["DMI","ADMI"])
+        self.rates  = self.RateVariables(kiosk, publish=["DMI", "ADMI"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
@@ -151,6 +152,7 @@ class Wofost(SimulationObject):
         self.assim = Assimilation(day, kiosk, cropdata)
         self.mres  = MaintenanceRespiration(day, kiosk, cropdata)
         self.evtra = Evapotranspiration(day, kiosk, cropdata, soildata)
+        self.frostol = FROSTOL(day, kiosk, cropdata, sitedata)
         self.ro_dynamics = Root_Dynamics(day, kiosk, cropdata, soildata)
         self.st_dynamics = Stem_Dynamics(day, kiosk, cropdata)
         self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, cropdata)
@@ -230,8 +232,10 @@ class Wofost(SimulationObject):
         self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES,
                                    CVF, pf)
 
-        # distribution over plant organ
+        # Frost tolerance
+        self.frostol.calc_rates(day, drv)
 
+        # -- distribution over plant organ --
         # Below-ground dry matter increase and root dynamics
         self.ro_dynamics.calc_rates(day, drv)
         # Aboveground dry matter increase and distribution over stems,
@@ -264,6 +268,9 @@ class Wofost(SimulationObject):
         # Partitioning
         self.part.integrate(day)
         
+        # Frost tolerance
+        self.frostol.integrate(day)
+
         # Integrate states on leaves, storage organs, stems and roots
         self.ro_dynamics.integrate(day)
         self.so_dynamics.integrate(day)

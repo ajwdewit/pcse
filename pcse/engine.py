@@ -138,8 +138,8 @@ class Engine(BaseEngine):
         self.soil = self.mconf.SOIL(self.day, self.kiosk, cropdata, soildata, sitedata)
 
         # Component for agromanagement
-        self.agromanagement = self.mconf.AGROMANAGEMENT(self.day, self.kiosk, timerdata, soildata,
-                                                        sitedata, cropdata)
+        self.agromanagement = self.mconf.AGROMANAGEMENT(self.day, self.kiosk, self.mconf,
+                                                        timerdata, soildata, sitedata, cropdata)
         # Call AgroManagement module for management actions at initialization
         self.agromanagement(self.day, self.drv)
 
@@ -379,8 +379,8 @@ class Engine(BaseEngine):
 
         return increments
 
-    def get_results(self):
+    def get_output(self):
         return self._saved_output
 
-    def get_summary_results(self):
+    def get_summary_output(self):
         return self._saved_summary_output

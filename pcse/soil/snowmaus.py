@@ -110,7 +110,7 @@ class SnowMAUS(SimulationObject):
             msg = ("SNOWDENSITY parameter of SnowMAUS module cannot be zero " +
                    "to avoid division by zero")
             raise exc.ParameterError(msg)
-        self.params = self.Parameters(parvalues)
+        self.params = self.Parameters(sitedata)
         self.rates  = self.RateVariables(kiosk)
 
         SWEDEPTH = self.params.SWEDEPTHI

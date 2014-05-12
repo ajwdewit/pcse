@@ -70,12 +70,10 @@ class Vernalisation(SimulationObject):
      Name        Description                                       Pbl   Unit
     ============ ================================================= ==== ========
     VERN         Vernalisation state                                N    days
-    VERNFAC      Reduction factor on development rate due to        Y    -
-                 vernalisation effect.
     DOV          Day when vernalisation requirements are            N    -
                  fulfilled.
     ISVERNALISED Flag indicated that vernalisation                  Y    -
-                 requirements have been reached
+                 requirement has been reached
     ============ ================================================= ==== ========
 
 
@@ -85,28 +83,39 @@ class Vernalisation(SimulationObject):
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
     VERNR    Rate of vernalisation                              N    -
+    VERNFAC  Reduction factor on development rate due to        Y    -
+             vernalisation effect.
     =======  ================================================= ==== ============
 
     
     **External dependencies:**
-    
-    None    
 
+    ============ =============================== ========================== =====
+     Name        Description                         Provided by             Unit
+    ============ =============================== ========================== =====
+    DVS          Development Stage                 Phenology                 |-|
+                 Used only to determine if the
+                 critical development stage for
+                 vernalisation (VERNDVS) is
+                 reached.
+    ============ =============================== ========================== =====
     """
+    # Helper variable to indicate that DVS > VERNDVS
+    _force_vernalisation = Bool(False)
 
     class Parameters(ParamTemplate):
-        VERNSAT  = Float(-99.)     # Saturated vernalisation requirements
+        VERNSAT = Float(-99.)     # Saturated vernalisation requirements
         VERNBASE = Float(-99.)     # Base vernalisation requirements
-        VERNRTB  = AfgenTrait()    # Vernalisation temperature response
-        VERNDVS  = Float(-99.)     # Critical DVS for vernalisation fulfillment
+        VERNRTB = AfgenTrait()    # Vernalisation temperature response
+        VERNDVS = Float(-99.)     # Critical DVS for vernalisation fulfillment
 
     class RateVariables(RatesTemplate):
         VERNR = Float(-99.)        # Rate of vernalisation
+        VERNFAC = Float(-99.)      # Red. factor for phenol. devel.
 
     class StateVariables(StatesTemplate):
-        VERN     = Float(-99.)              # Vernalisation state
-        VERNFAC  = Float(-99.)              # Red. factor for phenol. devel.
-        DOV      = Instance(datetime.date)  # Day when vernalisation 
+        VERN = Float(-99.)              # Vernalisation state
+        DOV = Instance(datetime.date)  # Day when vernalisation
                                             # requirements are fulfilled
         ISVERNALISED =  Bool()              # True when VERNSAT is reached and
                                             # Forced when DVS > VERNDVS
@@ -120,65 +129,63 @@ class Vernalisation(SimulationObject):
 
         """
         self.params = self.Parameters(cropdata)
-        self.rates = self.RateVariables(kiosk)
+        self.rates = self.RateVariables(kiosk, publish=["VERNFAC"])
         self.kiosk = kiosk
 
         # Define initial states
         self.states = self.StateVariables(kiosk, VERN=0., VERNFAC=0.,
                                           DOV=None, ISVERNALISED=False,
-                                          publish=["ISVERNALISED", "VERNFAC"])
+                                          publish=["ISVERNALISED"])
     #---------------------------------------------------------------------------
     @prepare_rates
     def calc_rates(self, day, drv):
         rates = self.rates
         states = self.states
         params = self.params
-        
+
+        DVS = self.kiosk["DVS"]
         if not states.ISVERNALISED:
-            rates.VERNR = params.VERNRTB(drv.TEMP)
+            if DVS < params.VERNDVS:
+                rates.VERNR = params.VERNRTB(drv.TEMP)
+                r = (states.VERN - params.VERNBASE)/(params.VERNSAT-params.VERNBASE)
+                rates.VERNFAC = limit(0., 1., r)
+            else:
+                rates.VERNR = 0.
+                rates.VERNFAC = 1.0
+                self._force_vernalisation = True
         else:
             rates.VERNR = 0.
+            rates.VERNFAC = 1.0
     #---------------------------------------------------------------------------
     @prepare_states
     def integrate(self, day):
         states = self.states
-        rates  = self.rates
+        rates = self.rates
         params = self.params
         
         states.VERN += rates.VERNR
         
-        if not states.ISVERNALISED:
-            DVS = self.kiosk["DVS"]
-            if states.VERN >= params.VERNSAT: # Vernalisation requirements reached
-    
+        if states.VERN >= params.VERNSAT:  # Vernalisation requirements reached
+            states.ISVERNALISED = True
+            if states.DOV is None:
                 states.DOV = day
-                states.ISVERNALISED = True
-                states.VERNFAC = 1.0
-                
                 msg = "Vernalization requirements reached at day %s."
                 self.logger.info(msg % day)
-                
-            elif DVS > params.VERNDVS: # Critical DVS for vernalisation reached
-                
-                # Force vernalisation, but do not set DOV
-                states.ISVERNALISED = True
-                states.VERNFAC = 1.0
-                
-                # Write log message to warn about forced vernalisation
-                msg = "Critical DVS for vernalization (VERNDVS) reached "+\
-                      "at day %s, "+\
-                      "but vernalization requirements not yet fulfilled. "+\
-                      "Forcing vernalization now (VERN=%f)."
-                self.logger.warning(msg % (day, states.VERN))
-    
-            else: # Reduction factor for phenologic development
-    
-                r = (states.VERN - params.VERNBASE)/(params.VERNSAT-params.VERNBASE)
-                states.VERNFAC = limit(0., 1., r)
-                states.ISVERNALISED = False
-        else:
-            states.VERNFAC = 1.0
-        
+
+        elif self._force_vernalisation:  # Critical DVS for vernalisation reached
+            # Force vernalisation, but do not set DOV
+            states.ISVERNALISED = True
+
+            # Write log message to warn about forced vernalisation
+            msg = ("Critical DVS for vernalization (VERNDVS) reached " +
+                   "at day %s, " +
+                   "but vernalization requirements not yet fulfilled. " +
+                   "Forcing vernalization now (VERN=%f).")
+            self.logger.warning(msg % (day, states.VERN))
+
+        else:  # Reduction factor for phenologic development
+            states.ISVERNALISED = False
+
 #-------------------------------------------------------------------------------
 class DVS_Phenology(SimulationObject):
     """Implements the algorithms for phenologic development in WOFOST.
@@ -325,7 +332,7 @@ class DVS_Phenology(SimulationObject):
                                           STAGE=STAGE)
 
         # initialize vernalisation for IDSL=2
-        if self.params.IDSL == 2:
+        if self.params.IDSL >= 2:
             self.vernalisation = Vernalisation(day, kiosk, cropdata)
     
     #---------------------------------------------------------------------------
@@ -350,6 +357,10 @@ class DVS_Phenology(SimulationObject):
             STAGE = "emerging"
             DOS = day
             DOE = None
+
+        else:
+            msg = "Unknown start type: %s" % self.start_type
+            raise exc.PCSEError(msg)
             
         return (DOS, DOE, STAGE)
 
@@ -361,34 +372,31 @@ class DVS_Phenology(SimulationObject):
         p = self.params
         r = self.rates
         s = self.states
-        
-        if s.STAGE == "emerging":
 
+        # Day length sensitivity
+        DVRED = 1.
+        if p.IDSL >= 1:
+            DAYLP = daylength(day, drv.LAT)
+            DVRED = limit(0., 1., (DAYLP - p.DLC)/(p.DLO - p.DLC))
+
+        # Vernalisation
+        VERNFAC = 1.
+        if p.IDSL >= 2:
+            self.vernalisation.calc_rates(day, drv)
+            VERNFAC = self.kiosk["VERNFAC"]
+
+        if s.STAGE == "emerging":
             r.DTSUME = limit(0., (p.TEFFMX - p.TBASEM), (drv.TEMP - p.TBASEM))
             
         elif s.STAGE == 'vegetative':
-
             # Temperature sum increase
             DTSUM = p.DTSMTB(drv.TEMP)
-
-            # Day length sensitivity
-            DVRED = 1.
-            if p.IDSL >= 1: 
-                DAYLP = daylength(day, drv.LAT)
-                DVRED = limit(0., 1., (DAYLP - p.DLC)/(p.DLO - p.DLC))
-            
-            # Vernalisation
-            VERNFAC = 1.
-            if p.IDSL >= 2: 
-                self.vernalisation.calc_rates(day, drv)
-                VERNFAC = self.kiosk["VERNFAC"]
 
             # Development rate
             r.DTSUM = DTSUM * VERNFAC * DVRED
             r.DVR = r.DTSUM/p.TSUM1
 
         elif s.STAGE == 'reproductive':
-
             # Temperature sum increase
             r.DTSUM = p.DTSMTB(drv.TEMP)
 
@@ -396,7 +404,6 @@ class DVS_Phenology(SimulationObject):
             r.DVR = r.DTSUM/p.TSUM2
             
         elif s.STAGE == 'mature':
-
             # Temperature sum increase
             r.DTSUM = p.DTSMTB(drv.TEMP)
 
@@ -419,26 +426,24 @@ class DVS_Phenology(SimulationObject):
         p = self.params
         r = self.rates
         s = self.states
-        
-        if s.STAGE == "emerging":
 
+        # Integrate vernalisation module
+        if p.IDSL >= 2:
+            self.vernalisation.integrate(day)
+
+        if s.STAGE == "emerging":
             s.TSUME += r.DTSUME
             if s.TSUME >= p.TSUMEM:
                 self._next_stage(day)
                 
         elif s.STAGE == 'vegetative':
-
             s.DVS += r.DVR
             s.TSUM += r.DTSUM
-            if p.IDSL >= 2: 
-                self.vernalisation.integrate(day)
-            
             if s.DVS >= 1.0:
                 self._next_stage(day)
                 s.DVS = 1.0
                 
         elif s.STAGE == 'reproductive':
-
             s.DVS += r.DVR
             s.TSUM += r.DTSUM
             if s.DVS >= p.DVSEND:
@@ -461,33 +466,26 @@ class DVS_Phenology(SimulationObject):
         
         this_stage = self.states.STAGE
         if this_stage == "emerging":
-
             self.states.STAGE = "vegetative"
             self.states.DOE = day
-
             # send signal to indicate crop emergence
             self._send_signal(signals.crop_emerged)
             
         elif this_stage == "vegetative":
-
             self.states.STAGE = "reproductive"
             self.states.DOA = day
                         
         elif this_stage == "reproductive":
-
             self.states.STAGE = "mature"
             self.states.DOM = day
             if self.stop_type in ["maturity","earliest"]:
                 self._send_signal(signal=signals.crop_finish,
                                   day=day, finish="maturity")
-                
         elif this_stage == "mature":
-
             msg = "Cannot move to next phenology stage: maturity already reached!"
             raise exc.PCSEError(msg)
 
         else: # Problem no stage defined
-
             msg = "No STAGE defined in phenology submodule."
             raise exc.PCSEError(msg)
         
