@@ -669,7 +669,6 @@ class ConfigurationLoader(object):
             mconf = os.path.normpath(config)
         else:
             pcse_dir = os.path.dirname(__file__)
-            print pcse_dir
             mconf = os.path.join(pcse_dir, "conf", config)
         model_config_file = os.path.abspath(mconf)
 
