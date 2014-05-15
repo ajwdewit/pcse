@@ -57,20 +57,20 @@ class Wofost(SimulationObject):
     
     **State variables:**
 
-    =======  ================================================= ==== ============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================= ==== ============
-    TAGP     Total above-ground Production                      N    |kg ha-1|
-    GASST    Total gross assimilation                           N    |kg CH2O ha-1|
-    MREST    Total gross maintenance respiration                N    |kg CH2O ha-1|
-    CTRAT    Total crop transpiration                           N    cm
-    HI       Harvest Index (only calculated during              N    -
-             `finalize()`)
-    DOF      Date representing the day of finish of the crop    N    -
-             simulation. 
-    FINISH   String representing the reason for finishing the   N    -
-             simulation: maturity, harvest, leave death, etc.
-    =======  ================================================= ==== ============
+    =========== ================================================= ==== ===============
+     Name        Description                                      Pbl      Unit
+    =========== ================================================= ==== ===============
+    TAGP        Total above-ground Production                      N    |kg ha-1|
+    GASST       Total gross assimilation                           N    |kg CH2O ha-1|
+    MREST       Total gross maintenance respiration                N    |kg CH2O ha-1|
+    CTRAT       Total crop transpiration                           N    cm
+    HI          Harvest Index (only calculated during              N    -
+                `finalize()`)
+    DOF         Date representing the day of finish of the crop    N    -
+                simulation. 
+    FINISH_TYPE String representing the reason for finishing the   N    -
+                simulation: maturity, harvest, leave death, etc.
+    =========== ================================================= ==== ===============
 
  
      **Rate variables:**
@@ -117,7 +117,7 @@ class Wofost(SimulationObject):
         CTRAT = Float(-99.) # Crop total transpiration
         HI    = Float(-99.)
         DOF = Instance(datetime.date)
-        FINISH = Instance(str)
+        FINISH_TYPE = Instance(str)
 
     class RateVariables(RatesTemplate):
         GASS  = Float(-99.)
@@ -164,7 +164,7 @@ class Wofost(SimulationObject):
                                           publish=["TAGP","GASST","MREST","HI"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0,
                                           CTRAT=0.0, HI=0.0,
-                                          DOF=None, FINISH=None)
+                                          DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
         checksum = cropdata["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
@@ -297,9 +297,9 @@ class Wofost(SimulationObject):
         SimulationObject.finalize(self, day)
 
     #---------------------------------------------------------------------------
-    def _on_CROP_FINISH(self, day, finish):
+    def _on_CROP_FINISH(self, day, finish_type=None):
         """Handler for setting day of finish (DOF) and reason for
         crop finishing (FINISH).
         """
         self._for_finalize["DOF"] = day
-        self._for_finalize["FINISH"]= finish
+        self._for_finalize["FINISH_TYPE"]= finish_type

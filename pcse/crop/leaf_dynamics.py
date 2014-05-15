@@ -421,6 +421,6 @@ class CSDM_Leaf_Dynamics(SimulationObject):
 
         if self.states.DAYNR > self.params.CSDM_T2:
             self._send_signal(signal=signals.crop_finish, day=day,
-                              finish="Canopy died according to leaf dynamics.",
+                              finish_type="Canopy died according to CSDM leaf model.",
                               crop_delete=True)
 

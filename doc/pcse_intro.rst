@@ -35,7 +35,7 @@ several interesting features:
   of state variables and actions needed to finalize the simulation.
 
 * Input/Output is completely separated from the simulation model itself. Therefore PCSE models can easily
-  read/write to and from files, databases, etc.
+  read from and write to files, databases, etc.
 
 * Built-in testing of program modules ensuring integrity of the system
 
@@ -43,7 +43,11 @@ Why python
 ==========
 PCSE was first and foremost developed from a scientific need, to be able to quickly adapt models and test ideas.
 In science, python is quickly becoming a tool for implementing algorithms, visualization and explorative analysis
-due to its clear syntax and ease of use. Many packages exist for numeric analysis (e.g. NumPy, SciPy),
+due to its clear syntax and ease of use. An additional advantage is that the C implementation of python
+can be easily interfaces with routines written in FORTRAN and therefore many FORTRAN routines can be reused by
+simulation models written with PCSE.
+
+Many packages exist for numeric analysis (e.g. NumPy, SciPy),
 visualisation (e.g. MatPlotLib, Chaco), distributed computing (e.g. iPython, pyMPI) and interfacing with databases
 (e.g. SQLAlchemy). Moreover, for statistical analyses an interface with R-project can be established through
 Rpy or Rserve. Even large companies like Google and YouTube are heavy python users, MicroSoft has implemented python
@@ -52,7 +56,7 @@ Geographical Information System (ArcGIS). Finally, python is an Open Source inte
 runs on almost any hardware and operating system.
 
 Given the above considerations, it was quickly recognized that python was a good choice. Although, PCSE was
-developed for scientific purposes, it can be used in a production environment.
+developed for scientific purposes, it has already been implemented for some tasks in a production environment.
 
 History of PCSE
 ===============
@@ -63,24 +67,6 @@ However, as the system has grown it has become evident that the system can be us
 hybridize (crop) simulation models. Therefore, the name "PyWOFOST" became too narrow and the name Python Crop
 Simulation Environment was selected in analog with the FORTRAN Simulation Environment (FSE).
 
-Requirements and dependencies
-=============================
-
-PCSE was developed on Ubuntu Linux 10.04 using python 2.7.6 and is known to work with the 3.x series (using the 2to3
-tool). On Windows7, PCSE is tested using version 7 of the Enthought Python Distribution 7.0 (EPD70),
-available from http://www.enthought.com/products/epd.php and free for academic use. The following screen dump shows
-the version of python, numpy and SQLAlchemy that were used to develop PCSE::
-
-    Python 2.7.6 (default, Dec 16 2013, 12:39:22)
-    [GCC 4.4.3] on linux2
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>> import numpy as np
-    >>> np.__version__
-    '1.8.0'
-    >>> import sqlalchemy as sa
-    >>> sa.__version__
-    '0.8.4'
-    >>>
 
 Limitations of PCSE
 ===================

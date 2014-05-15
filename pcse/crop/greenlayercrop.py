@@ -20,7 +20,7 @@ from .crop.leaf_dynamics import CSDM_Leaf_Dynamics as Leaf_Dynamics
 class GreenLayerCrop(SimulationObject):
     """Top level object organizing the different components of the crop
     simulation for a fake crop which only simulates water use but does not
-    simulate growth of biomass, etc. All crop parameters are hard-code into the
+    simulate growth of biomass, etc. All crop parameters are hard-coded into the
     respective modules, only soil parameters can be passed.
     
     The FakeCropSimulation is used to put before the real crop starts in order

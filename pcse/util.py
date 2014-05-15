@@ -11,6 +11,8 @@ from collections import namedtuple
 from bisect import bisect_left
 import UserDict
 import textwrap
+import sqlite3
+
 
 import numpy as np
 from sqlalchemy import Column
@@ -742,7 +744,7 @@ def is_a_dekad(day):
     """Returns True if the date is on a dekad boundary, i.e. the 10th,
     the 20th or the last day of each month"""
 
-    if day.month==12:
+    if day.month == 12:
         if (day == datetime.date(day.year, day.month, 10)):
             return True
         elif (day == datetime.date(day.year, day.month, 20)):
@@ -754,8 +756,21 @@ def is_a_dekad(day):
             return True
         elif (day == datetime.date(day.year, day.month, 20)):
             return True
-        elif (day == datetime.date(day.year, day.month+1, 1) - \
-                   datetime.timedelta(days=1)):
+        elif (day == datetime.date(day.year, day.month+1, 1) -
+                     datetime.timedelta(days=1)):
             return True
 
     return False
+
+def load_SQLite_dump_file(dump_file_name, SQLite_db_name):
+    """Build an SQLite database <SQLite_db_name> from dump file <dump_file_name>.
+    """
+
+    with open(dump_file_name) as fp:
+        sql_dump = fp.readlines()
+    str_sql_dump = ""
+    for line in sql_dump:
+        str_sql_dump += line
+    con = sqlite3.connect(SQLite_db_name)
+    con.executescript(str_sql_dump)
+    con.close()

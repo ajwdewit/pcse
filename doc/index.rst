@@ -11,8 +11,7 @@ Welcome to the PCSE documentation!
    
    pcse_intro.rst
    quickstart.rst
-   structure.rst
-   code.rst
+
 
 Indices and tables
 ==================

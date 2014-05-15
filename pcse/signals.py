@@ -92,12 +92,12 @@ keywords.*
  Indicates that the current crop cycle is finished
  
  self._send_signal(signal=signals.crop_finish, day=<date>,
-                   finish=<string>, crop_delete=<True|False>)
+                   finish_type=<string>, crop_delete=<True|False>)
 
 keyword arguments with signals.crop_finish:
     
     * day: Current date
-    * finish: string describing the reason for finishing the simulation, e.g.
+    * finish_type: string describing the reason for finishing the simulation, e.g.
       maturity, harvest, all leaves died, maximum duration reached, etc.
     * crop_delete: Set to True when the CropSimulation object must be deleted
       from the system, for example for the implementation of crop rotations.

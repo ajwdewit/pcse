@@ -1,41 +1,80 @@
-*****************************
+*************************
 Getting started with PCSE
-*****************************
+*************************
 
-This quickstart guide gives some examples to get you started with the Python
-Crop Simulation Environment. All examples are currently focused on applying
-the WOFOST crop simulation model, although other crop simulations may
-become available within PCSE in the future.
-All tests and examples were developed with the Enthought Python Distribution
-(http://www.enthought.com/products/epd.php) under windows7 (EPD 32bit). This
-product is now superseeded by Enthought Canopy.
+This quickstart guide will help you to install PCSE and provides
+some examples to get you started with modelling. All examples are currently focused on applying
+the WOFOST crop simulation model, although other crop simulations may become available within
+PCSE in the future.
+
+Installing PCSE
+===============
+
+Requirements and dependencies
+-----------------------------
+
+PCSE is being developed on Ubuntu Linux 10.04 using python 2.7.6 and is known to work with the 3.x series (using the 2to3
+tool). As python is a platform independent language, PCSE works equally well on Windows or Mac OSX.  The most
+straightforward approach for installing python is through one of the prepackaged python distributions
+such as `Enthought Canopy`_, `Anaconda`_ or `PythonXY`_.
+The following screen dump shows the version of python, numpy and SQLAlchemy that were used to develop PCSE::
+
+    Python 2.7.6 (default, Dec 16 2013, 12:39:22)
+    [GCC 4.4.3] on linux2
+    Type "help", "copyright", "credits" or "license" for more information.
+    >>> import numpy as np
+    >>> np.__version__
+    '1.8.0'
+    >>> import sqlalchemy as sa
+    >>> sa.__version__
+    '0.8.4'
+
+.. _Enthought Canopy: https://store.continuum.io/cshop/anaconda/
+.. _Anaconda: https://www.enthought.com/products/canopy/
+.. _PythonXY: https://code.google.com/p/pythonxy/wiki/Welcome
+
+All examples in this quickstart guide were developed under Windows 7 with the Enthought Python distribution
+(version 7.0) which is by now superseeded by Enthought Canopy.
+
+Downloading PCSE
+----------------
+
+The PCSE package can be downloaded as a zip file from GitHub.com using the link `here`_. Just unzip the package
+at a suitable location. Note that the top directory in the zip file is `pcse-<branchname>`. The actual PCSE is package is
+inside this folder and needs to be put on your file system.
+
+.. _here: https://github.com/ajwdewit/pcse/archive/develop.zip
+
 
 Testing the PCSE package
-========================
+------------------------
 To guarantee its integrity, the PCSE package includes a number of self
-tests that test individual components as well as the entire chain. These tests
+tests that test individual components as well as the entire simulation. These tests
 verify that the output produced by the different components matches with the
 expected outputs. Test data for the individual components can be found
 in the `pcse.tests.test_data` package, while the test data for the entire chain
-is stored in an SQLite database (pcse.db) that can be found under
-`pcse.db.pcse`.
+is stored in an SQLite database (pcse.db). This database can be found under
+`.pcse` in your home folder and will be automatically generated when importing
+PCSE for the first time. When you delete the database file manually it will be
+regenerated..
 
 We assume here that PCSE is installed under 'D:\\USERDATA\\pylib\\' and
 this location needs to be added to the search path of python::
 
-    E:\temp>python
+    C:\>python
     Enthought Python Distribution -- www.enthought.com
     Version: 7.0-2 (32-bit)
 
     Python 2.7.1 |EPD 7.0-2 (32-bit)| (r271:86832, Dec  2 2010, 10:35:02) [MSC v.1500 32 bit (Intel)] on win32
     Type "help", "copyright", "credits" or "license" for more information.
     >>> import sys
-    >>> import sys.path.append(r"D:\USERDATA\pylib\")
+    >>> import sys.path.append(r"D:\USERDATA\pylib\pcse")
 
 Next, PCSE can be imported and the tests can be executed by calling
 the `test()` function at the top of the package::
 
     >>> import pcse
+    Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db
     >>> pcse.test()
     runTest (pcse.tests.test_abioticdamage.Test_FROSTOL) ... ok
     runTest (pcse.tests.test_assimilation.Test_WOFOST_Assimilation) ... ok
@@ -67,11 +106,13 @@ If the model output matches the expected output the test will report 'OK',
 otherwise an error will be produced with a detailed traceback on where the
 problem occurred.
 
-An interactive PCSE/WOFOST session
-==================================
+Part 1: An interactive PCSE/WOFOST session
+==========================================
+
 The easiest way to demonstrate PCSE is to import WOFOST from PCSE and run it from
-an interactive Python session. We will be using the built-in demo database which
-contains meteorologic data, soil data and crop data for a grid location in South-Spain.
+an interactive Python session. We will be using the `start_wofost()` script that
+connects to a the demo database which contains meteorologic data, soil data
+and crop data for a grid location in South-Spain.
 
 Initializing PCSE/WOFOST and advancing model state
 --------------------------------------------------
@@ -118,13 +159,8 @@ and store the results to a file 'myresults.csv'::
 
 Which should look like this :download:`myresults.txt`
 
-Getting input data for PCSE/WOFOST
-==================================
-
-After running the examples you may be wondering where the data come
-from that are used to run WOFOST. In fact, these data are retrieved from
-an SQLite database `pcse.db` that is included with the source distribution
-and can be found in the `pcse/db/pcse` folder.
+Part 2: Running PCSE/WOFOST with custom input data
+==================================================
 
 For setting up PCSE/WOFOST with your
 own data sources you should understand that WOFOST uses 5 different types of
@@ -145,11 +181,12 @@ For the second example we will run a simulation for sugar beet in
 Wageningen (Netherlands) and we will read the input data step by step from
 several different sources instead of using the pre-configured `start_wofost()`
 script. For the example we will assume that data files are in the directory
-`D:\userdata\pcse_examples`. First we will import the necessary modules and
+`D:\\userdata\\pcse_examples`. First we will import the necessary modules and
 import set the data directory::
 
     >>> import os
     >>> import pcse
+    >>> import matplotlib.pyplot as plt
     >>> data_dir = r'D:\userdata\pcse_examples'
 
 Cropdata
@@ -225,7 +262,7 @@ in Wageningen can be downloaded here: :download:`sugarbeet_calendar.pcse`::
     >>> timerdata = PCSEFileReader(crop_calendar_file)
     >>> print timerdata
     PCSE parameter file contents loaded from:
-    /home/allard/Sources/python/pcse/doc/sugarbeet_calendar.pcse
+    D:\\userdata\\pcse_examples\\sugarbeet_calendar.pcse
 
     CAMPAIGNYEAR: 2000 (<type 'int'>)
     CROP_START_DATE: 2000-04-05 (<type 'datetime.date'>)
@@ -255,16 +292,14 @@ define these parameters directly on the python commandline::
 Driving variables (weather data)
 --------------------------------
 
-Daily weather variables are needed for running the simulation, see the section
-on :ref:`DrivingVar` for reference. Currently, three options are available in
-PCSE for storing and retrieving weather data:
+Daily weather variables are needed for running the simulation. Currently, three
+options are available in PCSE for retrieving weather data:
 
     1. The database structure as provided by the Crop Growth Monitoring
        System. Weather data will be read from the GRID_WEATHER table which
        is implemented using `pcse.db.pcse.GridWeatherDataProvider`.
     2. The file structure as defined by the `CABO Weather System`_ which is
-       implemented using `pcse.fileinput.CABOWeatherDataProvider`. For more
-       details see :ref:`TheCABOtools`.
+       implemented using `pcse.fileinput.CABOWeatherDataProvider`.
     3. The global weather data provided by the agroclimatology from the
        `NASA Power database`_ at a resolution of 1x1 degree. PCSE
        provides the `pcse.db.NASAPowerWeatherDataProvider' which retrieves
@@ -314,5 +349,50 @@ are provided in `pcse.models`. For the sugarbeet example we will import
 the WOFOST model for water-limited simulation under freely draining soils::
 
     >>> from pcse.models import Wofost71_WLP_FD
-    >>> Wofost71_WLP_FD
-    pcse.models.Wofost71_WLP_FD
+    >>> wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, wdp)
+
+We can then run the simulation and show some final results such as the anthesis and
+harvest dates (DOA, DOH), total biomass (TAGP) and maximum LAI (LAIMAX).
+Next, we retrieve the time series of daily simulation output using the `get_output()`
+method on the WOFOST object::
+
+    >>> wofsim.run(days=400)
+    >>> print wofsim.get_variable("DOA")
+    2000-06-09
+    >>> print wofsim.get_variable("DOH")
+    2000-10-20
+    >>> print wofsim.get_variable("TAGP")
+    22783.5023325
+    >>> print wofsim.get_variable("LAIMAX")
+    5.11868342855
+    >>> output = wofsim.get_output()
+    >>> len(output)
+    294
+
+As the output is returned as a list of dictionaries, we need to unpack these variables
+from the list of output::
+
+    >>> varnames = ["day", "DVS", "TAGP", "LAI", "SM"]
+    >>> tmp = {}
+    >>> for var in varnames:
+    >>>     tmp[var] = [t[var] for t in output]
+
+Finally, we can generate some figures of WOFOST variables such as the
+development (DVS), total biomass (TAGP), leaf area
+index (LAI) and root-zone soil moisture (SM) using the `MatPlotLib`_ plotting package::
+
+    >>> day = tmp.pop("day")
+    >>> fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10,8))
+    >>> for var, ax in zip(["DVS", "TAGP", "LAI", "SM"], axes.flatten()):
+    >>>     ax.plot_date(day, tmp[var], 'b-')
+    >>>     ax.set_title(var)
+    >>> fig.autofmt_xdate()
+    >>> fig.savefig('sugarbeet.png')
+
+.. _MatPlotLib: http://matplotlib.org/
+
+This should provide generate a figure of the simulation results as shown below.
+
+
+.. image:: sugarbeet.png
+

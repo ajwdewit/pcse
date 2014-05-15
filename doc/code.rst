@@ -42,7 +42,7 @@ Finally, all public methods of all object are described as well.
 Top level classes
 =================
     
-.. autoclass:: pcse.PyWofost
+.. autoclass:: pcse.crop.Wofost
     :members:
 
 .. autoclass:: pcse.soilcropsimulation.SoilCropSimulation
@@ -76,13 +76,13 @@ The PyWOFOST distribution provides several waterbalance modules:
        water tables.)
     4. A model for simulation the build-up and melting of the snow cover.
        
-.. autoclass:: pcse.classic_waterbalance.WaterbalancePP
+.. autoclass:: pcse.soil.WaterbalancePP
     :members:
 
-.. autoclass:: pcse.classic_waterbalance.WaterbalanceFD
+.. autoclass:: pcse.soil.WaterbalanceFD
     :members:
 
-.. autoclass:: pcse.snowmaus.SnowMaus
+.. autoclass:: pcse.soil.snowmaus.SnowMaus
     :members:
 
 Crop simulation processes

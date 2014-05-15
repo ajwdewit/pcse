@@ -243,7 +243,8 @@ class DVS_Phenology(SimulationObject):
     DOE      Day of emergence                                   N    - 
     DOA      Day of Anthesis                                    N    - 
     DOM      Day of maturity                                    N    - 
-    STAGE    Current phenological stage, can take the           N    - 
+    DOH      Day of harvest                                     N    -
+    STAGE    Current phenological stage, can take the           N    -
              folowing values:
              `emerging|vegetative|reproductive|mature`
     =======  ================================================= ==== ============
@@ -304,6 +305,7 @@ class DVS_Phenology(SimulationObject):
         DOE = Instance(datetime.date) # Day of emergence
         DOA = Instance(datetime.date) # Day of anthesis
         DOM = Instance(datetime.date) # Day of maturity
+        DOH = Instance(datetime.date) # Day of harvest
         STAGE  = Enum([None, "emerging", "vegetative", "reproductive", "mature"])
 
     #---------------------------------------------------------------------------
@@ -323,13 +325,15 @@ class DVS_Phenology(SimulationObject):
         self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
 
+        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
+
         # Define initial states
         DVS = self.params.DVSI
         DOS, DOE, STAGE = self._get_initial_stage(day, start_type, stop_type)
         self.states = self.StateVariables(kiosk, publish="DVS",
                                           TSUM=0., TSUME=0., DVS=DVS,
                                           DOS=DOS, DOE=DOE, DOA=None, DOM=None,
-                                          STAGE=STAGE)
+                                          DOH=None, STAGE=STAGE)
 
         # initialize vernalisation for IDSL=2
         if self.params.IDSL >= 2:
@@ -480,7 +484,7 @@ class DVS_Phenology(SimulationObject):
             self.states.DOM = day
             if self.stop_type in ["maturity","earliest"]:
                 self._send_signal(signal=signals.crop_finish,
-                                  day=day, finish="maturity")
+                                  day=day, finish_type="maturity")
         elif this_stage == "mature":
             msg = "Cannot move to next phenology stage: maturity already reached!"
             raise exc.PCSEError(msg)
@@ -491,3 +495,12 @@ class DVS_Phenology(SimulationObject):
         
         msg = "Changed phenological stage '%s' to '%s' on %s"
         self.logger.info(msg % (this_stage, self.states.STAGE, day))
+
+    #---------------------------------------------------------------------------
+    def _on_CROP_FINISH(self, day, finish_type=None):
+        """Handler for setting day of harvest (DOH). Although DOH is not
+        strictly related to phenology (but to management) this is the most
+        logical place to put it.
+        """
+        if finish_type == 'harvest':
+            self._for_finalize["DOH"] = day

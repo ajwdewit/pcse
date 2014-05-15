@@ -29,7 +29,8 @@ See Also
 """
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
-__version__ = "0.9.0"
+__version__ = "5.0.0"
+__stable__ = False
 
 import sys, os
 
@@ -37,7 +38,7 @@ import sys, os
 def setup():
     """
     Set up the .pcse folder and user settings file, add ~/.pcse to the
-    sys.path and setup logging.
+    sys.path.
     """
 
     user_home = os.path.expanduser("~")
@@ -64,6 +65,7 @@ def setup():
                     cline = "# " + line
                 fp.write(cline)
 
+
 setup()
 
 import logging.config
@@ -79,6 +81,25 @@ from . import agromanagement
 from . import soil
 from . import crop
 from .start_wofost import start_wofost
+
+# If no PCSE demo database, build it!
+pcse_db_file = os.path.join(settings.PCSE_USER_HOME, "pcse.db")
+if not os.path.exists(pcse_db_file):
+    print "Building PCSE demo database at: %s ..." % pcse_db_file
+    pcse_home = os.path.dirname(__file__)
+    pcse_db_dump_file = os.path.join(pcse_home, "db", "pcse", "pcse_dump.sql")
+    try:
+        util.load_SQLite_dump_file(pcse_db_dump_file, pcse_db_file)
+        print "OK"
+    except Exception as e:
+        logger = logging.getLogger()
+        msg1 = "Failed to create the PCSE demo data database: %s" % e
+        msg2 = "PCSE will likely be functional, but some tests and demos may fail."
+        logger.warn(msg1)
+        logger.warn(msg2)
+
+if not __stable__:
+    print "Warning: You are running a PCSE development version:  %s" % __version__
 
 def test(dsn=None):
     """Run all available tests for PCSE."""

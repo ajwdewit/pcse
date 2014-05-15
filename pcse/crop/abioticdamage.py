@@ -75,7 +75,7 @@ class CrownTemperature(SimulationObject):
 
     *Rate variables*
 
-    ==========  ============================================== =======  ==========
+    ========== =============================================== =======  ==========
      Name      Description                                      Pbl     Unit
     ========== =============================================== =======  ==========
     TEMP_CROWN  Daily average crown temperature                   N       |C|
@@ -425,7 +425,7 @@ class CERES_WinterKill(SimulationObject):
         if drv.TMIN_CROWN < states.HIKILLTEMP:
             rates.KILLFACTOR = 1.
             # Send signal that crop is finished
-            self._send_signal(signals.crop_finish, day=day, finish="frost kill")
+            self._send_signal(signals.crop_finish, day=day, finish_type="frost kill")
 
         elif drv.TMIN_CROWN > params.CWWK_KILLTEMP:
             rates.KILLFACTOR = 0.

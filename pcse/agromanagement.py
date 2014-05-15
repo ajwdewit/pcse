@@ -146,7 +146,7 @@ class AgroManagementSingleCrop(AncillaryObject):
         if finish_cropsimulation == True:
             self.in_crop_cycle = False
             self._send_signal(signal=signals.crop_finish, day=day,
-                              finish=finish_type)
+                              finish_type=finish_type)
     
     def _start_new_crop(self, day, cropsimulation):
         """Starts a new simulation by sending the apropriate signal and
