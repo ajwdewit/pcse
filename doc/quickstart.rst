@@ -68,7 +68,7 @@ this location needs to be added to the search path of python::
     Python 2.7.1 |EPD 7.0-2 (32-bit)| (r271:86832, Dec  2 2010, 10:35:02) [MSC v.1500 32 bit (Intel)] on win32
     Type "help", "copyright", "credits" or "license" for more information.
     >>> import sys
-    >>> import sys.path.append(r"D:\USERDATA\pylib\pcse")
+    >>> sys.path.append(r"D:\USERDATA\pylib\pcse")
 
 Next, PCSE can be imported and the tests can be executed by calling
 the `test()` function at the top of the package::

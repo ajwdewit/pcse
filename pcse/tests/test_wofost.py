@@ -23,6 +23,7 @@ from sqlalchemy import create_engine, MetaData, select, Table, and_, func
 from sqlalchemy.types import Date as saDate
 
 from ..run_wofost import run_wofost
+from ..settings import settings
 
 #-------------------------------------------------------------------------------
 class WofostBenchmarkRetriever:
@@ -120,11 +121,10 @@ class WofostTestingTemplate(unittest.TestCase):
 
     def __init__(self, testname, dsn=None):
         if dsn is None: # Assume SQlite demo DB
-            installdir = os.path.dirname(os.path.abspath(__file__))
-            db_location = os.path.join(installdir, "..", "db","pcse","pcse.db")
+            db_location = os.path.join(settings.PCSE_USER_HOME,"pcse.db")
             db_location = os.path.normpath(db_location)
             dsn = "sqlite:///" + db_location
-        self.dsn=dsn
+        self.dsn = dsn
         unittest.TestCase.__init__(self, testname)
         
     def setUp(self):

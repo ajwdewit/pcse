@@ -85,7 +85,7 @@ from .start_wofost import start_wofost
 # If no PCSE demo database, build it!
 pcse_db_file = os.path.join(settings.PCSE_USER_HOME, "pcse.db")
 if not os.path.exists(pcse_db_file):
-    print "Building PCSE demo database at: %s ..." % pcse_db_file
+    print ("Building PCSE demo database at: %s ..." % pcse_db_file),
     pcse_home = os.path.dirname(__file__)
     pcse_db_dump_file = os.path.join(pcse_home, "db", "pcse", "pcse_dump.sql")
     try:
