@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, MetaData, Table
 
 from . import db
 from .models import Wofost71_PP, Wofost71_WLP_FD
+from .settings import settings
 
 def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
                    dsn=None):
@@ -39,13 +40,12 @@ def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
         >>> wofsim.run(days=300)
         >>> wofsim.get_variable('tagp')
         15261.752187075261
-        
     """
 
     installdir = os.path.dirname(os.path.abspath(__file__))
 
     if dsn is None: # Assume SQlite demo DB
-        db_location = os.path.join(installdir, "db","pcse","pcse.db")
+        db_location = os.path.join(settings.PCSE_USER_HOME, "pcse.db")
         dsn = "sqlite:///" + db_location
     
     # Open database connections
