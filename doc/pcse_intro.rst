@@ -71,7 +71,7 @@ Simulation Environment was selected in analog with the FORTRAN Simulation Enviro
 Limitations of PCSE
 ===================
 
-PCSE als has its limitations, in fact there are several:
+PCSE also has its limitations, in fact there are several:
 
 * Speed: flexibility comes a at a price; PCSE is considerably slower than equivalent models written in FORTRAN or
   another compiled language.

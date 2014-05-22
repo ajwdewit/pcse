@@ -39,13 +39,16 @@ The tables specifying state/rate variables have the following columns:
     
 Finally, all public methods of all object are described as well.
 
-Top level classes
-=================
-    
-.. autoclass:: pcse.crop.Wofost
+Engines and models
+==================
+
+ .. autoclass:: pcse.engine.Engine
     :members:
 
-.. autoclass:: pcse.soilcropsimulation.SoilCropSimulation
+.. autoclass:: pcse.models.Wofost71_PP
+    :members:
+
+.. autoclass:: pcse.models.Wofost71_WLP_FD
     :members:
 
 .. _Agromanagement:

@@ -170,18 +170,17 @@ misnomer as they contain a mixture of parameter values, boundary conditions
 and events rather than data, except for the driving variables which
 can be considered as (observed) data. This terminology was inherited from the 
 previous WOFOST versions and it was kept because changing it would
-cause more confusion.
-
-All the input `\*data` must be provided as python dictionaries
-storing key/value pairs and several tools are available in the PCSE
-distribution to read these from a file or a database. Moreover,
-there are several tools available for reading weather data.
+cause more confusion. PCSE provides several tools for reading parameters and weather data from files
+or databases.
 
 For the second example we will run a simulation for sugar beet in
 Wageningen (Netherlands) and we will read the input data step by step from
 several different sources instead of using the pre-configured `start_wofost()`
 script. For the example we will assume that data files are in the directory
-`D:\\userdata\\pcse_examples`. First we will import the necessary modules and
+`D:\\userdata\\pcse_examples` and all the parameter files needed can be
+found by unpacking this zip file :download:`quickstart_part2.zip`.
+
+First we will import the necessary modules and
 import set the data directory::
 
     >>> import os
@@ -196,9 +195,8 @@ Cropdata consist of parameter names (dictionary keys) and the
 corresponding parameter values that are needed to parameterize the
 components of the crop simulation model. These are
 crop-specific values regarding phenology, assimilation, respiration,
-biomass partitioning, etc. The parameter file for sugar beet can be
-downloaded here: :download:`sug0601.crop` and is taken from the
-crop files in the `WOFOST Control Centre`_.
+biomass partitioning, etc. The parameter file for sugar beet
+is taken from the crop files in the `WOFOST Control Centre`_.
 
 .. _WOFOST Control Centre: http://www.wageningenur.nl/wofost
 
@@ -223,7 +221,7 @@ The soildata dictionary must provide the parameter name/value pairs related
 to the soil type and soil physical properties. The number of parameters is
 variable depending on the soil water balance type that is used for the
 simulation. For this example, we will use the water balance for freely
-draining soils and use the soil file for medium fine sand: :download:`ec3.soil`.
+draining soils and use the soil file for medium fine sand: `ec3.soil`.
 This file is also taken from the soil files in the `WOFOST Control Centre`_ ::
 
     >>> soilfile = os.path.join(data_dir, 'ec3.soil')
@@ -255,7 +253,7 @@ need to be specified in the `timerdata` dictionary::
 
 The CABO format has no support for dates, therefore the PCSE file format was
 developed that does allow to use dates. The crop calendar file for sugar beet
-in Wageningen can be downloaded here: :download:`sugarbeet_calendar.pcse`::
+in Wageningen `sugarbeet_calendar.pcse` can be read with the PCSEFileReader::
 
     >>> from pcse.fileinput import PCSEFileReader
     >>> crop_calendar_file = os.path.join(data_dir, 'sugarbeet_calendar.pcse')
@@ -302,7 +300,7 @@ options are available in PCSE for retrieving weather data:
        implemented using `pcse.fileinput.CABOWeatherDataProvider`.
     3. The global weather data provided by the agroclimatology from the
        `NASA Power database`_ at a resolution of 1x1 degree. PCSE
-       provides the `pcse.db.NASAPowerWeatherDataProvider' which retrieves
+       provides the `pcse.db.NASAPowerWeatherDataProvider` which retrieves
        the NASA Power data from the internet for a given latitude and
        longitude.
 
@@ -391,7 +389,8 @@ index (LAI) and root-zone soil moisture (SM) using the `MatPlotLib`_ plotting pa
 
 .. _MatPlotLib: http://matplotlib.org/
 
-This should provide generate a figure of the simulation results as shown below.
+This should provide generate a figure of the simulation results as shown below. The complete python
+script for this examples can be downloaded here :download:`quickstart_demo2.py`
 
 
 .. image:: sugarbeet.png
