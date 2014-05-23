@@ -115,14 +115,14 @@ def fetch_cropdata(metadata, grid, year, crop):
                             "no: %3i and year: %5i") % (cgmsgrid, crop, year))
     
     # Define crop parameter values
-    parameter_codes_sngl = ("CFET","CVL","CVO","CVR","CVS","DEPNR","DLC",
-                            "DLO","DVSEND","EFF","IAIRDU","IDSL","KDIF",
-                            "LAIEM","PERDL","Q10","RDI","RDMCR","RGRLAI",
-                            "RML","RMO","RMR","RMS","RRI","SPA","SPAN","SSA",
-                            "TBASE","TBASEM","TDWI","TEFFMX","TSUM1","TSUM2",
-                            "TSUMEM","IOX")
-    parameter_codes_mltp = ("AMAXTB","DTSMTB","FLTB","FOTB","FRTB","FSTB",
-                            "RDRRTB","RDRSTB","RFSETB","SLATB","TMNFTB",
+    parameter_codes_sngl = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC", 
+                            "DLO", "DVSEND", "EFF", "IAIRDU", "IDSL", "KDIF", 
+                            "LAIEM", "PERDL", "Q10", "RDI", "RDMCR", "RGRLAI", 
+                            "RML", "RMO", "RMR", "RMS", "RRI", "SPA", "SPAN", "SSA", 
+                            "TBASE", "TBASEM", "TDWI", "TEFFMX", "TSUM1", "TSUM2", 
+                            "TSUMEM", "IOX")
+    parameter_codes_mltp = ("AMAXTB", "DTSMTB", "FLTB", "FOTB", "FRTB", "FSTB", 
+                            "RDRRTB", "RDRSTB", "RFSETB", "SLATB", "TMNFTB", 
                             "TMPFTB")
     
     # Pull single value parameters from CROP_PARAMETER_VALUE first
@@ -276,16 +276,16 @@ def fetch_soilparams(metadata, grid, soilgroup):
 
     # Define soil physical variable parameter codes
     # defined as (code_parname, db_parname)
-    soil_parameters = [("CRAIRC","CRITICAL_AIR_CONTENT"),
-                       ("K0","HYDR_CONDUCT_SATUR"), 
-                       ("SOPE","MAX_PERCOL_ROOT_ZONE"),
-                       ("KSUB","MAX_PERCOL_SUBSOIL"),
-                       ("SMFCF","SOIL_MOISTURE_CONTENT_FC"),
-                       ("SM0","SOIL_MOISTURE_CONTENT_SAT"),
-                       ("SMW","SOIL_MOISTURE_CONTENT_WP")]
+    soil_parameters = [("CRAIRC", "CRITICAL_AIR_CONTENT"),
+                       ("K0", "HYDR_CONDUCT_SATUR"), 
+                       ("SOPE", "MAX_PERCOL_ROOT_ZONE"),
+                       ("KSUB", "MAX_PERCOL_SUBSOIL"),
+                       ("SMFCF", "SOIL_MOISTURE_CONTENT_FC"),
+                       ("SM0", "SOIL_MOISTURE_CONTENT_SAT"),
+                       ("SMW", "SOIL_MOISTURE_CONTENT_WP")]
     # Table soil parameters can be mapped directly to parameter names
     # in the WOFOST code.
-    soil_parameters_mltp = ["CONTAB","SMTAB"]
+    soil_parameters_mltp = ["CONTAB", "SMTAB"]
 
     # Select soil properties from table.
     soilparams = {}
@@ -516,13 +516,13 @@ def fetch_soildata(metadata, grid):
     
     # Retrieve soil physical properties for given layer for given soil
     # parameter codes: (wofost_parname, database_name)
-    soil_parameters = [("CRAIRC","CRITICAL_AIR_CONTENT"),
-                       ("K0","HYDR_CONDUCT_SATUR"), 
-                       ("SOPE","MAX_PERCOL_ROOT_ZONE"),
-                       ("KSUB","MAX_PERCOL_SUBSOIL"),
-                       ("SMFCF","SOIL_MOISTURE_CONTENT_FC"),
-                       ("SM0","SOIL_MOISTURE_CONTENT_SAT"),
-                       ("SMW","SOIL_MOISTURE_CONTENT_WP")]
+    soil_parameters = [("CRAIRC", "CRITICAL_AIR_CONTENT"),
+                       ("K0", "HYDR_CONDUCT_SATUR"),
+                       ("SOPE", "MAX_PERCOL_ROOT_ZONE"),
+                       ("KSUB", "MAX_PERCOL_SUBSOIL"),
+                       ("SMFCF", "SOIL_MOISTURE_CONTENT_FC"),
+                       ("SM0", "SOIL_MOISTURE_CONTENT_SAT"),
+                       ("SMW", "SOIL_MOISTURE_CONTENT_WP")]
     table_soil_pg = Table('soil_physical_group',metadata, autoload=True)
     for (wofost_soil_par, db_soil_par) in soil_parameters:
         r = select([table_soil_pg], 
@@ -674,16 +674,16 @@ class GridWeatherDataProvider(WeatherDataProvider):
         self.enddate = enddate
         self.timeinterval = (enddate - startdate).days + 1
         
-        # Get location info and return a template WeatherDataContainer
-        wdc = self._fetch_location_from_db(metadata)
+        # Get location info (lat/lon/elevation)
+        self._fetch_location_from_db(metadata)
 
-        # Retrieved meteo data, and update with ensemble weather where needed.
-        self._fetch_grid_weather_from_db(metadata, wdc)
+        # Retrieved meteo data
+        self._fetch_grid_weather_from_db(metadata)
             
     #---------------------------------------------------------------------------
     def _fetch_location_from_db(self, metadata):
         """Retrieves latitude, longitude, elevation from 'grid' table and
-        returns a template WeatherDataContainer with these values"""
+        assigns them to self.latitude, self.longitude, self.elevation."""
 
         # Pull Latitude value for grid nr from database
 
@@ -700,21 +700,18 @@ class GridWeatherDataProvider(WeatherDataProvider):
             msg = "Failed deriving location info for grid %s" % self.grid_no
             raise MeteodataError(msg)
 
-        wdc = WeatherDataContainer(LAT=row.latitude, LON=row.longitude,
-                                   ELEV=row.altitude)
+        self.latitude = row.latitude
+        self.longitude = row.longitude
+        self.elevation = row.altitude
 
         msg = "Succesfully retrieved location information from 'grid' table "+\
               "for grid %s"
         self.logger.info(msg % self.grid_no)
-        
-        return wdc
-        
+
     #---------------------------------------------------------------------------
-    def _fetch_grid_weather_from_db(self, metadata, wdc):
+    def _fetch_grid_weather_from_db(self, metadata):
         """Retrieves the meteo data from table 'grid_weather'.
-        
-        Meteo data are stored in the WeatherDataContainer -wdc- which is
-        deepcopied for each record."""
+        """
         
         try:
             table_gw = Table('grid_weather', metadata, autoload=True)
@@ -733,34 +730,35 @@ class GridWeatherDataProvider(WeatherDataProvider):
 
             meteopackager = self._make_WeatherDataContainer
             for row in rows:
-                ckey = self.check_keydate(row.day)
-                twdc = meteopackager(row, wdc)
-                self._store_WeatherDataContainer(twdc, ckey)
+                DAY = self.check_keydate(row.day)
+                t = {"DAY": DAY, "LAT": self.latitude,
+                     "LON": self.longitude, "ELEV": self.elevation}
+                wdc = meteopackager(row, t)
+                self._store_WeatherDataContainer(wdc, DAY)
         except Exception, e:
             errstr = "Failure reading meteodata: " + str(e)
             raise MeteodataError(errstr)
 
-        msg = "Succesfully retrieved weather data from 'grid_weather' table "+\
-              "for grid %s between %s and %s"
+        msg = ("Successfully retrieved weather data from 'grid_weather' table "
+               "for grid %s between %s and %s")
         self.logger.info(msg % (self.grid_no, self.startdate, self.enddate))
     
     #---------------------------------------------------------------------------
-    def _make_WeatherDataContainer(self, row, wdc):
+    def _make_WeatherDataContainer(self, row, t):
         """Process record from grid_weather including unit conversion."""
 
-        twdc = copy.deepcopy(wdc)
-        twdc.DAY = row.day
-        twdc.add_variable("TMAX",float(row.maximum_temperature),"Celsius")
-        twdc.add_variable("TMIN",float(row.minimum_temperature),"Celsius")
-        twdc.add_variable("VAP", float(row.vapour_pressure),"hPa")
-        twdc.add_variable("WIND",wind10to2(float(row.windspeed)),"m/sec")
-        twdc.add_variable("RAIN",float(row.rainfall)/10.,"cm/day")
-        twdc.add_variable("E0", float(row.e0)/10.,"cm/day")
-        twdc.add_variable("ES0",float(row.es0)/10.,"cm/day")
-        twdc.add_variable("ET0",float(row.et0)/10.,"cm/day")
-        twdc.add_variable("IRRAD",float(row.calculated_radiation)*1000.,"J/m2/day")
+        t.update({"TMAX": float(row.maximum_temperature),
+                  "TMIN": float(row.minimum_temperature),
+                  "VAP":  float(row.vapour_pressure),
+                  "WIND": wind10to2(float(row.windspeed)),
+                  "RAIN": float(row.rainfall)/10.,
+                  "E0":  float(row.e0)/10.,
+                  "ES0": float(row.es0)/10.,
+                  "ET0": float(row.et0)/10.,
+                  "IRRAD": float(row.calculated_radiation)*1000.})
+        wdc = WeatherDataContainer(**t)
         
-        return twdc
+        return wdc
 
 
 #----------------------------------------------------------------------------
@@ -893,15 +891,15 @@ class EnsembleGridWeatherDataProvider(WeatherDataProvider):
 
         twdc = copy.deepcopy(wdc)
         twdc.DAY = row.day
-        twdc.add_variable("TMAX",float(row.maximum_temperature),"Celsius")
-        twdc.add_variable("TMIN",float(row.minimum_temperature),"Celsius")
-        twdc.add_variable("VAP", float(row.vapour_pressure),"hPa")
-        twdc.add_variable("WIND",wind10to2(float(row.windspeed)),"m/sec")
-        twdc.add_variable("RAIN",float(row.rainfall)/10.,"cm/day")
-        twdc.add_variable("E0", float(row.e0)/10.,"cm/day")
-        twdc.add_variable("ES0",float(row.es0)/10.,"cm/day")
-        twdc.add_variable("ET0",float(row.et0)/10.,"cm/day")
-        twdc.add_variable("IRRAD",float(row.calculated_radiation)*1000.,"J/m2/day")
+        twdc.add_variable("TMAX", float(row.maximum_temperature),"Celsius")
+        twdc.add_variable("TMIN", float(row.minimum_temperature),"Celsius")
+        twdc.add_variable("VAP",  float(row.vapour_pressure),"hPa")
+        twdc.add_variable("WIND", wind10to2(float(row.windspeed)),"m/sec")
+        twdc.add_variable("RAIN", float(row.rainfall)/10.,"cm/day")
+        twdc.add_variable("E0",  float(row.e0)/10.,"cm/day")
+        twdc.add_variable("ES0", float(row.es0)/10.,"cm/day")
+        twdc.add_variable("ET0", float(row.et0)/10.,"cm/day")
+        twdc.add_variable("IRRAD", float(row.calculated_radiation)*1000.,"J/m2/day")
         
         return twdc
 

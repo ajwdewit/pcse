@@ -123,8 +123,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                 self.logger.debug(msg)
                 self._get_and_process_NASAPower(self.latitude, self.longitude)
             except Exception, e:
-                msg = ("Reloading data from NASA failed, reverting to (outdated) "+\
-                      "cache file")
+                msg = ("Reloading data from NASA failed, reverting to (outdated) " +
+                       "cache file")
                 self.logger.debug(msg)
                 status = self._load_cache_file()
                 if status is not True:
@@ -282,27 +282,28 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         """
 
         for rec in recs:
-            wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude,
-                                       ELEV=self.elevation)
-            wdc.DAY = rec["day"]
+            t = {"LAT": self.latitude, "LON": self.longitude, "ELEV": self.elevation, "DAY": rec["day"]}
+
             for pcse_name, power_name, conv, unit in self.pcse_variables:
                 value = conv(rec[power_name])
-                wdc.add_variable(pcse_name, value, unit)
+                t[pcse_name] = value
 
             # Reference evapotranspiration in mm/day
             try:
-                (E0, ES0, ET0) = penman(wdc.DAY, wdc.LAT, wdc.ELEV, self.angstA,
-                                        self.angstB, wdc.TMIN, wdc.TMAX, wdc.IRRAD,
-                                        wdc.VAP, wdc.WIND)
-            except ValueError, exc:
-                msg = (("Failed to calculate reference ET values on %s" % wdc.DAY) +
-                       "With input values:\n %s" % str(wdc))
+                (E0,ES0,ET0) = penman(t["DAY"], t["LAT"], t["ELEV"], self.angstA,
+                                      self.angstB, t["TMIN"], t["TMAX"], t["IRRAD"],
+                                      t["VAP"], t["WIND"])
+            except ValueError as e:
+                msg = (("Failed to calculate reference ET values on %s. " % thisdate) +
+                       ("With input values:\n %s.\n" % str(t)) +
+                       ("Due to error: %s" % e))
                 raise PCSEError(msg)
 
-            # Add to wdc and convert to cm/day
-            wdc.add_variable("E0", E0 / 10., "cm/day")
-            wdc.add_variable("ES0", ES0 / 10., "cm/day")
-            wdc.add_variable("ET0", ET0 / 10., "cm/day")
+            # update record with ET values value convert to cm/day
+            t.update({"E0": E0/10., "ES0": ES0/10., "ET0": ET0/10.})
+
+            # Build weather data container from dict 't'
+            wdc = WeatherDataContainer(**t)
 
             # add wdc to dictionary for thisdate
             self._store_WeatherDataContainer(wdc, wdc.DAY)

@@ -947,32 +947,139 @@ class TopPyWOFOSTObject(HasTraits, DispatcherObject):
 
         self.logger = logging.getLogger(loggername)
         self.initialize(day, *args, **kwargs)
-        self.logger.info("Component succesfully initialized on %s!" % day)
+        self.logger.info("Component successfully initialized on %s!" % day)
+
 
 #-------------------------------------------------------------------------------
-class WeatherDataContainer(object):
-    """Class for storing weather data values.
-    
-    :param LAT: Latitude of location (decimal degree)
-    :param LON: Longitude of location (decimal degree)
-    :param ELEV: Elevation of location (meters)
+class SlotPickleMixin(object):
+    """This mixin makes it possible to pickle/unpickle objects with __slots__ defined.
+
+    In many programs, one or a few classes have a very large number of instances.
+    Adding __slots__ to these classes can dramatically reduce the memory footprint
+    and improve execution speed by eliminating the instance dictionary. Unfortunately,
+    the resulting objects cannot be pickled. This mixin makes such classes pickleable
+    again and even maintains compatibility with pickle files created before adding
+    __slots__.
+
+    Recipe taken from:
+    http://code.activestate.com/recipes/578433-mixin-for-pickling-objects-with-__slots__/
     """
-    
-    def __init__(self, LAT=None, LON=None, ELEV=None):
-        self.vars = []
-        self.units = []
-        if None in (LAT, LON, ELEV):
-            msg = "One of parameters LAT, LON, ELEV not provided."
-            raise RuntimeError(msg)
-        else:
-            self.LAT = float(LAT)
-            self.LON = float(LON)
-            self.ELEV = float(ELEV)
-    
+    def __getstate__(self):
+        return dict(
+            (slot, getattr(self, slot))
+            for slot in self.__slots__
+            if hasattr(self, slot)
+        )
+
+    def __setstate__(self, state):
+        for slot, value in state.items():
+            setattr(self, slot, value)
+
+
+class WeatherDataContainer(SlotPickleMixin):
+    """Class for storing weather data elements.
+
+    Weather data elements are provided through keywords that are also the
+    attribute names under which the variables can accessed in the
+    WeatherDataContainer. So the keyword TMAX=15 sets an attribute
+    TMAX with value 15.
+
+    The following keywords are compulsory:
+    :keyword LAT: Latitude of location (decimal degree)
+    :keyword LON: Longitude of location (decimal degree)
+    :keyword ELEV: Elevation of location (meters)
+    :keyword DAY: the day of observation (python datetime.date)
+    :keyword IRRAD: Incoming global radiaiton (J/m2/day)
+    :keyword TMIN: Daily minimum temperature (Celsius)
+    :keyword TMAX: Daily maximum temperature (Celsius)
+    :keyword VAP: Daily mean vapour pressure (hPa)
+    :keyword RAIN: Daily total rainfall (cm/day)
+    :keyword WIND: Daily mean wind speed (m/sec)
+    :keyword E0: Daily evaporation rate from open water (cm/day)
+    :keyword ES0: Daily evaporation rate from bare soil (cm/day)
+    :keyword ET0: Daily evapotranspiration rate from reference crop (cm/day)
+
+    There are two optional keywords arguments:
+    :keyword TEMP: Daily mean temperature (Celsius), will otherwise be
+                   derived from (TMAX+TMIN)/2.
+    :keyword SNOWDEPTH: Depth of snow cover (cm)
+    """
+    sitevar = ["LAT", "LON", "ELEV"]
+    required = ["IRRAD", "TMIN", "TMAX", "VAP", "RAIN", "E0", "ES0", "ET0", "WIND"]
+    optional = ["SNOWDEPTH", "TEMP", "TMINRA"]
+    # In the future __slots__ can be extended or attribute setting can be allowed
+    # by add '__dict__' to __slots__.
+    __slots__ = sitevar + required + optional + ["DAY"]
+
+    units = {"IRRAD": "J/m2/day", "TMIN": "Celsius", "TMAX": "Celsius", "VAP": "hPa",
+             "RAIN": "cm/day", "E0": "cm/day", "ES0": "cm/day", "ET0": "cm/day",
+             "LAT": "Degrees", "LON": "Degrees", "ELEV": "m", "SNOWDEPTH": "cm",
+             "TEMP": "Celsius", "TMINRA": "Celsius", "WIND": "m/sec"}
+
+    def __init__(self, *args, **kwargs):
+
+        # only keyword parameters should be used for weather data container
+        if len(args) > 0:
+            msg = ("WeatherDataContainer should be initialized by providing weather " +
+                   "variables through keywords only. Got '%s' instead.")
+            raise exc.PCSEError(msg % args)
+
+        # First assign site variables
+        for varname in self.sitevar:
+            try:
+                setattr(self, varname, float(kwargs.pop(varname)))
+            except (KeyError, ValueError) as e:
+                msg = "Site parameter '%s' missing or invalid when building WeatherDataContainer: %s"
+                raise exc.PCSEError(msg, varname, e)
+
+        # check if we have a DAY element
+        if "DAY" not in kwargs:
+            msg = "Date of observations 'DAY' not provided when building WeatherDataContainer."
+            raise exc.PCSEError(msg)
+        self.DAY = kwargs.pop("DAY")
+
+        # Loop over required arguments to see if all required variables are there
+        for varname in self.required:
+            value = kwargs.pop(varname, None)
+            try:
+                setattr(self, varname, float(value))
+            except (KeyError, ValueError) as e:
+                msg = "%s: Weather attribute '%s' missing or invalid numerical value: %s"
+                logging.warning(msg, self.DAY, varname, e)
+
+        # Loop over optional arguments
+        for varname in self.optional:
+            value = kwargs.pop(varname, None)
+            if value is None:
+                continue
+            else:
+                try:
+                    setattr(self, varname, float(value))
+                except ValueError as e:
+                    msg = "%s: Weather attribute '%s' has invalid numerical value: %s"
+                    logging.warning(msg, self.DAY, varname, e)
+
+        # Check for remaining unknown arguments
+        if len(kwargs) > 0:
+            msg = "WeatherDataContainer: unknown keywords '%s' are ignored!"
+            logging.warning(msg, kwargs.keys())
+
     def __str__(self):
         msg = "Weather data for %s (DAY)\n" % self.DAY
-        for v, unit in zip(self.vars, self.units):
-            msg += "%5s: %12.2f %9s\n" % (v, getattr(self, v), unit)
+        for v in self.required:
+            value = getattr(self, v, None)
+            if value is None:
+                msg += "%5s: element missing!\n"
+            else:
+                unit = self.units[v]
+                msg += "%5s: %12.2f %9s\n" % (v, value, unit)
+        for v in self.optional:
+            value = getattr(self, v, None)
+            if value is None:
+                continue
+            else:
+                unit = self.units[v]
+                msg += "%5s: %12.2f %9s\n" % (v, value, unit)
         msg += ("Latitude  (LAT): %8.2f degr.\n" % self.LAT)
         msg += ("Longitude (LON): %8.2f degr.\n" % self.LON)
         msg += ("Elevation (ELEV): %6.1f m.\n" % self.ELEV)
@@ -986,9 +1093,9 @@ class WeatherDataContainer(object):
         :param unit: string representation of the unit of the variable. Is
             only use for print the contents of the WeatherDataContainer.
         """
-        self.vars.append(varname)
-        self.units.append(unit)
-        setattr(self,varname, value)
+        if varname not in self.units:
+            self.units[varname] = unit
+        setattr(self, varname, value)
 
 #-------------------------------------------------------------------------------
 class WeatherDataProvider(object):
@@ -1034,7 +1141,7 @@ class WeatherDataProvider(object):
         """
         with open(cache_fname, "wb") as fp:
             dmp = (self.store, self.elevation, self.longitude, self.latitude, self.description)
-            cPickle.dump(dmp, fp)
+            cPickle.dump(dmp, fp, cPickle.HIGHEST_PROTOCOL)
 
     def _load(self, cache_fname):
         """Loads the contents from cache_fname using cPickle.
