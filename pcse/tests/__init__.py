@@ -10,6 +10,7 @@ import test_partitioning
 import test_evapotranspiration
 import test_respiration
 import test_wofost
+import test_penmanmonteith
 
 def test_all(dsn=None):
     allsuites = unittest.TestSuite([test_abioticdamage.suite(), 
@@ -17,5 +18,6 @@ def test_all(dsn=None):
                                     test_partitioning.suite(),
                                     test_evapotranspiration.suite(),
                                     test_respiration.suite(),
+                                    test_penmanmonteith.suite(),
                                     test_wofost.suite(dsn)])
     unittest.TextTestRunner(verbosity=2).run(allsuites)
