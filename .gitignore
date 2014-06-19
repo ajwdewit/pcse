@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Sphinx documentation
+docs/_build/
+doc/_build/
+
+# Sqlite DB
+*.db
+
+# Virtual environment files
+env/
+
+# PyCharm configuration files
+.idea/
