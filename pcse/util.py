@@ -9,17 +9,109 @@ import copy
 from math import log10, cos, sin, asin, sqrt, exp
 from collections import namedtuple
 from bisect import bisect_left
-import UserDict
+try:
+    # support both python2 and python3
+    from collections import MutableMapping
+except ImportError:
+    from UserDict import DictMixin as MutableMapping
 import textwrap
 import sqlite3
 
 
 import numpy as np
-from sqlalchemy import Column
 
 from . import exceptions as exc
 
-def penman(day, LAT, ELEV, ANGSTA, ANGSTB, TMIN, TMAX, AVRAD, VAP, WIND2):
+Celsius2Kelvin = lambda x: x + 273.16
+hPa2kPa = lambda x: x/10.
+# Saturated Vapour pressure [kPa] at temperature temp [C]
+SatVapourPressure = lambda temp: 0.6108 * exp((17.27 * temp) / (237.3 + temp))
+
+def reference_ET(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2,
+                 ANGSTA, ANGSTB, ETMODEL="PM"):
+    """Calculates reference evapotranspiration values E0, ES0 and ET0.
+
+    The open water (E0) and bare soil evapotranspiration (ES0) are calculated with
+    the modified Penman approach, while the references canopy evapotranspiration is
+    calculated with the modified Penman or the Penman-Monteith approach, the latter
+    is the default.
+
+    Input variables::
+
+        day     -  Python datetime.date object                      -
+        LAT     -  Latitude of the site                          degrees
+        ELEV    -  Elevation above sea level                        m
+        TMIN    -  Minimum temperature                              C
+        TMAX    -  Maximum temperature                              C
+        AVRAD   -  Daily shortwave radiation                     J m-2 d-1
+        VAP     -  24 hour average vapour pressure                 hPa
+        WIND2   -  24 hour average windspeed at 2 meter            m/s
+        ANGSTA  -  Empirical constant in Angstrom formula           -
+        ANGSTB  -  Empirical constant in Angstrom formula           -
+        ETMODEL -  Indicates if the canopy reference ET should     PM|P
+                   be calculated with the Penman-Monteith method
+                   (PM) or the modified Penman method (P)
+
+    Output is a tuple (E0, ES0, ET0)::
+
+        E0      -  Penman potential evaporation from a free
+                   water surface [mm/d]
+        ES0     -  Penman potential evaporation from a moist
+                   bare soil surface [mm/d]
+        ET0     -  Penman or Penman-Monteith potential evapotranspiration from a
+                   crop canopy [mm/d]
+
+.. note:: The Penman-Monteith algorithm is valid only for a reference canopy and
+    therefore it is not used to calculate the reference values for bare soil and
+    open water (ES0, E0).
+
+    The background is that the Penman-Monteith model is basically a surface
+    energy balance where the net solar radiation is partitioned over latent and
+    sensible heat fluxes (ignoring the soil heat flux). To estimate this
+    partitioning, the PM method makes a connection between the surface
+    temperature and the air temperature. However, the assumptions
+    underlying the PM model are valid only when the surface where this
+    partitioning takes place is the same for the latent and sensible heat
+    fluxes.
+
+    For a crop canopy this assumption is valid because the leaves of the
+    canopy form the surface where both latent heat flux (through stomata)
+    and sensible heat flux (through leaf temperature) are partitioned.
+    For a soil, this principle does not work because when the soil is
+    drying the evaporation front will quickly disappear below the surface
+    and therefore the assumption that the partitioning surface is the
+    same does not hold anymore.
+
+    For water surfaces, the assumptions underlying PM do not hold
+    because there is no direct relationship between the temperature
+    of the water surface and the net incoming radiation as radiation is
+    absorbed by the water column and the temperature of the water surface
+    is co-determined by other factors (mixing, etc.). Only for a very
+    shallow layer of water (1 cm) the PM methodology could be applied.
+
+    For bare soil and open water the Penman model is preferred. Although it
+    partially suffers from the same problems, it is calibrated somewhat
+    better for open water and bare soil based on its empirical wind
+    function.
+
+    Finally, in crop simulation models the open water evaporation and
+    bare soil evaporation only play a minor role (pre-sowing conditions
+    and flooded rice at early stages), it is not worth investing much
+    effort in improved estimates of reference value for E0 and ES0.
+    """
+    if ETMODEL not in ["PM", "P"]:
+        msg = "Variable ETMODEL can have values 'PM'|'P' only."
+        raise RuntimeError(msg)
+
+    E0, ES0, ET0 = penman(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2,
+                          ANGSTA, ANGSTB)
+    if ETMODEL == "PM":
+        ET0 = penman_monteith(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2)
+
+    return E0, ES0, ET0
+
+
+def penman(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     """Calculates E0, ES0, ET0 based on the Penman model.
     
      This routine calculates the potential evapo(transpi)ration rates from
@@ -30,52 +122,51 @@ def penman(day, LAT, ELEV, ANGSTA, ANGSTB, TMIN, TMAX, AVRAD, VAP, WIND2):
 
     Input variables::
     
-        day     I4  Python date                                    -      
-        LAT     R4  Latitude of the site                        degrees   
-        ELEV    R4  Elevation above sea level                      m      
-        ANGSTA  R4  Empirical constant in Angstrom formula         -      
-        ANGSTB  R4  Empirical constant in Angstrom formula         -      
-        TMIN    R4  Minimum temperature                            C      
-        TMAX    R4  Maximum temperature                            C      
-        AVRAD   R4  Daily shortwave radiation                   J m-2 d-1 
-        VAP     R4  24 hour average vapour pressure               hPa     
-        WIND2   R4  24 hour average windspeed at 2 meter          m/s     
-        
+        day     -  Python datetime.date object                                    -      
+        LAT     -  Latitude of the site                        degrees   
+        ELEV    -  Elevation above sea level                      m      
+        TMIN    -  Minimum temperature                            C
+        TMAX    -  Maximum temperature                            C      
+        AVRAD   -  Daily shortwave radiation                   J m-2 d-1 
+        VAP     -  24 hour average vapour pressure               hPa     
+        WIND2   -  24 hour average windspeed at 2 meter          m/s     
+        ANGSTA  -  Empirical constant in Angstrom formula         -
+        ANGSTB  -  Empirical constant in Angstrom formula         -
+
     Output is a tuple (E0,ES0,ET0)::
     
-        E0      R4  Penman potential evaporation from a free water surface [mm/d]
-        ES0     R4  Penman potential evaporation from a moist bare soil surface [mm/d]
-        ET0     R4  Penman potential transpiration from a crop canopy [mm/d]
+        E0      -  Penman potential evaporation from a free water surface [mm/d]
+        ES0     -  Penman potential evaporation from a moist bare soil surface [mm/d]
+        ET0     -  Penman potential transpiration from a crop canopy [mm/d]
     """
     # psychrometric instrument constant (mbar/Celsius-1)
     # albedo for water surface, soil surface and canopy
     # latent heat of evaporation of water (J/kg=J/mm)
-    # Stefan Boltzmann constant (J/m2/d/K4)
-    PSYCON=0.67; REFCFW=0.05; REFCFS=0.15; REFCFC=0.25
-    LHVAP=2.45E6; STBC=4.9E-3
+    # Stefan Boltzmann constant (in J/m2/d/K4, e.g multiplied by 24*60*60)
+    PSYCON = 0.67; REFCFW = 0.05; REFCFS = 0.15; REFCFC = 0.25
+    LHVAP = 2.45E6; STBC = 4.9E-3
 
     # preparatory calculations
     # mean daily temperature and temperature difference (Celsius)
     # coefficient Bu in wind function, dependent on temperature
     # difference
-    TMPA  = (TMIN+TMAX)/2.
-    TDIF  = TMAX - TMIN
-    BU    = 0.54 + 0.35 * limit(0.,1.,(TDIF-12.)/4.)
+    TMPA = (TMIN+TMAX)/2.
+    TDIF = TMAX - TMIN
+    BU = 0.54 + 0.35 * limit(0.,1.,(TDIF-12.)/4.)
 
     # barometric pressure (mbar)
     # psychrometric constant (mbar/Celsius)
-    PBAR  = 1013.*exp(-0.034*ELEV/(TMPA+273.))
+    PBAR = 1013.*exp(-0.034*ELEV/(TMPA+273.))
     GAMMA = PSYCON*PBAR/1013.
-
 
     # saturated vapour pressure according to equation of Goudriaan
     # (1977) derivative of SVAP with respect to temperature, i.e. 
     # slope of the SVAP-temperature curve (mbar/Celsius);
     # measured vapour pressure not to exceed saturated vapour pressure
 
-    SVAP  = 6.10588 * exp(17.32491*TMPA/(TMPA+238.102))
+    SVAP = 6.10588 * exp(17.32491*TMPA/(TMPA+238.102))
     DELTA = 238.102*17.32491*SVAP/(TMPA+238.102)**2
-    VAP   = min(VAP,SVAP)
+    VAP = min(VAP, SVAP)
 
     # the expression n/N (RELSSD) from the Penman formula is estimated
     # from the Angstrom formula: RI=RA(A+B.n/N) -> n/N=(RI/RA-A)/B,
@@ -83,12 +174,12 @@ def penman(day, LAT, ELEV, ANGSTA, ANGSTB, TMIN, TMAX, AVRAD, VAP, WIND2):
     # to ASTRO:
 
     r = astro(day, LAT, AVRAD)
-    RELSSD = limit(0.,1.,(r.ATMTR-abs(ANGSTA))/abs(ANGSTB))
+    RELSSD = limit(0., 1., (r.ATMTR-abs(ANGSTA))/abs(ANGSTB))
 
     # Terms in Penman formula, for water, soil and canopy
 
     # net outgoing long-wave radiation (J/m2/d) acc. to Brunt (1932)
-    RB  = STBC*(TMPA+273.)**4*(0.56-0.079*sqrt(VAP))*(0.1+0.9*RELSSD)
+    RB = STBC*(TMPA+273.)**4*(0.56-0.079*sqrt(VAP))*(0.1+0.9*RELSSD)
 
     # net absorbed radiation, expressed in mm/d
     RNW = (AVRAD*(1.-REFCFW)-RB)/LHVAP
@@ -96,20 +187,117 @@ def penman(day, LAT, ELEV, ANGSTA, ANGSTB, TMIN, TMAX, AVRAD, VAP, WIND2):
     RNC = (AVRAD*(1.-REFCFC)-RB)/LHVAP
 
     # evaporative demand of the atmosphere (mm/d)
-    EA  = 0.26 * max(0.,(SVAP-VAP)) * (0.5+BU*WIND2)
+    EA = 0.26 * max(0.,(SVAP-VAP)) * (0.5+BU*WIND2)
     EAC = 0.26 * max(0.,(SVAP-VAP)) * (1.0+BU*WIND2)
 
     # Penman formula (1948)
-    E0  = (DELTA*RNW+GAMMA*EA)/(DELTA+GAMMA)
+    E0 = (DELTA*RNW+GAMMA*EA)/(DELTA+GAMMA)
     ES0 = (DELTA*RNS+GAMMA*EA)/(DELTA+GAMMA)
     ET0 = (DELTA*RNC+GAMMA*EAC)/(DELTA+GAMMA)
 
     # Ensure reference evaporation >= 0.
-    E0  = max(0., E0)
+    E0 = max(0., E0)
     ES0 = max(0., ES0)
     ET0 = max(0., ET0)
     
-    return (E0,ES0,ET0)
+    return E0, ES0, ET0
+
+
+def penman_monteith(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
+    """Calculates reference ET0 based on the Penman-Monteith model.
+
+     This routine calculates the potential evapotranspiration rate from
+     a reference crop canopy (ET0) in mm/d. For these calculations the
+     analysis by FAO is followed as laid down in the FAO publication
+     `Guidelines for computing crop water requirements - FAO Irrigation
+     and drainage paper 56 <http://www.fao.org/docrep/X0490E/x0490e00.htm#Contents>`_
+
+    Input variables::
+
+        day   -  Python datetime.date object                   -
+        LAT   -  Latitude of the site                        degrees
+        ELEV  - Elevation above sea level                      m
+        TMIN  - Minimum temperature                            C
+        TMAX  - Maximum temperature                            C
+        AVRAD - Daily shortwave radiation                   J m-2 d-1
+        VAP   - 24 hour average vapour pressure               hPa
+        WIND2 - 24 hour average windspeed at 2 meter          m/s
+
+    Output is:
+
+        ET0   - Penman-Monteith potential transpiration
+                rate from a crop canopy                     [mm/d]
+    """
+
+    # psychrometric instrument constant (kPa/Celsius)
+    PSYCON = 0.665
+    # albedo and surface resistance [sec/m] for the reference crop canopy
+    REFCFC = 0.23; CRES = 70.
+    # latent heat of evaporation of water [J/kg == J/mm] and
+    LHVAP = 2.45E6
+    # Stefan Boltzmann constant (J/m2/d/K4, e.g multiplied by 24*60*60)
+    STBC = 4.903E-3
+    # Soil heat flux [J/m2/day] explicitly set to zero
+    G = 0.
+
+    # mean daily temperature (Celsius)
+    TMPA = (TMIN+TMAX)/2.
+
+    # Vapour pressure to kPa
+    VAP = hPa2kPa(VAP)
+
+    # atmospheric pressure (kPa)
+    T = Celsius2Kelvin(TMPA)
+    PATM = 101.3 * pow((T - (0.0065*ELEV))/T, 5.26)
+
+    # psychrometric constant (kPa/Celsius)
+    GAMMA = PSYCON * PATM * 1.0E-3
+
+    # Derivative of SVAP with respect to mean temperature, i.e.
+    # slope of the SVAP-temperature curve (kPa/Celsius);
+    SVAP_TMPA = SatVapourPressure(TMPA)
+    DELTA = (4098. * SVAP_TMPA)/pow((TMPA + 237.3), 2)
+
+    # Daily average saturated vapour pressure [kPa] from min/max temperature
+    SVAP_TMAX = SatVapourPressure(TMAX)
+    SVAP_TMIN = SatVapourPressure(TMIN)
+    SVAP = (SVAP_TMAX + SVAP_TMIN) / 2.
+
+    # measured vapour pressure not to exceed saturated vapour pressure
+    VAP = min(VAP, SVAP)
+
+    # Longwave radiation according at Tmax, Tmin (J/m2/d)
+    # and preliminary net outgoing long-wave radiation (J/m2/d)
+    STB_TMAX = STBC * pow(Celsius2Kelvin(TMAX), 4)
+    STB_TMIN = STBC * pow(Celsius2Kelvin(TMIN), 4)
+    RNL_TMP = ((STB_TMAX + STB_TMIN) / 2.) * (0.34 - 0.14 * sqrt(VAP))
+
+    # Clear Sky radiation [J/m2/day] from Angot TOA radiation
+    # the latter is found through a call to astro()
+    r = astro(day, LAT, AVRAD)
+    CSKYRAD = (0.75 + (2e-05 * ELEV)) * r.ANGOT
+
+    if CSKYRAD > 0:
+        # Final net outgoing longwave radiation [J/m2/day]
+        RNL = RNL_TMP * (1.35 * (AVRAD/CSKYRAD) - 0.35)
+
+        # radiative evaporation equivalent for the reference surface
+        # [mm/day]
+        RN = ((1-REFCFC) * AVRAD - RNL)/LHVAP
+
+        # aerodynamic evaporation equivalent [mm/day]
+        EA = ((900./(TMPA + 273)) * WIND2 * (SVAP - VAP))
+
+        # Modified psychometric constant (gamma*)[kPa/C]
+        MGAMMA = GAMMA * (1. + (CRES/208.*WIND2))
+
+        # Reference ET in mm/day
+        ET0 = (DELTA * (RN-G))/(DELTA + MGAMMA) + (GAMMA * EA)/(DELTA + MGAMMA)
+        ET0 = max(0., ET0)
+    else:
+        ET0 = 0.
+
+    return ET0
 
 #-------------------------------------------------------------------------------
 def check_angstromAB(xA, xB):
@@ -126,26 +314,26 @@ def check_angstromAB(xA, xB):
     A = abs(xA)
     B = abs(xB)
     SUM_AB = A + B
-    if (A < MIN_A or A > MAX_A):
+    if A < MIN_A or A > MAX_A:
         msg = "invalid Angstrom A value!"
         raise exc.PCSEError(msg)
-    if (B < MIN_B or B > MAX_B):
+    if B < MIN_B or B > MAX_B:
         msg = "invalid Angstrom B value!"
         raise exc.PCSEError(msg)
-    if (SUM_AB < MIN_SUM_AB or SUM_AB > MAX_SUM_AB):
+    if SUM_AB < MIN_SUM_AB or SUM_AB > MAX_SUM_AB:
         msg = "invalid sum of Angstrom A & B values!"
         raise exc.PCSEError(msg)
 
     return [A,B]
 
-#-------------------------------------------------------------------------------
+
 def wind10to2(wind10):
     """Converts windspeed at 10m to windspeed at 2m using log. wind profile
     """
     wind2 = wind10 * (log10(2./0.033) / log10(10/0.033))
     return wind2
 
-#-------------------------------------------------------------------------------
+
 def ea_from_tdew(tdew):
     """
     Calculates actual vapour pressure, ea [kPa] from the dewpoint temperature
@@ -173,7 +361,8 @@ def ea_from_tdew(tdew):
     tmp = (17.27 * tdew) / (tdew + 237.3)
     ea = 0.6108 * exp(tmp)
     return ea
-#-------------------------------------------------------------------------------
+
+
 def angstrom(day, latitude, ssd, cA, cB):
     """Compute global radiation using the Angstrom equation.
     
@@ -192,7 +381,7 @@ def angstrom(day, latitude, ssd, cA, cB):
     globrad = r.ANGOT * (cA + cB * (ssd / r.DAYL))
     return globrad
                        
-#-------------------------------------------------------------------------------
+
 def doy(day):
     """Converts a date or datetime object to day-of-year (Jan 1st = doy 1)
     """
@@ -207,25 +396,7 @@ def doy(day):
 
     return (day-datetime.date(day.year,1,1)).days + 1
 
-#-------------------------------------------------------------------------------
-def is_data_column(col):
-    """Returns True if given column is not part of the run descriptors
-    
-    Parameters:
-    * col - An SQLAlchemy column object
-    """
-    if not isinstance(col, Column):
-        msg = "Provided variable is not an SQLAlchemy column object"
-        raise RuntimeError(msg)
 
-    run_descriptors = ["grid_no","crop_no","year","day","simulation_mode", 
-                       "member_id"]
-    if col.name not in run_descriptors:
-        return True
-    else:
-        return False
-
-#-------------------------------------------------------------------------------
 def limit(min, max, v):
     """limits the range of v between min and max
     """
@@ -240,7 +411,7 @@ def limit(min, max, v):
     else:             # v above range: return max
         return max
 
-#-------------------------------------------------------------------------------
+
 def daylength(day, latitude, angle=-4, _cache={}):
     """Calculates the daylength for a given day, altitude and base.
 
@@ -301,7 +472,7 @@ def daylength(day, latitude, angle=-4, _cache={}):
     
     return DAYLP
 
-#-------------------------------------------------------------------------------
+
 def astro(day, latitude, radiation, _cache={}):
     """python version of ASTRO routine by Daniel van Kraalingen.
     
@@ -380,32 +551,32 @@ def astro(day, latitude, radiation, _cache={}):
     # summer or 0 hours in winter.
 
     # Calculate solution for base=0 degrees
-    if (abs(AOB) <= 1.0):
+    if abs(AOB) <= 1.0:
         DAYL  = 12.0*(1.+2.*ASIN(AOB)/PI)
         # integrals of sine of solar height
         DSINB  = 3600.*(DAYL*SINLD+24.*COSLD*SQRT(1.-AOB**2)/PI)
         DSINBE = 3600.*(DAYL*(SINLD+0.4*(SINLD**2+COSLD**2*0.5))+
                  12.*COSLD*(2.+3.*0.4*SINLD)*SQRT(1.-AOB**2)/PI)
     else:
-        if (AOB >  1.0): DAYL = 24.0
-        if (AOB < -1.0): DAYL =  0.0
+        if AOB >  1.0: DAYL = 24.0
+        if AOB < -1.0: DAYL = 0.0
         # integrals of sine of solar height	
-        DSINB  = 3600.*(DAYL*SINLD)
+        DSINB = 3600.*(DAYL*SINLD)
         DSINBE = 3600.*(DAYL*(SINLD+0.4*(SINLD**2+COSLD**2*0.5)))
 
     # Calculate solution for base=-4 (ANGLE) degrees
     AOB_CORR = (-SIN(ANGLE*RAD)+SINLD)/COSLD
-    if (ABS(AOB_CORR) <= 1.0):
+    if abs(AOB_CORR) <= 1.0:
         DAYLP = 12.0*(1.+2.*ASIN(AOB_CORR)/PI)
-    elif (AOB_CORR >  1.0):
+    elif AOB_CORR > 1.0:
         DAYLP = 24.0
-    elif (AOB_CORR < -1.0):
-        DAYLP =  0.0
+    elif AOB_CORR < -1.0:
+        DAYLP = 0.0
 
     # extraterrestrial radiation and atmospheric transmission
-    ANGOT  = SC*DSINB
+    ANGOT = SC*DSINB
     # Check for DAYL=0 as in that case the angot radiation is 0 as well
-    if (DAYL > 0.0):
+    if DAYL > 0.0:
         ATMTR = AVRAD/ANGOT
     else:
         ATMTR = 0.
@@ -417,17 +588,16 @@ def astro(day, latitude, radiation, _cache={}):
         FRDIF = 1.33-1.46*ATMTR
     elif (ATMTR <= 0.35) and (ATMTR > 0.07):
         FRDIF = 1.-2.3*(ATMTR-0.07)**2
-    elif (ATMTR <= 0.07):
+    else:  # ATMTR <= 0.07
         FRDIF = 1.
 
     DIFPP = FRDIF*ATMTR*0.5*SC
     
     # Pack return values in namedtuple, add to cache and return
-    astro_nt = namedtuple("AstroResults","DAYL,DAYLP,SINLD,COSLD,DIFPP,ATMTR,DSINBE,ANGOT")
-    retvalue = astro_nt(DAYL,DAYLP,SINLD,COSLD,DIFPP,ATMTR,DSINBE,ANGOT)
+    astro_nt = namedtuple("AstroResults","DAYL, DAYLP, SINLD, COSLD, DIFPP, "
+                                         "ATMTR, DSINBE, ANGOT")
+    retvalue = astro_nt(DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE, ANGOT)
     _cache[(IDAY, LAT, AVRAD)] = retvalue
-
-    #print IDAY, LAT, AVRAD, DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE
 
     return retvalue
 
@@ -556,7 +726,7 @@ class Afgen2(object):
         
         # Determine if there are empty pairs in tbl_xy by searching
         # for the point where x stops monotonically increasing
-        xpos = np.arange(len(x)-1) + 1
+        xpos = np.arange(1, len(x))
         ibreak = False
         for i in xpos:
             if x[i] <= x[i-1]:
@@ -590,7 +760,7 @@ class Afgen2(object):
         return msg
 
 #-------------------------------------------------------------------------------
-class Chainmap(UserDict.DictMixin):
+class Chainmap(MutableMapping):
     """Combine multiple mappings for sequential lookup.
 
     For example, to emulate Python's normal lookup sequence:
@@ -619,7 +789,7 @@ class Chainmap(UserDict.DictMixin):
             return k.extend(mapping.keys)
         return k
 
-#-------------------------------------------------------------------------------
+
 def merge_dict(d1, d2, overwrite=False):
     """Merge contents of d1 and d2 and return the merged dictionary
     
@@ -730,7 +900,7 @@ def is_a_month(day):
     """Returns True if the date is on the last day of a month."""
 
     if day.month==12:
-        if (day == datetime.date(day.year, day.month, 31)):
+        if day == datetime.date(day.year, day.month, 31):
             return True
     else:
         if (day == datetime.date(day.year, day.month+1, 1) - \
@@ -745,16 +915,16 @@ def is_a_dekad(day):
     the 20th or the last day of each month"""
 
     if day.month == 12:
-        if (day == datetime.date(day.year, day.month, 10)):
+        if day == datetime.date(day.year, day.month, 10):
             return True
-        elif (day == datetime.date(day.year, day.month, 20)):
+        elif day == datetime.date(day.year, day.month, 20):
             return True
-        elif (day == datetime.date(day.year, day.month, 31)):
+        elif day == datetime.date(day.year, day.month, 31):
             return True
     else:
-        if (day == datetime.date(day.year, day.month, 10)):
+        if day == datetime.date(day.year, day.month, 10):
             return True
-        elif (day == datetime.date(day.year, day.month, 20)):
+        elif day == datetime.date(day.year, day.month, 20):
             return True
         elif (day == datetime.date(day.year, day.month+1, 1) -
                      datetime.timedelta(days=1)):

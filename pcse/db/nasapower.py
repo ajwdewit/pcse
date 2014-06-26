@@ -7,7 +7,7 @@ from datetime import date, timedelta
 import numpy as np
 
 from ..base_classes import WeatherDataProvider, WeatherDataContainer
-from ..util import wind10to2, ea_from_tdew, penman, check_angstromAB
+from ..util import wind10to2, ea_from_tdew, reference_ET, check_angstromAB
 from ..exceptions import PCSEError
 from ..settings import settings
 
@@ -23,7 +23,10 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
     :param latitude: latitude to request weather data for
     :param longitude: longitude to request weather data for
-    :param force_update: Force to request fresh data from POWER website
+    :keyword force_update: Set to True to force to request fresh data
+        from POWER website.
+    :keyword ETmodel: "PM"|"P" for selecting penman-monteith or Penman
+        method for reference evapotranspiration. Defaults to "PM".
 
     The NASA POWER database is a global database of daily weather data
     specifically designed for agrometeorological applications. The spatial
@@ -76,7 +79,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     angstA = 0.25
     angstB = 0.5
 
-    def __init__(self, latitude=None, longitude=None, force_update=False):
+    def __init__(self, latitude, longitude, force_update=False, ETmodel="PM"):
 
         WeatherDataProvider.__init__(self)
 
@@ -89,6 +92,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
         self.latitude = float(latitude)
         self.longitude = float(longitude)
+        self.ETmodel = ETmodel
         msg = "Retrieving weather data from NASA Power for lat/lon: (%f, %f)."
         self.logger.info(msg % (self.latitude, self.longitude))
 
@@ -291,11 +295,10 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
             # Reference evapotranspiration in mm/day
             try:
-                (E0,ES0,ET0) = penman(t["DAY"], t["LAT"], t["ELEV"], self.angstA,
-                                      self.angstB, t["TMIN"], t["TMAX"], t["IRRAD"],
-                                      t["VAP"], t["WIND"])
+                E0, ES0, ET0 = reference_ET(t["DAY"], t["LAT"], t["ELEV"], t["TMIN"], t["TMAX"], t["IRRAD"],
+                                            t["VAP"], t["WIND"], self.angstA, self.angstB, self.ETmodel)
             except ValueError as e:
-                msg = (("Failed to calculate reference ET values on %s. " % thisdate) +
+                msg = (("Failed to calculate reference ET values on %s. " % t["DAY"]) +
                        ("With input values:\n %s.\n" % str(t)) +
                        ("Due to error: %s" % e))
                 raise PCSEError(msg)

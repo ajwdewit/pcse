@@ -13,11 +13,12 @@ Installing PCSE
 Requirements and dependencies
 -----------------------------
 
-PCSE is being developed on Ubuntu Linux 10.04 using python 2.7.6 and is known to work with the 3.x series (using the 2to3
-tool). As python is a platform independent language, PCSE works equally well on Windows or Mac OSX.  The most
-straightforward approach for installing python is through one of the prepackaged python distributions
-such as `Enthought Canopy`_, `Anaconda`_ or `PythonXY`_.
-The following screen dump shows the version of python, numpy and SQLAlchemy that were used to develop PCSE::
+PCSE is being developed on Ubuntu Linux 10.04 using python 2.7.6 and is known to work with
+the 3.x series (using the 2to3 tool). As python is a platform independent language, PCSE
+works equally well on Windows or Mac OSX.  The most straightforward approach for installing
+python is through one of the prepackaged python distributions such as `Enthought Canopy`_,
+`Anaconda`_ or `PythonXY`_. The following screen dump shows the version of python, numpy and
+SQLAlchemy that were used to develop PCSE::
 
     Python 2.7.6 (default, Dec 16 2013, 12:39:22)
     [GCC 4.4.3] on linux2
@@ -29,8 +30,8 @@ The following screen dump shows the version of python, numpy and SQLAlchemy that
     >>> sa.__version__
     '0.8.4'
 
-.. _Enthought Canopy: https://store.continuum.io/cshop/anaconda/
-.. _Anaconda: https://www.enthought.com/products/canopy/
+.. _Enthought Canopy: https://www.enthought.com/products/canopy/
+.. _Anaconda: https://store.continuum.io/cshop/anaconda/
 .. _PythonXY: https://code.google.com/p/pythonxy/wiki/Welcome
 
 All examples in this quickstart guide were developed under Windows 7 with the Enthought Python distribution
@@ -39,9 +40,13 @@ All examples in this quickstart guide were developed under Windows 7 with the En
 Downloading PCSE
 ----------------
 
-The PCSE package can be downloaded as a zip file from GitHub.com using the link `here`_. Just unzip the package
-at a suitable location. Note that the top directory in the zip file is `pcse-<branchname>`. The actual PCSE is package is
-inside this folder and needs to be put on your file system.
+The PCSE package can be downloaded as a zip file from GitHub.com using the link `here`_. Just unzip
+the package at a suitable location, for this tutorial we assume that PCSE is installed
+under 'D:\\USERDATA\\pylib\\'. Note that the top directory in the zip file is `pcse-<branchname>`.
+The actual PCSE is package is inside this folder and needs to be put on your file system. After
+unzipping the 'D:\\USERDATA\\pylib\\' folder should resemble the screenshot below.
+
+.. image:: pylib.png
 
 .. _here: https://github.com/ajwdewit/pcse/archive/develop.zip
 
@@ -68,7 +73,7 @@ this location needs to be added to the search path of python::
     Python 2.7.1 |EPD 7.0-2 (32-bit)| (r271:86832, Dec  2 2010, 10:35:02) [MSC v.1500 32 bit (Intel)] on win32
     Type "help", "copyright", "credits" or "license" for more information.
     >>> import sys
-    >>> sys.path.append(r"D:\USERDATA\pylib\pcse")
+    >>> sys.path.append(r"D:\USERDATA\pylib")
 
 Next, PCSE can be imported and the tests can be executed by calling
 the `test()` function at the top of the package::

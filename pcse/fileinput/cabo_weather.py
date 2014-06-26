@@ -6,11 +6,10 @@ import glob
 import calendar
 import numpy as np
 import datetime as dt
-import copy
 import warnings
 
 from ..base_classes import WeatherDataContainer, WeatherDataProvider
-from ..util import penman, angstrom, check_angstromAB
+from ..util import reference_ET, angstrom, check_angstromAB
 from ..exceptions import PCSEError
 
 class CABOWeatherDataProvider(WeatherDataProvider):
@@ -18,6 +17,10 @@ class CABOWeatherDataProvider(WeatherDataProvider):
     
     :param fname: root name of CABO weather files to read
     :param fpath: path where to find files, can be absolute or relative.
+    :keyword ETmodel: "PM"|"P" for selecting penman-monteith or Penman
+        method for reference evapotranspiration. Defaults to "PM".
+    :keyword distance: maximum interpolation distance for meteorological
+        variables, defaults to 1 day.
     :returns: callable like object with meteo records keyed on date.
     
     The Wageningen crop models that are written in FORTRAN or FST often use
@@ -85,8 +88,10 @@ class CABOWeatherDataProvider(WeatherDataProvider):
     potential_records = None
     tmp_data = None
     
-    def __init__(self, fname, fpath=None, distance=1):
+    def __init__(self, fname, fpath=None, ETmodel="PM", distance=1):
         WeatherDataProvider.__init__(self)
+
+        self.ETmodel = ETmodel
 
         # Construct search path
         search_path = self._construct_search_path(fname, fpath)
@@ -124,6 +129,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
 
             # Write data to binary cache file
             self._write_cache_file(search_path)
+
             # Delete array for tmp storage
             delattr(self, "tmp_data")
 
@@ -275,7 +281,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
         #wdc_proto = self._build_WeatherDataContainer()
         
         for i in range(self.potential_records):
-            rec = self.tmp_data[:,i]
+            rec = self.tmp_data[:, i]
             if True in np.isnan(rec):
                 # Incomplete record: skip
                 continue
@@ -295,9 +301,8 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             
             # Reference evapotranspiration in mm/day
             try:
-                (E0,ES0,ET0) = penman(thisdate, t["LAT"], t["ELEV"], self.angstA,
-                                      self.angstB, t["TMIN"], t["TMAX"], t["IRRAD"],
-                                      t["VAP"], t["WIND"])
+                E0, ES0, ET0 = reference_ET(thisdate, t["LAT"], t["ELEV"], t["TMIN"], t["TMAX"], t["IRRAD"],
+                                            t["VAP"], t["WIND"], self.angstA, self.angstB, self.ETmodel)
             except ValueError as e:
                 msg = (("Failed to calculate reference ET values on %s. " % thisdate) +
                        ("With input values:\n %s.\n" % str(t)) +
