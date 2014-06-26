@@ -9,7 +9,11 @@ import copy
 from math import log10, cos, sin, asin, sqrt, exp
 from collections import namedtuple
 from bisect import bisect_left
-import UserDict
+try:
+    # support both python2 and python3
+    from collections import UserDict
+except:
+    import UserDict
 import textwrap
 import sqlite3
 
