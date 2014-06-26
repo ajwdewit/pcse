@@ -9,7 +9,11 @@ import copy
 from math import log10, cos, sin, asin, sqrt, exp
 from collections import namedtuple
 from bisect import bisect_left
-import UserDict
+try:
+    # support both python2 and python3
+    from collections import MutableMapping
+except ImportError:
+    from UserDict import DictMixin as MutableMapping
 import textwrap
 import sqlite3
 
@@ -756,7 +760,7 @@ class Afgen2(object):
         return msg
 
 #-------------------------------------------------------------------------------
-class Chainmap(UserDict.DictMixin):
+class Chainmap(MutableMapping):
     """Combine multiple mappings for sequential lookup.
 
     For example, to emulate Python's normal lookup sequence:
