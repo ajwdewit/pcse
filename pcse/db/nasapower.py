@@ -148,8 +148,9 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         self._make_WeatherDataContainers(recs)
 
         # dump contents to a cache file
-        cache_filename = self._get_cache_filename(latitude, longitude)
-        self._dump(cache_filename)
+        self._write_cache_file();
+        #cache_filename = self._get_cache_filename(latitude, longitude)
+        #self._dump(cache_filename)
 
     def _estimate_AngstAB(self, power_records):
         """Determine Angstrom A/B parameters from Top-of-Atmosphere (toa_dwn) and

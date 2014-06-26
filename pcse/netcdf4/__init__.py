@@ -6,3 +6,4 @@ for crop simulation models:
 - NetcdfWeatherDataProvider reads NETCDF4 files for use in PyWOFOST
 """
 from .netcdf4_reader import NetcdfWeatherDataProvider;
+from .netcdf4_reader import NetcdfEnvelope2D;

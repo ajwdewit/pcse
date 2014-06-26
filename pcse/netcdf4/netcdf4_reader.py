@@ -9,7 +9,7 @@ import math;
 
 from ..util import penman
 from ..base_classes import WeatherDataProvider, WeatherDataContainer
-from ..elevation import AsciiGrid, GridEnvelope2D;
+from pcse.pcse.geo import AsciiGrid, GridEnvelope2D;
 from ..exceptions import PCSEError
 from ..settings import settings
 import warnings
@@ -42,11 +42,62 @@ def vap_from_sh(sh, alt):
     vap = p * mr / (0.622 + mr); # constant is based on ratio of mole weights for dry air and water
     return vap;
 
-class NetcdfWeatherDataProvider(WeatherDataProvider):
+class NetcdfEnvelope2D(GridEnvelope2D):
+    # Constants
+    LON = 'lon';
+    LAT = 'lat';
+    TIME = 'time'
+    
+    # File names
+    elevation_grid = r"../geodata/glob_elevation_resampled.asc";
+    number_grid = r"../geodata/grid_50deg_gld.asc";
+    
+    def __init__(self, ds):
+        pass;
+    
+    @staticmethod
+    def getEnvelope(ds):
+        # Retrieve the x and y ranges stored in the netCDF dataset
+        LON = NetcdfEnvelope2D.LON;
+        LAT = NetcdfEnvelope2D.LAT;
+        _dims = ds.dimensions;
+        _vars = ds.variables;
+        x_range= NetcdfEnvelope2D._readRange(_vars[LON]);
+        y_range = NetcdfEnvelope2D._readRange(_vars[LAT]);
+        
+        # Now create an envelope object
+        dx = GridEnvelope2D._getStep(x_range[0], x_range[1], len(_dims[LON]));
+        dy = GridEnvelope2D._getStep(y_range[0], y_range[1], len(_dims[LAT]));
+        xll = min(_vars[LON]) - 0.5*dx;
+        yll = min(_vars[LAT]) - 0.5*dy;
+        nvlp = GridEnvelope2D(len(_dims[LON]), len(_dims[LAT]), xll, yll, dx, dy);
+        
+        # In some netCDF files the longitudes and latitudes are stored differently
+        if _vars[LON][0] > _vars[LON][-1]: nvlp.xcoords_sort = 'DESC';
+        if _vars[LAT][0] < _vars[LAT][-1]: nvlp.ycoords_sort = 'ASC';
+        return nvlp;
+    
+    @staticmethod
+    def _readRange(varxy):
+        # Argument is either x or y
+        minxy = min(varxy);
+        maxxy = max(varxy);
+        return [minxy, maxxy];
+    
+    @staticmethod
+    def _readDimensions(ncdimensions):
+        LON = NetcdfEnvelope2D.LON;
+        LAT = NetcdfEnvelope2D.LAT;
+        nrows = len(ncdimensions[LAT]);
+        ncols = len(ncdimensions[LON]);
+        return nrows, ncols;
+    
+
+class NetcdfWeatherDataProvider(WeatherDataProvider, NetcdfEnvelope2D):
     """WeatherDataProvider for using netcdf4 files with PCSE
     
-    :param latitude: latitude to request weather data for
     :param longitude: longitude to request weather data for
+    :param latitude: latitude to request weather data for
     
     Weather data can efficiently be delivered in the form of files in the NETCDF4
     format. In general such data pertain to gridded weather, meaning that they are
@@ -61,10 +112,6 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
     different variables for representing the weather.
     
     """
-    #constants
-    LON = 'lon';
-    LAT = 'lat';
-    TIME = 'time'
 
     # Define some lambda functions to take care of unit conversions.
     W_to_J_day = lambda x: x * 86400;
@@ -94,7 +141,8 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
     angstA = 0.25
     angstB = 0.5
 
-    def __init__(self, fname, latitude, longitude, fpath=None, force_update=False):
+    # Pls note that we use lon and then lat, just because x is usu. mentioned before y
+    def __init__(self, fname, longitude, latitude, fpath=None, force_update=False):
         WeatherDataProvider.__init__(self);
         
         # Construct search path
@@ -106,23 +154,16 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
         # Access the first file and calculate the dimensions etc.
         key1 = self.Netcdf4_files.keys()[0]; # first key
         ds = self.Netcdf4_files[key1];
-        nrows, ncols = self._readDimensions(ds.dimensions);
-        x_range = self._readRange(ds.variables[self.LON]);
-        y_range = self._readRange(ds.variables[self.LAT]);
-        dx = GridEnvelope2D.getStep(x_range[0], x_range[1], ncols);
-        dy = GridEnvelope2D.getStep(y_range[0], y_range[1], nrows);
-        
-        # For the mean time, assume that the files cover the same extent
-        nvlp = GridEnvelope2D(nrows, ncols, x_range[0] - 0.5*dx, y_range[0] - 0.5*dy, dx, dy);
+        nvlp = self.getEnvelope(ds);
         self.longitude, self.latitude = nvlp.getNearestCenterPoint(longitude, latitude);
         
         # Check for existence of a cache file
-        cache_file = self._find_cache_file(self.latitude, self.longitude);
+        cache_file = self._find_cache_file(self.longitude, self.latitude);
         if cache_file is None or force_update is True:
             msg = "No cache file or forced update, retrieving data from disk."
             self.logger.debug(msg)
             # No cache file, we really have to get the data from disk
-            self._get_and_process_Netcdf4(fname, self.latitude, self.longitude, nvlp);
+            self._get_and_process_Netcdf4(fname, self.longitude, self.latitude, nvlp);
             return;       
 
         # Get age of cache file, if any of the Netcdf4 files is younger then try 
@@ -149,13 +190,13 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
                 msg = "Loading cache file failed, reloading data from Netcdf4 files."
                 self.logger.debug(msg)
                 # Loading cache file failed!
-                self._get_and_process_Netcdf4(self.latitude, self.longitude);
+                self._get_and_process_Netcdf4(self.longitude, self.latitude);
         else:
             # Cache file is too old. Try loading new data from file
             try:
                 msg = "Cache file older then the Netcdf4 files, reloading data."
                 self.logger.debug(msg)
-                self._get_and_process_Netcdf4(self.latitude, self.longitude);
+                self._get_and_process_Netcdf4(self.longitude, self.latitude);
             except:
                 msg = ("Reloading data from Netcdf4 files failed, reverting to (outdated) " +
                        "cache file")
@@ -164,18 +205,6 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
                 if status is not True:
                     msg = "Outdated cache file failed loading."
                     raise PCSEError(msg);
-        
-        
-    def _readDimensions(self, ncdimensions):
-        nrows = len(ncdimensions[self.LAT]);
-        ncols = len(ncdimensions[self.LON]);
-        return nrows, ncols;
-    
-    def _readRange(self, varxy):
-        # Argument is either x or y
-        minxy = min(varxy);
-        maxxy = max(varxy);
-        return [minxy, maxxy];
 
     
     def _get_Netcdf4_files(self, fname, search_path):
@@ -225,7 +254,7 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
         
         return mainresult, available_years;
     
-    def _get_and_process_Netcdf4(self, fname, latitude, longitude, nvlp1):      
+    def _get_and_process_Netcdf4(self, fname, longitude, latitude, nvlp1):      
         # First check that the files do cover the same extent
         dateref = date(1860, 1, 1);
         timeref = datetime.combine(dateref, time(0,0,0));
@@ -239,23 +268,16 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
             # It was already checked that the file contains data wrt. a relevant variable
             if (key == key1): continue; # given envelope based on content of first file
             ds = self.Netcdf4_files[key];
+            nvlp = self.getEnvelope(ds);
 
-            # Create an envelope object for the current dataset
-            _dims = ds.dimensions;
-            _vars = ds.variables;
-            x_range= self._readRange(_vars[self.LON]);
-            y_range = self._readRange(_vars[self.LAT]);
-            dx = GridEnvelope2D.getStep(x_range[0], x_range[1], len(_dims[self.LON]));
-            dy = GridEnvelope2D.getStep(y_range[0], y_range[1], len(_dims[self.LAT]));
-            xll = min(_vars[self.LON]) - 0.5*dx;
-            yll = min(_vars[self.LAT]) - 0.5*dy;
-            nvlp = GridEnvelope2D(len(_dims[self.LAT]), len(_dims[self.LON]), xll, yll, dx, dy);
-
-            # Now check the extent; if it's ok, then continue
-            if not nvlp.hasSameExtent(nvlp1): raise PCSEError("Netcdf4 files do not cover the same extent");
+            # Now check the extent and sorting of coordinates; if it's ok, then continue
+            if not nvlp.hasSameExtent(nvlp1):
+                raise PCSEError("Netcdf4 files do not cover the same extent");
+            if not nvlp.compareSorting(nvlp1):
+                raise PCSEError("Netcdf4 files do not have their coordinates sorted in the same way");
 
         # If we reach here, we can assume that all file shave the same extent
-        self.elevation = self._get_elevation(latitude, longitude);
+        self.elevation = self.get_elevation(longitude, latitude);
         self.description = "Meteo data from Netcdf4 files with label " + fname;
         
         # Prepare to check the dates for which data are available in the various files
@@ -263,7 +285,16 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
         end_day = date(self.available_years[-1], 12, 31);
         
         # Get hold of all the data relevant for the given location, for the available years
-        i, k = nvlp1.getRowAndColIndex(self.longitude, self.latitude);
+        # Lookup lat-lon in the netCDF and check that latitudes and longitudes are the same! 
+        ds.variables[self.LAT]
+        k, i = nvlp1.getColAndRowIndex(self.longitude, self.latitude);
+        latitudes = ds.variables[self.LAT];
+        longitudes = ds.variables[self.LON];
+        abs_diff = abs(latitudes[i] - self.latitude);
+        assert abs_diff < 0.01, "Latitudes not equal: " + str(latitudes[i]) + " " + str(self.latitude);
+        abs_diff = abs(longitudes[k] - self.longitude)
+        assert abs_diff < 0.01, "Longitudes not equal!: " + str(longitudes[i]) + " " + str(self.longitude);
+
         dataslices = {}
         #for key in self.Netcdf4_files:
         #    ds = None;
@@ -342,18 +373,18 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
             self._store_WeatherDataContainer(wdc, wdc.DAY);
         self._write_cache_file();
     
-    def _find_cache_file(self, latitude, longitude):
+    def _find_cache_file(self, longitude, latitude):
         """Try to find a cache file for given latitude/longitude.
         Returns None if the cache file does not exist, else it returns the full path
         to the cache file.
         """
-        cache_filename = self._get_cache_filename(latitude, longitude)
+        cache_filename = self._get_cache_filename(longitude, latitude)
         if os.path.exists(cache_filename):
             return cache_filename
         else:
             return None;
     
-    def _get_cache_filename(self, latitude, longitude):
+    def _get_cache_filename(self, longitude, latitude):
         """Constructs the filename used for cache files given latitude and longitude
         The latitude and longitude is coded into the filename - no truncating.So the
         cache filename for a point with lat/lon 52.75/-124.75 will be:
@@ -367,7 +398,7 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
     def _write_cache_file(self):
         """Write the data loaded from the Netcdf files to a binary file using cPickle
         """
-        cache_filename = self._get_cache_filename(self.latitude, self.longitude)
+        cache_filename = self._get_cache_filename(self.longitude, self.latitude)
         try:
             self._dump(cache_filename)
         except (IOError, EnvironmentError), e:
@@ -397,7 +428,7 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
         Returns True if loading succeeded, False otherwise
         """
         # If no cache_file defined return False directly
-        cache_filename = self._get_cache_filename(self.latitude, self.longitude);
+        cache_filename = self._get_cache_filename(self.longitude, self.latitude);
         if not os.path.exists(cache_filename):
             return False;
         
@@ -457,29 +488,36 @@ class NetcdfWeatherDataProvider(WeatherDataProvider):
         finally:
             return result;
     
-    def _get_elevation(self, latitude, longitude):
-        # Find out where the elevation grid might be located
-        key1 = self.Netcdf4_files.keys()[0]; # first key
-        ds = self.Netcdf4_files[key1];
-        path = os.path.dirname(ds.filepath());
-        fullpath = os.path.join(path, r"../Elevation/glob_elevation_resampled.asc"); 
-        
-        # Now open the file
-        r = AsciiGrid(fullpath, "i");
+    def _get_value_from_grid(self, longitude, latitude, fpath):
+        # Open the file. Get right row and column. Elevations are linked to the cell centres
+        r = AsciiGrid(fpath, "i");
         if not r.open('r'): raise Exception("Unable to open input file " + r.name);
-        
-        # Use the coordinates for the upper left corner to find out the right row and column
-        # The elevations are linked to the cell centres
-        yul = r.yll + r.nrows * r.cellsize;
-        k = round(longitude - r.xll -  0.5 * r.cellsize) / r.cellsize;
-        i = round(yul - 0.5 * r.cellsize - latitude) / r.cellsize;
+        k, i = r.getColAndRowIndex(longitude, latitude);
+        if (i == r.nrows): i = i - 1;
         
         # Now get hold of the right row, read the wanted value and close
-        for _ in range(0, int(i)-1): r.next(False);
+        for _ in range(0, i): r.next(False);
         line = r.next(); # this line is split, unlike the previous ones
         r.close();
         return line[int(k)];    
     
+    def get_elevation(self, longitude, latitude):
+        # Find out where the elevation grid might be located
+        fname = self.elevation_grid;
+        fullpath = self._getFullPath(fname);
+        return self._get_value_from_grid(longitude, latitude, fullpath);
+    
+    def get_grid_no(self, longitude, latitude):
+        # Find out where the number grid might be located
+        fname = self.number_grid;
+        fullpath = self._getFullPath(fname);
+        return self._get_value_from_grid(longitude, latitude, fullpath);
+    
+    def _getFullPath(self, fname):
+        key1 = self.Netcdf4_files.keys()[0]; # first key
+        ds = self.Netcdf4_files[key1];
+        path = os.path.dirname(ds.filepath());
+        return os.path.join(path, fname);
     
     def close(self):
         # finally close the files

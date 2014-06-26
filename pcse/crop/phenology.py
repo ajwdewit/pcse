@@ -504,3 +504,21 @@ class DVS_Phenology(SimulationObject):
         """
         if finish_type == 'harvest':
             self._for_finalize["DOH"] = day
+
+
+class DVS_PhenologyOnly(SimulationObject):
+	"""Class for running the phenology as a stand-alone crop simulation. 
+	The class DVS_PhenologyOnly mimicks the signature expected by the AgroManagement
+	module to start the crop simulation. DVS_PhenologyOnly then starts the real 
+	phenology module with the correct signature."""
+	
+	dvs_pheno = Instance(SimulationObject)
+
+	def initialize(self, day, kiosk, cropdata, soildata, sitedata, start_type, stop_type):
+		self.dvs_pheno = DVS_Phenology(cropdata, start_type, stop_type)
+		
+	def calc_rates(day, drv):
+		self.dvs_pheno.calc_rates(day, drv)
+		
+	def integrate(day):
+		self.dvs_pheno.integrate(day)

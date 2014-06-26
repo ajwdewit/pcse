@@ -6,3 +6,4 @@ from .GraspNetcdfReader import GraspWeatherDataProvider;
 from .PrincetonNetcdfReader import PrincetonWeatherDataProvider
 from .WatchNetcdfReader import WatchWeatherDataProvider;
 from .WfdeiNetcdfReader import WfdeiWeatherDataProvider;
+from .CropInfoReader import CropInfoProvider;

@@ -4,12 +4,12 @@ class AgCfsrWeatherDataProvider(NetcdfWeatherDataProvider):
     # Dummy lambda function
     dummy = lambda x: x;
     
-    def __init__(self, latitude, longitude, fpath=None, force_update=False):
+    def __init__(self, longitude, latitude, fpath=None, force_update=False):
         # Add optional variables; conversion to VAP is not done by means of a lambda function
         self.netcdf_variables.append("hur");
         self.pcse_variables.append(("VAP", "hur", self.dummy, "hPa"));
         
-        NetcdfWeatherDataProvider.__init__(self, "AgCFSR", latitude, longitude, fpath, force_update);
+        NetcdfWeatherDataProvider.__init__(self, "AgCFSR", longitude, latitude, fpath, force_update);
         
         
         
