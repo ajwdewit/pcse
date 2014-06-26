@@ -227,7 +227,7 @@ def penman_monteith(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
 
     # psychrometric instrument constant (kPa/Celsius)
     PSYCON = 0.665
-    # albedo and surface resistance [sec/m] for the reference crop canopy
+    # albedo and canopy resistance [sec/m] for the reference crop canopy
     REFCFC = 0.23; CRES = 70.
     # latent heat of evaporation of water [J/kg == J/mm] and
     LHVAP = 2.45E6
