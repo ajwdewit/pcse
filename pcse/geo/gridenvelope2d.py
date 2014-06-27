@@ -65,6 +65,16 @@ class GridEnvelope2D:
         else:
             i = int(round((self.getMaxY() - y - 0.5*self.dy + eps) / self.dy)); # TODO: check
         return k, i;
+    
+    def getXandYfromIndices(self, k, i):
+        # TODO implement for xcoords_sort == 'DESC' and ycoords_sort == 'ASC'
+        lon = float('inf');
+        lat = float('inf');
+        if self.xcoords_sort == 'ASC':
+            lon = self.getMinX() + k*self.dx + 0.5*self.dx;
+        if self.ycoords_sort == 'DESC':
+            lat = self.getMaxY() - i*self.dy - 0.5*self.dy;
+        return lon, lat;
         
     def getNearestCenterPoint(self, x, y):
         # Rows are counted from the top downwards

@@ -100,7 +100,7 @@ class AsciiGrid(GridEnvelope2D):
     def __iter__(self):
         return self;
     
-    def next(self, splitline=True):
+    def next(self, parseLine=True):
         # Read the next row if possible, otherwise generate StopIteration
         # Assume that the header lines have been read and are correct wrt. ncols and nrows
         result = None;
@@ -119,7 +119,7 @@ class AsciiGrid(GridEnvelope2D):
 
                     # Now fill the array - first translate whitespace into space
                     rawline = self.__datafile.readline();
-                    if splitline:
+                    if parseLine:
                         i = 0;                    
                         for x in rawline.split(): 
                             if (i < self.ncols):
