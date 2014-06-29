@@ -46,11 +46,13 @@ class CropProcess(SimulationObject):
         self.logger.info(msg)
     
     @prepare_states
-    def integrate(day):
-        """Integrate the rates of change on the current state variables."""
+    def integrate(day, delt):
+        """Integrate the rates of change on the current state variables
+        multiplied by the time-step
+        """
         
-        self.states.STATE1 += self.rates.RATE1
-        self.states.STATE2 += self.rates.RATE2
+        self.states.STATE1 += self.rates.RATE1 * delt
+        self.states.STATE2 += self.rates.RATE2 * delts
 
         msg = "State update finished on CropProcess on %s." % day
         self.logger.info(msg)

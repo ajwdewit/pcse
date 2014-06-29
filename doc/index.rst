@@ -4,13 +4,15 @@
    contain the root `toctree` directive.
 
 Welcome to the PCSE documentation!
-====================================
+==================================
 
 .. toctree::
    :maxdepth: 2
    
    pcse_intro.rst
    quickstart.rst
+   structure.rst
+   code.rst
 
 
 Indices and tables

@@ -1,0 +1,113 @@
+
+
+.. note::
+    A point of attention is that the initial rates are not calculated
+    within the `initialize()` section of each SimulationObject.
+    Instead the calculation is delayed until all SimulationObject have been
+    initialized. The reason is that the initial rates of one object can depend on the
+    initial states of another object. The execution of the initial rates
+    calculation is therefore handled by the Engine.
+
+
+Components with the PyWOFOST package
+====================================
+
+The figure below gives an overview of the model components that are currently
+available in PyWOFOST. All green components are directly derived from the
+WOFOST7.1 source distribution, while the components marked in purple are new
+developments, that are based on existing models published in the literature.
+
+On the highest level there are four main components that are composed of one
+or more sub-components:
+
+1. The water balance which has two sub-components, one for simulations under
+   potential and one for free drainage conditions. Moreover, the water balance
+   can be combined with the SnowMAUS model for accumulation of snow on the soil
+   surface.
+2. The crop simulation object which is composed of the many sub-components for
+   different processes regarding crop growth such as phenology, assimilation,
+   respiration and the dynamics for roots, stems, leaves and storage organs.
+   Moreover, components are included for frost damage assessment (FROSTOL,
+   CERES_Winterkill) and the estimation of the crown temperature
+3. The AgroManagement module which implements management actions such as
+   sowing and harvesting
+4. The timer module which keeps track of time and generates model
+   output in specified intervals (daily, every x days, dekadal, monthly or None)
+
+.. figure:: components.png
+:align: center
+    :scale: 45 %
+
+        Graphical overview of
+        components (implemented as SimulationObjects) available in the PyWOFOST
+        source distribution. The waterbalance "water-limited groundwater" is
+        not yet implemented.
+
+    The PyWOFOST distribution contains a number of additional packages and
+    modules that are not displayed in the figure as they are utility packages or used
+    for setting up the environment. These packages are:
+
+      * the `base_classes` module which defines functionality underlying PyWOFOST.
+  * the `cabo` package for reading CABO weather and parameter files for
+    retrieving model input.
+  * the `db_util` module for communicating with a CGMS database for retrieving
+    model input.
+  * the `database` package which contains an SQLite database with example data.
+    and some utilities for setting up a PyWOFOST database.
+  * the `util` module with functions such as penman, angstrom and astro.
+  * the `traitlets` module for defining attributes on classes.
+  * the `pydispatch` module for sending and handling signals.
+  * the `signals` module which defines the used signals.
+  * the `test_data` package which defines the test data for some unit tests.
+  * the `tests` package which defines the unit tests for many SimulationObjects.
+
+
+Package structure of PyWOFOST
+=============================
+
+The PyWOFOST package structure is:
+
+.. literalinclude:: package_structure.txt
+
+
+
+
+
+
+
+
+
+
+Retrieving variables
+--------------------
+By calling the `get_variable(<varname>)` method of a PyWOFOST instance,
+state or rate variables are retrieved. The
+`get_variable` method first searches for `<varname>` within its own definitions
+of state and rate variables and returns the value if it is found. If not,
+it searches for other embedded SimulationObjects and calls their
+`get_variable(<varname>)` methods. This way, the call to `get_variable()`
+travels recursively through the hierarchy thereby returning directly when a
+variable is found. If the variable is not found, `get_variable()` will return
+`None`.
+
+A side effect is that a call to get_variable() will not result in an error
+when you specify a variable name that does not exist (for example due to a
+typo). The reason for this behaviour is that although a variable may not exist
+now, it may exist later in the simulation period. For example, as long as
+there is no sowing event, there is no crop simulation object and thus
+variables of the crop simulation model do not exist. However, after sowing
+these variables will be defined and can be found by `get_variable()`.
+
+A way around this is to first check in the VariableKiosk whether a variable
+name is registered by calling `variable_exists(<varname>)` on the
+VariableKiosk.
+
+.. note::
+
+    In the FORTRAN code of Wageningen crop simulation models it was customary
+    to put variable and parameter names in capitals. As a result many crop
+    parameter files have parameter names defined in capitals and so have many
+    database tables. For this reason, parameters and variable names in PyWOFOST
+    are also defined in capitals although it is free to mix upper and lower case
+    characters. For convenience `get_variable('MyVar')` both searches for
+    'MyVar' as well as 'MYVAR'.

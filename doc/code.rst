@@ -1,6 +1,6 @@
-*****************
-API documentation
-*****************
+******************************
+Model code documentation (API)
+******************************
 
 The API documentation provides a description of the interface and internals of 
 all SimulationObjects, AncillaryObjects and utility routines available in the
@@ -20,6 +20,7 @@ One or more of these sections may be excluded when they are not appropriate
 for the SimulationObject that is described.
 
 The table specifying the simulation parameters has the following columns:
+
     1. The name of the parameter.
     2. A description of the parameter.
     3. The type of the parameter. This is provided as a three-character code
@@ -29,18 +30,31 @@ The table specifying the simulation parameters has the following columns:
        character indicate whether this parameter should be present in the
        timerdata '**Ti**', cropdata '**Cr**', soildata '**So**' or
        sitedata '**Si**' dictionary.
-    4. The unit of the parameter.
+    4. The physical unit of the parameter.
 
 The tables specifying state/rate variables have the following columns:
     1. The name of the variable.
     2. A description of the variable.
     3. Whether the variable is published in the kiosk or not: Y|N
-    4. The unit of the variable.
+    4. The physical unit of the variable.
     
 Finally, all public methods of all object are described as well.
 
-Engines and models
-==================
+Engine and models
+=================
+
+The PCSE Engine provides the environment where SimulationObjects are 'living'.
+The engine takes care of reading the model configuration, initializing model
+components (e.g. groups of SimulationObjects), driving the simulation
+forward by calling the SimulationObjects, calling the agromanagement
+unit, keeping track of time and providing the weather data needed.
+
+Models are treated together with the Engine, because models are simply
+pre-configured Engines. Any model can be started by starting the Engine
+with the appropriate configuration file. The only difference is that
+models can have methods that deal with specific characteristics of a model.
+This kind of functionality cannot be implemented in the Engine because
+the model details are not known beforehand.
 
  .. autoclass:: pcse.engine.Engine
     :members:
@@ -68,7 +82,7 @@ The Timer
 The waterbalance
 ================
 
-The PyWOFOST distribution provides several waterbalance modules:
+The PCSE distribution provides several waterbalance modules:
     1. WaterbalancePP which is used for simulation under non-waterlimited
        production
     2. WaterbalanceFD which is used for simulation of water-limited production
@@ -77,7 +91,7 @@ The PyWOFOST distribution provides several waterbalance modules:
        conditions, water-limited free drainage conditions and
        water-limited groundwater conditions (in case of shallow ground
        water tables.)
-    4. A model for simulation the build-up and melting of the snow cover.
+    4. The `SnowMAUS` for simulation the build-up and melting of the snow cover.
        
 .. autoclass:: pcse.soil.WaterbalancePP
     :members:
@@ -90,14 +104,6 @@ The PyWOFOST distribution provides several waterbalance modules:
 
 Crop simulation processes
 =========================
-
-
-Integration of crop simulation processes
-----------------------------------------
-
-.. autoclass:: pcse.cropsimulation.CropSimulation
-    :members:
-
 
 Phenology
 ---------
@@ -121,9 +127,9 @@ Partitioning
 .. autoclass:: pcse.crop.assimilation.WOFOST_Assimilation
     :members:
     
-Respiration
------------
-.. autoclass:: pcse.crop.respiration.WOFOSTMaintenanceRespiration
+Maintenance respiration
+-----------------------
+.. autoclass:: pcse.crop.respiration.WOFOST_Maintenance_Respiration
     :members:
     
 Evapotranspiration
@@ -169,7 +175,7 @@ Base classes
 ============
 
 The base classes define much of the functionality which is used "under the
-hood" in PyWOFOST. Except for the `VariableKiosk` and the `WeatherDataContainer`
+hood" in PCSE. Except for the `VariableKiosk` and the `WeatherDataContainer`
 all classes are not to be called directly but should be subclassed instead.
 
 
@@ -214,24 +220,22 @@ values from files or databases.
 
 .. _TheCABOtools:
 
-The CABO tools
---------------
+Tools for reading input files
+-----------------------------
 
-The CABO tools contain two classes: the `CABOFileReader` for reading in
-parameter files in the CABO format and the `CABOWeatherDataProvider` for reading
-files from the CABO weather system.
+The file_input tools contain three classes: the `CABOFileReader` for reading in
+parameter files in the CABO format,  the `CABOWeatherDataProvider` for reading
+files from the CABO weather system and the `PCSEFileReader` for reading
+files in PCSE format.
 
-.. autoclass:: pcse.cabo.CABOFileReader
+.. autoclass:: pcse.file_input.CABOFileReader
     :members:
 
-.. autoclass:: pcse.cabo.CABOWeatherDataProvider
+.. autoclass:: pcse.file_input.CABOWeatherDataProvider
     :members:
 
-The PW tools
-------------
-
-the PW tools
-
+.. autoclass:: pcse.file_input.PCSEFileReader
+    :members:
 
 The database tools
 ------------------
