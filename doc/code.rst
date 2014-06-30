@@ -1,3 +1,5 @@
+.. include:: abbreviations.txt
+
 ******************************
 Model code documentation (API)
 ******************************
@@ -87,19 +89,23 @@ The PCSE distribution provides several waterbalance modules:
        production
     2. WaterbalanceFD which is used for simulation of water-limited production
        under conditions of freely draining soils
-    3. A multi-layer waterbalance implementing simulations for potential
+    3. The `SnowMAUS` for simulation the build-up and melting of the snow cover.
+    4. A multi-layer waterbalance implementing simulations for potential
        conditions, water-limited free drainage conditions and
        water-limited groundwater conditions (in case of shallow ground
-       water tables.)
-    4. The `SnowMAUS` for simulation the build-up and melting of the snow cover.
-       
+       water tables). This waterbalance is in a prototype stage and not yet
+       usable, although the source code is available in PCSE.
+
 .. autoclass:: pcse.soil.WaterbalancePP
     :members:
 
 .. autoclass:: pcse.soil.WaterbalanceFD
     :members:
 
-.. autoclass:: pcse.soil.snowmaus.SnowMaus
+.. autoclass:: pcse.soil.WaterbalanceFD
+    :members:
+
+.. autoclass:: pcse.soil.SnowMAUS
     :members:
 
 Crop simulation processes
@@ -218,7 +224,7 @@ Utilities
 The utilities section deals with tools for reading weather data and parameter
 values from files or databases.
 
-.. _TheCABOtools:
+.. _FileInput:
 
 Tools for reading input files
 -----------------------------
@@ -228,51 +234,77 @@ parameter files in the CABO format,  the `CABOWeatherDataProvider` for reading
 files from the CABO weather system and the `PCSEFileReader` for reading
 files in PCSE format.
 
-.. autoclass:: pcse.file_input.CABOFileReader
+.. autoclass:: pcse.fileinput.CABOFileReader
     :members:
 
-.. autoclass:: pcse.file_input.CABOWeatherDataProvider
+.. autoclass:: pcse.fileinput.CABOWeatherDataProvider
     :members:
 
-.. autoclass:: pcse.file_input.PCSEFileReader
+.. autoclass:: pcse.fileinput.PCSEFileReader
     :members:
 
 The database tools
 ------------------
 
 The database tools contain functions and classes for retrieving parameters
-and weather database from (modified) CGMS database.
+and weather database from several database structures. The database
+structure is mostly derived from the database used for the Crop Growth
+Monitoring System (CGMS_).
 
-.. autofunction:: pcse.db_input.fetch_cropdata
-.. autofunction:: pcse.db_input.fetch_soildata
-.. autofunction:: pcse.db_input.fetch_timerdata
-.. autofunction:: pcse.db_input.fetch_sitedata
-.. autoclass:: pcse.db_input.GridWeatherDataProvider
+.. _CGMS: http://mars.jrc.ec.europa.eu/mars/About-us/AGRI4CAST/Models-Software-Tools/Crop-Growth-Monitoring-System-CGMS
+
+The PCSE database
+.................
+
+The PCSE database structure is very similar to a CGMS9 structure but has some
+modifications for dealing with dates in the CROP_CALENDAR table and uses
+different table names and structure for model output.
+
+.. autofunction:: pcse.db.pcse.fetch_cropdata
+.. autofunction:: pcse.db.pcse.fetch_soildata
+.. autofunction:: pcse.db.pcse.fetch_timerdata
+.. autofunction:: pcse.db.pcse.fetch_sitedata
+.. autoclass:: pcse.db.pcse.GridWeatherDataProvider
     :members:
-.. autoclass:: pcse.db_input.EnsembleGridWeatherDataProvider
+
+The CGMS9 database
+..................
+
+The CGMS9 tools are for reading data from a database structure that is used
+by CGMS executable version 9 and 10.
+
+.. autoclass:: pcse.db.cgms9.GridWeatherDataProvider
     :members:
+
+The CGMS11 database
+...................
+
+Tools for reading a CGMS11 database are under construction.
     
 Convenience routines
 --------------------
 
-These routines are there for conveniently starting a PyWOFOST session. They
+These routines are there for conveniently starting a WOFOST simulation. They
 are mainly used in the tutorial and examples but can be used to further
 elaborating on when writing your own scripts.
 
-.. autofunction:: pcse.start_pywofost.start_pywofost
+.. autofunction:: pcse.start_wofost.start_wofost
 
-.. autofunction:: pcse.run_pywofost.run_pywofost
+.. autofunction:: pcse.run_wofost.run_wofost
 
 
 Miscelaneous utilities
 ----------------------
 
 Many miscelaneous for a variety of purposes such as the Arbitrary Function
-Generator (AFGEN) and functions for calculating Penman evapotranspiration,
+Generator (AfGen) for linear interpolation and functions for calculating
+Penman Penman/Monteith reference evapotranspiration,
 the Angstrom equation and astronomical calculations such as day length.
 
+.. autofunction:: pcse.util.reference_ET
+.. autofunction:: pcse.util.penman_monteith
 .. autofunction:: pcse.util.penman
-.. autofunction:: pcse.util.check_angstAB
+.. autofunction:: pcse.util.check_angstromAB
 .. autofunction:: pcse.util.wind10to2
 .. autofunction:: pcse.util.angstrom
 .. autofunction:: pcse.util.doy
@@ -282,34 +314,9 @@ the Angstrom equation and astronomical calculations such as day length.
 .. autofunction:: pcse.util.merge_dict
 .. autoclass:: pcse.util.Afgen
     :members:
-
-
-
-.. |CO2| replace:: CO\ :sub:`2`\
-.. |d| replace:: day
-.. |C| replace:: :math:`^{\circ}C`
-.. |hPa| replace:: :math:`hPa`
-.. |msec-1| replace:: :math:`m sec^{-1}`
-.. |cmday-1| replace:: :math:`cm day^{-1}`
-.. |Jm-2day-1| replace:: :math:`J m^{-2} day^{-1}`
-
-.. |C day-1| replace:: :math:`^{\circ}C day^{-1}`
-.. |C-1day-1| replace:: :math:`^{\circ}C^{-1} day^{-1}`
-.. |C-3day-1| replace:: :math:`^{\circ}C^{-3} day^{-1}`
-
-.. |kg ha-1| replace:: kg ha\ :sup:`-1`\
-.. |ha kg-1| replace:: ha kg\ :sup:`-1`\
-.. |kg ha-1 d-1| replace:: kg ha\ :sup:`-1`\ day\ :sup:`-1`\
-.. |kg kg-1 d-1| replace:: kg kg\ :sup:`-1`\ day\ :sup:`-1`\
-.. |ha ha-1 d-1| replace:: ha ha\ :sup:`-1`\ day\ :sup:`-1`\
-.. |kg ha-1 hr-1| replace:: kg ha\ :sup:`-1`\ hr\ :sup:`-1`\
-.. |kg ha-1 hr-1 /(J m-2 s-1)| replace:: kg ha\ :sup:`-1`\ hr\ :sup:`-1`\ /(J m\ :sup:`-2`\ sec\ :sup:`-1`\)
-
-.. |day-1| replace:: day\ :sup:`-1`\
-.. |cm day-1| replace:: cm day\ :sup:`-1`\
-.. |cmC-1day-1| replace:: :math:`cm^{\circ}C^{-1} day^{-1}`
-.. |Cday| replace:: :math:`^{\circ}C day`
-.. |kg CH2O kg-1 d-1| replace:: kg CH\ :sub:`2`\O kg\ :sup:`-1`\ d\ :sup:`-1`\
-.. |kg CH2O ha-1| replace:: kg CH\ :sub:`2`\O ha\ :sup:`-1`\
-.. |kg CH2O ha-1 d-1| replace:: kg CH\ :sub:`2`\O ha\ :sup:`-1`\ day\ :sup:`-1`\
-
+.. autoclass:: pcse.util.ConfigurationLoader
+    :members:
+.. autofunction:: pcse.util.is_a_month
+.. autofunction:: pcse.util.is_a_dekad
+.. autofunction:: pcse.util.get_dates_in_year_dekad
+.. autofunction:: pcse.util.load_SQLite_dump_file

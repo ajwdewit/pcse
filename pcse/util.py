@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Miscelaneous utilities for PyWOFOST
+"""Miscelaneous utilities for PCSE
 """
 import os, sys
-import datetime
+import datetime as dt
 import copy
 from math import log10, cos, sin, asin, sqrt, exp
 from collections import namedtuple
@@ -386,15 +386,15 @@ def doy(day):
     """Converts a date or datetime object to day-of-year (Jan 1st = doy 1)
     """
     # Check if day is a date or datetime object
-    if isinstance(day, datetime.date):
+    if isinstance(day, dt.date):
         pass
-    elif isinstance(day, datetime.datetime):
+    elif isinstance(day, dt.datetime):
         day = day.date()
     else:
         msg = "Parameter day is not a date or datetime object."
         raise RuntimeError(msg)
 
-    return (day-datetime.date(day.year,1,1)).days + 1
+    return (day-dt.date(day.year,1,1)).days + 1
 
 
 def limit(min, max, v):
@@ -691,103 +691,6 @@ class Afgen(object):
 
         return v
 
-#-------------------------------------------------------------------------------
-class Afgen2(object):
-    """Emulates the AFGEN function in TTUTIL with Numpy.interp
-    
-    :param tbl_xy: List or array of XY value pairs describing the function
-        the X values should be mononically increasing.
-    :param unit: The interpolated values is returned with given
-        `unit <http://pypi.python.org/pypi/Unum/4.1.0>`_ assigned.
-    
-    Returns the interpolated value provided with the 
-    absicca value at which the interpolation should take place.
-    
-    example::
-    
-        >>> tbl_xy = [0,0,1,1,5,10]
-        >>> f =  Afgen(tbl_xy)
-        >>> f(0.5)
-        0.5
-        >>> f(1.5)
-        2.125
-        >>> f(5)
-        10.0
-        >>> f(6)
-        10.0
-        >>> f(-1)
-        0.0
-    """
-    
-    def __init__(self, tbl_xy, unit=None):
-    
-        x = tbl_xy[0::2]
-        y = tbl_xy[1::2]
-        
-        # Determine if there are empty pairs in tbl_xy by searching
-        # for the point where x stops monotonically increasing
-        xpos = np.arange(1, len(x))
-        ibreak = False
-        for i in xpos:
-            if x[i] <= x[i-1]:
-                ibreak = True
-                break
-        
-        if ibreak is True:
-            x = x[0:i]
-            y = y[0:i]
-        
-        self.x = x
-        self.y = y
-        self.unit = unit
-    
-    def __call__(self, p):
-        
-        v = np.interp(p, self.x, self.y)
-        
-        # if a unum unit is defined, multiply with a unit
-        if self.unit is not None:
-            v *= self.unit
-        return float(v)
-    
-    def __str__(self):
-        msg = "AFGEN interpolation over (X,Y) pairs:\n"
-        for (x,y) in zip(self.x, self.y):
-            msg += ("(%f,%f)\n " % (x,y))
-        msg += "\n"
-        if self.unit is not None:
-             msg += "Return value as unit: %s" % self.unit
-        return msg
-
-#-------------------------------------------------------------------------------
-class Chainmap(MutableMapping):
-    """Combine multiple mappings for sequential lookup.
-
-    For example, to emulate Python's normal lookup sequence:
-
-        import __builtin__
-        pylookup = Chainmap(locals(), globals(), vars(__builtin__))
-    
-    recipe taken from http://code.activestate.com/recipes/305268/
-    Available natively in the connections module in python 3.3
-    """
-
-    def __init__(self, *maps):
-        self._maps = maps
-
-    def __getitem__(self, key):
-        for mapping in self._maps:
-            try:
-                return mapping[key]
-            except KeyError:
-                pass
-        raise KeyError(key)
-        
-    def keys(self):
-        k = []
-        for mapping in self._maps:
-            return k.extend(mapping.keys)
-        return k
 
 
 def merge_dict(d1, d2, overwrite=False):
@@ -900,11 +803,11 @@ def is_a_month(day):
     """Returns True if the date is on the last day of a month."""
 
     if day.month==12:
-        if day == datetime.date(day.year, day.month, 31):
+        if day == dt.date(day.year, day.month, 31):
             return True
     else:
-        if (day == datetime.date(day.year, day.month+1, 1) - \
-                   datetime.timedelta(days=1)):
+        if (day == dt.date(day.year, day.month+1, 1) - \
+                   dt.timedelta(days=1)):
             return True
 
     return False
@@ -915,22 +818,51 @@ def is_a_dekad(day):
     the 20th or the last day of each month"""
 
     if day.month == 12:
-        if day == datetime.date(day.year, day.month, 10):
+        if day == dt.date(day.year, day.month, 10):
             return True
-        elif day == datetime.date(day.year, day.month, 20):
+        elif day == dt.date(day.year, day.month, 20):
             return True
-        elif day == datetime.date(day.year, day.month, 31):
+        elif day == dt.date(day.year, day.month, 31):
             return True
     else:
-        if day == datetime.date(day.year, day.month, 10):
+        if day == dt.date(day.year, day.month, 10):
             return True
-        elif day == datetime.date(day.year, day.month, 20):
+        elif day == dt.date(day.year, day.month, 20):
             return True
-        elif (day == datetime.date(day.year, day.month+1, 1) -
-                     datetime.timedelta(days=1)):
+        elif (day == dt.date(day.year, day.month+1, 1) -
+                     dt.timedelta(days=1)):
             return True
 
     return False
+
+
+def get_dates_in_year_dekad(year, dekad):
+    """Returns the dates within the given year and dekad
+    """
+
+    if dekad not in range(1, 37):
+        msg = "dekad not in range 1..37"
+        raise RuntimeError(msg)
+
+    month = int((dekad-1)/3) + 1
+    dek_in_month = ((dekad-1) % 3) + 1
+
+    if dek_in_month == 1:
+        sdate = dt.date(year, month, 1)
+        days_in_dek = 10
+    elif dek_in_month == 2:
+        sdate = dt.date(year, month, 11)
+        days_in_dek = 10
+    else:  # dek_in_month == 3
+        if month != 12:
+            sdate = dt.date(year, month, 21)
+            edate = dt.date(year, month+1, 1)
+            days_in_dek = (edate - sdate).days
+        else:
+            sdate = dt.date(year, month, 21)
+            days_in_dek = 11
+    return [sdate + dt.timedelta(days=i) for i in range(days_in_dek)]
+
 
 def load_SQLite_dump_file(dump_file_name, SQLite_db_name):
     """Build an SQLite database <SQLite_db_name> from dump file <dump_file_name>.

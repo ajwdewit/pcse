@@ -1,12 +1,14 @@
 .. include:: abbreviations.txt
 
+***************
+PCSE User Guide
+***************
 
-******************************
 Introduction to design of PCSE
-******************************
+==============================
 
 Overall PCSE design
-===================
+-------------------
 
 The Python Crop Simulation Environment builds on the heritage
 provided by the earlier approaches developed in Wageningen.
@@ -33,7 +35,7 @@ Next, an overview of the different components in PCSE will be provided.
 
 
 SimulationObjects
-=================
+-----------------
 
 PCSE  uses SimulationObjects to group parts of the crop simulation model
 that form a logical entity into separate program code sections. In this
@@ -61,7 +63,7 @@ This approach has several advantages:
   handles the |CO2| assimilation.
 
 Characteristics of SimulationObjects
-------------------------------------
+....................................
 
 Each SimulationObject is defined in the same way and has a couple of standard
 sections and methods which facilitates understanding and readability.
@@ -111,7 +113,7 @@ can be added optionally. The skeleton of a SimulationObject looks like this:
 
 The strict separation of program logic was copied from the Fortran Simulation
 Environment (FSE, Rappoldt and Van Kraalingen 1996. http://edepot.wur.nl/4411
-and Van Kraalingen 1995, http://edepot.wur.nl/35555) and 
+and Van Kraalingen 1995, http://edepot.wur.nl/35555) and
 is critical to ensure that the simulation results are correct.
 The different calculations types (integration, driving variables and
 rate calculations) should be strictly separated. In other words, first all
@@ -125,7 +127,7 @@ Compared to the FSE system, the `initialize()`, `calc_rates()`, `integrate()`
 and `finalize()` sections match with the *ITASK* numbers 1, 2, 3, 4.
 
 Communication between SimulationObjects
----------------------------------------
+.......................................
 
 A complicating factor that arises when using modular code is how to arrange
 the communication between SimulationObjects. For example, the `evapotranspiration`
@@ -163,7 +165,7 @@ Therefore, the VariableKiosk is shared by all SimulationObjects and must
 be provided when SimulationObjects initialize.
 
 The VariableKiosk
------------------
+.................
 
 The VariableKiosk is an integral part of PCSE and it has several
 important functions. First of all it takes
@@ -200,14 +202,14 @@ important when running ensembles of PCSE models in combination with
 sending and receiving signals (see :ref:`EventsAndSignals`).
 
 Logging
--------
+.......
 Besides the features described above, a SimulationObject has a standard
 interface for sending log messages through `self.logger`. This works
 using the standard python logging facility, so `self.logger.info(<msg>)`
 sends a message with level INFO to the log file.
 
 The Engine
-==========
+----------
 
 The PCSE Engine provides the environment where SimulationObjects are 'living'.
 The engine takes care of reading the model configuration, initializing model
@@ -216,7 +218,7 @@ forward by calling the SimulationObjects, calling the agromanagement
 unit, keeping track of time and providing the weather data needed.
 
 Configuration files
--------------------
+...................
 The configuration of a model in PCSE is read from a configuration file
 by the Engine. This configuration defines the following aspects of
 a simulation:
@@ -232,7 +234,7 @@ a simulation:
 .. _ContinuousSimulation:
 
 Continuous simulation in PCSE
------------------------------
+.............................
 
 To implement continuous simulation, PCSE uses the same approach as
 FSE: Euler integration with a fixed time step of one day.  The following
@@ -241,7 +243,7 @@ and the execution order of various steps.
 
 .. figure:: continuous_simulation.png
     :align: center
-    :scale: 30%
+    :scale: 50%
 
     Order of calculations for continuous simulation using Euler integration
     (after Van Kraalingen, 1995).
@@ -262,21 +264,20 @@ system has to be initialized:
 5. The initial rates of change based on the initial states and driving
    variables must be calculated;
 6. Finally, output can be collected to save the initial states and rates of
-   the simulation. 
+   the simulation.
 
 Step 1 is a system-wide initialization as there is only a single timer module.
-The steps 2 and 3 are carried out by the the `initialize()` section of 
+The steps 2 and 3 are carried out by the the `initialize()` section of
 each SimulationObject. Next, the driving variables are retrieved (step 4) and
-used as input into the `calc_rates()` section of each SimulationObject 
+used as input into the `calc_rates()` section of each SimulationObject
 to calculate the initial rates of change (step 5). Finally, model state or
 rate variables may be saved for output (step 6).
-
 
 The next cycle in the simulation will now start with an update of the timer to
 the next time step (e.g. day) and the integration of the rates of change of
 the previous day onto the state variables of each SimulationObject. The latter
 is carried out in the `integrate()` section of each SimulationObject. Next,
-the driving variables for the current day are retrieved. 
+the driving variables for the current day are retrieved.
 Calculation of the rates of change based on the new driving variables and
 updated model states and so forth.
 
@@ -292,7 +293,7 @@ deferred to the end of the simulation, such as a harvest index or water balance
 totals to check the closure of the water balance.
 
 Tracking time
--------------
+.............
 
 PCSE contains a dedicated timer module which keeps track of time during the
 simulation. Since PCSE runs on fixed timesteps of one day, this is a fairly
@@ -303,7 +304,7 @@ stored. Depending on the configuration, output signals can be generated
 every *n* days or at the last day of each month/dekad.
 
 Retrieving weather data
------------------------
+.......................
 
 Weather data must be provided to the `Engine` using a special component called
 a `WeatherDataProvider`. The WeatherDataProvider encapsulates the weather
@@ -312,7 +313,7 @@ for a given day. Within PCSE several WeatherDataProviders are available
 that can retrieve data from different sources.
 
 Agromanagement
-==============
+--------------
 
 Agromanagement is a specific part of PCSE because it does not deal
 with continuous processed but rather with events that signal dedicated actions
@@ -336,7 +337,7 @@ rotation of crops and the support for irrigation and nutrient applications.
 .. _EventsAndSignals:
 
 Sending and handling signals
-============================
+----------------------------
 As already note before, during the simulation, events may occur that
 have to be notified to one or more parts of the model. Clear examples of
 such events are described above in the section on agromanagement. However,
@@ -374,7 +375,7 @@ Currently, the number of distinct signals is still quite limited and consist of:
 .. _DrivingVar:
 
 Driving variables
-=================
+-----------------
 
 To run the crop simulation meteorological inputs are needed as
 driving variables (e.g. the meteorology drives the system from one state to the
@@ -410,4 +411,5 @@ TEMP   Mean daily temperature (TMIN + TMAX)/2                     |C|
 DTEMP  Mean daytime temperature (TEMP + TMAX)/2                   |C|
 TMINRA The 7-day running average of TMIN                          |C|
 ====== ========================================================= ===============
+
 
