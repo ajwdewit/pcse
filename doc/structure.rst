@@ -1,88 +1,258 @@
-*****************************
-General structure of PyWOFOST
-*****************************
+.. include:: abbreviations.rst
 
-PyWOFOST has a rather different design philosophy compared to the heritage
-FORTRAN WOFOST model. Instead of using relatively large blocks of code
-where many calculations are carried out, PyWOFOST uses SimulationObjects. 
-Parts of the crop simulation model that form an
-entity are grouped into separate SimulationObjects. In this way the crop
-simulation model is grouped into logical sections that implement certain
+
+******************************
+Introduction to design of PCSE
+******************************
+
+Overall PCSE design
+===================
+
+The Python Crop Simulation Environment builds on the heritage
+provided by the earlier approaches developed in Wageningen.
+Nevertheless, it also tries to improve on these approaches
+by separating the simulation logic into a number of
+distinct components that play a
+role in the implementation of (crop) simulation models:
+
+ 1. The dynamic part of the simulation is taken care of by a
+    dedicated simulation engine which handles the initialization,
+    the correct order of rate/state updates as well as keeping
+    track of time and retrieving weather data.
+ 2. Solving the differential equations for crop growth and updating
+    of the crop state is deferred to SimulationObjects that
+    implement dedicated growth or development processes such as
+    phenology or |CO2| assimilation.
+ 3. An AgroManagement module is included which takes care of
+    signalling agricultural management actions such as sowing, harvesting,
+    irrigation, etc.
+ 4. Several tools are available for providing weather data and
+    for reading parameter values from files or databases.
+
+Next, an overview of the different components in PCSE will be provided.
+
+
+SimulationObjects
+=================
+
+PCSE  uses SimulationObjects to group parts of the crop simulation model
+that form a logical entity into separate program code sections. In this
+way the crop simulation model is grouped into sections that implement certain
 biophysical processes such as phenology, assimilation, respiration, etc.
+Simulation objects can be grouped to form components that perform the simulation
+of an entire crop or a soil profile.
 
 This approach has several advantages:
 
 * Model code with a certain purpose is grouped together, making it easier
   to read, understand and maintain.
 * A SimulationObject contains only parameters, rate and state variables
-  that are needed. This is differs from FORTRAN WOFOST where a
-  large number of variables are defined. It is often unclear (at
+  that are needed. In contrast, with monolythic code it is often unclear (at
   first glance at least) what biophysical process they belong to.
-* Implementation of isolated processes causing
-  less dependencies which makes it easier to modify individual
-  SimulationObjects.
+* Isolation of process implementations creates less dependencies, but more
+  importantly, dependencies are evident from the code which makes it easier
+  to modify individual SimulationObjects.
 * SimulationObjects can be tested individually by comparing output vs the
   expected output (e.g. unit testing).
 * SimulationObjects can be exchanged for other objects with the same purpose
   but a different biophysical approach. For example, the WOFOST assimilation
   approach could be easily replaced by a more simple Light Use Efficiency or
-  Water Use Efficiency approach, only by replacing the SimulationObject that
+  Water Use Efficiency approach, by replacing the SimulationObject that
   handles the |CO2| assimilation.
 
-.. |CO2| replace:: CO\ :sub:`2`\
-
-
 Characteristics of SimulationObjects
-====================================
+------------------------------------
 
-The actual calculations are all organized in SimulationObjects.
 Each SimulationObject is defined in the same way and has a couple of standard
-sections and methods which facilitates understanding and readability (in some
-cases a slightly modified approach is used, which will be discussed later).
+sections and methods which facilitates understanding and readability.
 Each SimulationObject has parameters to define the mathematical relationships,
 it has state variables to define the state of the system and it has rate
 variables that describe the rate of change from one time step to the next.
-Moreover, a SimulationObject often contains other SimulationObjects that
-together form a logical structure. Finally, driving variables (meteorology)
-must be retrieved and managed to fit into the program structure. 
+Moreover, a SimulationObject may contain other SimulationObjects that
+together form a logical structure. Finally, the SimulationObject must implemented
+separate code sections for initialization, rate calculation and integration
+of the rates of change. A finalization step which is called at the end of the simulation
+can be added optionally. The skeleton of a SimulationObject looks like this:
 
-How a SimulationObject simulates
---------------------------------
+.. code-block:: python
 
-In a SimulationObject, continuous simulation is implemented in separate code
-sections that implement initialization, rate calculation and integration of the
-rates of change. Retrieval and calculation of driving variables is
-implemented in different program sections. Moreover, time is managed by a
-specialized timer module.
+    class CropProcess(SimulationObject):
 
-The strict separation of program logic was copied by the Fortran Simulation
+        class Parameters(ParamTemplate):
+            PAR1 = Float()
+            # more parameters defined here
+
+        class StateVariables(StatesTemplate):
+            STATE1 = Float()
+            # more state variables defined here
+
+        class RateVariables(RatesTemplate):
+            RATE1 = Float()
+            # more rate variables defined here
+
+        def initialize(day, kiosk, parametervalues):
+            """Initializes the SimulationObject with given parametervalues."""
+
+        @prepare_rates
+        def calc_rates(day, drv):
+            """Calculate the rates of change given the current states and driving
+            variables (drv)."""
+
+        @prepare_states
+        def integrate(day, delt):
+            """Integrate the rates of change on the current state variables
+            multiplied by the time-step
+            """
+
+        @prepare_states
+        def finalize(day):
+            """do some final calculations when the simulation is finishing."""
+
+
+The strict separation of program logic was copied from the Fortran Simulation
 Environment (FSE, Rappoldt and Van Kraalingen 1996. http://edepot.wur.nl/4411
 and Van Kraalingen 1995, http://edepot.wur.nl/35555) and 
-is needed to ensure that the simulation results are correct.
+is critical to ensure that the simulation results are correct.
 The different calculations types (integration, driving variables and
 rate calculations) should be strictly separated. In other words, first all
 states should be updated, subsequently all driving variables should be calculated,
 after which all rates of change should be calculated. If this rule is not
 applied rigorously, some rates may pertain to states at
 the current time whereas others will pertain to states from the previous time
-step (Van Kraalingen, 1995). 
+step (Van Kraalingen, 1995).
 
-To implement the continuous simulation, PyWOFOST uses the same approach as
-FSE: Euler integration with a
-fixed time step of one day. Previous versions of WOFOST could be applied on
-10-daily or even monthly time steps but this option has been discarded in
-PyWOFOST. The following figures shows the principle of continuous simulation
+Compared to the FSE system, the `initialize()`, `calc_rates()`, `integrate()`
+and `finalize()` sections match with the *ITASK* numbers 1, 2, 3, 4.
+
+Communication between SimulationObjects
+---------------------------------------
+
+A complicating factor that arises when using modular code is how to arrange
+the communication between SimulationObjects. For example, the `evapotranspiration`
+SimulationObject will need information about the leaf area index from the
+`leaf_dynamics` SimulationObject to calculate the crop transpiration
+values.
+
+In FORTRAN WOFOST, this was
+handled by putting the variables that needed to be communicated into the
+subroutines calls. This leads to large unwieldy
+routine calls with a large risk of mapping names onto the wrong variable
+in the calling routine. Moreover, the variables in the call are often a
+mixture of model parameters, driving variables, rate/state variables and variables that are
+purely for program logic.  See for example:
+
+.. code-block:: fortran
+
+      SUBROUTINE CROPSI
+     &         (ITASK, IDAY  , DELT , TIME , IDEM, DOANTH, IDHALT,
+     &         TERMNL, ISTATE, IWB  , IOX  ,
+     &         LAT   , AVRAD , TMIN , TMAX , E0  , ES0, ET0,
+     &         CRFILE, IUPL  , IUOUT, IULOG,
+     &         SM    , SM0   , SMFCF, SMW  , CRAIRC,
+     &         EVWMX , EVSMX , TRA  , FR   , RRI   , IAIRDU,
+     &         RDI   , RDMCR)
+
+
+In PCSE the communication between
+SimulationObjects is taken care of by the so-called `VariableKiosk`. The
+metaphore kiosk is used because the SimulationObjects publish
+their rate and/or state variables (or a subset) into the kiosk, other
+SimulationObjects can subsequently request the variable value from the kiosk
+without any knowledge about the SimulationObject that published it.
+Therefore, the VariableKiosk is shared by all SimulationObjects and must
+be provided when SimulationObjects initialize.
+
+The VariableKiosk
+-----------------
+
+The VariableKiosk is an integral part of PCSE and it has several
+important functions. First of all it takes
+care of communicating variables between SimulationObjects.
+When a variable has been published,
+PCSE updates the value of that variables into the `VariableKiosk` at each
+simulation cycle. Under the hood, this functionality is provided by the
+`traitlets` module from which all SimulationObjects are derived.
+
+To avoid that state or rate variables of previous time steps keep
+lagging in the VariableKiosk, the kiosk contents kiosk are flushed during each
+time step. After all rates have been calculated, the values of all state
+variables are flushed from the VariableKiosk. Similarly, after the update of the
+state variables, the values of rate variables are flushed from the kiosk.
+
+Second, to enforce that variable names are unique across the entire model
+the VariableKiosk registers all variables across all SimulationObjects.
+Variable names that are defined in a `RateVariables` or
+`StateVariables` class definition are automatically
+registered in the VariableKiosk and the name is checked for uniqueness.
+Moreover, it is tracked which SimulationObject registers which variable and
+only the SimulationObject that registers and publishes a variable can change
+its value. All other objects can retrieve that value, but not change it.
+Uniqueness of variable names is important for retrieving their value; if two
+SimulationObject would define the same variable than PCSE would only find the
+first one. It is not even guaranteed that this would be the same
+variable between sessions.
+
+Finally, the VariableKiosk serves as a unique identifier for a PCSE model instances.
+Since the VariableKiosk is shared across all SimulationObjects within the
+hierarchy, it can be used as a unique identifier of a PCSE model instance
+by retrieving its identifier with python's `id()` function. This aspect is
+important when running ensembles of PCSE models in combination with
+sending and receiving signals (see :ref:`EventsAndSignals`).
+
+Logging
+-------
+Besides the features described above, a SimulationObject has a standard
+interface for sending log messages through `self.logger`. This works
+using the standard python logging facility, so `self.logger.info(<msg>)`
+sends a message with level INFO to the log file.
+
+The Engine
+==========
+
+The PCSE Engine provides the environment where SimulationObjects are 'living'.
+The engine takes care of reading the model configuration, initializing model
+components (e.g. groups of SimulationObjects), driving the simulation
+forward by calling the SimulationObjects, calling the agromanagement
+unit, keeping track of time and providing the weather data needed.
+
+Configuration files
+-------------------
+The configuration of a model in PCSE is read from a configuration file
+by the Engine. This configuration defines the following aspects of
+a simulation:
+
+* the component to be used for simulation the soil dynamics;
+* the component to be used for simulating the crop dynamics;
+* the component to be used for agromanagement actions;
+* the names of the variables to be stored for output;
+* the frequency when output is generated;
+* the names of the variables to be stored for summary output. Summary
+  output is only generated when the crop simulation is finished.
+
+.. _ContinuousSimulation:
+
+Continuous simulation in PCSE
+-----------------------------
+
+To implement continuous simulation, PCSE uses the same approach as
+FSE: Euler integration with a fixed time step of one day.  The following
+figures shows the principle of continuous simulation
 and the execution order of various steps.
 
 .. figure:: continuous_simulation.png
     :align: center
-    :scale: 50%
-    
+    :scale: 30%
+
     Order of calculations for continuous simulation using Euler integration
     (after Van Kraalingen, 1995).
 
-From the previous figure it is clear that before the simulation can start an
-initialization has to be carried out which comprises of:
+The steps in the proces cycle that are evident from the figure above are
+implemented in the simulation `Engine` which is completely separated
+from the model logistic itself. Therefore the Engine is generic and can be
+used for any model that is defined in PCSE.
+
+From the previous figure it is clear that before the simulation can start the
+system has to be initialized:
 
 1. The timer module must be initialized on the starting day;
 2. All parameters of all SimulationObjects must be assigned a value;
@@ -101,13 +271,6 @@ used as input into the `calc_rates()` section of each SimulationObject
 to calculate the initial rates of change (step 5). Finally, model state or
 rate variables may be saved for output (step 6).
 
-A point of attention is that the initial rates are not calculated
-within the `initialize()` section of each SimulationObject.
-Instead the calculation is delayed after all SimulationObject have been
-initialized, because the initial rates of one object can depend on the
-initial states of other objects. The execution of the initial rates
-calculation is therefore handled by the SimulationObject in the top of the
-hierarchy.
 
 The next cycle in the simulation will now start with an update of the timer to
 the next time step (e.g. day) and the integration of the rates of change of
@@ -128,167 +291,85 @@ SimulationObject will be called in order to allow calculations that have to be
 deferred to the end of the simulation, such as a harvest index or water balance
 totals to check the closure of the water balance.
 
-Compared to the FSE system, the `initialize()`, `calc_rates()`, `integrate()`
-and `finalize()` sections match with the *ITASK* numbers 1, 2, 3, 4. 
+Tracking time
+-------------
 
-Communication between SimulationObjects
----------------------------------------
+PCSE contains a dedicated timer module which keeps track of time during the
+simulation. Since PCSE runs on fixed timesteps of one day, this is a fairly
+simple module which uses python `datetime.date` and `datetime.timedelta`
+objects to save and update the simulation time. Additionally, the timer
+module generates output signals that indicate when simulation results must be
+stored. Depending on the configuration, output signals can be generated
+every *n* days or at the last day of each month/dekad.
 
-A complicating factor that arises when using modular code is how to arrange
-the communication between SimulationObjects. For example, the `evapotranspiration`
-SimulationObject will need information about the leaf area index from the
-`leaf_dynamics` SimulationObject to calculate the crop transpiration
-values.
+Retrieving weather data
+-----------------------
 
-In FORTRAN WOFOST, this was
-handled by putting the variables that needed to be communicated into the 
-subroutines calls. This leads to large unwieldy
-routine calls with a large risk of mapping variables onto the wrong variable
-names. Moreover, the parameters in the call are often a mixture of model
-parameters, driving variables, rate/state variables and variables that are
-purely for program logic.  See for example:
+Weather data must be provided to the `Engine` using a special component called
+a `WeatherDataProvider`. The WeatherDataProvider encapsulates the weather
+data and provides an interface for the Engine to retrieve the weather data
+for a given day. Within PCSE several WeatherDataProviders are available
+that can retrieve data from different sources.
 
-.. code-block:: fortran
+Agromanagement
+==============
 
-      SUBROUTINE CROPSI
-     &         (ITASK, IDAY  , DELT , TIME , IDEM, DOANTH, IDHALT,
-     &         TERMNL, ISTATE, IWB  , IOX  ,
-     &         LAT   , AVRAD , TMIN , TMAX , E0  , ES0, ET0,
-     &         CRFILE, IUPL  , IUOUT, IULOG,
-     &         SM    , SM0   , SMFCF, SMW  , CRAIRC,
-     &         EVWMX , EVSMX , TRA  , FR   , RRI   , IAIRDU,
-     &         RDI   , RDMCR)
+Agromanagement is a specific part of PCSE because it does not deal
+with continuous processed but rather with events that signal dedicated actions
+such as sowing, harvesting, irrigation, etc. Such events are a kind of
+discontinuities in the simulation and they are difficult to implement within
+the normal processing loop for continuous simulation
+(see :ref:`ContinuousSimulation`). Therefore, PCSE uses a different for
+dealing with agromanagement actions; it uses signals that are broadcasted
+through the entire simulation environment.
 
+The purpose of the agromanagement module is to check at each time-step
+if management actions are scheduled. If so, the signals that are defined
+for these actions are broadcasted by the agromanagement module together
+with the parameters that are associated with the particular action.
 
-In PyWOFOST the communication between
-SimulationObjects is taken care of by the so-called `VariableKiosk`. The
-metaphore kiosk is used because the SimulationObjects publish
-their rate and/or state variables (or a subset)into the kiosk, other
-SimulationObjects can subsequently request the variable value from the kiosk
-without any knowledge about the SimulationObject that published it.
-Note that the VariableKiosk is shared by all SimulationObjects.
-
-
-The VariableKiosk
------------------
-
-The VariableKiosk is an integral part of PyWOFOST and it has several
-important functions. First of all it takes 
-care of communicating variables between SimulationObjects (as already
-mentioned in the previous paragraph). When a variable has been published,
-PyWOFOST updates the state and rate variables into the `VariableKiosk` at each
-simulation cycle. Under the hood, this functionality is provided by the
-`traitlets` module from which all SimulationObjects are derived.
-
-To avoid that state or rate variables of previous time steps keep
-lagging in the VariableKiosk, the kiosk contents kiosk are flushed during each
-time step. After all rates have been calculated, the values of all state
-variables are flushed from the VariableKiosk. Similarly, after the update of the state 
-variables, the rate variables are flushed from the kiosk.
-
-Second, to enforce that variable names are unique across the entire model
-the VariableKiosk registers all variables across all SimulationObjects.
-Variable names that are defined in SimulationObjects are automatically
-registered in the VariableKiosk and the name is checked for uniqueness.
-Moreover, it is tracked which SimulationObject registers which variable and
-only the SimulationObject that registers and publishes a variable can change
-its value. All other objects can retrieve that value, but not change it.
-Uniqueness of variable names is important for retrieving their value; if two
-SimulationObject would define the same variable than Python would only find the
-first one. It is not even guaranteed that his would be the same
-variable between sessions.
-
-Finally, the VariableKiosk serves as a unique identifier for a PyWofost instance.
-Since the VariableKiosk is shared across all SimulationObjects within the
-hierarchy, it can be used as a unique identifier of a PyWOFOST model instance
-by retrieving its identifier with python's `id()` function. This aspect is 
-important when running ensembles of PyWOFOST models in combination with
-sending and receiving signals (see :ref:`EventsAndSignals`).
-
-Retrieving variables
---------------------
-By calling the `get_variable(<varname>)` method of a PyWOFOST instance,
-state or rate variables are retrieved. The
-`get_variable` method first searches for `<varname>` within its own definitions
-of state and rate variables and returns the value if it is found. If not,
-it searches for other embedded SimulationObjects and calls their
-`get_variable(<varname>)` methods. This way, the call to `get_variable()`
-travels recursively through the hierarchy thereby returning directly when a
-variable is found. If the variable is not found, `get_variable()` will return
-`None`.
-
-A side effect is that a call to get_variable() will not result in an error
-when you specify a variable name that does not exist (for example due to a
-typo). The reason for this behaviour is that although a variable may not exist
-now, it may exist later in the simulation period. For example, as long as
-there is no sowing event, there is no crop simulation object and thus
-variables of the crop simulation model do not exist. However, after sowing
-these variables will be defined and can be found by `get_variable()`.
-
-A way around this is to first check in the VariableKiosk whether a variable
-name is registered by calling `variable_exists(<varname>)` on the
-VariableKiosk.
-
-.. note::
-
-    In the FORTRAN code of Wageningen crop simulation models it was customary
-    to put variable and parameter names in capitals. As a result many crop
-    parameter files have parameter names defined in capitals and so have many
-    database tables. For this reason, parameters and variable names in PyWOFOST
-    are also defined in capitals although it is free to mix upper and lower case
-    characters. For convenience `get_variable('MyVar')` both searches for
-    'MyVar' as well as 'MYVAR'. 
+Currently, PCSE contains one agromanagement component `AgroManagementSingleCrop`
+which is used for simulating a single cropping season. New `AgroManagement`
+modules will be developed which will allow continuous simulation with
+rotation of crops and the support for irrigation and nutrient applications.
 
 .. _EventsAndSignals:
 
 Sending and handling signals
-----------------------------
-During the simulation, some events have to be notified to one or
-more parts of the model. Examples of events are:
-
-- sowing, the system has to be notified that the crop simulation
-  model has to be initialized.
-- finishing of the crop simulation.
-- saving the states of the simulation at regular intervals for later output. 
-- termination of the entire model simulation.
-  
-These events can be generated from different parts of the model. Particularly,
-crop simulation ending can be signalled by several modules:
-1) the harvest date is reached (the AgroManagement module), 2) the crop
-reaches physiological maturity (the phenology module) and 3) all leaves die
-(leaf dynamics module). Moreover, several
-simulation objects  may want to be notified of such an event and in
+============================
+As already note before, during the simulation, events may occur that
+have to be notified to one or more parts of the model. Clear examples of
+such events are described above in the section on agromanagement. However,
+agromanagent is not the only component where signals and events play an
+important role. For example OUTPUT signals are generated by the `timer`
+module to indicate that the current state of variables should be saved
+for later use. Moreover, ending the crop simulation can be signalled by
+several modules:
+1) the harvest date is reached (the `AgroManagement` module), 2) the crop
+reaches physiological maturity (the `Phenology` module) and 3) all leaves die
+(the `Leaf_dynamics` module). Moreover, several
+simulation objects  may need to be notified of such an event and in
 some cases variables need to be passed with a given event.
 It is clear that implementing this kind of communication through classical
 variable passing leads to large dependencies between modules which is
 undesirable.
 
-Therefore  PyWOFOST uses the pyDispatcher module available from
-http://pydispatcher.sourceforge.net/. This module allows a
-SimulationObject to send signals and to register one or more
-handlers which 'react' to a given signal.
+Therefore PCSE uses the pyDispatcher module available from
+http://pydispatcher.sourceforge.net/. This module allows a SimulationObject
+to send signals and to register one or more handlers which 'react' to a
+given signal. Using this approach information can be shared efficiently
+between SimulationObjects, the Engine and the AgroManagement module that
+would otherwise be difficult to implement.
 
+The signals that are used by PCSE are all defined in the `signals` module.
+Currently, the number of distinct signals is still quite limited and consist of:
 
-Currently only a limited number of signals are
-implemented in the PyWOFOST. These can be found in the `signals` module:
-
-- "CROP_START" when the crop simulations needs to be started.
-- "CROP_FINISH" when the crop simulations are finished.
-- "TERMINATE" when the entire system needs to be terminated.
-- "OUTPUT" when output must be generated for a given set of state variables.
-
-The pyDispatcher module allows for great flexibility and new
-events can be easily added to PyWOFOST. Examples are signals for
-AgroManagement such as irrigation scheduling and nutrient application
-which may be added in future versions of PyWOFOST.
-
-Logging
--------
-Besides the features described above, a SimulationObject has a standard
-interface for sending log messages through `self.logger` member. This works
-using the standard python logging facility, so `self.logger.info(<msg>)`
-sends a message with level INFO to the log file.
-See the `logging` module in the python documentation for more information.
+* CROP_START: which is used when a crop simulation is started. The most
+  important parameter is the crop simulation component itself which send
+  to the Engine in order become part of the simulation loop.
+* CROP_FINISH: when the crop simulation is finished.
+* TERMINATE":when the simulation needs to be halted.
+* OUTPUT: when the current state of selected variables must be stored.
 
 .. _DrivingVar:
 
@@ -297,108 +378,36 @@ Driving variables
 
 To run the crop simulation meteorological inputs are needed as
 driving variables (e.g. the meteorology drives the system from one state to the
-next). Internally, PyWOFOST uses daily meteorological variables with the
-following characteristics:
+next). PCSE uses the following daily meteorological variables:
+
+========= ========================================================= ===============
+Name        Description                                               Unit
+========= ========================================================= ===============
+TMAX      Daily maximum temperature                                  |C|
+TMIN      Daily minimum temperature                                  |C|
+VAP       Mean daily vapour pressure                                 |hPa|
+WIND      Mean daily wind speed at 2 m above ground level            |msec-1|
+RAIN      Precipitation (rainfall or water equivalent in case of
+          snow or hail).                                             |cmday-1|
+IRRAD     Daily global radiation                                     |Jm-2day-1|
+SNOWDEPTH Depth of snow cover (optional)                             |cm|
+========= ========================================================= ===============
+
+The snow depth is an optional meteorological variable and is only used for
+estimating the impact of frost damage on the crop (if enabled). Snow depth can
+also be simulated by the `SnowMAUS` module if observations are not available
+on a daily basis. Furthermore there are some meteorological variables which
+are derived from the previous ones:
 
 ====== ========================================================= ===============
-Name   Description                                               Unit
+Name   Description                                                 Unit
 ====== ========================================================= ===============
-TMAX   Daily maximum temperature                                 |C|
-TMIN   Daily minimum temperature                                 |C|
-VAP    Mean daily vapour pressure                                |hPa|
-WIND   Mean daily wind speed at 2 m above ground level           |msec-1|
-RAIN   Precipitation (rainfall or water equivalent in case of
-       snow or hail).                                            |cmday-1|
-IRRAD  Daily global radiation                                    |Jm-2day-1|
-LAT    Latitude of the meteorological observations.              |DD|
-====== ========================================================= ===============
-
-Strictly speaking the latitude is not a driving variable, but as it is needed
-for some of the calculations involving driving variables, it is included with
-the driving variables for convenience.
-
-Further there are some meteorological variables which are derived from the
-previous ones:
-
-====== ========================================================= ===============
-Name   Description                                               Unit
-====== ========================================================= ===============
-E0     Penman potential evaporation from a free water surface    |cmday-1|
-ES0    Penman potential evaporation from a bare soil surface     |cmday-1|
-ET0    Penman potential evaporation from a reference crop
-       canopy                                                    |cmday-1|
-TEMP   Mean daily temperature (TMIN + TMAX)/2                    |C|
-DTEMP  Mean daytime temperature (TEMP + TMAX)/2                  |C|
-TMINRA The 7-day running average of TMIN                         |C| 
+E0     Penman potential evaporation for a free water surface      |cmday-1|
+ES0    Penman potential evaporation for a bare soil surface       |cmday-1|
+ET0    Penman or Penman-Monteith potential evaporation
+       for a reference crop canopy                                |cmday-1|
+TEMP   Mean daily temperature (TMIN + TMAX)/2                     |C|
+DTEMP  Mean daytime temperature (TEMP + TMAX)/2                   |C|
+TMINRA The 7-day running average of TMIN                          |C|
 ====== ========================================================= ===============
 
-
-Components with the PyWOFOST package
-====================================
-
-The figure below gives an overview of the model components that are currently
-available in PyWOFOST. All green components are directly derived from the
-WOFOST7.1 source distribution, while the components marked in purple are new
-developments, that are based on existing models published in the literature.
-
-On the highest level there are four main components that are composed of one
-or more sub-components:
- 
-1. The water balance which has two sub-components, one for simulations under
-   potential and one for free drainage conditions. Moreover, the water balance
-   can be combined with the SnowMAUS model for accumulation of snow on the soil
-   surface.
-2. The crop simulation object which is composed of the many sub-components for
-   different processes regarding crop growth such as phenology, assimilation,
-   respiration and the dynamics for roots, stems, leaves and storage organs.
-   Moreover, components are included for frost damage assessment (FROSTOL,
-   CERES_Winterkill) and the estimation of the crown temperature
-3. The AgroManagement module which implements management actions such as
-   sowing and harvesting
-4. The timer module which keeps track of time and generates model
-   output in specified intervals (daily, every x days, dekadal, monthly or None)
-
-.. figure:: components.png
-    :align: center
-    :scale: 45 %
-    
-    Graphical overview of 
-    components (implemented as SimulationObjects) available in the PyWOFOST
-    source distribution. The waterbalance "water-limited groundwater" is
-    not yet implemented.
-    
-The PyWOFOST distribution contains a number of additional packages and
-modules that are not displayed in the figure as they are utility packages or used
-for setting up the environment. These packages are:
-
-  * the `base_classes` module which defines functionality underlying PyWOFOST.
-  * the `cabo` package for reading CABO weather and parameter files for 
-    retrieving model input.
-  * the `db_util` module for communicating with a CGMS database for retrieving
-    model input.
-  * the `database` package which contains an SQLite database with example data.
-    and some utilities for setting up a PyWOFOST database.
-  * the `util` module with functions such as penman, angstrom and astro.
-  * the `traitlets` module for defining attributes on classes.
-  * the `pydispatch` module for sending and handling signals.
-  * the `signals` module which defines the used signals.
-  * the `test_data` package which defines the test data for some unit tests.
-  * the `tests` package which defines the unit tests for many SimulationObjects.
-
-
-Package structure of PyWOFOST
-=============================
-
-The PyWOFOST package structure is:
-
-.. literalinclude:: package_structure.txt
-
-
-
-
-.. |C| replace:: :math:`^{\circ}C`
-.. |hPa| replace:: :math:`hPa`
-.. |msec-1| replace:: :math:`m sec^{-1}`
-.. |cmday-1| replace:: :math:`cm day^{-1}`
-.. |Jm-2day-1| replace:: :math:`J m^{-2} day^{-1}`
-.. |DD| replace:: :math:`Decimal Degree`
