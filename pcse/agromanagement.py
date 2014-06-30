@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""
-Classes that simulate AgroManagement actions in PCSE.
+"""Classes that simulate AgroManagement actions in PCSE.
 
-Agromanagement actions are those actions that are originating from human actors rather than biophysical principles.
-Examples are sowing and harvesting, etc.
-
-List of routines:
-
-* AgroManagementSingleCrop
+Agromanagement actions are those actions that are originating from
+human actors rather than biophysical principles. Examples are sowing
+and harvesting, etc.
 """
 
 import datetime
@@ -19,6 +15,7 @@ from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool
 from . import signals
 from . import exceptions as exc
 from .util import ConfigurationLoader
+
 
 class AgroManagementSingleCrop(AncillaryObject):
     """Agromanagement for running a single crop season.

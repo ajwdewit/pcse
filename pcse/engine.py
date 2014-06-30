@@ -1,6 +1,19 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+"""The PCSE Engine provides the environment where SimulationObjects are 'living'.
+The engine takes care of reading the model configuration, initializing model
+components (e.g. groups of SimulationObjects), driving the simulation
+forward by calling the SimulationObjects, calling the agromanagement
+unit, keeping track of time and providing the weather data needed.
+
+Models are treated together with the Engine, because models are simply
+pre-configured Engines. Any model can be started by starting the Engine
+with the appropriate configuration file. The only difference is that
+models can have methods that deal with specific characteristics of a model.
+This kind of functionality cannot be implemented in the Engine because
+the model details are not known beforehand.
+"""
 import os, sys
 from collections import deque
 import logging
