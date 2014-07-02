@@ -15,8 +15,7 @@ class Hdf5Raster(GridEnvelope2D):
     # Data attributes - assign some dummy values for the mean time
     name = "dummy.h5";
     folder = os.getcwd();
-
-    cellsize = 100;
+    cellsize = 1;
     nodatavalue = -9999.0;
     dataset_name = "dummy";
     group_prefix = "row";
@@ -35,7 +34,7 @@ class Hdf5Raster(GridEnvelope2D):
         # Also derive the folder
         self.folder = os.path.dirname(filepath);
     
-    def open(self, mode, ncols=1, nrows=1, xll=0, yll=0, cellsize=100, nodatavalue=-9999.0,
+    def open(self, mode, ncols=1, nrows=1, xll=0, yll=0, cellsize=1, nodatavalue=-9999.0,
         dataset_name="dummy", group_prefix="row", table_prefix="col", index_format="04i", variables=[], units=[]):
         # Initialise
         fpath = os.path.join(self.folder, self.name);
@@ -69,7 +68,7 @@ class Hdf5Raster(GridEnvelope2D):
     
     def readheader(self):
         # Read header file and assign all attributes 
-        pos = str.rfind(self.name, "." + self.DATAFILEXT);
+        pos = str.rfind(str(self.name), "." + self.DATAFILEXT);
         if pos != -1: hdrFilename = self.name[0:pos] + "." + self.HEADEREXT
         else: raise ValueError("Invalid file name: " + self.name);
         fpath = os.path.join(self.folder, hdrFilename)
@@ -105,16 +104,16 @@ class Hdf5Raster(GridEnvelope2D):
             raise IOError(msg);
         
     @staticmethod
-    def getDataFileExt():
+    def getDataFileExt(self):
         return self.DATAFILEXT;
     
     @staticmethod
-    def getHeaderFileExt():
+    def getHeaderFileExt(self):
         return self.HEADEREXT; 
         
     def writeheader(self):
         # Write header file with all attributes 
-        pos = str.rfind(self.name, "." + self.DATAFILEXT);
+        pos = str.rfind(str(self.name), "." + self.DATAFILEXT);
         if pos != -1: hdrFilename = self.name[0:pos] + "." + self.HEADEREXT
         else: raise ValueError("Invalid file name: " + self.name);
         try:

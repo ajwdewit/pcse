@@ -74,7 +74,7 @@ class FloatingPointRaster(GridEnvelope2D):
     
     def readheader(self):
         # Read header file and assign all attributes 
-        pos = str.rfind(self.name, "." + const.DATAFILEXT);
+        pos = str.rfind(str(self.name), "." + const.DATAFILEXT);
         if pos != -1: hdrFilename = self.name[0:pos] + "." + const.HEADEREXT
         else: raise ValueError("Invalid file name: " + self.name);
         if os.path.exists(self.folder + os.path.sep + hdrFilename):
@@ -145,7 +145,7 @@ class FloatingPointRaster(GridEnvelope2D):
     
     def writeheader(self):
         # Write header file with all attributes 
-        pos = str.rfind(self.name, "." + const.DATAFILEXT);
+        pos = str.rfind(str(self.name), "." + const.DATAFILEXT);
         if pos != -1: hdrFilename = self.name[0:pos] + "." + const.HEADEREXT
         else: raise ValueError("Invalid file name: " + self.name);
         try:

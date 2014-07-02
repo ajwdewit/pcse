@@ -5,7 +5,6 @@ class Netcdf4Envelope2D(GridEnvelope2D):
     LON = 'lon';
     LAT = 'lat';
     TIME = 'time'
-    __dataset = None;
     
     # TODO: here the names for the dimensions are hardcoded, but they can be retrieved
     # from the netCDF4 file 
@@ -28,7 +27,7 @@ class Netcdf4Envelope2D(GridEnvelope2D):
             dy = GridEnvelope2D._getStep(y_range[0], y_range[1], len(_dims[LAT]));
             xll = min(_vars[LON]) - 0.5*dx;
             yll = min(_vars[LAT]) - 0.5*dy;
-            GridEnvelope2D.__init__(len(_dims[LON]), len(_dims[LAT]), xll, yll, dx, dy);
+            GridEnvelope2D.__init__(self, len(_dims[LON]), len(_dims[LAT]), xll, yll, dx, dy);
         
             # In some netCDF files the longitudes and latitudes are stored differently
             if _vars[LON][0] > _vars[LON][-1]: self.xcoords_sort = 'DESC';
@@ -40,16 +39,18 @@ class Netcdf4Envelope2D(GridEnvelope2D):
         maxxy = max(varxy);
         return [minxy, maxxy];
     
+    """
     def _readDimensions(self, ncdimensions):
         LON = self.LON;
         LAT = self.LAT;
         nrows = len(ncdimensions[LAT]);
         ncols = len(ncdimensions[LON]);
         return nrows, ncols;
+    """
     
-    def getDimension(self): 
+    def getDimension(self, ds): 
         result = 2;
-        if self.__dataset != None:
-            result = len(self.__dataset.dimensions.keys());
-        return  result;
+        if ds != None:
+            result = len(ds.dimensions.keys());
+        return result;
     

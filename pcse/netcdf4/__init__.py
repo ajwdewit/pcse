@@ -3,7 +3,6 @@
 # Steven Hoek (steven.hoek@wur.nl), May 2014
 """Tools for reading  weather files in the NetCDF4 format used
 for crop simulation models:
-- NetcdfWeatherDataProvider reads NETCDF4 files for use in PyWOFOST
+- NetcdfWeatherDataConverter converts NETCDF4 files to HDF5 files for use in PyWOFOST
 """
-from .netcdf4_reader import NetcdfWeatherDataProvider;
-from .netcdf4_reader import NetcdfEnvelope2D;
+from .netcdf4converter import NetcdfWeatherDataConverter;
