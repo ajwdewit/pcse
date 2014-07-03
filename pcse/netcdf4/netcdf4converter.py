@@ -173,7 +173,7 @@ class NetcdfWeatherDataConverter():
             fpath = os.path.join(datadir, fname + r'_data.h5');
             h5r = Hdf5Raster(fpath);
             
-            # Typically the hdf5vars are: [day. tmax, tmin, temp, prec, irrad, wind2, e0, es0, et0]
+            # Typically the hdf5vars are: [day. tmax, tmin, temp, rain, irrad, wind, e0, es0, et0]
             hdf5vars = getOrderedKeys(ncdf_weather.columns); 
             _units = ['date', 'Celsius', 'Celsius', 'Celsius', 'cm/day', "J/m2/day" 'm/s', 'cm/day', 'cm/day', 'cm/day'];
             h5r.open('w', n.ncols, n.nrows, n.xll, n.yll, n.dx, nc4r1.nodatavalue, 
@@ -224,8 +224,13 @@ class NetcdfWeatherDataConverter():
                         self.check_location(nc4r1, k, i);
                         recs = self._process_pixel(k, i, numdays, elevations[k]);
                         
-                    # Add the records to the array data
-                    data[k] = recs;
+                        # TODO: write output data for the current pixel; if all are missing then don't write!
+                        if len(recs) < numdays: self.logger.warning("")
+                        
+                        # Report how many days are missing; 
+                        
+                        # Add the records to the array data
+                        data[k] = recs;
                 
                 # Output for current row is complete
                 h5r.writenext(data, ncdf_weather);
@@ -250,64 +255,70 @@ class NetcdfWeatherDataConverter():
             # Estimate Angstrom coefficients
             key1 = self.Netcdf4rasters.keys()[0]; # first key
             nvlp1 = self.Netcdf4rasters[key1].getEnvelope();
-            longitude, latitude = nvlp1.getXandYfromIndices(self, k, i);
-            AngstA, AngstB = self.getAngstromCoeff(latitude);
+            longitude, latitude = nvlp1.getXandYfromIndices(k, i);
+            AngstA, AngstB = self._getAngstromCoeff(latitude);
     
-            # Typically the hdf5vars are: [day. tmax, tmin, temp, prec, irrad, wind2, e0, es0, et0]
+            # Typically the hdf5vars are: [day. tmax, tmin, temp, rain, irrad, wind, e0, es0, et0]
             hdf5vars = getOrderedKeys(ncdf_weather.columns); 
     
             # Prepare to loop over all the days in the dataset; use class ncdf_weather for storing the data 
             result = [];
-            start_day = date(self.available_years[0], 1, 1);
+            start_day = datetime(self.available_years[0], 1, 1).date();
             for day in range(0, numdays):
                 # Initialise record for this day
-                date = start_day + datetime.timedelta(days=day);
-                rec = [date.toordinal(), None, None, None, None, None, None, None, None, None];                    
+                curdate = start_day + timedelta(days=day);
+                rec = [curdate.toordinal(), None, None, None, None, None, None, None, None, None, None];                    
                 
                 # Retrieve relevant data from the various data slices
                 empty_slice_found = False;
                 for pcse_name, netcdf_name, conv, units in self.pcse_variables:
                     if self.__dataslices[netcdf_name] != None:
-                        dataslice = self.__dataslices[netcdf_name][k];                     
-                        if pcse_name != "VAP":
-                            value = conv(dataslice[day]);  
-                        else:
-                            if (netcdf_name =="hur"):
-                                pos = hdf5vars.index("tmin");
-                                value = dataslice[day] * ea_from_tdew(rec[pos]) / 10.; # rh_to_hpa
+                        dataslice = self.__dataslices[netcdf_name][:, k]; 
+                        if str(dataslice[day]) != '--':                    
+                            if pcse_name != "VAP":
+                                value = conv(dataslice[day]);  
                             else:
-                                # convert specific humidity "hus" to vapour pressure
-                                value = vap_from_sh(dataslice[day], elevation); # sh_to_hpa
-                        pos = hdf5vars.index(pcse_name.lower());
-                        rec[pos] = value;
+                                if (netcdf_name =="hur"):
+                                    pos = hdf5vars.index("tmin");
+                                    value = dataslice[day] * ea_from_tdew(rec[pos]) / 10.; # rh_to_hpa
+                                else:
+                                    # convert specific humidity "hus" to vapour pressure
+                                    value = vap_from_sh(dataslice[day], elevation); # sh_to_hpa
+                            pos = hdf5vars.index(pcse_name.lower());
+                            rec[pos] = value;
                     else: 
                         empty_slice_found = True;
                 
-                if not empty_slice_found:
-                    # Reference evapotranspiration in mm/day
+                if not empty_slice_found and self._record_is_ok(rec):
                     try:
-                        # TODO check used arguments!
-                        (E0,ES0,ET0) = reference_ET(rec[0], latitude, elevation,
+                        # Reference evapotranspiration in mm/day
+                        (E0,ES0,ET0) = reference_ET(curdate, latitude, elevation,
                             rec[hdf5vars.index("tmin")], rec[hdf5vars.index("tmax")],
                             rec[hdf5vars.index("irrad")], rec[hdf5vars.index("vap")],
                             rec[hdf5vars.index("wind")], AngstA, AngstB, "PM");
                     except ValueError as e:
-                        msg = (("Failed to calculate reference ET values on %s. " % date) +
+                        msg = (("Failed to calculate reference ET values on %s. " % curdate) +
                                ("With input values:\n %s.\n" % str(rec)) +
                                ("Due to error: %s" % e))
                         raise PCSEError(msg)
         
-                    # update record with ET values value convert to cm/day
-                    rec[hdf5vars.index("e0")]  = E0/10.0;
-                    rec[hdf5vars.index("es0")] = ES0/10.0;
-                    rec[hdf5vars.index("et0")] = ET0/10.0;
-                result.append(tuple(rec));
+                        # update record with ET values value convert to cm/day
+                        rec[hdf5vars.index("e0")]  = E0/10.0;
+                        rec[hdf5vars.index("es0")] = ES0/10.0;
+                        rec[hdf5vars.index("et0")] = ET0/10.0;
+                        result.append(tuple(rec)); # TODO if incommplete, don't append!
 
         except Exception as e:
             print str(e);
         finally:
             return result;   
         
+    def _record_is_ok(self, rec):
+        for j in range(1, len(rec) - 3):
+            if rec[j] == None:
+                return False;
+        return True;
+    
     def _check_Netcdf4rasters(self, timeref, envelope):
         try:
             # Compare the extent of the given envelope with that of the other one
@@ -360,7 +371,36 @@ class NetcdfWeatherDataConverter():
             return True;
         except Exception as e:
             print str(e);
-            return False;  
+            return False;
+        
+    def _getAngstromCoeff(self, deglat):
+        # Constants from pcse.util
+        MIN_A = 0.1
+        MAX_A = 0.4
+        MIN_B = 0.3
+        MAX_B = 0.7;
+        
+        # See van der Drift en van Diepen, 1992
+        result = [0.25, 0.5]; # default values
+        try:
+            # Initialise A and B
+            A = result[0];
+            B = result[1];
+            
+            # THe folowing is based on method check_angstromAB found in pcse.util
+            if abs(deglat) < 45.0:
+                # For tropical regions, the A becomes too high and the B too low
+                A = min(0.4885 - 0.0052 * abs(float(deglat)), MAX_A);
+                B = max(0.1563 + 0.0074 * abs(float(deglat)), MIN_B);
+            else:
+                # For temperate regions, the A becomes too low and the B too high
+                A = max(0.4885 - 0.0052 * abs(float(deglat)), MIN_A);
+                B = min(0.1563 + 0.0074 * abs(float(deglat)), MAX_B);
+
+            # Assign the result - for no latitude the sum of A and B will be too large
+            result = [A, B];
+        finally:
+            return result;  
         
     def _getFullPath(self, fname):
         key1 = self.Netcdf4rasters.keys()[0]; # first key
@@ -374,9 +414,9 @@ class ncdf_weather(IsDescription):
     tmax = Float32Col(pos=2)
     tmin = Float32Col(pos=3)
     temp = Float32Col(pos=4)
-    prec = Float32Col(pos=5)
+    rain = Float32Col(pos=5)
     irrad = Float32Col(pos=6)
-    wind2 = Float32Col(pos=7)
+    wind = Float32Col(pos=7)
     vap = Float32Col(pos=8)
     e0 = Float32Col(pos=9)
     es0 = Float32Col(pos=10)

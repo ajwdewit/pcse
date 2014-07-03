@@ -195,8 +195,11 @@ class Hdf5Raster(GridEnvelope2D):
             return True;
         except Exception, e:
             print e;            
-            raise StopIteration
+            raise StopIteration;
         
+    def write(self):
+        pass; # TODO
+    
     def flush(self):
         self.__datafile.flush();    
         
