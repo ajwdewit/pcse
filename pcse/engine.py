@@ -85,7 +85,7 @@ class Engine(BaseEngine):
     # Helper variables
     TMNSAV = Instance(deque)
     
-    def __init__(self, sitedata, timerdata, soildata, cropdata,
+    def __init__(self, sitedata, timerdata, soildata, cropdata, fertilizer,
                  weatherdataprovider, config=None):
         """
         :param sitedata: A dictionary(-like) object containing key/value pairs with
@@ -139,7 +139,8 @@ class Engine(BaseEngine):
 
         # Component for agromanagement
         self.agromanagement = self.mconf.AGROMANAGEMENT(self.day, self.kiosk, self.mconf,
-                                                        timerdata, soildata, sitedata, cropdata)
+                                                        timerdata, soildata, sitedata, cropdata,
+                                                        fertilizer)
         # Call AgroManagement module for management actions at initialization
         self.agromanagement(self.day, self.drv)
 
