@@ -50,26 +50,26 @@ class NPK_Crop_Dynamics(SimulationObject):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    ANLV     Actual N concentration in leaves                          |kg N |
-    APLV     Actual P concentration in leaves                          |kg P |
-    AKLV     Actual K concentration in leaves                          |kg K |
+    ANLV     Actual N amount in living leaves                       |kg N ha-1|
+    APLV     Actual P amount in living leaves                       |kg P ha-1|
+    AKLV     Actual K amount in living leaves                       |kg K ha-1|
         
-    ANST     Actual N concentration in stems                           |kg N |
-    APST     Actual P concentration in stems                           |kg P |
-    AKST     Actual K concentration in stems                           |kg K |
+    ANST     Actual N amount in living stems                        |kg N ha-1|
+    APST     Actual P amount in living stems                        |kg P ha-1|
+    AKST     Actual K amount in living stems                        |kg K ha-1|
 
-    ANSO     Actual N concentration in storage organs                  |kg N |
-    APSO     Actual P concentration in storage organs                  |kg P |
-    AKSO     Actual K concentration in storage organs                  |kg K |
+    ANSO     Actual N amount in living storage organs               |kg N ha-1|
+    APSO     Actual P amount in living storage organs               |kg P ha-1|
+    AKSO     Actual K amount in living storage organs               |kg K ha-1|
     
-    ANRT     Actual N concentration in roots                           |kg N |
-    APRT     Actual P concentration in roots                           |kg P |
-    AKRT     Actual K concentration in roots                           |kg K |
+    ANRT     Actual N amount in living roots                        |kg N ha-1|
+    APRT     Actual P amount in living roots                        |kg P ha-1|
+    AKRT     Actual K amount in living roots                        |kg K ha-1|
     
-    NUPTT    total absorbed N amount                                |kg N |
-    PUPTT    total absorbed P amount                                |kg P |
-    KUPTT    total absorbed K amount                                |kg K |
-    NFIXTT   total biological fixated N amount                      |kg N |
+    NUPTT    total absorbed N amount                                |kg N ha-1|
+    PUPTT    total absorbed P amount                                |kg P ha-1|
+    KUPTT    total absorbed K amount                                |kg K ha-1|
+    NFIXTT   total biological fixated N amount                      |kg N ha-1|
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -159,21 +159,21 @@ class NPK_Crop_Dynamics(SimulationObject):
         DVSNLT = Float(-99.)
 
     class StateVariables(StatesTemplate):
-        ANLV = Float(-99.) # N concentration in leaves [kg N ]
-        APLV = Float(-99.) # P concentration in leaves [kg P ]
-        AKLV = Float(-99.) # K concentration in leaves [kg K ]
+        ANLV = Float(-99.) # N amount in leaves [kg N ha-1]
+        APLV = Float(-99.) # P amount in leaves [kg P ]
+        AKLV = Float(-99.) # K amount in leaves [kg K ]
         
-        ANST = Float(-99.) # N concentration in stems [kg N ]
-        APST = Float(-99.) # P concentration in stems [kg P ]
-        AKST = Float(-99.) # K concentration in stems [kg K ]
+        ANST = Float(-99.) # N amount in stems [kg N ]
+        APST = Float(-99.) # P amount in stems [kg P ]
+        AKST = Float(-99.) # K amount in stems [kg K ]
       
-        ANSO = Float(-99.) # N concentration in storage organs [kg N ]
-        APSO = Float(-99.) # P concentration in storage organs [kg P ]
-        AKSO = Float(-99.) # K concentration in storage organs [kg K ]
+        ANSO = Float(-99.) # N amount in storage organs [kg N ]
+        APSO = Float(-99.) # P amount in storage organs [kg P ]
+        AKSO = Float(-99.) # K amount in storage organs [kg K ]
         
-        ANRT = Float(-99.) # N concentration in roots [kg N ]
-        APRT = Float(-99.) # P concentration in roots [kg P ]
-        AKRT = Float(-99.) # K concentration in roots [kg K ]
+        ANRT = Float(-99.) # N amount in roots [kg N ]
+        APRT = Float(-99.) # P amount in roots [kg P ]
+        AKRT = Float(-99.) # K amount in roots [kg K ]
         
         NUPTT = Float(-99.) # total absorbed N amount [kg N ]
         PUPTT = Float(-99.) # total absorbed P amount [kg P ]

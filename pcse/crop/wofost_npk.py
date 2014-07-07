@@ -19,7 +19,7 @@ from .assimilation import WOFOST_Assimilation2 as Assimilation
 from .partitioning import DVS_Partitioning_NPK as Partitioning
 from .evapotranspiration import Evapotranspiration2 as Evapotranspiration
 
-from .npk_crop_dynamics import NPK_Crop_Dynamics as NPK_crop
+from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
 from .nutrients.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
 from .nutrients.npk_stress import npk_stress as NPK_Stress
 
@@ -206,7 +206,6 @@ class WofostNPK(SimulationObject):
     def calc_rates(self, day, drv):
         params = self.params
         rates  = self.rates
-        states = self.states
 
         # Phenology
         self.pheno.calc_rates(day, drv)

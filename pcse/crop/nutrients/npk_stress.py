@@ -21,19 +21,13 @@ class npk_stress(SimulationObject):
     =======  ============================================= =======  ============
      Name     Description                                   Type     Unit
     =======  ============================================= =======  ============
-    TDWI     Initial total crop dry weight                  SCr      |kg ha-1|
-    SPA      Specific Pod Area                              SCr      |ha kg-1|
-    =======  ============================================= =======  ============    
+    =======  ============================================= =======  ============
 
     **State variables**
 
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    PAI      Pod Area Index                                     Y     -
-    WSO      Weight of living storage organs                    Y     |kg ha-1|
-    DWSO     Weight of dead storage organs                      N     |kg ha-1|
-    TWSO     Total weight of storage organs                     Y     |kg ha-1|
     =======  ================================================= ==== ============
 
     
@@ -102,8 +96,7 @@ class npk_stress(SimulationObject):
         NMAXLV = params.NMAXLV(DVS)
         PMAXLV = params.PMAXLV(DVS)
         KMAXLV = params.KMAXLV(DVS)
-        
-        
+
 #       Maximum NPK concentrations in stems (kg N kg-1 DM)
         NMAXST = params.LSNR * NMAXLV
         PMAXST = params.LSPR * PMAXLV
