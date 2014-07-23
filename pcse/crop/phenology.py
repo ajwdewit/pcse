@@ -82,8 +82,8 @@ class Vernalisation(SimulationObject):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    VERNR    Rate of vernalisation                              N    -
-    VERNFAC  Reduction factor on development rate due to        Y    -
+    VERNR    Rate of vernalisation                              N     -
+    VERNFAC  Reduction factor on development rate due to        Y     -
              vernalisation effect.
     =======  ================================================= ==== ============
 
@@ -93,7 +93,7 @@ class Vernalisation(SimulationObject):
     ============ =============================== ========================== =====
      Name        Description                         Provided by             Unit
     ============ =============================== ========================== =====
-    DVS          Development Stage                 Phenology                 |-|
+    DVS          Development Stage                 Phenology                 -
                  Used only to determine if the
                  critical development stage for
                  vernalisation (VERNDVS) is

@@ -1,0 +1,32 @@
+.. |CO2| replace:: CO\ :sub:`2`\
+.. |C| replace:: :math:`^{\circ}C`
+.. |hPa| replace:: :math:`hPa`
+.. |cm| replace:: :math:`cm`
+.. |DD| replace:: :math:`Decimal Degree`
+.. |d| replace:: day
+.. |Cday| replace:: :math:`^{\circ}C day`
+
+.. |msec-1| replace:: :math:`m sec^{-1}`
+.. |cmday-1| replace:: :math:`cm day^{-1}`
+.. |Jm-2day-1| replace:: :math:`J m^{-2} day^{-1}`
+.. |C day-1| replace:: :math:`^{\circ}C day^{-1}`
+.. |C-1day-1| replace:: :math:`^{\circ}C^{-1} day^{-1}`
+.. |C-3day-1| replace:: :math:`^{\circ}C^{-3} day^{-1}`
+
+.. |kg ha-1| replace:: kg ha\ :sup:`-1`\
+.. |ha kg-1| replace:: ha kg\ :sup:`-1`\
+.. |kg ha-1 d-1| replace:: kg ha\ :sup:`-1`\ day\ :sup:`-1`\
+.. |kg kg-1 d-1| replace:: kg kg\ :sup:`-1`\ day\ :sup:`-1`\
+.. |ha ha-1 d-1| replace:: ha ha\ :sup:`-1`\ day\ :sup:`-1`\
+.. |kg ha-1 hr-1| replace:: kg ha\ :sup:`-1`\ hr\ :sup:`-1`\
+.. |kg ha-1 hr-1 /(J m-2 s-1)| replace:: kg ha\ :sup:`-1`\ hr\ :sup:`-1`\ /(J m\ :sup:`-2`\ sec\ :sup:`-1`\)
+
+.. |day-1| replace:: day\ :sup:`-1`\
+.. |cm day-1| replace:: cm day\ :sup:`-1`\
+.. |cmC-1day-1| replace:: :math:`cm^{\circ}C^{-1} day^{-1}`
+.. |kg CH2O kg-1 d-1| replace:: kg CH\ :sub:`2`\O kg\ :sup:`-1`\ d\ :sup:`-1`\
+.. |kg CH2O ha-1| replace:: kg CH\ :sub:`2`\O ha\ :sup:`-1`\
+.. |kg CH2O ha-1 d-1| replace:: kg CH\ :sub:`2`\O ha\ :sup:`-1`\ day\ :sup:`-1`\
+
+.. |date| date::
+.. |time| date:: %H:%M

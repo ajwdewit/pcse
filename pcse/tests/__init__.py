@@ -13,7 +13,7 @@ import test_wofost
 import test_penmanmonteith
 
 def test_all(dsn=None):
-    allsuites = unittest.TestSuite([test_abioticdamage.suite(), 
+    allsuites = unittest.TestSuite([test_abioticdamage.suite(),
                                     test_assimilation.suite(),
                                     test_partitioning.suite(),
                                     test_evapotranspiration.suite(),

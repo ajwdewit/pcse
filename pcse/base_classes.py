@@ -985,6 +985,7 @@ class WeatherDataContainer(SlotPickleMixin):
     TMAX with value 15.
 
     The following keywords are compulsory:
+
     :keyword LAT: Latitude of location (decimal degree)
     :keyword LON: Longitude of location (decimal degree)
     :keyword ELEV: Elevation of location (meters)
@@ -1000,6 +1001,7 @@ class WeatherDataContainer(SlotPickleMixin):
     :keyword ET0: Daily evapotranspiration rate from reference crop (cm/day)
 
     There are two optional keywords arguments:
+
     :keyword TEMP: Daily mean temperature (Celsius), will otherwise be
                    derived from (TMAX+TMIN)/2.
     :keyword SNOWDEPTH: Depth of snow cover (cm)

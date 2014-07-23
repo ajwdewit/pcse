@@ -3,15 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. include:: abbreviations.txt
+
 Welcome to the PCSE documentation!
-====================================
+==================================
 
 .. toctree::
    :maxdepth: 2
    
    pcse_intro.rst
    quickstart.rst
+   user_guide.rst
+   code.rst
 
+This document was generated on |date|/|time|.
 
 Indices and tables
 ==================

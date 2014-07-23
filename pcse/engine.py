@@ -1,6 +1,19 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+"""The PCSE Engine provides the environment where SimulationObjects are 'living'.
+The engine takes care of reading the model configuration, initializing model
+components (e.g. groups of SimulationObjects), driving the simulation
+forward by calling the SimulationObjects, calling the agromanagement
+unit, keeping track of time and providing the weather data needed.
+
+Models are treated together with the Engine, because models are simply
+pre-configured Engines. Any model can be started by starting the Engine
+with the appropriate configuration file. The only difference is that
+models can have methods that deal with specific characteristics of a model.
+This kind of functionality cannot be implemented in the Engine because
+the model details are not known beforehand.
+"""
 import os, sys
 from collections import deque
 import logging
@@ -104,8 +117,8 @@ class Engine(BaseEngine):
         :param weatherdataprovider: An instance of a WeatherDataProvider that can
             return weather data in a WeatherDataContainer for a given date.
         :param config: A string describing the model configuration file to use.
-            By only giving filename PCSE assumes it to be located under
-            conf/pcse. If you want to provide you own configuration file, specify
+            By only giving a filename PCSE assumes it to be located under
+            pcse/conf. If you want to provide you own configuration file, specify
              it as an absolute or a relative path (e.g. with a leading '.')
         """
         BaseEngine.__init__(self)
@@ -347,14 +360,15 @@ class Engine(BaseEngine):
 
     #---------------------------------------------------------------------------
     def set_variable(self, varname, value):
-        """ Sets the value of the specified state or rate variable.
+        """Sets the value of the specified state or rate variable.
 
         :param varname: Name of the variable to be updated (string).
         :param value: Value that it should be updated to (float)
 
         :returns: a dict containing the increments of the variables
-        that were updated (new - old). If the call was unsuccessful
-        in finding the class method (see below) it will return an empty dict.
+            that were updated (new - old). If the call was unsuccessful
+            in finding the class method (see below) it will return an empty
+            dict.
 
         Note that 'setting' a variable (e.g. updating a model state) is much more
         complex than just `getting` a variable, because often some other
