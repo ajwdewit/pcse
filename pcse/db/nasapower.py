@@ -314,8 +314,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     def _parse_elevation(self, powerdata):
         """Parse elevation out of the powerdata header"""
         for line in powerdata:
-            if line.startswith("Elevation"):
-                elev = int(line.split("=")[-1])
+            if line.startswith(b"Elevation"):
+                elev = int(line.split(b"=")[-1])
                 return elev
 
     def _parse_header(self, powerdata):
@@ -333,7 +333,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         is_header = True
         while is_header:
             line = powerdata.pop(0)
-            if line.startswith("-END HEADER"):
+            if line.startswith(b"-END HEADER"):
                 is_header = False
 
         # Now start parsing meteo records
