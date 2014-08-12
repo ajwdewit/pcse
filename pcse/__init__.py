@@ -93,7 +93,7 @@ if not os.path.exists(pcse_db_file):
         print "OK"
     except Exception as e:
         logger = logging.getLogger()
-        msg1 = "Failed to create the PCSE demo data database: %s" % e
+        msg1 = "Failed to create the PCSE demo database: %s" % e
         msg2 = "PCSE will likely be functional, but some tests and demos may fail."
         logger.warn(msg1)
         logger.warn(msg2)
