@@ -2,14 +2,11 @@
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 
-import sys, os
-import datetime
-import logging
 
 from sqlalchemy import create_engine, MetaData, Table
 
 from . import db
-from .models import Wofost71_WLP_FD,Wofost71_PP
+from .models import Wofost71_WLP_FD, Wofost71_PP
 
 def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     """Provides a convenient interface for running PCSE/WOFOST
@@ -39,7 +36,7 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
         table_sim_results_smry.delete().execute()
     
     # Get input data from database
-    sitedata  = db.pcse.fetch_sitedata(db_metadata, grid, year)
+    sitedata = db.pcse.fetch_sitedata(db_metadata, grid, year)
     timerdata = db.pcse.fetch_timerdata(db_metadata, grid, year, crop)
     cropdata = db.pcse.fetch_cropdata(db_metadata, grid, year, crop)
     soildata = db.pcse.fetch_soildata(db_metadata, grid)
