@@ -77,10 +77,6 @@ class NPK_Crop_Dynamics(SimulationObject):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    ATN      Max amount translocatable N                            |kg ha-1 d-1|
-    ATP      Max amount translocatable P                            |kg ha-1 d-1|
-    ATK      Max amount translocatable K                            |kg ha-1 d-1|
-    
     RNLV     Weight increase (N) in leaves                      N   |kg ha-1 d-1|
     RPLV     Weight increase (P) in leaves                      N   |kg ha-1 d-1|
     RKLV     Weight increase (K) in leaves                      N   |kg ha-1 d-1|
@@ -185,10 +181,6 @@ class NPK_Crop_Dynamics(SimulationObject):
         KLOSST = Float(-99.)
 
     class RateVariables(RatesTemplate):
-        ATN = Float(-99.)
-        ATP = Float(-99.)
-        ATK = Float(-99.)
-        
         RNLV = Float(-99.)
         RPLV = Float(-99.)
         RKLV = Float(-99.)

@@ -32,11 +32,7 @@ class npk_uptake_rate(SimulationObject):
         PUPTR  = Float(-99.)
         KUPTR  = Float(-99.)
         NFIXTR = Float(-99.)
-        
-        RNUSO  = Float(-99.) # N uptake rate storage organs [kg ha-1 d -1]
-        RPUSO  = Float(-99.) # P uptake rate storage organs [kg ha-1 d -1]
-        RKUSO  = Float(-99.) # K uptake rate storage organs [kg ha-1 d -1]
-    
+            
     def initialize(self, day, kiosk, cropdata):
         """
         :param day: start date of the simulation
