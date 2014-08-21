@@ -10,7 +10,7 @@ class npk_supply_storage_organs(SimulationObject):
         TCNT  = Float(-99.) # time coefficient for N translocation to storage organs [days]
         TCPT  = Float(-99.) # time coefficient for P translocation to storage organs [days]
         TCKT  = Float(-99.) # time coefficient for K translocation to storage organs [days]
-        DVSNT = Float(-99.) # development stage above which N-P-K translocation to storage organs does occur 
+        DVSNPK_TRANSL = Float(-99.) # development stage above which N-P-K translocation to storage organs does occur
     
     class StateVariables(StatesTemplate):
         NUPSO = Float(-99.) # N amount that can be translocated to the storage organs [kg N ha-1]
@@ -57,7 +57,7 @@ class npk_supply_storage_organs(SimulationObject):
         
         # NPK amount that can be translocated to the storage organs [kg N ha-1]
         # translocation occurs after DVSNT
-        if DVS > params.DVSNT:
+        if DVS > params.DVSNPK_TRANSL:
             states.NUPSO = ATN/params.TCNT
             states.PUPSO = ATP/params.TCPT
             states.KUPSO = ATK/params.TCKT

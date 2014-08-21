@@ -24,15 +24,15 @@ class npk_losses(SimulationObject):
         RDRRTB = AfgenTrait() # rel. death rate of roots as a function of DVS [-; kg kg-1 d-1]
         RDRSTB = AfgenTrait() # rel. death rate of stems as a function of DVS [-; kg kg-1 d-1]
         
-        RNFLV = Float(-99.) # residual N fraction in leaves [kg N kg-1 dry biomass]
-        RNFST = Float(-99.) # residual N fraction in stems [kg N kg-1 dry biomass]
-        RNFRT = Float(-99.) # residual N fraction in roots [kg N kg-1 dry biomass]
-        RPFLV = Float(-99.) # residual P fraction in leaves [kg P kg-1 dry biomass]
-        RPFST = Float(-99.) # residual P fraction in stems [kg P kg-1 dry biomass]
-        RPFRT = Float(-99.) # residual P fraction in roots [kg P kg-1 dry biomass]
-        RKFLV = Float(-99.) # residual K fraction in leaves [kg K kg-1 dry biomass]
-        RKFST = Float(-99.) # residual K fraction in stems [kg K kg-1 dry biomass]
-        RKFRT = Float(-99.) # residual K fraction in roots [kg K kg-1 dry biomass]
+        NRESIDLV = Float(-99.) # residual N fraction in leaves [kg N kg-1 dry biomass]
+        NRESIDST = Float(-99.) # residual N fraction in stems [kg N kg-1 dry biomass]
+        NRESIDRT = Float(-99.) # residual N fraction in roots [kg N kg-1 dry biomass]
+        PRESIDLV = Float(-99.) # residual P fraction in leaves [kg P kg-1 dry biomass]
+        PRESIDST = Float(-99.) # residual P fraction in stems [kg P kg-1 dry biomass]
+        PRESIDRT = Float(-99.) # residual P fraction in roots [kg P kg-1 dry biomass]
+        KRESIDLV = Float(-99.) # residual K fraction in leaves [kg K kg-1 dry biomass]
+        KRESIDST = Float(-99.) # residual K fraction in stems [kg K kg-1 dry biomass]
+        KRESIDRT = Float(-99.) # residual K fraction in roots [kg K kg-1 dry biomass]
         
         
     def initialize(self, day, kiosk, cropdata):
@@ -65,17 +65,17 @@ class npk_losses(SimulationObject):
         DRRT = params.RDRRTB(DVS) * WRT
         DRST = params.RDRSTB(DVS) * WST
                 
-        rates.RNDLV = params.RNFLV * DRLV
-        rates.RNDST = params.RNFST * DRST
-        rates.RNDRT = params.RNFRT * DRRT
+        rates.RNDLV = params.NRESIDLV * DRLV
+        rates.RNDST = params.NRESIDST * DRST
+        rates.RNDRT = params.NRESIDRT * DRRT
         
-        rates.RPDLV = params.RPFLV * DRLV
-        rates.RPDST = params.RPFST * DRST
-        rates.RPDRT = params.RPFRT * DRRT
+        rates.RPDLV = params.PRESIDLV * DRLV
+        rates.RPDST = params.PRESIDST * DRST
+        rates.RPDRT = params.PRESIDRT * DRRT
 
-        rates.RKDLV = params.RKFLV * DRLV
-        rates.RKDST = params.RKFST * DRST
-        rates.RKDRT = params.RKFRT * DRRT
+        rates.RKDLV = params.KRESIDLV * DRLV
+        rates.RKDST = params.KRESIDST * DRST
+        rates.RKDRT = params.KRESIDRT * DRRT
         
 
         

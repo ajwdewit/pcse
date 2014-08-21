@@ -7,7 +7,6 @@ from pcse.engine import Engine
 start_day = dt.date(1976,1,1)
 
 def main():
-    os.chdir(r"D:\UserData\sources\npk")
     end_day = dt.date(1976,12,31)
     timer = {"GRID_NO":1,
              "CROP_NO":1,
@@ -30,6 +29,7 @@ def main():
     pw.run(days=300)
     r = pw.get_output()
     print r[-1]
+    print r[100]
     
 if __name__ == '__main__':
         main()

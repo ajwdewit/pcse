@@ -538,11 +538,11 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         TBASE  = Float(-99.)
         PERDL  = Float(-99.)
         TDWI   = Float(-99.)
-        RDRNS  = Float(-99.) # max. relative death rate of leaves due to nutrient NPK stress
-        NLAI   = Float(-99.) # coefficient for the reduction due to nutrient NPK stress of the LAI increase (during juvenile phase)
-        NSLA   = Float(-99.) # coefficient for the effect of nutrient NPK stress on SLA reduction
         SLATB  = AfgenTrait()
         KDIFTB = AfgenTrait()
+        RDRLV_NPK  = Float(-99.) # max. relative death rate of leaves due to nutrient NPK stress
+        NLAI_NPK   = Float(-99.) # coefficient for the reduction due to nutrient NPK stress of the LAI increase (during juvenile phase)
+        NSLA_NPK   = Float(-99.) # coefficient for the effect of nutrient NPK stress on SLA reduction
 
     class StateVariables(StatesTemplate):
         LV     = Instance(deque)
@@ -652,7 +652,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         # added IS
         # Extra death rate due to nutrient stress
         # has to be added to rates.DSLV
-        rates.DSLV4 = states.WLV * params.RDRNS * (1.0 - self.kiosk["NPKI"])
+        rates.DSLV4 = states.WLV * params.RDRLV_NPK * (1.0 - self.kiosk["NPKI"])
 
         # added IS
         # leaf death equals maximum of water stress, shading and frost
@@ -677,7 +677,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         # added IS
         # correction SLA due to nutrient stress
-        sla_npk_factor = exp(-params.NSLA * (1.0 - self.kiosk["NPKI"]))
+        sla_npk_factor = exp(-params.NSLA_NPK * (1.0 - self.kiosk["NPKI"]))
 
         # specific leaf area of leaves per time step
         rates.SLAT = params.SLATB(DVS) * sla_npk_factor
@@ -689,7 +689,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
             # added IS
             # Nutrient and water stress during juvenile stage:
             if DVS < 0.2 and states.LAI < 0.75:
-                factor = TRA/TRAMX * exp(-params.NLAI * (1.0 - self.kiosk["NPKI"]))
+                factor = TRA/TRAMX * exp(-params.NLAI_NPK * (1.0 - self.kiosk["NPKI"]))
             else:
                 factor = 1.
 

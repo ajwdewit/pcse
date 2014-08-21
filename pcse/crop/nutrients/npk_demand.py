@@ -8,20 +8,20 @@ from ...traitlets import HasTraits, Float, Int, Instance
 class npk_demand(SimulationObject):
     
     class Parameters(ParamTemplate):
-        NMAXLV = AfgenTrait()  # maximum N concentration in leaves as function of dvs
-        PMAXLV = AfgenTrait()  # maximum P concentration in leaves as function of dvs
-        KMAXLV = AfgenTrait()  # maximum P concentration in leaves as function of dvs
+        NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs
+        PMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
+        KMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
         
-        LRNR   = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
-        LSNR   = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
-        LRPR   = Float(-99.)  # maximum P concentration in roots as fraction of maximum P concentration in leaves
-        LSPR   = Float(-99.)  # maximum P concentration in stems as fraction of maximum P concentration in leaves
-        LRKR   = Float(-99.)  # maximum K concentration in roots as fraction of maximum K concentration in leaves
-        LSKR   = Float(-99.)  # maximum K concentration in stems as fraction of maximum K concentration in leaves
+        NMAXRT_FR   = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
+        NMAXST_FR   = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
+        PMAXRT_FR   = Float(-99.)  # maximum P concentration in roots as fraction of maximum P concentration in leaves
+        PMAXST_FR   = Float(-99.)  # maximum P concentration in stems as fraction of maximum P concentration in leaves
+        KMAXRT_FR   = Float(-99.)  # maximum K concentration in roots as fraction of maximum K concentration in leaves
+        KMAXST_FR   = Float(-99.)  # maximum K concentration in stems as fraction of maximum K concentration in leaves
         
-        NMAXSO = Float(-99.)  # maximum P concentration in stems in storage organs [kg N kg-1 dry biomass]
-        PMAXSO = Float(-99.)  # maximum P concentration in stems in storage organs [kg P kg-1 dry biomass]
-        KMAXSO = Float(-99.)  # maximum K concentration in stems in storage organs [kg K kg-1 dry biomass]
+        NMAXSO = Float(-99.)  # maximum P concentration in storage organs [kg N kg-1 dry biomass]
+        PMAXSO = Float(-99.)  # maximum P concentration in storage organs [kg P kg-1 dry biomass]
+        KMAXSO = Float(-99.)  # maximum K concentration in storage organs [kg K kg-1 dry biomass]
         
         TCNT   = Float(-99.)  # time coefficient for N translocation to storage organs [days]
         TCPT   = Float(-99.)  # time coefficient for P translocation to storage organs [days]
@@ -91,21 +91,21 @@ class npk_demand(SimulationObject):
         params = self.params
 
 #       Maximum NPK concentrations in leaves [kg N kg-1 DM]
-        NMAXLV = params.NMAXLV(DVS)
-        PMAXLV = params.PMAXLV(DVS)
-        KMAXLV = params.KMAXLV(DVS)
+        NMAXLV = params.NMAXLV_TB(DVS)
+        PMAXLV = params.PMAXLV_TB(DVS)
+        KMAXLV = params.KMAXLV_TB(DVS)
         
 #       Maximum NPK concentrations in stems and roots [kg N kg-1 DM]
-        NMAXST = params.LSNR * NMAXLV
-        NMAXRT = params.LRNR * NMAXLV
+        NMAXST = params.NMAXST_FR * NMAXLV
+        NMAXRT = params.NMAXRT_FR * NMAXLV
         NMAXSO = params.NMAXSO
       
-        PMAXST = params.LSPR * PMAXLV
-        PMAXRT = params.LRPR * PMAXLV
+        PMAXST = params.PMAXST_FR * PMAXLV
+        PMAXRT = params.PMAXRT_FR * PMAXLV
         PMAXSO = params.PMAXSO      
       
-        KMAXST = params.LSKR * KMAXLV
-        KMAXRT = params.LRKR * KMAXLV
+        KMAXST = params.KMAXST_FR * KMAXLV
+        KMAXRT = params.KMAXRT_FR * KMAXLV
         KMAXSO = params.KMAXSO
 
 #       N demand [kg ha-1] - maybe should be [kg ha-1 day-1]

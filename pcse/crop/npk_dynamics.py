@@ -142,17 +142,17 @@ class NPK_Crop_Dynamics(SimulationObject):
 
 
     class Parameters(ParamTemplate):
-        NMAXLV = AfgenTrait()
-        PMAXLV = AfgenTrait()
-        KMAXLV = AfgenTrait()
+        NMAXLV_TB = AfgenTrait()
+        PMAXLV_TB = AfgenTrait()
+        KMAXLV_TB = AfgenTrait()
         TDWI = Float(-99.)
-        LSNR = Float(-99.)
-        LRNR = Float(-99.)
-        LSPR = Float(-99.)
-        LRPR = Float(-99.)
-        LSKR = Float(-99.)
-        LRKR = Float(-99.)
-        DVSNLT = Float(-99.)
+        NMAXST_FR = Float(-99.)
+        NMAXRT_FR = Float(-99.)
+        PMAXST_FR = Float(-99.)
+        PMAXRT_FR = Float(-99.)
+        KMAXST_FR = Float(-99.)
+        KMAXRT_FR = Float(-99.)
+        DVSNPK_STOP = Float(-99.)
 
     class StateVariables(StatesTemplate):
         ANLV = Float(-99.) # N amount in leaves [kg N ha-1]
@@ -236,23 +236,20 @@ class NPK_Crop_Dynamics(SimulationObject):
         WSO  = params.TDWI * (1-FR) * FO
         WRT  = params.TDWI * FR
         
-        self.ANLVI = ANLV = WLV * params.NMAXLV(DVS)
-        self.ANSTI = ANST = WST * params.NMAXLV(DVS) * params.LSNR
-        self.ANRTI = ANRT = WRT * params.NMAXLV(DVS) * params.LRNR
+        self.ANLVI = ANLV = WLV * params.NMAXLV_TB(DVS)
+        self.ANSTI = ANST = WST * params.NMAXLV_TB(DVS) * params.NMAXST_FR
+        self.ANRTI = ANRT = WRT * params.NMAXLV_TB(DVS) * params.NMAXRT_FR
         self.ANSOI = ANSO = 0.
         
-        self.APLVI = APLV = WLV * params.PMAXLV(DVS)
-        self.APSTI = APST = WST * params.PMAXLV(DVS) * params.LSPR
-        self.APRTI = APRT = WRT * params.PMAXLV(DVS) * params.LRPR
+        self.APLVI = APLV = WLV * params.PMAXLV_TB(DVS)
+        self.APSTI = APST = WST * params.PMAXLV_TB(DVS) * params.PMAXST_FR
+        self.APRTI = APRT = WRT * params.PMAXLV_TB(DVS) * params.PMAXRT_FR
         self.APSOI = APSO = 0.
 
-        self.AKLVI = AKLV = WLV * params.KMAXLV(DVS)
-        self.AKSTI = AKST = WST * params.KMAXLV(DVS) * params.LSKR
-        self.AKRTI = AKRT = WRT * params.KMAXLV(DVS) * params.LRKR
+        self.AKLVI = AKLV = WLV * params.KMAXLV_TB(DVS)
+        self.AKSTI = AKST = WST * params.KMAXLV_TB(DVS) * params.KMAXST_FR
+        self.AKRTI = AKRT = WRT * params.KMAXLV_TB(DVS) * params.KMAXRT_FR
         self.AKSOI = AKSO = 0.
-        
-        params = self.params
-        DVSNLT = params.DVSNLT
 
         self.states = self.StateVariables(kiosk,
                         publish=["ANLV","ANST","ANRT","ANSO", "APLV","APST",
@@ -261,9 +258,8 @@ class NPK_Crop_Dynamics(SimulationObject):
                         APLV=APLV, APST=APST, APRT=APRT, APSO=APSO,
                         AKLV=AKLV, AKST=AKST, AKRT=AKRT, AKSO=AKSO,
                         NUPTT=0 ,PUPTT=0., KUPTT=0., NFIXTT=0.,
-                        NLOSST=0  ,PLOSST=0., KLOSST=0.)
-        
-   
+                        NLOSST=0 ,PLOSST=0., KLOSST=0.)
+
     @staticmethod
     def _check_N_balance(self, day):
         states = self.states

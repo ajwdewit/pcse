@@ -8,19 +8,19 @@ from ...base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
 class npk_translocatable(SimulationObject):
     
     class Parameters(ParamTemplate):
-        RNFLV = Float(-99.) # residual N fraction in leaves [kg N kg-1 dry biomass]
-        RNFST = Float(-99.) # residual N fraction in stems [kg N kg-1 dry biomass]
-        RNFRT = Float(-99.) # residual N fraction in roots [kg N kg-1 dry biomass]
+        NRESIDLV = Float(-99.) # residual N fraction in leaves [kg N kg-1 dry biomass]
+        NRESIDST = Float(-99.) # residual N fraction in stems [kg N kg-1 dry biomass]
+        NRESIDRT = Float(-99.) # residual N fraction in roots [kg N kg-1 dry biomass]
         
-        RPFLV = Float(-99.) # residual P fraction in leaves [kg P kg-1 dry biomass]
-        RPFST = Float(-99.) # residual P fraction in stems [kg P kg-1 dry biomass]
-        RPFRT = Float(-99.) # residual P fraction in roots [kg P kg-1 dry biomass]
+        PRESIDLV = Float(-99.) # residual P fraction in leaves [kg P kg-1 dry biomass]
+        PRESIDST = Float(-99.) # residual P fraction in stems [kg P kg-1 dry biomass]
+        PRESIDRT = Float(-99.) # residual P fraction in roots [kg P kg-1 dry biomass]
         
-        RKFLV = Float(-99.) # residual K fraction in leaves [kg P kg-1 dry biomass]
-        RKFST = Float(-99.) # residual K fraction in stems [kg P kg-1 dry biomass]
-        RKFRT = Float(-99.) # residual K fraction in roots [kg P kg-1 dry biomass]    
+        KRESIDLV = Float(-99.) # residual K fraction in leaves [kg P kg-1 dry biomass]
+        KRESIDST = Float(-99.) # residual K fraction in stems [kg P kg-1 dry biomass]
+        KRESIDRT = Float(-99.) # residual K fraction in roots [kg P kg-1 dry biomass]
         
-        FNTRT = Float(-99.) # NPK translocation from roots as a fraction of resp. total NPK amounts translocated from leaves and stems
+        NPK_TRANSLRT_FR = Float(-99.) # NPK translocation from roots as a fraction of resp. total NPK amounts translocated from leaves and stems
         
         
     class StateVariables(StatesTemplate):
@@ -76,21 +76,21 @@ class npk_translocatable(SimulationObject):
                
         
 #       translocatable N amount in the organs [kg N ha-1]
-        states.ATNLV = max (0. , ANLV - WLV * params.RNFLV)
-        states.ATNST = max (0. , ANST - WST * params.RNFST)
-        states.ATNRT = max((states.ATNLV + states.ATNST) * params.FNTRT, ANRT - WRT * params.RNFRT)
+        states.ATNLV = max (0. , ANLV - WLV * params.NRESIDLV)
+        states.ATNST = max (0. , ANST - WST * params.NRESIDST)
+        states.ATNRT = max((states.ATNLV + states.ATNST) * params.NPK_TRANSLRT_FR, ANRT - WRT * params.NRESIDRT)
                
 
 #       translocatable P amount in the organs [kg P ha-1]
-        states.ATPLV = max (0. , APLV - WLV * params.RPFLV)
-        states.ATPST = max (0. , APST - WST * params.RPFST)
-        states.ATPRT = max((states.ATPLV + states.ATPST) * params.FNTRT, APRT - WRT * params.RPFRT)
+        states.ATPLV = max (0. , APLV - WLV * params.PRESIDLV)
+        states.ATPST = max (0. , APST - WST * params.PRESIDST)
+        states.ATPRT = max((states.ATPLV + states.ATPST) * params.NPK_TRANSLRT_FR, APRT - WRT * params.PRESIDRT)
         
       
 #       translocatable K amount in the organs [kg K ha-1]
-        states.ATKLV = max (0. , AKLV - WLV * params.RKFLV)
-        states.ATKST = max (0. , AKST - WST * params.RKFST)
-        states.ATKRT = max((states.ATKLV + states.ATKST) * params.FNTRT, AKRT - WRT * params.RKFRT)
+        states.ATKLV = max (0. , AKLV - WLV * params.KRESIDLV)
+        states.ATKST = max (0. , AKST - WST * params.KRESIDST)
+        states.ATKRT = max((states.ATKLV + states.ATKST) * params.NPK_TRANSLRT_FR, AKRT - WRT * params.KRESIDRT)
 
         
       

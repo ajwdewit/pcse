@@ -43,25 +43,25 @@ class npk_stress(SimulationObject):
     """
 
     class Parameters(ParamTemplate):
-        NMAXLV = AfgenTrait()  # maximum N concentration in leaves as function of dvs
-        PMAXLV = AfgenTrait()  # maximum P concentration in leaves as function of dvs
-        KMAXLV = AfgenTrait()  # maximum P concentration in leaves as function of dvs
-        FRNX  = Float(-99.)   # optimal N concentration as fraction of maximum N concentration
-        FRPX  = Float(-99.)   # optimal P concentration as fraction of maximum P concentration
-        FRKX  = Float(-99.)   # optimal K concentration as fraction of maximum K concentration
-        LRNR   = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
-        LSNR   = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
-        LRPR   = Float(-99.)  # maximum P concentration in roots as fraction of maximum P concentration in leaves
-        LSPR   = Float(-99.)  # maximum P concentration in stems as fraction of maximum P concentration in leaves
-        LRKR   = Float(-99.)  # maximum K concentration in roots as fraction of maximum K concentration in leaves
-        LSKR   = Float(-99.)  # maximum K concentration in stems as fraction of maximum K concentration in leaves
-        RNFLV  = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
-        RNFST  = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
-        RPFLV  = Float(-99.)  # residual P fraction in leaves [kg P kg-1 dry biomass]
-        RPFST  = Float(-99.)  # residual P fraction in stems [kg P kg-1 dry biomass]
-        RKFLV  = Float(-99.)  # residual K fraction in leaves [kg K kg-1 dry biomass]
-        RKFST  = Float(-99.)  # residual K fraction in stems [kg K kg-1 dry biomass]
-        NLUE   = Float(-99.)  # coefficient for the reduction of RUE due to nutrient (N-P-K) stress
+        NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs
+        PMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
+        KMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
+        NCRIT_FR  = Float(-99.)   # optimal N concentration as fraction of maximum N concentration
+        PCRIT_FR  = Float(-99.)   # optimal P concentration as fraction of maximum P concentration
+        KCRIT_FR  = Float(-99.)   # optimal K concentration as fraction of maximum K concentration
+        NMAXRT_FR   = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
+        NMAXST_FR   = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
+        PMAXST_FR   = Float(-99.)  # maximum P concentration in roots as fraction of maximum P concentration in leaves
+        PMAXRT_FR   = Float(-99.)  # maximum P concentration in stems as fraction of maximum P concentration in leaves
+        KMAXRT_FR   = Float(-99.)  # maximum K concentration in roots as fraction of maximum K concentration in leaves
+        KMAXST_FR   = Float(-99.)  # maximum K concentration in stems as fraction of maximum K concentration in leaves
+        NRESIDLV  = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
+        NRESIDST  = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
+        PRESIDLV  = Float(-99.)  # residual P fraction in leaves [kg P kg-1 dry biomass]
+        PRESIDST  = Float(-99.)  # residual P fraction in stems [kg P kg-1 dry biomass]
+        KRESIDLV  = Float(-99.)  # residual K fraction in leaves [kg K kg-1 dry biomass]
+        KRESIDST  = Float(-99.)  # residual K fraction in stems [kg K kg-1 dry biomass]
+        NLUE_NPK   = Float(-99.)  # coefficient for the reduction of RUE due to nutrient (N-P-K) stress
         
 
     def initialize(self, day, kiosk, cropdata):
@@ -93,27 +93,27 @@ class npk_stress(SimulationObject):
         AKST = self.kiosk["AKST"] # K concentration in stems [kg ha-1]
        
 #       Maximum NPK concentrations in leaves (kg N kg-1 DM)        
-        NMAXLV = params.NMAXLV(DVS)
-        PMAXLV = params.PMAXLV(DVS)
-        KMAXLV = params.KMAXLV(DVS)
+        NMAXLV = params.NMAXLV_TB(DVS)
+        PMAXLV = params.PMAXLV_TB(DVS)
+        KMAXLV = params.KMAXLV_TB(DVS)
 
 #       Maximum NPK concentrations in stems (kg N kg-1 DM)
-        NMAXST = params.LSNR * NMAXLV
-        PMAXST = params.LSPR * PMAXLV
-        KMAXST = params.LSKR * KMAXLV
+        NMAXST = params.NMAXST_FR * NMAXLV
+        PMAXST = params.PMAXRT_FR * PMAXLV
+        KMAXST = params.KMAXST_FR * KMAXLV
         
 #       Total vegetative living above-ground biomass (kg DM ha-1)     
         TBGMR = WLV + WST 
       
 #       Optimal NPK amount in vegetative above-ground living biomass and its NPK concentration
-        NOPTL  = params.FRNX * NMAXLV * WLV
-        NOPTS  = params.FRNX * NMAXST * WST
+        NOPTL  = params.NCRIT_FR * NMAXLV * WLV
+        NOPTS  = params.NCRIT_FR * NMAXST * WST
         
-        POPTL = params.FRPX * PMAXLV * WLV
-        POPTS = params.FRPX * PMAXST * WST
+        POPTL = params.PCRIT_FR * PMAXLV * WLV
+        POPTS = params.PCRIT_FR * PMAXST * WST
 
-        KOPTL = params.FRKX * KMAXLV * WLV
-        KOPTS = params.FRKX * KMAXST * WST
+        KOPTL = params.KCRIT_FR * KMAXLV * WLV
+        KOPTS = params.KCRIT_FR * KMAXST * WST
         
 #       if above-ground living biomass = 0 then optimum = 0
         if TBGMR > 0.:
@@ -137,31 +137,31 @@ class npk_stress(SimulationObject):
 #       Residual NPK concentration in total vegetative living above-ground biomass  (kg N/P/K kg-1 DM)
 #       if above-ground living biomass = 0 then residual concentration = 0
         if TBGMR > 0.:
-            NRMR = (WLV * params.RNFLV + WST * params.RNFST)/TBGMR
-            PRMR = (WLV * params.RPFLV + WST * params.RPFST)/TBGMR
-            KRMR = (WLV * params.RKFLV + WST * params.RKFST)/TBGMR
+            NRMR = (WLV * params.NRESIDLV + WST * params.NRESIDST)/TBGMR
+            PRMR = (WLV * params.PRESIDLV + WST * params.PRESIDST)/TBGMR
+            KRMR = (WLV * params.KRESIDLV + WST * params.KRESIDST)/TBGMR
         else:
-            NRMR = PRMR = KRMR = 0
+            NRMR = PRMR = KRMR = 0.
             
 #              
         if (NOPTMR - NRMR) > 0.:
-            NNI = max(0.001,(NFGMR-NRMR)/(NOPTMR-NRMR))
+            NNI = max(0.001, (NFGMR-NRMR)/(NOPTMR-NRMR))
         else:
             NNI = 0.001
             
         if (POPTMR - PRMR) > 0.:
-            PNI = max (0.001,(PFGMR-PRMR)/(POPTMR-PRMR))
+            PNI = max(0.001, (PFGMR-PRMR)/(POPTMR-PRMR))
         else:
            PNI = 0.001
             
-        if  (KOPTMR-KRMR) > 0:   
-            KNI = max (0.001,(KFGMR-KRMR)/(KOPTMR-KRMR))
+        if (KOPTMR-KRMR) > 0:
+            KNI = max(0.001, (KFGMR-KRMR)/(KOPTMR-KRMR))
         else:
             KNI = 0.001
       
-        NPKI = min(NNI,PNI,KNI)    
+        NPKI = min(NNI, PNI, KNI)
 
 #       Nutrient reduction factor
-        NPKREF= limit(0., 1.0, 1. - params.NLUE*(1.0001-NPKI)**2)
+        NPKREF= limit(0., 1.0, 1. - params.NLUE_NPK*(1.0001-NPKI)**2)
          
         return NNI, NPKI, NPKREF

@@ -23,16 +23,16 @@ class NPK_Soil_Dynamics(SimulationObject):
         PRFTAB  = AfgenTrait() # kg P uptake per kg fertilser-P applied
         KRFTAB  = AfgenTrait() # kg K uptake per kg fertilser-K applied
         
-        NMINS   = Float(-99.)  # total mineral soil N available at start of growth period [kg N/ha]
-        RTNMINS = Float(-99.)  # fraction of soil mineral N coming available per day [day-1]
+        NSOILBASE   = Float(-99.)  # total mineral soil N available at start of growth period [kg N/ha]
+        NSOILBASE_FR = Float(-99.)  # fraction of soil mineral N coming available per day [day-1]
 
-        PMINS   = Float(-99.)  # total mineral soil P available at start of growth period [kg N/ha]
-        RTPMINS = Float(-99.)  # fraction of soil mineral P coming available per day [day-1]
+        PSOILBASE   = Float(-99.)  # total mineral soil P available at start of growth period [kg N/ha]
+        PSOILBASE_FR = Float(-99.)  # fraction of soil mineral P coming available per day [day-1]
         
-        KMINS   = Float(-99.)  # total mineral soil K available at start of growth period [kg N/ha]
-        RTKMINS = Float(-99.)  # fraction of soil mineral K coming available per day [day-1]
+        KSOILBASE   = Float(-99.)  # total mineral soil K available at start of growth period [kg N/ha]
+        KSOILBASE_FR = Float(-99.)  # fraction of soil mineral K coming available per day [day-1]
         
-        DVSNLT  = Float(-99.)  # Developmentstage after which no nutrients are absorbed
+        DVSNPK_STOP  = Float(-99.)  # Developmentstage after which no nutrients are absorbed
         
     class StateVariables(StatesTemplate):
         NMIN = Float(-99.) # mineral N available from soil for crop    kg N ha-1
@@ -70,9 +70,9 @@ class NPK_Soil_Dynamics(SimulationObject):
       # INITIAL STATES
         params= self.params
        
-        NMIN = params.NMINS
-        PMIN = params.PMINS
-        KMIN = params.KMINS
+        NMIN = params.NSOILBASE
+        PMIN = params.PSOILBASE
+        KMIN = params.KSOILBASE
         
         iday  = doy(day)
         NMINT = params.FERNTAB(iday) * params.NRFTAB(iday)
@@ -108,14 +108,14 @@ class NPK_Soil_Dynamics(SimulationObject):
         
         TRANRF = TRA/TRAMX
         
-        if DVS < params.DVSNLT and TRANRF > 0.01 :
+        if DVS < params.DVSNPK_STOP and TRANRF > 0.01 :
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.
                     
-        rates.RNMINS = -max(0.,min( params.RTNMINS * self.NMINI * NutrientLIMIT, NMIN))
-        rates.RPMINS = -max(0.,min( params.RTPMINS * self.PMINI * NutrientLIMIT, PMIN))
-        rates.RKMINS = -max(0.,min( params.RTKMINS * self.KMINI * NutrientLIMIT, KMIN))
+        rates.RNMINS = -max(0.,min( params.NSOILBASE_FR * self.NMINI * NutrientLIMIT, NMIN))
+        rates.RPMINS = -max(0.,min( params.PSOILBASE_FR * self.PMINI * NutrientLIMIT, PMIN))
+        rates.RKMINS = -max(0.,min( params.KSOILBASE_FR * self.KMINI * NutrientLIMIT, KMIN))
         
         iday  = doy(day)
         FERTNS = params.FERNTAB(iday) * params.NRFTAB(iday)

@@ -7,28 +7,27 @@ from ...base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
 class npk_uptake_rate(SimulationObject):
     
     class Parameters(ParamTemplate):
-        NFIXF  = Float(-99.) # fraction of crop nitrogen uptake by biological fixation
-        DVSNT  = Float(-99.) # development stage above which NPK translocation to storage organs does occur 
-        DVSNLT = Float(-99.) # development stage above which no crop N-P-K uptake does occur
-    
-        
+        NFIX_FR = Float(-99.)  # fraction of crop nitrogen uptake by biological fixation
+        DVSNPK_TRANSL = Float(-99.)  # development stage above which NPK translocation to storage organs does occur
+        DVSNPK_STOP = Float(-99.)  # development stage above which no crop N-P-K uptake does occur
+
     class RateVariables(RatesTemplate):
-        RNULV  = Float(-99.) # N uptake rate [kg ha-1 d -1]
+        RNULV  = Float(-99.)  # N uptake rate [kg ha-1 d -1]
         RNUST  = Float(-99.)
         RNURT  = Float(-99.)
         RNUSO  = Float(-99.)
         
-        RPULV  = Float(-99.) # P uptake rate [kg ha-1 d -1]
+        RPULV  = Float(-99.)  # P uptake rate [kg ha-1 d -1]
         RPUST  = Float(-99.)
         RPURT  = Float(-99.)
         RPUSO  = Float(-99.)
 
-        RKULV  = Float(-99.) # N uptake rate [kg ha-1 d -1]
+        RKULV  = Float(-99.)  # N uptake rate [kg ha-1 d -1]
         RKUST  = Float(-99.)
         RKURT  = Float(-99.)
         RKUSO  = Float(-99.)
         
-        NUPTR  = Float(-99.) # Total N uptake rate [kg ha-1 d -1]
+        NUPTR  = Float(-99.)  # Total N uptake rate [kg ha-1 d -1]
         PUPTR  = Float(-99.)
         KUPTR  = Float(-99.)
         NFIXTR = Float(-99.)
@@ -94,20 +93,20 @@ class npk_uptake_rate(SimulationObject):
         
 #       No nutrients are absorbed after developmentstage DVSNLT or
 #       when watershortage occurs i.e. TRANRF <= 0.01
-        if DVS < params.DVSNLT and TRANRF > 0.01 :
+        if DVS < params.DVSNPK_STOP and TRANRF > 0.01 :
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.
 
         
         # NPK uptake rate from soil
-        rates.NUPTR = (max (0., min ((1.-params.NFIXF)*NDEMTO, NMINT))* NutrientLIMIT)
+        rates.NUPTR = (max (0., min ((1.-params.NFIX_FR)*NDEMTO, NMINT))* NutrientLIMIT)
         rates.PUPTR = (max (0., min (PDEMTO, PMINT))* NutrientLIMIT)
         rates.KUPTR = (max (0., min (KDEMTO, KMINT))* NutrientLIMIT)
        
         
         # biological nitrogen fixation
-        rates.NFIXTR= (max (0., params.NFIXF*NDEMTO)* NutrientLIMIT)
+        rates.NFIXTR= (max (0., params.NFIX_FR*NDEMTO)* NutrientLIMIT)
         
         # NPK uptake rate
         # if no demand then uptake rate = 0.
@@ -135,13 +134,3 @@ class npk_uptake_rate(SimulationObject):
             rates.RKURT = (KDEMR / KDEMTO) * rates.KUPTR
             
 #        print "RKUST: ",rates.RKUST, "KDEMS: ",KDEMS, "KDEMTO: ",KDEMTO, "KUPTR: ",rates.KUPTR, KMINT
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
