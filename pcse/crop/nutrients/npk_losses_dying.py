@@ -21,9 +21,6 @@ class NPK_Losses(SimulationObject):
         RKDRT = Float(-99.)  # K loss rate roots  [kg ha-1 d-1]
     
     class Parameters(ParamTemplate):
-        RDRRTB = AfgenTrait()  # rel. death rate of roots as a function of DVS [-; kg kg-1 d-1]
-        RDRSTB = AfgenTrait()  # rel. death rate of stems as a function of DVS [-; kg kg-1 d-1]
-        
         NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
         NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
         NRESIDRT = Float(-99.)  # residual N fraction in roots [kg N kg-1 dry biomass]
@@ -43,26 +40,20 @@ class NPK_Losses(SimulationObject):
         """
 
         self.params = self.Parameters(cropdata)
-        self.rates   = self.RateVariables(kiosk, publish=["RNDLV", "RNDST", "RNDRT",
-                                                          "RPDLV", "RPDST", "RPDRT",
-                                                          "RKDLV", "RKDST","RKDRT"])
-        self.kiosk  = kiosk
+        self.rates = self.RateVariables(kiosk, publish=["RNDLV", "RNDST", "RNDRT",
+                                                        "RPDLV", "RPDST", "RPDRT",
+                                                        "RKDLV", "RKDST","RKDRT"])
+        self.kiosk = kiosk
 
     @prepare_rates
     def calc_rates(self, day):
         rates = self.rates
         params = self.params
         
-        DVS  = self.kiosk["DVS"]
-        DRLV = self.kiosk["DRLV"] # death rate leaves [kg dry matter ha-1 d-1]
-        
-        WRT = self.kiosk["WRT"]
-        WST = self.kiosk["WST"]
-        
-        
-        DRRT = params.RDRRTB(DVS) * WRT
-        DRST = params.RDRSTB(DVS) * WST
-                
+        DRLV = self.kiosk["DRLV"]  # death rate leaves [kg dry matter ha-1 d-1]
+        DRST = self.kiosk["DRST"]  # death rate stems [kg dry matter ha-1 d-1]
+        DRRT = self.kiosk["DRRT"]  # death rate roots [kg dry matter ha-1 d-1]
+
         rates.RNDLV = params.NRESIDLV * DRLV
         rates.RNDST = params.NRESIDST * DRST
         rates.RNDRT = params.NRESIDRT * DRRT

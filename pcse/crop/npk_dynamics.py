@@ -6,7 +6,6 @@ from ..decorators import prepare_rates, prepare_states
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 
-from .nutrients import NPK_Losses
 from .nutrients import NPK_Translocation
 from .nutrients import NPK_Demand_Uptake
 
@@ -112,7 +111,6 @@ class NPK_Crop_Dynamics(SimulationObject):
     """
 
     translocation = Instance(SimulationObject)
-    losses = Instance(SimulationObject)
     demand_uptake = Instance(SimulationObject)
 
     ANLVI = Float(-99.)  # initial soil N amount in leaves
@@ -131,17 +129,25 @@ class NPK_Crop_Dynamics(SimulationObject):
     AKSOI = Float(-99.)  # initial soil K amount in storage organs
 
     class Parameters(ParamTemplate):
+        DVSNPK_STOP = Float(-99.)
         NMAXLV_TB = AfgenTrait()
         PMAXLV_TB = AfgenTrait()
         KMAXLV_TB = AfgenTrait()
-        TDWI = Float(-99.)
         NMAXST_FR = Float(-99.)
         NMAXRT_FR = Float(-99.)
         PMAXST_FR = Float(-99.)
         PMAXRT_FR = Float(-99.)
         KMAXST_FR = Float(-99.)
         KMAXRT_FR = Float(-99.)
-        DVSNPK_STOP = Float(-99.)
+        NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
+        NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
+        NRESIDRT = Float(-99.)  # residual N fraction in roots [kg N kg-1 dry biomass]
+        PRESIDLV = Float(-99.)  # residual P fraction in leaves [kg P kg-1 dry biomass]
+        PRESIDST = Float(-99.)  # residual P fraction in stems [kg P kg-1 dry biomass]
+        PRESIDRT = Float(-99.)  # residual P fraction in roots [kg P kg-1 dry biomass]
+        KRESIDLV = Float(-99.)  # residual K fraction in leaves [kg K kg-1 dry biomass]
+        KRESIDST = Float(-99.)  # residual K fraction in stems [kg K kg-1 dry biomass]
+        KRESIDRT = Float(-99.)  # residual K fraction in roots [kg K kg-1 dry biomass]
 
     class StateVariables(StatesTemplate):
         ANLV = Float(-99.) # N amount in leaves [kg N ha-1]
@@ -170,7 +176,7 @@ class NPK_Crop_Dynamics(SimulationObject):
         KLOSSES_T = Float(-99.)
 
     class RateVariables(RatesTemplate):
-        RNLV = Float(-99.)
+        RNLV = Float(-99.)  # Net rates of NPK in different plant organs 
         RPLV = Float(-99.)
         RKLV = Float(-99.)
         
@@ -186,6 +192,18 @@ class NPK_Crop_Dynamics(SimulationObject):
         RPSO = Float(-99.)
         RKSO = Float(-99.)
                
+        RNDLV = Float(-99.)  # N loss rate leaves [kg ha-1 d-1]
+        RNDST = Float(-99.)  # N loss rate stems  [kg ha-1 d-1]
+        RNDRT = Float(-99.)  # N loss rate roots  [kg ha-1 d-1]
+        
+        RPDLV = Float(-99.)  # P loss rate leaves [kg ha-1 d-1]
+        RPDST = Float(-99.)  # P loss rate stems  [kg ha-1 d-1]
+        RPDRT = Float(-99.)  # P loss rate roots  [kg ha-1 d-1]
+        
+        RKDLV = Float(-99.)  # K loss rate leaves [kg ha-1 d-1]
+        RKDST = Float(-99.)  # K loss rate stems  [kg ha-1 d-1]
+        RKDRT = Float(-99.)  # K loss rate roots  [kg ha-1 d-1]
+
         RNLOSS = Float(-99.)
         RPLOSS = Float(-99.)
         RKLOSS = Float(-99.)
@@ -201,7 +219,7 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.kiosk = kiosk
         
 #       Initialize components of the npk_crop_dynamics
-        self.losses = NPK_Losses(day, kiosk, cropdata)
+#        self.losses = NPK_Losses(day, kiosk, cropdata)
         self.translocation = NPK_Translocation(day, kiosk, cropdata)
         self.demand_uptake = NPK_Demand_Uptake(day, kiosk, cropdata)
 
@@ -239,32 +257,50 @@ class NPK_Crop_Dynamics(SimulationObject):
     @prepare_rates
     def calc_rates(self, day):
         rates = self.rates
+        params = self.params
         
         self.demand_uptake.calc_rates(day)
         self.translocation.calc_rates(day)
-        self.losses.calc_rates(day)
-                   
-        # N rates in leaves, stems, root and storage organs
-        rates.RNLV = self.kiosk["RNULV"] - self.kiosk["RNTLV"] - self.kiosk["RNDLV"]
-        rates.RNST = self.kiosk["RNUST"] - self.kiosk["RNTST"] - self.kiosk["RNDST"]
-        rates.RNRT = self.kiosk["RNURT"] - self.kiosk["RNTRT"] - self.kiosk["RNDRT"]
+
+        # Compute loss of NPK due to death of plant material
+        DRLV = self.kiosk["DRLV"]  # death rate leaves [kg dry matter ha-1 d-1]
+        DRST = self.kiosk["DRST"]  # death rate stems [kg dry matter ha-1 d-1]
+        DRRT = self.kiosk["DRRT"]  # death rate roots [kg dry matter ha-1 d-1]
+
+        rates.RNDLV = params.NRESIDLV * DRLV
+        rates.RNDST = params.NRESIDST * DRST
+        rates.RNDRT = params.NRESIDRT * DRRT
+
+        rates.RPDLV = params.PRESIDLV * DRLV
+        rates.RPDST = params.PRESIDST * DRST
+        rates.RPDRT = params.PRESIDRT * DRRT
+
+        rates.RKDLV = params.KRESIDLV * DRLV
+        rates.RKDST = params.KRESIDST * DRST
+        rates.RKDRT = params.KRESIDRT * DRRT
+
+        # N rates in leaves, stems, root and storage organs computed as uptake - translocation - death.
+        # except for storage organs which only take up as a result of translocation.
+        rates.RNLV = self.kiosk["RNULV"] - self.kiosk["RNTLV"] - rates.RNDLV
+        rates.RNST = self.kiosk["RNUST"] - self.kiosk["RNTST"] - rates.RNDST
+        rates.RNRT = self.kiosk["RNURT"] - self.kiosk["RNTRT"] - rates.RNDRT
         rates.RNSO = self.kiosk["RNUSO"]
         
         # P rates in leaves, stems, root and storage organs
-        rates.RPLV = self.kiosk["RPULV"] - self.kiosk["RPTLV"] - self.kiosk["RPDLV"]
-        rates.RPST = self.kiosk["RPUST"] - self.kiosk["RPTST"] - self.kiosk["RPDST"]
-        rates.RPRT = self.kiosk["RPURT"] - self.kiosk["RPTRT"] - self.kiosk["RPDRT"]
+        rates.RPLV = self.kiosk["RPULV"] - self.kiosk["RPTLV"] - rates.RPDLV
+        rates.RPST = self.kiosk["RPUST"] - self.kiosk["RPTST"] - rates.RPDST
+        rates.RPRT = self.kiosk["RPURT"] - self.kiosk["RPTRT"] - rates.RPDRT
         rates.RPSO = self.kiosk["RPUSO"]
 
         # K rates in leaves, stems, root and storage organs
-        rates.RKLV = self.kiosk["RKULV"] - self.kiosk["RKTLV"] - self.kiosk["RKDLV"]
-        rates.RKST = self.kiosk["RKUST"] - self.kiosk["RKTST"] - self.kiosk["RKDST"]
-        rates.RKRT = self.kiosk["RKURT"] - self.kiosk["RKTRT"] - self.kiosk["RKDRT"]
+        rates.RKLV = self.kiosk["RKULV"] - self.kiosk["RKTLV"] - rates.RKDLV
+        rates.RKST = self.kiosk["RKUST"] - self.kiosk["RKTST"] - rates.RKDST
+        rates.RKRT = self.kiosk["RKURT"] - self.kiosk["RKTRT"] - rates.RKDRT
         rates.RKSO = self.kiosk["RKUSO"]
         
-        rates.RNLOSS = self.kiosk["RNDLV"] + self.kiosk["RNDST"] + self.kiosk["RNDRT"]
-        rates.RPLOSS = self.kiosk["RPDLV"] + self.kiosk["RPDST"] + self.kiosk["RPDRT"]
-        rates.RKLOSS = self.kiosk["RKDLV"] + self.kiosk["RKDST"] + self.kiosk["RKDRT"]
+        rates.RNLOSS = rates.RNDLV + rates.RNDST + rates.RNDRT
+        rates.RPLOSS = rates.RPDLV + rates.RPDST + rates.RPDRT
+        rates.RKLOSS = rates.RKDLV + rates.RKDST + rates.RKDRT
 
         self._check_N_balance(day)
         self._check_P_balance(day)

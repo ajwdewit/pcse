@@ -96,7 +96,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         """
         
         self.params = self.Parameters(cropdata)
-        self.rates  = self.RateVariables(kiosk)
+        self.rates  = self.RateVariables(kiosk, publish="DRST")
         self.kiosk  = kiosk
 
         # INITIAL STATES
