@@ -10,7 +10,7 @@ from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
 #from .nutrients import npk_translocation as nutrient_translocation_rate
 from .nutrients import npk_losses as nutrient_losses_rate
 from .nutrients import npk_translocatable as nutrient_translocatable
-from .nutrients import npk_demand_uptake as crop_demand
+from .nutrients import NPK_Demand_Uptake as crop_demand
 #from .nutrients import npk_supply_storage_organs as supply_storage_organs
 
 

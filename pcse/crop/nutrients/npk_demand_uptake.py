@@ -5,7 +5,7 @@ from ...base_classes import StatesTemplate, ParamTemplate, SimulationObject, \
 from ...decorators import prepare_rates, prepare_states
 from ...traitlets import HasTraits, Float, Int, Instance
 
-class npk_demand_uptake(SimulationObject):
+class NPK_Demand_Uptake(SimulationObject):
     
     class Parameters(ParamTemplate):
         NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs
