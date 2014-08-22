@@ -5,7 +5,7 @@ from ...base_classes import StatesTemplate, ParamTemplate, SimulationObject, \
 from ...decorators import prepare_rates, prepare_states
 from ...traitlets import HasTraits, Float, Int, Instance
 
-class npk_demand(SimulationObject):
+class npk_demand_uptake(SimulationObject):
     
     class Parameters(ParamTemplate):
         NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs
@@ -79,23 +79,16 @@ class npk_demand(SimulationObject):
         self.params = self.Parameters(cropdata)
         self.kiosk = kiosk
 
-        self.rates = self.RateVariables(kiosk, publish=["RNULV","RNUST","RNURT","RNUSO",
-                                                         "RPULV","RPUST","RPURT","RPUSO",
-                                                         "RKULV","RKUST","RKURT","RKUSO",
-                                                         "RNUPTAKE","RPUPTAKE","RKUPTAKE",
-                                                         "RNFIX"])
+        self.rates = self.RateVariables(kiosk,
+            publish=["RNULV", "RNUST", "RNURT", "RNUSO",
+                     "RPULV", "RPUST", "RPURT", "RPUSO",
+                     "RKULV","RKUST","RKURT","RKUSO",
+                     "RNUPTAKE","RPUPTAKE","RKUPTAKE", "RNFIX"])
 
-
-        # self.states = self.StateVariables(kiosk ,publish=["NDEMLV","NDEMST","NDEMRT","NDEMSO",
-        #                                                  "PDEMLV","PDEMST","PDEMRT","PDEMSO",
-        #                                                  "KDEMLV","KDEMST","KDEMRT","KDEMSO"],
-        #                                     NDEMLV=0.,NDEMST=0.,NDEMRT=0.,NDEMSO=0.,
-        #                                     PDEMLV=0.,PDEMST=0.,PDEMRT=0.,PDEMSO=0.,
-        #                                     KDEMLV=0.,KDEMST=0.,KDEMRT=0.,KDEMSO=0.)
         self.states = self.StateVariables(kiosk,
-                                            NDEMLV=0.,NDEMST=0.,NDEMRT=0.,NDEMSO=0.,
-                                            PDEMLV=0.,PDEMST=0.,PDEMRT=0.,PDEMSO=0.,
-                                            KDEMLV=0.,KDEMST=0.,KDEMRT=0.,KDEMSO=0.)
+            NDEMLV=0., NDEMST=0., NDEMRT=0., NDEMSO=0.,
+            PDEMLV=0., PDEMST=0., PDEMRT=0., PDEMSO=0.,
+            KDEMLV=0., KDEMST=0., KDEMRT=0., KDEMSO=0.)
 
     @prepare_rates
     def calc_rates(self, day):
@@ -128,21 +121,20 @@ class npk_demand(SimulationObject):
 
         TRANRF = TRA/TRAMX
 
-#       No nutrients are absorbed after developmentstage DVSNLT or
+#       No nutrients are absorbed after development stage DVSNPK_STOP or
 #       when watershortage occurs i.e. TRANRF <= 0.01
         if DVS < p.DVSNPK_STOP and TRANRF > 0.01:
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.
 
-
-        # NPK uptake rate from soil
-        r.RNUPTAKE = (max(0., min((1. - p.NFIX_FR)*NDEMTO, NAVAIL)) * NutrientLIMIT)
-        r.RPUPTAKE = (max(0., min(PDEMTO, PAVAIL)) * NutrientLIMIT)
-        r.RKUPTAKE = (max(0., min(KDEMTO, KAVAIL)) * NutrientLIMIT)
-
         # biological nitrogen fixation
         r.RNFIX = (max(0., p.NFIX_FR * NDEMTO) * NutrientLIMIT)
+
+        # NPK uptake rate from soil
+        r.RNUPTAKE = (max(0., min(NDEMTO - r.RNFIX, NAVAIL)) * NutrientLIMIT)
+        r.RPUPTAKE = (max(0., min(PDEMTO, PAVAIL)) * NutrientLIMIT)
+        r.RKUPTAKE = (max(0., min(KDEMTO, KAVAIL)) * NutrientLIMIT)
 
         # NPK uptake rate
         # if no demand then uptake rate = 0.
@@ -153,14 +145,12 @@ class npk_demand(SimulationObject):
             r.RNUST = (s.NDEMST / NDEMTO) * (r.RNUPTAKE + r.RNFIX)
             r.RNURT = (s.NDEMRT / NDEMTO) * (r.RNUPTAKE + r.RNFIX)
 
-
         if PDEMTO == 0.:
             r.RPULV = r.RPUST = r.RPURT = 0.
         else:
             r.RPULV = (s.PDEMLV / PDEMTO) * r.RPUPTAKE
             r.RPUST = (s.PDEMST / PDEMTO) * r.RPUPTAKE
             r.RPURT = (s.PDEMRT / PDEMTO) * r.RPUPTAKE
-
 
         if KDEMTO == 0.:
             r.RKULV = r.RKUST = r.RKURT = 0.
@@ -216,19 +206,19 @@ class npk_demand(SimulationObject):
         KMAXSO = params.KMAXSO
 
 #       N demand [kg ha-1] - maybe should be [kg ha-1 day-1]
-        states.NDEMLV  =  max(NMAXLV*WLV  - ANLV, 0.) # maybe should be divided by one day, see equation 5 Shibu etal 2010
-        states.NDEMST  =  max(NMAXST*WST  - ANST, 0.)
-        states.NDEMRT  =  max(NMAXRT*WRT  - ANRT, 0.)
-        states.NDEMSO =  max(NMAXSO*WSO  - ANSO, 0.)/params.TCNT
+        states.NDEMLV = max(NMAXLV*WLV - ANLV, 0.)  # maybe should be divided by one day, see equation 5 Shibu etal 2010
+        states.NDEMST = max(NMAXST*WST - ANST, 0.)
+        states.NDEMRT = max(NMAXRT*WRT - ANRT, 0.)
+        states.NDEMSO = max(NMAXSO*WSO - ANSO, 0.)/params.TCNT
 
 #       P demand [kg ha-1]
-        states.PDEMLV  =  max(PMAXLV*WLV  - APLV, 0.)
-        states.PDEMST  =  max(PMAXST*WST  - APST, 0.)
-        states.PDEMRT  =  max(PMAXRT*WRT  - APRT, 0.)
-        states.PDEMSO =  max(PMAXSO*WSO  - APSO, 0.)/params.TCPT
+        states.PDEMLV = max(PMAXLV*WLV - APLV, 0.)
+        states.PDEMST = max(PMAXST*WST - APST, 0.)
+        states.PDEMRT = max(PMAXRT*WRT - APRT, 0.)
+        states.PDEMSO = max(PMAXSO*WSO - APSO, 0.)/params.TCPT
 
 #       K demand [kg ha-1]
-        states.KDEMLV  =  max(KMAXLV*WLV  - AKLV, 0.)
-        states.KDEMST  =  max(KMAXST*WST  - AKST, 0.)
-        states.KDEMRT  =  max(KMAXRT*WRT  - AKRT, 0.)
-        states.KDEMSO =  max(KMAXSO*WSO  - AKSO, 0.)/params.TCKT
+        states.KDEMLV = max(KMAXLV*WLV - AKLV, 0.)
+        states.KDEMST = max(KMAXST*WST - AKST, 0.)
+        states.KDEMRT = max(KMAXRT*WRT - AKRT, 0.)
+        states.KDEMSO = max(KMAXSO*WSO - AKSO, 0.)/params.TCKT
