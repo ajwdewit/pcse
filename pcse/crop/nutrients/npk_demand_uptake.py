@@ -82,7 +82,7 @@ class npk_demand_uptake(SimulationObject):
         self.rates = self.RateVariables(kiosk,
             publish=["RNULV", "RNUST", "RNURT", "RNUSO",
                      "RPULV", "RPUST", "RPURT", "RPUSO",
-                     "RKULV","RKUST","RKURT","RKUSO",
+                     "RKULV", "RKUST", "RKURT", "RKUSO",
                      "RNUPTAKE","RPUPTAKE","RKUPTAKE", "RNFIX"])
 
         self.states = self.StateVariables(kiosk,

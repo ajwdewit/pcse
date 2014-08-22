@@ -7,11 +7,11 @@ from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 
 #from .nutrients import npk_uptake_rate as nutrient_uptake_rate
-from .nutrients import npk_translocation as nutrient_translocation_rate
+#from .nutrients import npk_translocation as nutrient_translocation_rate
 from .nutrients import npk_losses as nutrient_losses_rate
 from .nutrients import npk_translocatable as nutrient_translocatable
 from .nutrients import npk_demand_uptake as crop_demand
-from .nutrients import npk_supply_storage_organs as supply_storage_organs
+#from .nutrients import npk_supply_storage_organs as supply_storage_organs
 
 
 class NPK_Crop_Dynamics(SimulationObject):
@@ -117,11 +117,11 @@ class NPK_Crop_Dynamics(SimulationObject):
 
 #   rate calculation components
 #    uptake_rate = Instance(SimulationObject)
-    transl_rate = Instance(SimulationObject)
+    translocation = Instance(SimulationObject)
     dying_rate = Instance(SimulationObject)
 
 #   state calculation components    
-    transl_state = Instance(SimulationObject)
+#    transl_state = Instance(SimulationObject)
     demand = Instance(SimulationObject)
     supply = Instance(SimulationObject)
     
@@ -213,12 +213,12 @@ class NPK_Crop_Dynamics(SimulationObject):
         
 #       Initialize components of the npk_crop_dynamics
 #        self.uptake_rate = nutrient_uptake_rate(day, kiosk, cropdata)
-        self.transl_rate = nutrient_translocation_rate(day, kiosk, cropdata)
+#        self.transl_rate = nutrient_translocation_rate(day, kiosk, cropdata)
         self.dying_rate  = nutrient_losses_rate(day, kiosk, cropdata)
         
-        self.transl_state = nutrient_translocatable(day, kiosk, cropdata)
+        self.translocation = nutrient_translocatable(day, kiosk, cropdata)
         self.demand = crop_demand(day, kiosk, cropdata)
-        self.supply = supply_storage_organs(day, kiosk, cropdata)
+#        self.supply = supply_storage_organs(day, kiosk, cropdata)
         
         # INITIAL STATES
         params = self.params
@@ -265,7 +265,7 @@ class NPK_Crop_Dynamics(SimulationObject):
         rates = self.rates
         
         self.demand.calc_rates(day)
-        self.transl_rate.calc_rates(day)
+        self.translocation.calc_rates(day)
         self.dying_rate.calc_rates(day)
                    
         # N rates in leaves, stems, root and storage organs
@@ -297,9 +297,8 @@ class NPK_Crop_Dynamics(SimulationObject):
         
     @prepare_states
     def integrate(self, day):
-        rates  = self.rates
+        rates = self.rates
         states = self.states
-        
 
         # N amount in leaves, stems, root and storage organs
         states.ANLV += rates.RNLV
@@ -320,11 +319,11 @@ class NPK_Crop_Dynamics(SimulationObject):
         states.AKSO += rates.RKSO
         
         # translocatable NPK amount
-        self.transl_state.integrate(day)
+        self.translocation.integrate(day)
         # NPK demand
         self.demand.integrate(day)
         # NPK supply to storage organs
-        self.supply.integrate(day)
+#        self.supply.integrate(day)
         
         # total NPK uptake from soil
         states.NUPTAKE_T += self.kiosk["RNUPTAKE"]
@@ -354,8 +353,8 @@ class NPK_Crop_Dynamics(SimulationObject):
 
         NLOSST = states.NLOSSES_T
 
-        checksum = abs(NUPTAKE_T + NFIX_T + (ANLVI + ANSTI + ANRTI + ANSOI) - \
-                    (ANLV + ANST + ANRT + ANSO + NLOSST))
+        checksum = abs(NUPTAKE_T + NFIX_T + (ANLVI + ANSTI + ANRTI + ANSOI) -
+                       (ANLV + ANST + ANRT + ANSO + NLOSST))
 
         if abs(checksum) >= 1.:
             msg = "N flows not balanced on day %s\n" % day
