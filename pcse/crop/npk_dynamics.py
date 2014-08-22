@@ -197,9 +197,9 @@ class NPK_Crop_Dynamics(SimulationObject):
         RPSO = Float(-99.)
         RKSO = Float(-99.)
                
-        NLOSSR = Float(-99.)
-        PLOSSR = Float(-99.)
-        KLOSSR = Float(-99.)
+        RNLOSS = Float(-99.)
+        RPLOSS = Float(-99.)
+        RKLOSS = Float(-99.)
         
     def initialize(self, day, kiosk, cropdata):
         """
@@ -371,9 +371,9 @@ class NPK_Crop_Dynamics(SimulationObject):
         rates.RKRT = self.kiosk["RKURT"] - self.kiosk["RKTRT"] - self.kiosk["RKDRT"]
         rates.RKSO = self.kiosk["RKUSO"]
         
-        rates.NLOSSR = self.kiosk["RNDLV"] + self.kiosk["RNDST"] + self.kiosk["RNDRT"]
-        rates.PLOSSR = self.kiosk["RPDLV"] + self.kiosk["RPDST"] + self.kiosk["RPDRT"]
-        rates.KLOSSR = self.kiosk["RKDLV"] + self.kiosk["RKDST"] + self.kiosk["RKDRT"] 
+        rates.RNLOSS = self.kiosk["RNDLV"] + self.kiosk["RNDST"] + self.kiosk["RNDRT"]
+        rates.RPLOSS = self.kiosk["RPDLV"] + self.kiosk["RPDST"] + self.kiosk["RPDRT"]
+        rates.RKLOSS = self.kiosk["RKDLV"] + self.kiosk["RKDST"] + self.kiosk["RKDRT"]
 
         self._check_N_balance(day)
         self._check_P_balance(day)
@@ -412,11 +412,11 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.supply.integrate(day)
         
         # total NPK uptake from soil
-        states.NUPTAKE_T  += self.kiosk["NUPTR"]
-        states.PUPTAKE_T  += self.kiosk["PUPTR"]
-        states.KUPTAKE_T  += self.kiosk["KUPTR"]
-        states.NFIX_T += self.kiosk["NFIXTR"]
+        states.NUPTAKE_T += self.kiosk["RNUPTAKE"]
+        states.PUPTAKE_T += self.kiosk["RPUPTAKE"]
+        states.KUPTAKE_T += self.kiosk["RKUPTAKE"]
+        states.NFIX_T += self.kiosk["RNFIX"]
         
-        states.NLOSSES_T += rates.NLOSSR
-        states.PLOSSES_T += rates.PLOSSR
-        states.KLOSSES_T += rates.KLOSSR
+        states.NLOSSES_T += rates.RNLOSS
+        states.PLOSSES_T += rates.RPLOSS
+        states.KLOSSES_T += rates.RKLOSS

@@ -27,10 +27,10 @@ class npk_uptake_rate(SimulationObject):
         RKURT  = Float(-99.)
         RKUSO  = Float(-99.)
         
-        NUPTR  = Float(-99.)  # Total N uptake rate [kg ha-1 d -1]
-        PUPTR  = Float(-99.)
-        KUPTR  = Float(-99.)
-        NFIXTR = Float(-99.)
+        RNUPTAKE  = Float(-99.)  # Total N uptake rate [kg ha-1 d -1]
+        RPUPTAKE  = Float(-99.)
+        RKUPTAKE  = Float(-99.)
+        RNFIX = Float(-99.)
             
     def initialize(self, day, kiosk, cropdata):
         """
@@ -42,7 +42,8 @@ class npk_uptake_rate(SimulationObject):
         self.rates   = self.RateVariables(kiosk,publish=["RNULV","RNUST","RNURT","RNUSO", 
                                                          "RPULV","RPUST","RPURT","RPUSO", 
                                                          "RKULV","RKUST","RKURT","RKUSO",
-                                                         "NUPTR","PUPTR","KUPTR","NFIXTR"])
+                                                         "RNUPTAKE","RPUPTAKE","RKUPTAKE",
+                                                         "RNFIX"])
         self.params = self.Parameters(cropdata)
         self.kiosk  = kiosk
 
@@ -100,37 +101,37 @@ class npk_uptake_rate(SimulationObject):
 
         
         # NPK uptake rate from soil
-        rates.NUPTR = (max (0., min((1. - params.NFIX_FR)*NDEMTO, NAVAIL)) * NutrientLIMIT)
-        rates.PUPTR = (max (0., min(PDEMTO, PAVAIL)) * NutrientLIMIT)
-        rates.KUPTR = (max (0., min(KDEMTO, KAVAIL)) * NutrientLIMIT)
+        rates.RNUPTAKE = (max (0., min((1. - params.NFIX_FR)*NDEMTO, NAVAIL)) * NutrientLIMIT)
+        rates.RPUPTAKE = (max (0., min(PDEMTO, PAVAIL)) * NutrientLIMIT)
+        rates.RKUPTAKE = (max (0., min(KDEMTO, KAVAIL)) * NutrientLIMIT)
        
         
         # biological nitrogen fixation
-        rates.NFIXTR = (max(0., params.NFIX_FR * NDEMTO) * NutrientLIMIT)
+        rates.RNFIX = (max(0., params.NFIX_FR * NDEMTO) * NutrientLIMIT)
         
         # NPK uptake rate
         # if no demand then uptake rate = 0.
         if NDEMTO == 0.:
             rates.RNULV = rates.RNUST = rates.RNURT = 0.
         else:    
-            rates.RNULV = (NDEMLV / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
-            rates.RNUST = (NDEMST / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
-            rates.RNURT = (NDEMRT / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
+            rates.RNULV = (NDEMLV / NDEMTO) * (rates.RNUPTAKE + rates.RNFIX)
+            rates.RNUST = (NDEMST / NDEMTO) * (rates.RNUPTAKE + rates.RNFIX)
+            rates.RNURT = (NDEMRT / NDEMTO) * (rates.RNUPTAKE + rates.RNFIX)
             
             
         if PDEMTO == 0.:
             rates.RPULV = rates.RPUST = rates.RPURT = 0.
         else:    
-            rates.RPULV = (PDEMLV / PDEMTO) * rates.PUPTR
-            rates.RPUST = (PDEMST / PDEMTO) * rates.PUPTR
-            rates.RPURT = (PDEMRT / PDEMTO) * rates.PUPTR
+            rates.RPULV = (PDEMLV / PDEMTO) * rates.RPUPTAKE
+            rates.RPUST = (PDEMST / PDEMTO) * rates.RPUPTAKE
+            rates.RPURT = (PDEMRT / PDEMTO) * rates.RPUPTAKE
             
 
         if KDEMTO == 0.:
             rates.RKULV = rates.RKUST = rates.RKURT = 0.
         else:    
-            rates.RKULV = (KDEMLV / KDEMTO) * rates.KUPTR
-            rates.RKUST = (KDEMST / KDEMTO) * rates.KUPTR
-            rates.RKURT = (KDEMRT / KDEMTO) * rates.KUPTR
+            rates.RKULV = (KDEMLV / KDEMTO) * rates.RKUPTAKE
+            rates.RKUST = (KDEMST / KDEMTO) * rates.RKUPTAKE
+            rates.RKURT = (KDEMRT / KDEMTO) * rates.RKUPTAKE
             
 #        print "RKUST: ",rates.RKUST, "KDEMS: ",KDEMS, "KDEMTO: ",KDEMTO, "KUPTR: ",rates.KUPTR, KMINT
