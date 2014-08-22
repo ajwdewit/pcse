@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from ...base_classes import StatesTemplate, ParamTemplate, SimulationObject, \
-       AfgenTrait
+       AfgenTrait, RatesTemplate
 from ...decorators import prepare_rates, prepare_states
 from ...traitlets import HasTraits, Float, Int, Instance
 
@@ -26,22 +26,47 @@ class npk_demand(SimulationObject):
         TCNT   = Float(-99.)  # time coefficient for N translocation to storage organs [days]
         TCPT   = Float(-99.)  # time coefficient for P translocation to storage organs [days]
         TCKT   = Float(-99.)  # time coefficient for K translocation to storage organs [days]
-        
+
+        NFIX_FR = Float(-99.)  # fraction of crop nitrogen uptake by biological fixation
+        DVSNPK_TRANSL = Float(-99.)  # development stage above which NPK translocation to storage organs does occur
+        DVSNPK_STOP = Float(-99.)  # development stage above which no crop N-P-K uptake does occur
+
     class StateVariables(StatesTemplate):
-        NDEMLV  = Float(-99.)
-        NDEMST  = Float(-99.)
-        NDEMRT  = Float(-99.)
+        NDEMLV = Float(-99.)
+        NDEMST = Float(-99.)
+        NDEMRT = Float(-99.)
         NDEMSO = Float(-99.)
 
-        PDEMLV  = Float(-99.)
-        PDEMST  = Float(-99.)
-        PDEMRT  = Float(-99.)
+        PDEMLV = Float(-99.)
+        PDEMST = Float(-99.)
+        PDEMRT = Float(-99.)
         PDEMSO = Float(-99.)
         
-        KDEMLV  = Float(-99.)
-        KDEMST  = Float(-99.)
-        KDEMRT  = Float(-99.)
+        KDEMLV = Float(-99.)
+        KDEMST = Float(-99.)
+        KDEMRT = Float(-99.)
         KDEMSO = Float(-99.)
+
+    class RateVariables(RatesTemplate):
+        RNULV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
+        RNUST = Float(-99.)
+        RNURT = Float(-99.)
+        RNUSO = Float(-99.)
+
+        RPULV = Float(-99.)  # P uptake rate [kg ha-1 d -1]
+        RPUST = Float(-99.)
+        RPURT = Float(-99.)
+        RPUSO = Float(-99.)
+
+        RKULV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
+        RKUST = Float(-99.)
+        RKURT = Float(-99.)
+        RKUSO = Float(-99.)
+
+        RNUPTAKE = Float(-99.)  # Total N uptake rate [kg ha-1 d -1]
+        RPUPTAKE = Float(-99.)
+        RKUPTAKE = Float(-99.)
+        RNFIX = Float(-99.)
 
     
     def initialize(self, day, kiosk, cropdata):
@@ -51,17 +76,99 @@ class npk_demand(SimulationObject):
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         :returns: the npk demand __call__()
         """
-        self.states = self.StateVariables(kiosk,publish=["NDEMLV","NDEMST","NDEMRT","NDEMSO",
-                                                         "PDEMLV","PDEMST","PDEMRT","PDEMSO",
-                                                         "KDEMLV","KDEMST","KDEMRT","KDEMSO"],
+        self.params = self.Parameters(cropdata)
+        self.kiosk = kiosk
+
+        self.rates = self.RateVariables(kiosk, publish=["RNULV","RNUST","RNURT","RNUSO",
+                                                         "RPULV","RPUST","RPURT","RPUSO",
+                                                         "RKULV","RKUST","RKURT","RKUSO",
+                                                         "RNUPTAKE","RPUPTAKE","RKUPTAKE",
+                                                         "RNFIX"])
+
+
+        # self.states = self.StateVariables(kiosk ,publish=["NDEMLV","NDEMST","NDEMRT","NDEMSO",
+        #                                                  "PDEMLV","PDEMST","PDEMRT","PDEMSO",
+        #                                                  "KDEMLV","KDEMST","KDEMRT","KDEMSO"],
+        #                                     NDEMLV=0.,NDEMST=0.,NDEMRT=0.,NDEMSO=0.,
+        #                                     PDEMLV=0.,PDEMST=0.,PDEMRT=0.,PDEMSO=0.,
+        #                                     KDEMLV=0.,KDEMST=0.,KDEMRT=0.,KDEMSO=0.)
+        self.states = self.StateVariables(kiosk,
                                             NDEMLV=0.,NDEMST=0.,NDEMRT=0.,NDEMSO=0.,
                                             PDEMLV=0.,PDEMST=0.,PDEMRT=0.,PDEMSO=0.,
                                             KDEMLV=0.,KDEMST=0.,KDEMRT=0.,KDEMSO=0.)
 
-                                                                                                                
-        self.params = self.Parameters(cropdata)
-        self.kiosk  = kiosk
-    
+    @prepare_rates
+    def calc_rates(self, day):
+        r = self.rates
+        s = self.states
+        p = self.params
+
+        NAVAIL = self.kiosk["NAVAIL"]  # total mineral N from soil and fertiliser  [kg ha-1]
+        PAVAIL = self.kiosk["PAVAIL"]  # total mineral P from soil and fertiliser  [kg ha-1]
+        KAVAIL = self.kiosk["KAVAIL"]  # total mineral K from soil and fertiliser  [kg ha-1]
+
+        TRA   = self.kiosk["TRA"]
+        TRAMX = self.kiosk["TRAMX"]
+        DVS   = self.kiosk["DVS"]
+
+        NTRANSLOCATABLE = self.kiosk["NTRANSLOCATABLE"]  # N supply to storage organs [kg ha-1]
+        PTRANSLOCATABLE = self.kiosk["PTRANSLOCATABLE"]  # P supply to storage organs [kg ha-1]
+        KTRANSLOCATABLE = self.kiosk["KTRANSLOCATABLE"]  # K supply to storage organs [kg ha-1]
+
+#       total NPK demand of leaves, stems and roots
+        NDEMTO = s.NDEMLV + s.NDEMST + s.NDEMRT
+        PDEMTO = s.PDEMLV + s.PDEMST + s.PDEMRT
+        KDEMTO = s.KDEMLV + s.KDEMST + s.KDEMRT
+
+#       NPK uptake rate in storage organs (kg N ha-1 d-1)
+#       is the mimimum of supply and demand
+        r.RNUSO = min(s.NDEMSO, NTRANSLOCATABLE)
+        r.RPUSO = min(s.PDEMSO, PTRANSLOCATABLE)
+        r.RKUSO = min(s.KDEMSO, KTRANSLOCATABLE)
+
+        TRANRF = TRA/TRAMX
+
+#       No nutrients are absorbed after developmentstage DVSNLT or
+#       when watershortage occurs i.e. TRANRF <= 0.01
+        if DVS < p.DVSNPK_STOP and TRANRF > 0.01:
+            NutrientLIMIT = 1.0
+        else:
+            NutrientLIMIT = 0.
+
+
+        # NPK uptake rate from soil
+        r.RNUPTAKE = (max(0., min((1. - p.NFIX_FR)*NDEMTO, NAVAIL)) * NutrientLIMIT)
+        r.RPUPTAKE = (max(0., min(PDEMTO, PAVAIL)) * NutrientLIMIT)
+        r.RKUPTAKE = (max(0., min(KDEMTO, KAVAIL)) * NutrientLIMIT)
+
+        # biological nitrogen fixation
+        r.RNFIX = (max(0., p.NFIX_FR * NDEMTO) * NutrientLIMIT)
+
+        # NPK uptake rate
+        # if no demand then uptake rate = 0.
+        if NDEMTO == 0.:
+            r.RNULV = r.RNUST = r.RNURT = 0.
+        else:
+            r.RNULV = (s.NDEMLV / NDEMTO) * (r.RNUPTAKE + r.RNFIX)
+            r.RNUST = (s.NDEMST / NDEMTO) * (r.RNUPTAKE + r.RNFIX)
+            r.RNURT = (s.NDEMRT / NDEMTO) * (r.RNUPTAKE + r.RNFIX)
+
+
+        if PDEMTO == 0.:
+            r.RPULV = r.RPUST = r.RPURT = 0.
+        else:
+            r.RPULV = (s.PDEMLV / PDEMTO) * r.RPUPTAKE
+            r.RPUST = (s.PDEMST / PDEMTO) * r.RPUPTAKE
+            r.RPURT = (s.PDEMRT / PDEMTO) * r.RPUPTAKE
+
+
+        if KDEMTO == 0.:
+            r.RKULV = r.RKUST = r.RKURT = 0.
+        else:
+            r.RKULV = (s.KDEMLV / KDEMTO) * r.RKUPTAKE
+            r.RKUST = (s.KDEMST / KDEMTO) * r.RKUPTAKE
+            r.RKURT = (s.KDEMRT / KDEMTO) * r.RKUPTAKE
+
     @prepare_states
     def integrate(self, day):
         states = self.states

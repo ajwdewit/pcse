@@ -6,7 +6,7 @@ from ..decorators import prepare_rates, prepare_states
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 
-from .nutrients import npk_uptake_rate as nutrient_uptake_rate
+#from .nutrients import npk_uptake_rate as nutrient_uptake_rate
 from .nutrients import npk_translocation as nutrient_translocation_rate
 from .nutrients import npk_losses as nutrient_losses_rate
 from .nutrients import npk_translocatable as nutrient_translocatable
@@ -116,7 +116,7 @@ class NPK_Crop_Dynamics(SimulationObject):
     """
 
 #   rate calculation components
-    uptake_rate = Instance(SimulationObject)
+#    uptake_rate = Instance(SimulationObject)
     transl_rate = Instance(SimulationObject)
     dying_rate = Instance(SimulationObject)
 
@@ -212,7 +212,7 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.kiosk = kiosk
         
 #       Initialize components of the npk_crop_dynamics
-        self.uptake_rate = nutrient_uptake_rate(day, kiosk, cropdata)
+#        self.uptake_rate = nutrient_uptake_rate(day, kiosk, cropdata)
         self.transl_rate = nutrient_translocation_rate(day, kiosk, cropdata)
         self.dying_rate  = nutrient_losses_rate(day, kiosk, cropdata)
         
@@ -222,7 +222,6 @@ class NPK_Crop_Dynamics(SimulationObject):
         
         # INITIAL STATES
         params = self.params
-        states = self.states
         # Initial storage organ biomass
         FO   = self.kiosk["FO"]
         FR   = self.kiosk["FR"]
@@ -260,98 +259,14 @@ class NPK_Crop_Dynamics(SimulationObject):
                         NUPTAKE_T=0 ,PUPTAKE_T=0., KUPTAKE_T=0., NFIX_T=0.,
                         NLOSSES_T=0 ,PLOSSES_T=0., KLOSSES_T=0.)
 
-    def _check_N_balance(self, day):
-        states = self.states
-        
-        NUPTAKE_T  = states.NUPTAKE_T
-        NFIX_T = states.NFIX_T
-        
-        ANLVI  = self.ANLVI
-        ANSTI  = self.ANSTI
-        ANRTI  = self.ANRTI
-        ANSOI  = self.ANSOI
-        
-        ANLV  = states.ANLV
-        ANST  = states.ANST
-        ANRT  = states.ANRT
-        ANSO  = states.ANSO
-        
-        NLOSST = states.NLOSSES_T
 
-        checksum = abs(NUPTAKE_T + NFIX_T + (ANLVI + ANSTI + ANRTI + ANSOI) - \
-                    (ANLV + ANST + ANRT + ANSO + NLOSST))
-        
-        if abs(checksum) >= 1.:
-            msg = "N flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, NUPTAKE_T: %f, NFIX_T: %f\n" % (checksum, NUPTAKE_T, NFIX_T)
-            msg += "ANLVI: %f, ANSTI: %f, ANRTI: %f, ANSOI: %f\n"  %(ANLVI, ANSTI, ANRTI, ANSOI)
-            msg += "ANLV: %f, ANST: %f, ANRT: %f, ANSO: %f\n" % (ANLV, ANST, ANRT, ANSO) 
-            msg += "NLOSST: %f\n" %(NLOSST)
-            raise exc.NutrientBalanceError(msg)
-            
-     
-    def _check_P_balance(self, day):
-        states = self.states            
-        PUPTAKE_T = states.PUPTAKE_T
-             
-        APLVI  = self.APLVI
-        APSTI  = self.APSTI
-        APRTI  = self.APRTI
-        APSOI  = self.APSOI
-        
-        APLV  = states.APLV
-        APST  = states.APST
-        APRT  = states.APRT
-        APSO  = states.APSO
-        
-        PLOSST = states.PLOSSES_T
-        
-        checksum = abs(PUPTAKE_T + (APLVI + APSTI + APRTI + APSOI) - \
-                    (APLV + APST + APRT + APSO + PLOSST))
-            
-        if abs(checksum) >= 1.:
-            msg = "P flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, PUPTAKE_T: %f\n" % (checksum, PUPTAKE_T)
-            msg += "APLVI: %f, APSTI: %f, APRTI: %f, APSOI: %f\n" % (APLVI, APSTI, APRTI, APSOI)
-            msg += "APLV: %f, APST: %f, APRT: %f, APSO: %f\n" % (APLV, APST, APRT, APSO) 
-            msg += "PLOSST: %f\n" %(PLOSST)
-            raise exc.NutrientBalanceError(msg)
-            
-    def _check_K_balance(self, day):
-        states = self.states            
-        KUPTAKE_T  = states.KUPTAKE_T
-             
-        AKLVI  = self.AKLVI
-        AKSTI  = self.AKSTI
-        AKRTI  = self.AKRTI
-        AKSOI  = self.AKSOI
-        
-        AKLV  = states.AKLV
-        AKST  = states.AKST
-        AKRT  = states.AKRT
-        AKSO  = states.AKSO
-        
-        KLOSST = states.KLOSSES_T
-        
-        checksum = abs(KUPTAKE_T + (AKLVI + AKSTI + AKRTI + AKSOI) - \
-                    (AKLV + AKST + AKRT + AKSO + KLOSST))
-            
-        if abs(checksum) >= 1.:
-            msg = "K flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, KUPTAKE_T: %f\n"  %(checksum, KUPTAKE_T)
-            msg += "AKLVI: %f, AKSTI: %f, AKRTI: %f, AKSOI: %f\n" % (AKLVI, AKSTI, AKRTI, AKSOI)
-            msg += "AKLV: %f, AKST: %f, AKRT: %f, AKSO: %f\n" % (AKLV, AKST, AKRT, AKSO) 
-            msg += "KLOSST: %f\n" %(KLOSST)
-            raise exc.NutrientBalanceError(msg)    
-            
     @prepare_rates
     def calc_rates(self, day):
-        rates  = self.rates     
+        rates = self.rates
         
-        self.uptake_rate.calc_rates(day)
+        self.demand.calc_rates(day)
         self.transl_rate.calc_rates(day)
         self.dying_rate.calc_rates(day)
-        
                    
         # N rates in leaves, stems, root and storage organs
         rates.RNLV = self.kiosk["RNULV"] - self.kiosk["RNTLV"] - self.kiosk["RNDLV"]
@@ -420,3 +335,87 @@ class NPK_Crop_Dynamics(SimulationObject):
         states.NLOSSES_T += rates.RNLOSS
         states.PLOSSES_T += rates.RPLOSS
         states.KLOSSES_T += rates.RKLOSS
+
+    def _check_N_balance(self, day):
+        states = self.states
+
+        NUPTAKE_T  = states.NUPTAKE_T
+        NFIX_T = states.NFIX_T
+
+        ANLVI  = self.ANLVI
+        ANSTI  = self.ANSTI
+        ANRTI  = self.ANRTI
+        ANSOI  = self.ANSOI
+
+        ANLV  = states.ANLV
+        ANST  = states.ANST
+        ANRT  = states.ANRT
+        ANSO  = states.ANSO
+
+        NLOSST = states.NLOSSES_T
+
+        checksum = abs(NUPTAKE_T + NFIX_T + (ANLVI + ANSTI + ANRTI + ANSOI) - \
+                    (ANLV + ANST + ANRT + ANSO + NLOSST))
+
+        if abs(checksum) >= 1.:
+            msg = "N flows not balanced on day %s\n" % day
+            msg += "Checksum: %f, NUPTAKE_T: %f, NFIX_T: %f\n" % (checksum, NUPTAKE_T, NFIX_T)
+            msg += "ANLVI: %f, ANSTI: %f, ANRTI: %f, ANSOI: %f\n"  %(ANLVI, ANSTI, ANRTI, ANSOI)
+            msg += "ANLV: %f, ANST: %f, ANRT: %f, ANSO: %f\n" % (ANLV, ANST, ANRT, ANSO)
+            msg += "NLOSST: %f\n" %(NLOSST)
+            raise exc.NutrientBalanceError(msg)
+
+
+    def _check_P_balance(self, day):
+        states = self.states
+        PUPTAKE_T = states.PUPTAKE_T
+
+        APLVI  = self.APLVI
+        APSTI  = self.APSTI
+        APRTI  = self.APRTI
+        APSOI  = self.APSOI
+
+        APLV  = states.APLV
+        APST  = states.APST
+        APRT  = states.APRT
+        APSO  = states.APSO
+
+        PLOSST = states.PLOSSES_T
+
+        checksum = abs(PUPTAKE_T + (APLVI + APSTI + APRTI + APSOI) - \
+                    (APLV + APST + APRT + APSO + PLOSST))
+
+        if abs(checksum) >= 1.:
+            msg = "P flows not balanced on day %s\n" % day
+            msg += "Checksum: %f, PUPTAKE_T: %f\n" % (checksum, PUPTAKE_T)
+            msg += "APLVI: %f, APSTI: %f, APRTI: %f, APSOI: %f\n" % (APLVI, APSTI, APRTI, APSOI)
+            msg += "APLV: %f, APST: %f, APRT: %f, APSO: %f\n" % (APLV, APST, APRT, APSO)
+            msg += "PLOSST: %f\n" %(PLOSST)
+            raise exc.NutrientBalanceError(msg)
+
+    def _check_K_balance(self, day):
+        states = self.states
+        KUPTAKE_T  = states.KUPTAKE_T
+
+        AKLVI  = self.AKLVI
+        AKSTI  = self.AKSTI
+        AKRTI  = self.AKRTI
+        AKSOI  = self.AKSOI
+
+        AKLV  = states.AKLV
+        AKST  = states.AKST
+        AKRT  = states.AKRT
+        AKSO  = states.AKSO
+
+        KLOSST = states.KLOSSES_T
+
+        checksum = abs(KUPTAKE_T + (AKLVI + AKSTI + AKRTI + AKSOI) - \
+                    (AKLV + AKST + AKRT + AKSO + KLOSST))
+
+        if abs(checksum) >= 1.:
+            msg = "K flows not balanced on day %s\n" % day
+            msg += "Checksum: %f, KUPTAKE_T: %f\n"  %(checksum, KUPTAKE_T)
+            msg += "AKLVI: %f, AKSTI: %f, AKRTI: %f, AKSOI: %f\n" % (AKLVI, AKSTI, AKRTI, AKSOI)
+            msg += "AKLV: %f, AKST: %f, AKRT: %f, AKSO: %f\n" % (AKLV, AKST, AKRT, AKSO)
+            msg += "KLOSST: %f\n" %(KLOSST)
+            raise exc.NutrientBalanceError(msg)
