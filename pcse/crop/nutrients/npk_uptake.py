@@ -1,4 +1,4 @@
-
+#TODO: integrate npk_demand.py and npk_uptake.py because these are complementary
 from ...traitlets import Float, Instance
 from ...decorators import prepare_rates, prepare_states
 from ...base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
@@ -51,86 +51,86 @@ class npk_uptake_rate(SimulationObject):
         rates  = self.rates
         params = self.params
         
-        NMINT  = self.kiosk["NMINT"] # total mineral N from soil and fertiliser  [kg ha-1]
-        PMINT  = self.kiosk["PMINT"] # total mineral P from soil and fertiliser  [kg ha-1]
-        KMINT  = self.kiosk["KMINT"] # total mineral K from soil and fertiliser  [kg ha-1]
+        NAVAIL = self.kiosk["NAVAIL"]  # total mineral N from soil and fertiliser  [kg ha-1]
+        PAVAIL = self.kiosk["PAVAIL"]  # total mineral P from soil and fertiliser  [kg ha-1]
+        KAVAIL = self.kiosk["KAVAIL"]  # total mineral K from soil and fertiliser  [kg ha-1]
         
         TRA   = self.kiosk["TRA"]
         TRAMX = self.kiosk["TRAMX"]
         DVS   = self.kiosk["DVS"]
         
-        NDEML  = self.kiosk["NDEML"]  # N demand leaves [kg ha-1]
-        NDEMS  = self.kiosk["NDEMS"]  # N demand stems [kg ha-1]
-        NDEMR  = self.kiosk["NDEMR"]  # N demand roots [kg ha-1]
-        NDEMSO = self.kiosk["NDEMSO"] # N demand storage organs [kg ha-1]
+        NDEMLV = self.kiosk["NDEMLV"]  # N demand leaves [kg ha-1]
+        NDEMST = self.kiosk["NDEMST"]  # N demand stems [kg ha-1]
+        NDEMRT = self.kiosk["NDEMRT"]  # N demand roots [kg ha-1]
+        NDEMSO = self.kiosk["NDEMSO"]  # N demand storage organs [kg ha-1]
 
-        PDEML  = self.kiosk["PDEML"]  # P demand leaves [kg ha-1]
-        PDEMS  = self.kiosk["PDEMS"]  # P demand stems [kg ha-1]
-        PDEMR  = self.kiosk["PDEMR"]  # P demand roots [kg ha-1]
-        PDEMSO = self.kiosk["PDEMSO"] # P demand storage organs [kg ha-1]
+        PDEMLV = self.kiosk["PDEMLV"]  # P demand leaves [kg ha-1]
+        PDEMST = self.kiosk["PDEMST"]  # P demand stems [kg ha-1]
+        PDEMRT = self.kiosk["PDEMRT"]  # P demand roots [kg ha-1]
+        PDEMSO = self.kiosk["PDEMSO"]  # P demand storage organs [kg ha-1]
  
-        KDEML  = self.kiosk["KDEML"]  # K demand leaves [kg ha-1]
-        KDEMS  = self.kiosk["KDEMS"]  # K demand stems [kg ha-1]
-        KDEMR  = self.kiosk["KDEMR"]  # K demand roots [kg ha-1]
-        KDEMSO = self.kiosk["KDEMSO"] # K demand storage organs [kg ha-1]
+        KDEMLV = self.kiosk["KDEMLV"]  # K demand leaves [kg ha-1]
+        KDEMST = self.kiosk["KDEMST"]  # K demand stems [kg ha-1]
+        KDEMRT = self.kiosk["KDEMRT"]  # K demand roots [kg ha-1]
+        KDEMSO = self.kiosk["KDEMSO"]  # K demand storage organs [kg ha-1]
         
-        NUPSO = self.kiosk["NUPSO"]   # N supply to storage organs [kg ha-1]
-        PUPSO = self.kiosk["PUPSO"]   # P supply to storage organs [kg ha-1]
-        KUPSO = self.kiosk["KUPSO"]   # K supply to storage organs [kg ha-1]
+        NTRANSLOCATABLE = self.kiosk["NTRANSLOCATABLE"]  # N supply to storage organs [kg ha-1]
+        PTRANSLOCATABLE = self.kiosk["PTRANSLOCATABLE"]  # P supply to storage organs [kg ha-1]
+        KTRANSLOCATABLE = self.kiosk["KTRANSLOCATABLE"]  # K supply to storage organs [kg ha-1]
         
 #       total NPK demand of leaves, stems and roots
-        NDEMTO = NDEML + NDEMS + NDEMR
-        PDEMTO = PDEML + PDEMS + PDEMR
-        KDEMTO = KDEML + KDEMS + KDEMR  
+        NDEMTO = NDEMLV + NDEMST + NDEMRT
+        PDEMTO = PDEMLV + PDEMST + PDEMRT
+        KDEMTO = KDEMLV + KDEMST + KDEMRT
         
 #       NPK uptake rate in storage organs (kg N ha-1 d-1)
 #       is the mimimum of supply and demand
-        rates.RNUSO =  min(NDEMSO, NUPSO)
-        rates.RPUSO =  min(PDEMSO, PUPSO)
-        rates.RKUSO =  min(KDEMSO, KUPSO)
+        rates.RNUSO = min(NDEMSO, NTRANSLOCATABLE)
+        rates.RPUSO = min(PDEMSO, PTRANSLOCATABLE)
+        rates.RKUSO = min(KDEMSO, KTRANSLOCATABLE)
         
         TRANRF = TRA/TRAMX
         
 #       No nutrients are absorbed after developmentstage DVSNLT or
 #       when watershortage occurs i.e. TRANRF <= 0.01
-        if DVS < params.DVSNPK_STOP and TRANRF > 0.01 :
+        if DVS < params.DVSNPK_STOP and TRANRF > 0.01:
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.
 
         
         # NPK uptake rate from soil
-        rates.NUPTR = (max (0., min ((1.-params.NFIX_FR)*NDEMTO, NMINT))* NutrientLIMIT)
-        rates.PUPTR = (max (0., min (PDEMTO, PMINT))* NutrientLIMIT)
-        rates.KUPTR = (max (0., min (KDEMTO, KMINT))* NutrientLIMIT)
+        rates.NUPTR = (max (0., min((1. - params.NFIX_FR)*NDEMTO, NAVAIL)) * NutrientLIMIT)
+        rates.PUPTR = (max (0., min(PDEMTO, PAVAIL)) * NutrientLIMIT)
+        rates.KUPTR = (max (0., min(KDEMTO, KAVAIL)) * NutrientLIMIT)
        
         
         # biological nitrogen fixation
-        rates.NFIXTR= (max (0., params.NFIX_FR*NDEMTO)* NutrientLIMIT)
+        rates.NFIXTR = (max(0., params.NFIX_FR * NDEMTO) * NutrientLIMIT)
         
         # NPK uptake rate
         # if no demand then uptake rate = 0.
         if NDEMTO == 0.:
-            rates.RNULV = rates.RNUST = rates.RNURT =0.
+            rates.RNULV = rates.RNUST = rates.RNURT = 0.
         else:    
-            rates.RNULV = (NDEML / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
-            rates.RNUST = (NDEMS / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
-            rates.RNURT = (NDEMR / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
+            rates.RNULV = (NDEMLV / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
+            rates.RNUST = (NDEMST / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
+            rates.RNURT = (NDEMRT / NDEMTO) * (rates.NUPTR + rates.NFIXTR)
             
             
         if PDEMTO == 0.:
-            rates.RPULV = rates.RPUST = rates.RPURT =0.
+            rates.RPULV = rates.RPUST = rates.RPURT = 0.
         else:    
-            rates.RPULV = (PDEML / PDEMTO) * rates.PUPTR
-            rates.RPUST = (PDEMS / PDEMTO) * rates.PUPTR
-            rates.RPURT = (PDEMR / PDEMTO) * rates.PUPTR
+            rates.RPULV = (PDEMLV / PDEMTO) * rates.PUPTR
+            rates.RPUST = (PDEMST / PDEMTO) * rates.PUPTR
+            rates.RPURT = (PDEMRT / PDEMTO) * rates.PUPTR
             
 
         if KDEMTO == 0.:
-            rates.RKULV = rates.RKUST = rates.RKURT =0.
+            rates.RKULV = rates.RKUST = rates.RKURT = 0.
         else:    
-            rates.RKULV = (KDEML / KDEMTO) * rates.KUPTR
-            rates.RKUST = (KDEMS / KDEMTO) * rates.KUPTR
-            rates.RKURT = (KDEMR / KDEMTO) * rates.KUPTR
+            rates.RKULV = (KDEMLV / KDEMTO) * rates.KUPTR
+            rates.RKUST = (KDEMST / KDEMTO) * rates.KUPTR
+            rates.RKURT = (KDEMRT / KDEMTO) * rates.KUPTR
             
 #        print "RKUST: ",rates.RKUST, "KDEMS: ",KDEMS, "KDEMTO: ",KDEMTO, "KUPTR: ",rates.KUPTR, KMINT

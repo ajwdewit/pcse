@@ -66,10 +66,10 @@ class NPK_Crop_Dynamics(SimulationObject):
     APRT     Actual P amount in living roots                        |kg P ha-1|
     AKRT     Actual K amount in living roots                        |kg K ha-1|
     
-    NUPTT    total absorbed N amount                                |kg N ha-1|
-    PUPTT    total absorbed P amount                                |kg P ha-1|
-    KUPTT    total absorbed K amount                                |kg K ha-1|
-    NFIXTT   total biological fixated N amount                      |kg N ha-1|
+    NUPTAKE_T    total absorbed N amount                                |kg N ha-1|
+    PUPTAKE_T    total absorbed P amount                                |kg P ha-1|
+    KUPTAKE_T    total absorbed K amount                                |kg K ha-1|
+    NFIX_T   total biological fixated N amount                      |kg N ha-1|
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -171,14 +171,14 @@ class NPK_Crop_Dynamics(SimulationObject):
         APRT = Float(-99.) # P amount in roots [kg P ]
         AKRT = Float(-99.) # K amount in roots [kg K ]
         
-        NUPTT = Float(-99.) # total absorbed N amount [kg N ]
-        PUPTT = Float(-99.) # total absorbed P amount [kg P ]
-        KUPTT = Float(-99.) # total absorbed K amount [kg K ]
-        NFIXTT = Float(-99.) # total biological fixated N amount [kg N ]
+        NUPTAKE_T = Float(-99.) # total absorbed N amount [kg N ]
+        PUPTAKE_T = Float(-99.) # total absorbed P amount [kg P ]
+        KUPTAKE_T = Float(-99.) # total absorbed K amount [kg K ]
+        NFIX_T = Float(-99.) # total biological fixated N amount [kg N ]
         
-        NLOSST = Float(-99.)
-        PLOSST = Float(-99.)
-        KLOSST = Float(-99.)
+        NLOSSES_T = Float(-99.)
+        PLOSSES_T = Float(-99.)
+        KLOSSES_T = Float(-99.)
 
     class RateVariables(RatesTemplate):
         RNLV = Float(-99.)
@@ -257,15 +257,14 @@ class NPK_Crop_Dynamics(SimulationObject):
                         ANLV=ANLV, ANST=ANST, ANRT=ANRT, ANSO=ANSO,
                         APLV=APLV, APST=APST, APRT=APRT, APSO=APSO,
                         AKLV=AKLV, AKST=AKST, AKRT=AKRT, AKSO=AKSO,
-                        NUPTT=0 ,PUPTT=0., KUPTT=0., NFIXTT=0.,
-                        NLOSST=0 ,PLOSST=0., KLOSST=0.)
+                        NUPTAKE_T=0 ,PUPTAKE_T=0., KUPTAKE_T=0., NFIX_T=0.,
+                        NLOSSES_T=0 ,PLOSSES_T=0., KLOSSES_T=0.)
 
-    @staticmethod
     def _check_N_balance(self, day):
         states = self.states
         
-        NUPTT  = states.NUPTT
-        NFIXTT = states.NFIXTT
+        NUPTAKE_T  = states.NUPTAKE_T
+        NFIX_T = states.NFIX_T
         
         ANLVI  = self.ANLVI
         ANSTI  = self.ANSTI
@@ -277,24 +276,23 @@ class NPK_Crop_Dynamics(SimulationObject):
         ANRT  = states.ANRT
         ANSO  = states.ANSO
         
-        NLOSST = states.NLOSST
+        NLOSST = states.NLOSSES_T
 
-        checksum = abs(NUPTT + NFIXTT + (ANLVI + ANSTI + ANRTI + ANSOI) - \
+        checksum = abs(NUPTAKE_T + NFIX_T + (ANLVI + ANSTI + ANRTI + ANSOI) - \
                     (ANLV + ANST + ANRT + ANSO + NLOSST))
         
         if abs(checksum) >= 1.:
             msg = "N flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, NUPTT: %f, NFIXTT: %f\n" % (checksum, NUPTT, NFIXTT)
+            msg += "Checksum: %f, NUPTAKE_T: %f, NFIX_T: %f\n" % (checksum, NUPTAKE_T, NFIX_T)
             msg += "ANLVI: %f, ANSTI: %f, ANRTI: %f, ANSOI: %f\n"  %(ANLVI, ANSTI, ANRTI, ANSOI)
             msg += "ANLV: %f, ANST: %f, ANRT: %f, ANSO: %f\n" % (ANLV, ANST, ANRT, ANSO) 
             msg += "NLOSST: %f\n" %(NLOSST)
             raise exc.NutrientBalanceError(msg)
             
      
-    @staticmethod
     def _check_P_balance(self, day):
         states = self.states            
-        PUPTT  = states.PUPTT
+        PUPTAKE_T = states.PUPTAKE_T
              
         APLVI  = self.APLVI
         APSTI  = self.APSTI
@@ -306,23 +304,22 @@ class NPK_Crop_Dynamics(SimulationObject):
         APRT  = states.APRT
         APSO  = states.APSO
         
-        PLOSST = states.PLOSST
+        PLOSST = states.PLOSSES_T
         
-        checksum = abs(PUPTT + (APLVI + APSTI + APRTI + APSOI) - \
+        checksum = abs(PUPTAKE_T + (APLVI + APSTI + APRTI + APSOI) - \
                     (APLV + APST + APRT + APSO + PLOSST))
             
         if abs(checksum) >= 1.:
             msg = "P flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, PUPTT: %f\n" % (checksum, PUPTT)
+            msg += "Checksum: %f, PUPTAKE_T: %f\n" % (checksum, PUPTAKE_T)
             msg += "APLVI: %f, APSTI: %f, APRTI: %f, APSOI: %f\n" % (APLVI, APSTI, APRTI, APSOI)
             msg += "APLV: %f, APST: %f, APRT: %f, APSO: %f\n" % (APLV, APST, APRT, APSO) 
             msg += "PLOSST: %f\n" %(PLOSST)
             raise exc.NutrientBalanceError(msg)
             
-    @staticmethod
     def _check_K_balance(self, day):
         states = self.states            
-        KUPTT  = states.KUPTT
+        KUPTAKE_T  = states.KUPTAKE_T
              
         AKLVI  = self.AKLVI
         AKSTI  = self.AKSTI
@@ -334,20 +331,19 @@ class NPK_Crop_Dynamics(SimulationObject):
         AKRT  = states.AKRT
         AKSO  = states.AKSO
         
-        KLOSST = states.KLOSST
+        KLOSST = states.KLOSSES_T
         
-        checksum = abs(KUPTT + (AKLVI + AKSTI + AKRTI + AKSOI) - \
+        checksum = abs(KUPTAKE_T + (AKLVI + AKSTI + AKRTI + AKSOI) - \
                     (AKLV + AKST + AKRT + AKSO + KLOSST))
             
         if abs(checksum) >= 1.:
             msg = "K flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, KUPTT: %f\n"  %(checksum, KUPTT)
+            msg += "Checksum: %f, KUPTAKE_T: %f\n"  %(checksum, KUPTAKE_T)
             msg += "AKLVI: %f, AKSTI: %f, AKRTI: %f, AKSOI: %f\n" % (AKLVI, AKSTI, AKRTI, AKSOI)
             msg += "AKLV: %f, AKST: %f, AKRT: %f, AKSO: %f\n" % (AKLV, AKST, AKRT, AKSO) 
             msg += "KLOSST: %f\n" %(KLOSST)
             raise exc.NutrientBalanceError(msg)    
             
-
     @prepare_rates
     def calc_rates(self, day):
         rates  = self.rates     
@@ -379,9 +375,9 @@ class NPK_Crop_Dynamics(SimulationObject):
         rates.PLOSSR = self.kiosk["RPDLV"] + self.kiosk["RPDST"] + self.kiosk["RPDRT"]
         rates.KLOSSR = self.kiosk["RKDLV"] + self.kiosk["RKDST"] + self.kiosk["RKDRT"] 
 
-        self._check_N_balance(self, day)
-        self._check_P_balance(self, day)
-        self._check_K_balance(self, day)
+        self._check_N_balance(day)
+        self._check_P_balance(day)
+        self._check_K_balance(day)
         
         
     @prepare_states
@@ -416,14 +412,11 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.supply.integrate(day)
         
         # total NPK uptake from soil
-        states.NUPTT  += self.kiosk["NUPTR"]
-        states.PUPTT  += self.kiosk["PUPTR"]
-        states.KUPTT  += self.kiosk["KUPTR"]
-        states.NFIXTT += self.kiosk["NFIXTR"]
+        states.NUPTAKE_T  += self.kiosk["NUPTR"]
+        states.PUPTAKE_T  += self.kiosk["PUPTR"]
+        states.KUPTAKE_T  += self.kiosk["KUPTR"]
+        states.NFIX_T += self.kiosk["NFIXTR"]
         
-        states.NLOSST += rates.NLOSSR
-        states.PLOSST += rates.PLOSSR
-        states.KLOSST += rates.KLOSSR
-    
-    
-    
+        states.NLOSSES_T += rates.NLOSSR
+        states.PLOSSES_T += rates.PLOSSR
+        states.KLOSSES_T += rates.KLOSSR

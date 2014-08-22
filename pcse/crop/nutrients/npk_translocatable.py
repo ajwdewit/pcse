@@ -76,22 +76,18 @@ class npk_translocatable(SimulationObject):
                
         
 #       translocatable N amount in the organs [kg N ha-1]
-        states.ATNLV = max (0. , ANLV - WLV * params.NRESIDLV)
-        states.ATNST = max (0. , ANST - WST * params.NRESIDST)
+        states.ATNLV = max(0., ANLV - WLV * params.NRESIDLV)
+        states.ATNST = max(0., ANST - WST * params.NRESIDST)
         states.ATNRT = max((states.ATNLV + states.ATNST) * params.NPK_TRANSLRT_FR, ANRT - WRT * params.NRESIDRT)
                
 
 #       translocatable P amount in the organs [kg P ha-1]
-        states.ATPLV = max (0. , APLV - WLV * params.PRESIDLV)
-        states.ATPST = max (0. , APST - WST * params.PRESIDST)
+        states.ATPLV = max(0., APLV - WLV * params.PRESIDLV)
+        states.ATPST = max(0., APST - WST * params.PRESIDST)
         states.ATPRT = max((states.ATPLV + states.ATPST) * params.NPK_TRANSLRT_FR, APRT - WRT * params.PRESIDRT)
         
       
 #       translocatable K amount in the organs [kg K ha-1]
-        states.ATKLV = max (0. , AKLV - WLV * params.KRESIDLV)
-        states.ATKST = max (0. , AKST - WST * params.KRESIDST)
+        states.ATKLV = max(0., AKLV - WLV * params.KRESIDLV)
+        states.ATKST = max(0., AKST - WST * params.KRESIDST)
         states.ATKRT = max((states.ATKLV + states.ATKST) * params.NPK_TRANSLRT_FR, AKRT - WRT * params.KRESIDRT)
-
-        
-      
-     

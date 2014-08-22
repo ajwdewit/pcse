@@ -28,19 +28,19 @@ class npk_demand(SimulationObject):
         TCKT   = Float(-99.)  # time coefficient for K translocation to storage organs [days]
         
     class StateVariables(StatesTemplate):
-        NDEML  = Float(-99.)
-        NDEMS  = Float(-99.)
-        NDEMR  = Float(-99.)
+        NDEMLV  = Float(-99.)
+        NDEMST  = Float(-99.)
+        NDEMRT  = Float(-99.)
         NDEMSO = Float(-99.)
 
-        PDEML  = Float(-99.)
-        PDEMS  = Float(-99.)
-        PDEMR  = Float(-99.)
+        PDEMLV  = Float(-99.)
+        PDEMST  = Float(-99.)
+        PDEMRT  = Float(-99.)
         PDEMSO = Float(-99.)
         
-        KDEML  = Float(-99.)
-        KDEMS  = Float(-99.)
-        KDEMR  = Float(-99.)
+        KDEMLV  = Float(-99.)
+        KDEMST  = Float(-99.)
+        KDEMRT  = Float(-99.)
         KDEMSO = Float(-99.)
 
     
@@ -51,12 +51,12 @@ class npk_demand(SimulationObject):
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         :returns: the npk demand __call__()
         """
-        self.states = self.StateVariables(kiosk,publish=["NDEML","NDEMS","NDEMR","NDEMSO",
-                                                         "PDEML","PDEMS","PDEMR","PDEMSO",
-                                                         "KDEML","KDEMS","KDEMR","KDEMSO"],
-                                            NDEML=0.,NDEMS=0.,NDEMR=0.,NDEMSO=0.,
-                                            PDEML=0.,PDEMS=0.,PDEMR=0.,PDEMSO=0.,
-                                            KDEML=0.,KDEMS=0.,KDEMR=0.,KDEMSO=0.)
+        self.states = self.StateVariables(kiosk,publish=["NDEMLV","NDEMST","NDEMRT","NDEMSO",
+                                                         "PDEMLV","PDEMST","PDEMRT","PDEMSO",
+                                                         "KDEMLV","KDEMST","KDEMRT","KDEMSO"],
+                                            NDEMLV=0.,NDEMST=0.,NDEMRT=0.,NDEMSO=0.,
+                                            PDEMLV=0.,PDEMST=0.,PDEMRT=0.,PDEMSO=0.,
+                                            KDEMLV=0.,KDEMST=0.,KDEMRT=0.,KDEMSO=0.)
 
                                                                                                                 
         self.params = self.Parameters(cropdata)
@@ -109,21 +109,19 @@ class npk_demand(SimulationObject):
         KMAXSO = params.KMAXSO
 
 #       N demand [kg ha-1] - maybe should be [kg ha-1 day-1]
-        states.NDEML  =  max(NMAXLV*WLV  - ANLV, 0.) # maybe should be divided by one day, see equation 5 Shibu etal 2010
-        states.NDEMS  =  max(NMAXST*WST  - ANST, 0.)
-        states.NDEMR  =  max(NMAXRT*WRT  - ANRT, 0.)
+        states.NDEMLV  =  max(NMAXLV*WLV  - ANLV, 0.) # maybe should be divided by one day, see equation 5 Shibu etal 2010
+        states.NDEMST  =  max(NMAXST*WST  - ANST, 0.)
+        states.NDEMRT  =  max(NMAXRT*WRT  - ANRT, 0.)
         states.NDEMSO =  max(NMAXSO*WSO  - ANSO, 0.)/params.TCNT
 
 #       P demand [kg ha-1]
-        states.PDEML  =  max(PMAXLV*WLV  - APLV, 0.)
-        states.PDEMS  =  max(PMAXST*WST  - APST, 0.)
-        states.PDEMR  =  max(PMAXRT*WRT  - APRT, 0.)
+        states.PDEMLV  =  max(PMAXLV*WLV  - APLV, 0.)
+        states.PDEMST  =  max(PMAXST*WST  - APST, 0.)
+        states.PDEMRT  =  max(PMAXRT*WRT  - APRT, 0.)
         states.PDEMSO =  max(PMAXSO*WSO  - APSO, 0.)/params.TCPT
 
 #       K demand [kg ha-1]
-        states.KDEML  =  max(KMAXLV*WLV  - AKLV, 0.)
-        states.KDEMS  =  max(KMAXST*WST  - AKST, 0.)
-        states.KDEMR  =  max(KMAXRT*WRT  - AKRT, 0.)
+        states.KDEMLV  =  max(KMAXLV*WLV  - AKLV, 0.)
+        states.KDEMST  =  max(KMAXST*WST  - AKST, 0.)
+        states.KDEMRT  =  max(KMAXRT*WRT  - AKRT, 0.)
         states.KDEMSO =  max(KMAXSO*WSO  - AKSO, 0.)/params.TCKT
-        
-        

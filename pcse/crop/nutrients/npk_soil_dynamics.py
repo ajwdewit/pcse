@@ -10,9 +10,9 @@ from copy import deepcopy
 
 class NPK_Soil_Dynamics(SimulationObject):
     
-    NMINI = Float(-99.) # initial soil N amount
-    PMINI = Float(-99.) # initial soil P amount
-    KMINI = Float(-99.) # initial soil K amount
+    NSOILI = Float(-99.) # initial soil N amount
+    PSOILI = Float(-99.) # initial soil P amount
+    KSOILI = Float(-99.) # initial soil K amount
     
     class Parameters(ParamTemplate):      
         FERNTAB = AfgenTrait() # N fertilizer application table
@@ -35,13 +35,13 @@ class NPK_Soil_Dynamics(SimulationObject):
         DVSNPK_STOP  = Float(-99.)  # Developmentstage after which no nutrients are absorbed
         
     class StateVariables(StatesTemplate):
-        NMIN = Float(-99.) # mineral N available from soil for crop    kg N ha-1
-        PMIN = Float(-99.) # mineral N available from soil for crop    kg N ha-1
-        KMIN = Float(-99.) # mineral N available from soil for crop    kg N ha-1
+        NSOIL = Float(-99.) # mineral N available from soil for crop    kg N ha-1
+        PSOIL = Float(-99.) # mineral N available from soil for crop    kg N ha-1
+        KSOIL = Float(-99.) # mineral N available from soil for crop    kg N ha-1
         
-        NMINT = Float(-99.) # total mineral N from soil and fertiliser  kg N ha-1
-        PMINT = Float(-99.) # total mineral P from soil and fertiliser  kg N ha-1
-        KMINT = Float(-99.) # total mineral K from soil and fertiliser  kg N ha-1
+        NAVAIL = Float(-99.) # total mineral N from soil and fertiliser  kg N ha-1
+        PAVAIL = Float(-99.) # total mineral P from soil and fertiliser  kg N ha-1
+        KAVAIL = Float(-99.) # total mineral K from soil and fertiliser  kg N ha-1
       
     class RateVariables(RatesTemplate):
         RNMINS = Float(-99.)
@@ -64,28 +64,25 @@ class NPK_Soil_Dynamics(SimulationObject):
         parvalues.update(fertilizer)
         
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk)
-        self.kiosk  = kiosk
+        self.rates = self.RateVariables(kiosk)
+        self.kiosk = kiosk
         
       # INITIAL STATES
-        params= self.params
+        params = self.params
        
-        NMIN = params.NSOILBASE
-        PMIN = params.PSOILBASE
-        KMIN = params.KSOILBASE
-        
         iday  = doy(day)
-        NMINT = params.FERNTAB(iday) * params.NRFTAB(iday)
-        PMINT = params.FERPTAB(iday) * params.PRFTAB(iday)
-        KMINT = params.FERKTAB(iday) * params.KRFTAB(iday)
+        NAVAIL = params.FERNTAB(iday) * params.NRFTAB(iday)
+        PAVAIL = params.FERPTAB(iday) * params.PRFTAB(iday)
+        KAVAIL = params.FERKTAB(iday) * params.KRFTAB(iday)
         
-        self.NMINI = NMIN
-        self.PMINI = PMIN
-        self.KMINI = KMIN
+        self.NSOILI = params.NSOILBASE
+        self.PSOILI = params.PSOILBASE
+        self.KSOILI = params.KSOILBASE
         
-        self.states = self.StateVariables(kiosk, publish=["NMIN","PMIN","KMIN",
-                                                          "NMINT","PMINT","KMINT"],
-            NMIN=NMIN, PMIN=PMIN, KMIN=KMIN,NMINT=NMINT, PMINT=PMINT, KMINT=KMINT)
+        self.states = self.StateVariables(kiosk,
+            publish=["NSOIL", "PSOIL", "KSOIL", "NAVAIL", "PAVAIL", "KAVAIL"],
+            NSOIL=params.NSOILBASE, PSOIL=params.PSOILBASE, KSOIL=params.KSOILBASE,
+            NAVAIL=NAVAIL, PAVAIL=PAVAIL, KAVAIL=KAVAIL)
         
         
     @prepare_rates
@@ -98,10 +95,6 @@ class NPK_Soil_Dynamics(SimulationObject):
         TRAMX = self.kiosk["TRAMX"]
         DVS   = self.kiosk["DVS"]
         
-        NMIN  = self.kiosk["NMIN"]
-        PMIN  = self.kiosk["PMIN"]
-        KMIN  = self.kiosk["KMIN"]
-        
         NUPTR = self.kiosk["NUPTR"]
         PUPTR = self.kiosk["PUPTR"]
         KUPTR = self.kiosk["KUPTR"]
@@ -113,9 +106,9 @@ class NPK_Soil_Dynamics(SimulationObject):
         else:
             NutrientLIMIT = 0.
                     
-        rates.RNMINS = -max(0.,min( params.NSOILBASE_FR * self.NMINI * NutrientLIMIT, NMIN))
-        rates.RPMINS = -max(0.,min( params.PSOILBASE_FR * self.PMINI * NutrientLIMIT, PMIN))
-        rates.RKMINS = -max(0.,min( params.KSOILBASE_FR * self.KMINI * NutrientLIMIT, KMIN))
+        rates.RNMINS = -max(0., min(params.NSOILBASE_FR * self.NSOILI * NutrientLIMIT, states.NSOIL))
+        rates.RPMINS = -max(0., min(params.PSOILBASE_FR * self.PSOILI * NutrientLIMIT, states.PSOIL))
+        rates.RKMINS = -max(0., min(params.KSOILBASE_FR * self.KSOILI * NutrientLIMIT, states.KSOIL))
         
         iday  = doy(day)
         FERTNS = params.FERNTAB(iday) * params.NRFTAB(iday)
@@ -134,12 +127,12 @@ class NPK_Soil_Dynamics(SimulationObject):
         states = self.states
 
         # mineral NPK  amount in the soil
-        states.NMIN += rates.RNMINS
-        states.PMIN += rates.RPMINS
-        states.KMIN += rates.RKMINS
+        states.NSOIL += rates.RNMINS
+        states.PSOIL += rates.RPMINS
+        states.KSOIL += rates.RKMINS
         
         # total (soil + fertilizer) NPK amount in soil
-        states.NMINT += rates.RNMINT
-        states.PMINT += rates.RPMINT
-        states.KMINT += rates.RKMINT
+        states.NAVAIL += rates.RNMINT
+        states.PAVAIL += rates.RPMINT
+        states.KAVAIL += rates.RKMINT
         

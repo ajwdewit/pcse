@@ -13,9 +13,9 @@ class npk_supply_storage_organs(SimulationObject):
         DVSNPK_TRANSL = Float(-99.) # development stage above which N-P-K translocation to storage organs does occur
     
     class StateVariables(StatesTemplate):
-        NUPSO = Float(-99.) # N amount that can be translocated to the storage organs [kg N ha-1]
-        PUPSO = Float(-99.) # P amount that can be translocated to the storage organs [kg P ha-1]
-        KUPSO = Float(-99.) # K amount that can be translocated to the storage organs [kg K ha-1]
+        NTRANSLOCATABLE = Float(-99.) # N amount that can be translocated to the storage organs [kg N ha-1]
+        PTRANSLOCATABLE = Float(-99.) # P amount that can be translocated to the storage organs [kg P ha-1]
+        KTRANSLOCATABLE = Float(-99.) # K amount that can be translocated to the storage organs [kg K ha-1]
        
     def initialize(self, day, kiosk, cropdata):
         """
@@ -26,8 +26,9 @@ class npk_supply_storage_organs(SimulationObject):
         """
 
         self.params = self.Parameters(cropdata)
-        self.states  = self.StateVariables(kiosk,publish=["NUPSO","PUPSO","KUPSO"],
-                                           NUPSO=0.,PUPSO=0.,KUPSO=0.)
+        self.states = self.StateVariables(kiosk,
+            publish=["NTRANSLOCATABLE","PTRANSLOCATABLE", "KTRANSLOCATABLE"],
+            NTRANSLOCATABLE=0., PTRANSLOCATABLE=0., KTRANSLOCATABLE=0.)
     
     @prepare_states
     def integrate(self, day):
@@ -51,18 +52,18 @@ class npk_supply_storage_organs(SimulationObject):
         DVS = self.kiosk["DVS"] 
         
 #       total translocatable NPK amount in the organs [kg N ha-1]
-        ATN   = ATNLV + ATNST + ATNRT
-        ATP   = ATPLV + ATPST + ATPRT
-        ATK   = ATKLV + ATKST + ATKRT
+        ATN = ATNLV + ATNST + ATNRT
+        ATP = ATPLV + ATPST + ATPRT
+        ATK = ATKLV + ATKST + ATKRT
         
         # NPK amount that can be translocated to the storage organs [kg N ha-1]
         # translocation occurs after DVSNT
         if DVS > params.DVSNPK_TRANSL:
-            states.NUPSO = ATN/params.TCNT
-            states.PUPSO = ATP/params.TCPT
-            states.KUPSO = ATK/params.TCKT
+            states.NTRANSLOCATABLE = ATN/params.TCNT
+            states.PTRANSLOCATABLE = ATP/params.TCPT
+            states.KTRANSLOCATABLE = ATK/params.TCKT
         else:
-            states.NUPSO = states.PUPSO= states.KUPSO = 0.
+            states.NTRANSLOCATABLE = states.PTRANSLOCATABLE = states.KTRANSLOCATABLE = 0.
         
         
         
