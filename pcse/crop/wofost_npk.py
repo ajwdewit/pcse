@@ -21,7 +21,7 @@ from .evapotranspiration import Evapotranspiration2 as Evapotranspiration
 
 from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
 from .nutrients.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
-from .nutrients.npk_stress import npk_stress as NPK_Stress
+from .nutrients.npk_stress import NPK_Stress as NPK_Stress
 
 #-------------------------------------------------------------------------------
 class WofostNPK(SimulationObject):
@@ -95,9 +95,9 @@ class WofostNPK(SimulationObject):
     
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
-    part  = Instance(SimulationObject)
+    part = Instance(SimulationObject)
     assim = Instance(SimulationObject)
-    mres  = Instance(SimulationObject)
+    mres = Instance(SimulationObject)
     evtra = Instance(SimulationObject)
     lv_dynamics = Instance(SimulationObject)
     st_dynamics = Instance(SimulationObject)
@@ -124,19 +124,18 @@ class WofostNPK(SimulationObject):
         DOF = Instance(datetime.date)
         FINISH_TYPE = Instance(str)
 
-
     class RateVariables(RatesTemplate):
         GASS = Float(-99.)
         PGASS = Float(-99.)
-        MRES  = Float(-99.)
+        MRES = Float(-99.)
         PMRES = Float(-99.)
         ASRC = Float(-99.)
         DMI = Float(-99.)
         ADMI = Float(-99.)
         
-        NPKREF = Float(-99.) # nutrient stress reduction for assimilation
-        NPKI = Float(-99.) # nutrient stress index
-        NNI = Float(-99.) # N nutrition index
+        NPKREF = Float(-99.)  # nutrient stress reduction for assimilation
+        NPKI = Float(-99.)  # nutrient stress index
+        NNI = Float(-99.)  # N nutrition index
 
     def initialize(self, day, kiosk, cropdata, soildata, fertilizer,
                    start_type, stop_type):
@@ -150,14 +149,14 @@ class WofostNPK(SimulationObject):
         """
         
         self.params = self.Parameters(cropdata)
-        self.rates  = self.RateVariables(kiosk, publish=["DMI","ADMI", "NPKREF","NPKI","NNI"])
+        self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI", "NPKREF", "NPKI", "NNI"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
         self.pheno = Phenology(day, kiosk,  cropdata, start_type, stop_type)
-        self.part  = Partitioning(day, kiosk, cropdata)
+        self.part = Partitioning(day, kiosk, cropdata)
         self.assim = Assimilation(day, kiosk, cropdata)
-        self.mres  = MaintenanceRespiration(day, kiosk, cropdata)
+        self.mres = MaintenanceRespiration(day, kiosk, cropdata)
         self.evtra = Evapotranspiration(day, kiosk, cropdata, soildata)
         self.ro_dynamics = Root_Dynamics(day, kiosk, cropdata, soildata)
         self.st_dynamics = Stem_Dynamics(day, kiosk, cropdata)

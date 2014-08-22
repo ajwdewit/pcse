@@ -534,39 +534,40 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
     class Parameters(ParamTemplate):
         RGRLAI = Float(-99.)
-        SPAN   = Float(-99.)
-        TBASE  = Float(-99.)
-        PERDL  = Float(-99.)
-        TDWI   = Float(-99.)
-        SLATB  = AfgenTrait()
+        SPAN = Float(-99.)
+        TBASE = Float(-99.)
+        PERDL = Float(-99.)
+        TDWI = Float(-99.)
+        SLATB = AfgenTrait()
         KDIFTB = AfgenTrait()
-        RDRLV_NPK  = Float(-99.) # max. relative death rate of leaves due to nutrient NPK stress
-        NLAI_NPK   = Float(-99.) # coefficient for the reduction due to nutrient NPK stress of the LAI increase (during juvenile phase)
-        NSLA_NPK   = Float(-99.) # coefficient for the effect of nutrient NPK stress on SLA reduction
+        RDRLV_NPK = Float(-99.)  # max. relative death rate of leaves due to nutrient NPK stress
+        NSLA_NPK = Float(-99.)  # coefficient for the effect of nutrient NPK stress on SLA reduction
+        NLAI_NPK = Float(-99.)  # coefficient for the reduction due to nutrient NPK stress of the 
+                                  # LAI increase (during juvenile phase)
 
     class StateVariables(StatesTemplate):
-        LV     = Instance(deque)
-        SLA    = Instance(deque)
-        LVAGE  = Instance(deque)
-        LAIEM  = Float(-99.)
-        LASUM  = Float(-99.)
+        LV = Instance(deque)
+        SLA = Instance(deque)
+        LVAGE = Instance(deque)
+        LAIEM = Float(-99.)
+        LASUM = Float(-99.)
         LAIEXP = Float(-99.)
         LAIMAX = Float(-99.)
-        LAI    = Float(-99.)
-        WLV    = Float(-99.)
-        DWLV   = Float(-99.)
-        TWLV   = Float(-99.)
+        LAI = Float(-99.)
+        WLV = Float(-99.)
+        DWLV = Float(-99.)
+        TWLV = Float(-99.)
 
     class RateVariables(RatesTemplate):
-        GRLV  = Float(-99.)
+        GRLV = Float(-99.)
         DSLV1 = Float(-99.)
         DSLV2 = Float(-99.)
         DSLV3 = Float(-99.)
         DSLV4 = Float(-99.)
-        DSLV  = Float(-99.)
-        DALV  = Float(-99.)
-        DRLV  = Float(-99.)
-        SLAT  = Float(-99.)
+        DSLV = Float(-99.)
+        DALV = Float(-99.)
+        DRLV = Float(-99.)
+        SLAT = Float(-99.)
         FYSAGE = Float(-99.)
         GLAIEX = Float(-99.)
         GLASOL = Float(-99.)
@@ -578,41 +579,36 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         """
 
-        self.kiosk  = kiosk
+        self.kiosk = kiosk
         self.params = self.Parameters(cropdata)
-        self.rates  = self.RateVariables(kiosk,publish=["DRLV"])
+        self.rates = self.RateVariables(kiosk,publish=["DRLV"])
 
         # CALCULATE INITIAL STATE VARIABLES
         params = self.params
-        FL  = self.kiosk["FL"]
-        FR  = self.kiosk["FR"]
+        FL = self.kiosk["FL"]
+        FR = self.kiosk["FR"]
         DVS = self.kiosk["DVS"]
 
         # Initial leaf biomass
-        WLV  = (params.TDWI * (1-FR)) * FL
+        WLV = (params.TDWI * (1-FR)) * FL
         DWLV = 0.
         TWLV = WLV + DWLV
 
         # First leaf class (SLA, age and weight)
-        SLA   = deque([params.SLATB(DVS)])
+        SLA = deque([params.SLATB(DVS)])
         LVAGE = deque([0.])
-        LV    = deque([WLV])
+        LV = deque([WLV])
 
         # Initial values for leaf area
-        LAIEM  = LV[0] * SLA[0]
-        LASUM  = LAIEM
+        LAIEM = LV[0] * SLA[0]
+        LASUM = LAIEM
         LAIEXP = LAIEM
         LAIMAX = LAIEM
-        LAI    = LASUM + self.kiosk["SAI"] + self.kiosk["PAI"]
+        LAI = LASUM + self.kiosk["SAI"] + self.kiosk["PAI"]
 
         # Initialize StateVariables object
-        self.states = self.StateVariables(kiosk, publish=["LAI","TWLV","WLV"],
-                                          LV     = LV,     SLA    = SLA,
-                                          LVAGE  = LVAGE,
-                                          LAIEM  = LAIEM,  LASUM  = LASUM,
-                                          LAIEXP = LAIEXP, LAIMAX = LAIMAX,
-                                          LAI    = LAI,    WLV    = WLV,
-                                          DWLV   = DWLV,   TWLV   = TWLV)
+        self.states = self.StateVariables(kiosk, publish=["LAI", "TWLV", "WLV"], LV=LV, SLA=SLA, LVAGE=LVAGE,
+            LAIEM=LAIEM, LASUM=LASUM, LAIEXP=LAIEXP, LAIMAX=LAIMAX, LAI=LAI, WLV=WLV, DWLV=DWLV, TWLV=TWLV)
 
     def _calc_LAI(self):
         # Total leaf area Index as sum of leaf, pod and stem area

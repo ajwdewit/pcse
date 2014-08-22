@@ -6,13 +6,9 @@ from ..decorators import prepare_rates, prepare_states
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 
-#from .nutrients import npk_uptake_rate as nutrient_uptake_rate
-#from .nutrients import npk_translocation as nutrient_translocation_rate
-from .nutrients import npk_losses as nutrient_losses_rate
-from .nutrients import npk_translocatable as nutrient_translocatable
-from .nutrients import NPK_Demand_Uptake as crop_demand
-#from .nutrients import npk_supply_storage_organs as supply_storage_organs
-
+from .nutrients import NPK_Losses
+from .nutrients import NPK_Translocation
+from .nutrients import NPK_Demand_Uptake
 
 class NPK_Crop_Dynamics(SimulationObject):
     """Implementation of npk dynamics.
@@ -115,31 +111,24 @@ class NPK_Crop_Dynamics(SimulationObject):
     =======  =================================== =================  ============
     """
 
-#   rate calculation components
-#    uptake_rate = Instance(SimulationObject)
     translocation = Instance(SimulationObject)
-    dying_rate = Instance(SimulationObject)
+    losses = Instance(SimulationObject)
+    demand_uptake = Instance(SimulationObject)
 
-#   state calculation components    
-#    transl_state = Instance(SimulationObject)
-    demand = Instance(SimulationObject)
-    supply = Instance(SimulationObject)
+    ANLVI = Float(-99.)  # initial soil N amount in leaves
+    ANSTI = Float(-99.)  # initial soil N amount in stems
+    ANRTI = Float(-99.)  # initial soil N amount in roots
+    ANSOI = Float(-99.)  # initial soil N amount in storage organs
     
-    ANLVI = Float(-99.) # initial soil N amount in leaves 
-    ANSTI = Float(-99.) # initial soil N amount in stems
-    ANRTI = Float(-99.) # initial soil N amount in roots
-    ANSOI = Float(-99.) # initial soil N amount in storage organs
-    
-    APLVI = Float(-99.) # initial soil P amount in leaves 
-    APSTI = Float(-99.) # initial soil P amount in stems
-    APRTI = Float(-99.) # initial soil P amount in roots
-    APSOI = Float(-99.) # initial soil P amount in storage organs
+    APLVI = Float(-99.)  # initial soil P amount in leaves
+    APSTI = Float(-99.)  # initial soil P amount in stems
+    APRTI = Float(-99.)  # initial soil P amount in roots
+    APSOI = Float(-99.)  # initial soil P amount in storage organs
 
-    AKLVI = Float(-99.) # initial soil K amount in leaves 
-    AKSTI = Float(-99.) # initial soil K amount in stems
-    AKRTI = Float(-99.) # initial soil K amount in roots
-    AKSOI = Float(-99.) # initial soil K amount in storage organs
-
+    AKLVI = Float(-99.)  # initial soil K amount in leaves
+    AKSTI = Float(-99.)  # initial soil K amount in stems
+    AKRTI = Float(-99.)  # initial soil K amount in roots
+    AKSOI = Float(-99.)  # initial soil K amount in storage organs
 
     class Parameters(ParamTemplate):
         NMAXLV_TB = AfgenTrait()
@@ -212,29 +201,17 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.kiosk = kiosk
         
 #       Initialize components of the npk_crop_dynamics
-#        self.uptake_rate = nutrient_uptake_rate(day, kiosk, cropdata)
-#        self.transl_rate = nutrient_translocation_rate(day, kiosk, cropdata)
-        self.dying_rate  = nutrient_losses_rate(day, kiosk, cropdata)
-        
-        self.translocation = nutrient_translocatable(day, kiosk, cropdata)
-        self.demand = crop_demand(day, kiosk, cropdata)
-#        self.supply = supply_storage_organs(day, kiosk, cropdata)
-        
+        self.losses = NPK_Losses(day, kiosk, cropdata)
+        self.translocation = NPK_Translocation(day, kiosk, cropdata)
+        self.demand_uptake = NPK_Demand_Uptake(day, kiosk, cropdata)
+
         # INITIAL STATES
         params = self.params
-        # Initial storage organ biomass
-        FO   = self.kiosk["FO"]
-        FR   = self.kiosk["FR"]
-        FS   = self.kiosk["FS"]
-        FL   = self.kiosk["FL"]
-        
-        DVS  = self.kiosk["DVS"]
-               
-        WLV  = params.TDWI * (1-FR) * FL
-        WST  = params.TDWI * (1-FR) * FS
-        WSO  = params.TDWI * (1-FR) * FO
-        WRT  = params.TDWI * FR
-        
+
+        DVS = self.kiosk["DVS"]
+        WLV = self.kiosk["WLV"]
+        WST = self.kiosk["WST"]
+        WRT = self.kiosk["WRT"]
         self.ANLVI = ANLV = WLV * params.NMAXLV_TB(DVS)
         self.ANSTI = ANST = WST * params.NMAXLV_TB(DVS) * params.NMAXST_FR
         self.ANRTI = ANRT = WRT * params.NMAXLV_TB(DVS) * params.NMAXRT_FR
@@ -259,14 +236,13 @@ class NPK_Crop_Dynamics(SimulationObject):
                         NUPTAKE_T=0 ,PUPTAKE_T=0., KUPTAKE_T=0., NFIX_T=0.,
                         NLOSSES_T=0 ,PLOSSES_T=0., KLOSSES_T=0.)
 
-
     @prepare_rates
     def calc_rates(self, day):
         rates = self.rates
         
-        self.demand.calc_rates(day)
+        self.demand_uptake.calc_rates(day)
         self.translocation.calc_rates(day)
-        self.dying_rate.calc_rates(day)
+        self.losses.calc_rates(day)
                    
         # N rates in leaves, stems, root and storage organs
         rates.RNLV = self.kiosk["RNULV"] - self.kiosk["RNTLV"] - self.kiosk["RNDLV"]
@@ -294,7 +270,6 @@ class NPK_Crop_Dynamics(SimulationObject):
         self._check_P_balance(day)
         self._check_K_balance(day)
         
-        
     @prepare_states
     def integrate(self, day):
         rates = self.rates
@@ -318,13 +293,9 @@ class NPK_Crop_Dynamics(SimulationObject):
         states.AKRT += rates.RKRT
         states.AKSO += rates.RKSO
         
-        # translocatable NPK amount
         self.translocation.integrate(day)
-        # NPK demand
-        self.demand.integrate(day)
-        # NPK supply to storage organs
-#        self.supply.integrate(day)
-        
+        self.demand_uptake.integrate(day)
+
         # total NPK uptake from soil
         states.NUPTAKE_T += self.kiosk["RNUPTAKE"]
         states.PUPTAKE_T += self.kiosk["RPUPTAKE"]

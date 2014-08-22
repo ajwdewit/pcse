@@ -8,12 +8,12 @@ Class to calculate various nutrient relates stress factors:
 
 
 from ...traitlets import Float, Int, Instance, AfgenTrait
-from ...util import limit, doy
+from ...util import limit
 from ...base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
 from ... import exceptions as exc
 
-class npk_stress(SimulationObject):
+class NPK_Stress(SimulationObject):
     """Implementation of npk stress calculation through [NPK]nutrition index.
     
     **Simulation parameters**
@@ -72,25 +72,25 @@ class npk_stress(SimulationObject):
         """
 
         self.params = self.Parameters(cropdata)
-        self.kiosk  = kiosk
+        self.kiosk = kiosk
               
         
     def __call__(self, day):
         params = self.params
 
         # published states from the kiosk
-        WLV  = self.kiosk["WLV"]
-        WST  = self.kiosk["WST"]
-        DVS  = self.kiosk["DVS"]
+        WLV = self.kiosk["WLV"]
+        WST = self.kiosk["WST"]
+        DVS = self.kiosk["DVS"]
         
-        ANLV = self.kiosk["ANLV"] # N concentration in leaves [kg ha-1]
-        ANST = self.kiosk["ANST"] # N concentration in stems [kg ha-1
+        ANLV = self.kiosk["ANLV"]  # N concentration in leaves [kg ha-1]
+        ANST = self.kiosk["ANST"]  # N concentration in stems [kg ha-1
         
-        APLV = self.kiosk["APLV"] # P concentration in leaves [kg ha-1]
-        APST = self.kiosk["APST"] # P concentration in stems [kg ha-1]
+        APLV = self.kiosk["APLV"]  # P concentration in leaves [kg ha-1]
+        APST = self.kiosk["APST"]  # P concentration in stems [kg ha-1]
         
-        AKLV = self.kiosk["AKLV"] # K concentration in leaves [kg ha-1]
-        AKST = self.kiosk["AKST"] # K concentration in stems [kg ha-1]
+        AKLV = self.kiosk["AKLV"]  # K concentration in leaves [kg ha-1]
+        AKST = self.kiosk["AKST"]  # K concentration in stems [kg ha-1]
        
 #       Maximum NPK concentrations in leaves (kg N kg-1 DM)        
         NMAXLV = params.NMAXLV_TB(DVS)
@@ -106,20 +106,20 @@ class npk_stress(SimulationObject):
         TBGMR = WLV + WST 
       
 #       Optimal NPK amount in vegetative above-ground living biomass and its NPK concentration
-        NOPTL  = params.NCRIT_FR * NMAXLV * WLV
-        NOPTS  = params.NCRIT_FR * NMAXST * WST
+        NOPTLV  = params.NCRIT_FR * NMAXLV * WLV
+        NOPTST  = params.NCRIT_FR * NMAXST * WST
         
-        POPTL = params.PCRIT_FR * PMAXLV * WLV
-        POPTS = params.PCRIT_FR * PMAXST * WST
+        POPTLV = params.PCRIT_FR * PMAXLV * WLV
+        POPTST = params.PCRIT_FR * PMAXST * WST
 
-        KOPTL = params.KCRIT_FR * KMAXLV * WLV
-        KOPTS = params.KCRIT_FR * KMAXST * WST
+        KOPTLV = params.KCRIT_FR * KMAXLV * WLV
+        KOPTST = params.KCRIT_FR * KMAXST * WST
         
 #       if above-ground living biomass = 0 then optimum = 0
         if TBGMR > 0.:
-            NOPTMR = (NOPTL + NOPTS)/TBGMR
-            POPTMR = (POPTL + POPTS)/TBGMR
-            KOPTMR = (KOPTL + KOPTS)/TBGMR
+            NOPTMR = (NOPTLV + NOPTST)/TBGMR
+            POPTMR = (POPTLV + POPTST)/TBGMR
+            KOPTMR = (KOPTLV + KOPTST)/TBGMR
         else:
             NOPTMR = POPTMR = KOPTMR = 0.
         
@@ -162,6 +162,6 @@ class npk_stress(SimulationObject):
         NPKI = min(NNI, PNI, KNI)
 
 #       Nutrient reduction factor
-        NPKREF= limit(0., 1.0, 1. - params.NLUE_NPK*(1.0001-NPKI)**2)
+        NPKREF = limit(0., 1.0, 1. - (params.NLUE_NPK * (1.0001-NPKI)**2))
          
         return NNI, NPKI, NPKREF

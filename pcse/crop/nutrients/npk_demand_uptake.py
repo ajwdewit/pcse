@@ -12,20 +12,20 @@ class NPK_Demand_Uptake(SimulationObject):
         PMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
         KMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
         
-        NMAXRT_FR   = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
-        NMAXST_FR   = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
-        PMAXRT_FR   = Float(-99.)  # maximum P concentration in roots as fraction of maximum P concentration in leaves
-        PMAXST_FR   = Float(-99.)  # maximum P concentration in stems as fraction of maximum P concentration in leaves
-        KMAXRT_FR   = Float(-99.)  # maximum K concentration in roots as fraction of maximum K concentration in leaves
-        KMAXST_FR   = Float(-99.)  # maximum K concentration in stems as fraction of maximum K concentration in leaves
+        NMAXRT_FR = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
+        NMAXST_FR = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
+        PMAXRT_FR = Float(-99.)  # maximum P concentration in roots as fraction of maximum P concentration in leaves
+        PMAXST_FR = Float(-99.)  # maximum P concentration in stems as fraction of maximum P concentration in leaves
+        KMAXRT_FR = Float(-99.)  # maximum K concentration in roots as fraction of maximum K concentration in leaves
+        KMAXST_FR = Float(-99.)  # maximum K concentration in stems as fraction of maximum K concentration in leaves
         
         NMAXSO = Float(-99.)  # maximum P concentration in storage organs [kg N kg-1 dry biomass]
         PMAXSO = Float(-99.)  # maximum P concentration in storage organs [kg P kg-1 dry biomass]
         KMAXSO = Float(-99.)  # maximum K concentration in storage organs [kg K kg-1 dry biomass]
         
-        TCNT   = Float(-99.)  # time coefficient for N translocation to storage organs [days]
-        TCPT   = Float(-99.)  # time coefficient for P translocation to storage organs [days]
-        TCKT   = Float(-99.)  # time coefficient for K translocation to storage organs [days]
+        TCNT = Float(-99.)  # time coefficient for N translocation to storage organs [days]
+        TCPT = Float(-99.)  # time coefficient for P translocation to storage organs [days]
+        TCKT = Float(-99.)  # time coefficient for K translocation to storage organs [days]
 
         NFIX_FR = Float(-99.)  # fraction of crop nitrogen uptake by biological fixation
         DVSNPK_TRANSL = Float(-99.)  # development stage above which NPK translocation to storage organs does occur

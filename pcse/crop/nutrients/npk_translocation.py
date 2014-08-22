@@ -5,57 +5,60 @@ from ...decorators import prepare_rates, prepare_states
 from ...base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 
-class npk_translocatable(SimulationObject):
+class NPK_Translocation(SimulationObject):
     
     class Parameters(ParamTemplate):
-        NRESIDLV = Float(-99.) # residual N fraction in leaves [kg N kg-1 dry biomass]
-        NRESIDST = Float(-99.) # residual N fraction in stems [kg N kg-1 dry biomass]
-        NRESIDRT = Float(-99.) # residual N fraction in roots [kg N kg-1 dry biomass]
+        NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
+        NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
+        NRESIDRT = Float(-99.)  # residual N fraction in roots [kg N kg-1 dry biomass]
         
-        PRESIDLV = Float(-99.) # residual P fraction in leaves [kg P kg-1 dry biomass]
-        PRESIDST = Float(-99.) # residual P fraction in stems [kg P kg-1 dry biomass]
-        PRESIDRT = Float(-99.) # residual P fraction in roots [kg P kg-1 dry biomass]
+        PRESIDLV = Float(-99.)  # residual P fraction in leaves [kg P kg-1 dry biomass]
+        PRESIDST = Float(-99.)  # residual P fraction in stems [kg P kg-1 dry biomass]
+        PRESIDRT = Float(-99.)  # residual P fraction in roots [kg P kg-1 dry biomass]
         
-        KRESIDLV = Float(-99.) # residual K fraction in leaves [kg P kg-1 dry biomass]
-        KRESIDST = Float(-99.) # residual K fraction in stems [kg P kg-1 dry biomass]
-        KRESIDRT = Float(-99.) # residual K fraction in roots [kg P kg-1 dry biomass]
+        KRESIDLV = Float(-99.)  # residual K fraction in leaves [kg P kg-1 dry biomass]
+        KRESIDST = Float(-99.)  # residual K fraction in stems [kg P kg-1 dry biomass]
+        KRESIDRT = Float(-99.)  # residual K fraction in roots [kg P kg-1 dry biomass]
         
-        NPK_TRANSLRT_FR = Float(-99.) # NPK translocation from roots as a fraction of resp. total NPK amounts translocated from leaves and stems
+        NPK_TRANSLRT_FR = Float(-99.)  # NPK translocation from roots as a fraction of
+                                       # resp. total NPK amounts translocated from leaves
+                                       # and stems
 
-        TCNT  = Float(-99.) # time coefficient for N translocation to storage organs [days]
-        TCPT  = Float(-99.) # time coefficient for P translocation to storage organs [days]
-        TCKT  = Float(-99.) # time coefficient for K translocation to storage organs [days]
-        DVSNPK_TRANSL = Float(-99.) # development stage above which N-P-K translocation to storage organs does occur
+        TCNT = Float(-99.)  # time coefficient for N translocation to storage organs [days]
+        TCPT = Float(-99.)  # time coefficient for P translocation to storage organs [days]
+        TCKT = Float(-99.)  # time coefficient for K translocation to storage organs [days]
+        DVSNPK_TRANSL = Float(-99.)  # development stage above which N-P-K translocation
+                                     # to storage organs does occur
         
     class RateVariables(RatesTemplate):
-        RNTLV = Float(-99.) # N translocation rate from leaves [kg ha-1 d-1]
-        RNTST = Float(-99.) # N translocation rate from stems [kg ha-1 d-1]
-        RNTRT = Float(-99.) # N translocation rate from roots [kg ha-1 d-1]
+        RNTLV = Float(-99.)  # N translocation rate from leaves [kg ha-1 d-1]
+        RNTST = Float(-99.)  # N translocation rate from stems [kg ha-1 d-1]
+        RNTRT = Float(-99.)  # N translocation rate from roots [kg ha-1 d-1]
 
-        RPTLV = Float(-99.) # P translocation rate from leaves [kg ha-1 d-1]
-        RPTST = Float(-99.) # P translocation rate from stems [kg ha-1 d-1]
-        RPTRT = Float(-99.) # P translocation rate from roots [kg ha-1 d-1]
+        RPTLV = Float(-99.)  # P translocation rate from leaves [kg ha-1 d-1]
+        RPTST = Float(-99.)  # P translocation rate from stems [kg ha-1 d-1]
+        RPTRT = Float(-99.)  # P translocation rate from roots [kg ha-1 d-1]
 
-        RKTLV = Float(-99.) # K translocation rate from leaves [kg ha-1 d-1]
-        RKTST = Float(-99.) # K translocation rate from stems [kg ha-1 d-1]
-        RKTRT = Float(-99.) # K translocation rate from roots [kg ha-1 d-1]
+        RKTLV = Float(-99.)  # K translocation rate from leaves [kg ha-1 d-1]
+        RKTST = Float(-99.)  # K translocation rate from stems [kg ha-1 d-1]
+        RKTRT = Float(-99.)  # K translocation rate from roots [kg ha-1 d-1]
 
     class StateVariables(StatesTemplate):
-        ATNLV = Float(-99.) # translocatable N amount in leaves [kg N ha-1]
-        ATNST = Float(-99.) # translocatable N amount in stems [kg N ha-1]
-        ATNRT = Float(-99.) # translocatable N amount in roots [kg N ha-1]
+        ATNLV = Float(-99.)  # translocatable N amount in leaves [kg N ha-1]
+        ATNST = Float(-99.)  # translocatable N amount in stems [kg N ha-1]
+        ATNRT = Float(-99.)  # translocatable N amount in roots [kg N ha-1]
         
-        ATPLV = Float(-99.) # translocatable P amount in leaves [kg N ha-1]
-        ATPST = Float(-99.) # translocatable P amount in stems [kg N ha-1]
-        ATPRT = Float(-99.) # translocatable P amount in roots [kg N ha-1]
+        ATPLV = Float(-99.)  # translocatable P amount in leaves [kg N ha-1]
+        ATPST = Float(-99.)  # translocatable P amount in stems [kg N ha-1]
+        ATPRT = Float(-99.)  # translocatable P amount in roots [kg N ha-1]
         
-        ATKLV = Float(-99.) # translocatable K amount in leaves [kg N ha-1
-        ATKST = Float(-99.) # translocatable K amount in stems [kg N ha-1]
-        ATKRT = Float(-99.) # translocatable K amount in roots [kg N ha-1]
+        ATKLV = Float(-99.)  # translocatable K amount in leaves [kg N ha-1
+        ATKST = Float(-99.)  # translocatable K amount in stems [kg N ha-1]
+        ATKRT = Float(-99.)  # translocatable K amount in roots [kg N ha-1]
 
-        NTRANSLOCATABLE = Float(-99.) # Total N amount that can be translocated to the storage organs [kg N ha-1]
-        PTRANSLOCATABLE = Float(-99.) # Total P amount that can be translocated to the storage organs [kg P ha-1]
-        KTRANSLOCATABLE = Float(-99.) # Total K amount that can be translocated to the storage organs [kg K ha-1]
+        NTRANSLOCATABLE = Float(-99.)  # Total N amount that can be translocated to the storage organs [kg N ha-1]
+        PTRANSLOCATABLE = Float(-99.)  # Total P amount that can be translocated to the storage organs [kg P ha-1]
+        KTRANSLOCATABLE = Float(-99.)  # Total K amount that can be translocated to the storage organs [kg K ha-1]
 
     def initialize(self, day, kiosk, cropdata):
         """
@@ -66,18 +69,15 @@ class npk_translocatable(SimulationObject):
         """
 
         self.params = self.Parameters(cropdata)
-        self.rates = self.RateVariables(kiosk, publish=["RNTLV","RNTST","RNTRT",
-                                                        "RPTLV","RPTST","RPTRT",
-                                                        "RKTLV","RKTST","RKTRT"])
+        self.rates = self.RateVariables(kiosk, publish=["RNTLV", "RNTST", "RNTRT",
+                                                        "RPTLV", "RPTST", "RPTRT",
+                                                        "RKTLV", "RKTST", "RKTRT"])
 
-        self.states = self.StateVariables(kiosk, publish=["ATNLV","ATNST","ATNRT",
-                                                         "ATPLV","ATPST","ATPRT",
-                                                         "ATKLV","ATKST","ATKRT",
-                                                         "NTRANSLOCATABLE", "PTRANSLOCATABLE", "KTRANSLOCATABLE"],
-                                            ATNLV=0.,ATNST=0.,ATNRT=0.,
-                                            ATPLV=0.,ATPST=0.,ATPRT=0.,
-                                            ATKLV=0.,ATKST=0.,ATKRT=0.,
-                                            NTRANSLOCATABLE=0., PTRANSLOCATABLE=0., KTRANSLOCATABLE=0.)
+        self.states = self.StateVariables(kiosk,
+            ATNLV=0., ATNST=0., ATNRT=0., ATPLV=0., ATPST=0., ATPRT=0., ATKLV=0., ATKST=0. ,ATKRT=0.,
+            NTRANSLOCATABLE=0., PTRANSLOCATABLE=0., KTRANSLOCATABLE=0.,
+            publish=["ATNLV", "ATNST", "ATNRT", "ATPLV", "ATPST", "ATPRT", "ATKLV", "ATKST", "ATKRT",
+                     "NTRANSLOCATABLE", "PTRANSLOCATABLE", "KTRANSLOCATABLE"])
         self.kiosk = kiosk
         
     @prepare_rates
