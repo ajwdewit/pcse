@@ -256,9 +256,11 @@ need to be specified in the `timerdata` dictionary::
        CROP_END_DATE: date of the end of the crop simulation in case of CROP_END_TYPE == 'harvest' | 'earliest'
         MAX_DURATION: maximum number of days of the crop simulation
 
-The CABO format has no support for dates, therefore the PCSE file format was
-developed that does allow to use dates. The crop calendar file for sugar beet
-in Wageningen `sugarbeet_calendar.pcse` can be read with the PCSEFileReader::
+The CABO format does provide support date/time values, but the CABOFilereader
+cannot yet parse them. Moreover, python supports date/time value natively and
+they can be defined using the python-based PCSE file format. The crop calendar
+file for sugar beet in Wageningen `sugarbeet_calendar.pcse` can be read with
+the PCSEFileReader::
 
     >>> from pcse.fileinput import PCSEFileReader
     >>> crop_calendar_file = os.path.join(data_dir, 'sugarbeet_calendar.pcse')

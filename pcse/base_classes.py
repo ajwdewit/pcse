@@ -1045,9 +1045,9 @@ class WeatherDataContainer(SlotPickleMixin):
             value = kwargs.pop(varname, None)
             try:
                 setattr(self, varname, float(value))
-            except (KeyError, ValueError) as e:
+            except (KeyError, ValueError, TypeError) as e:
                 msg = "%s: Weather attribute '%s' missing or invalid numerical value: %s"
-                logging.warning(msg, self.DAY, varname, e)
+                logging.warning(msg, self.DAY, varname, value)
 
         # Loop over optional arguments
         for varname in self.optional:
@@ -1057,9 +1057,9 @@ class WeatherDataContainer(SlotPickleMixin):
             else:
                 try:
                     setattr(self, varname, float(value))
-                except ValueError as e:
-                    msg = "%s: Weather attribute '%s' has invalid numerical value: %s"
-                    logging.warning(msg, self.DAY, varname, e)
+                except (KeyError, ValueError, TypeError) as e:
+                    msg = "%s: Weather attribute '%s' missing or invalid numerical value: %s"
+                    logging.warning(msg, self.DAY, varname, value)
 
         # Check for remaining unknown arguments
         if len(kwargs) > 0:
@@ -1258,8 +1258,11 @@ class WeatherDataProvider(object):
 
         msg = "Weather data provided by: %s\n" % self.__class__.__name__
         msg += "--------Description---------\n"
-        for l in self.description:
-            msg += ("%s\n" % str(l))
+        if isinstance(self.description, str):
+            msg += ("%s\n" % self.description)
+        else:
+            for l in self.description:
+                msg += ("%s\n" % str(l))
         msg += "----Site characteristics----\n"
         msg += "Elevation: %6.1f\n" % self.elevation
         msg += "Latitude:  %6.3f\n" % self.latitude
