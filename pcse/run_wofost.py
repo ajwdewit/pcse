@@ -53,7 +53,7 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     elif mode == 'wlp':
         wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, meteof)
     else:
-        msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'"
+        msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'" % mode
         raise RuntimeError(msg, mode)
 
     wofsim.run(days=365)
