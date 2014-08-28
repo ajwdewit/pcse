@@ -110,9 +110,9 @@ def fetch_cropdata(metadata, grid, year, crop):
         variety = rows[0].variety_no
     else:
         logger.error(("None or multiple crop definitions found for grid: %7i and crop " + \
-                            "no: %3i and year: %5i") % (cgmsgrid, crop, year))
+                            "no: %3i and year: %5i") % (grid, crop, year))
         raise CropdataError(("No crop definition found for grid: %7i and crop " + \
-                            "no: %3i and year: %5i") % (cgmsgrid, crop, year))
+                            "no: %3i and year: %5i") % (grid, crop, year))
     
     # Define crop parameter values
     parameter_codes_sngl = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC", 
