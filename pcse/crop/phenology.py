@@ -504,3 +504,25 @@ class DVS_Phenology(SimulationObject):
         """
         if finish_type == 'harvest':
             self._for_finalize["DOH"] = day
+
+
+class DVS_Phenology_Wrapper(SimulationObject):
+    """This is wrapper class that wraps the DVS_phenology simulation object
+    in such a way that it can run directly in the Engine. This means that
+    it can be used direct in a configuration file::
+
+        CROP = DVS_Phenology_Wrapper
+
+    This is useful for running only the phenology instead of the entire
+    crop simulation.
+    """
+    phenology = Instance(SimulationObject)
+
+    def initialize(self, day, kiosk, cropdata, soildata, sitedata, start_type, stop_type):
+        self.phenology = DVS_Phenology(day, kiosk, cropdata, start_type,  stop_type)
+
+    def calc_rates(self, day, drv):
+        self.phenology.calc_rates(day, drv)
+
+    def integrate(self, day):
+        self.phenology.integrate(day)
