@@ -155,8 +155,10 @@ class CABOFileReader(dict):
         rest = re.sub(regexp, "", parsections)
         rest = rest.replace(";", "")
         if rest.strip() != "":
-            msg = "Failed to parse: %s" % rest
-            raise CABOToolsError(msg)
+            msg = "Failed to parse the CABO file!\n" +\
+                  ("Found the following parameter definitions:\n %s" % par_definitions) + \
+                  ("Failed to parse:\n %s" % rest)
+            raise PCSEError(msg)
         return par_definitions
         
     def __init__(self, fname):
@@ -167,7 +169,7 @@ class CABOFileReader(dict):
 
         if len(filecontents) == 0:
             msg = "Empty CABO file!"
-            raise CABOToolsError(msg)
+            raise PCSEError(msg)
 
         # Split between file header and parameters
         self.header, filecontents = self._find_header(filecontents)
@@ -192,7 +194,7 @@ class CABOFileReader(dict):
                 self[parname] = value
             except (ValueError), exc:
                 msg = "Failed to parse parameter, value: %s, %s" 
-                raise CABOToolsError(msg % (parstr, valuestr))
+                raise PCSEError(msg % (parstr, valuestr))
 
         for parstr in string_defs:
             try:
@@ -202,7 +204,7 @@ class CABOFileReader(dict):
                 self[parname] = value
             except (ValueError), exc:
                 msg = "Failed to parse parameter, value: %s, %s" 
-                raise CABOToolsError(msg % (parstr, valuestr))
+                raise PCSEError(msg % (parstr, valuestr))
 
         for parstr in table_defs:
             parname, valuestr = parstr.split("=")
@@ -210,15 +212,15 @@ class CABOFileReader(dict):
             try:
                 value = self._parse_table_values(valuestr)
                 self[parname] = value
-            except (ValueError), exc:
+            except (ValueError) as exc:
                 msg = "Failed to parse table parameter %s: %s" % (parname, valuestr)
-                raise CABOToolsError(msg)
-            except (LengthError), exc:
+                raise PCSEError(msg)
+            except (LengthError) as exc:
                 msg = "Failed to parse table parameter %s: %s. \n" % (parname, valuestr)
                 msg += "Table parameter should contain at least 4 values "
                 msg += "instead got %i" 
-                raise CABOLengthError(msg % exc.value[0])
-            except (XYPairsError), exc:
+                raise PCSEError(msg % exc.value[0])
+            except (XYPairsError) as exc:
                 msg = "Failed to parse table parameter %s: %s\n" % (parname, valuestr)
                 msg += "Parameter should be have even number of positions."
                 raise XYPairsError(msg)
