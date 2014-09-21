@@ -24,12 +24,6 @@ class NPK_Translocation(SimulationObject):
                                        # resp. total NPK amounts translocated from leaves
                                        # and stems
 
-        TCNT = Float(-99.)  # time coefficient for N translocation to storage organs [days]
-        TCPT = Float(-99.)  # time coefficient for P translocation to storage organs [days]
-        TCKT = Float(-99.)  # time coefficient for K translocation to storage organs [days]
-        DVSNPK_TRANSL = Float(-99.)  # development stage above which N-P-K translocation
-                                     # to storage organs does occur
-        
     class RateVariables(RatesTemplate):
         RNTLV = Float(-99.)  # N translocation rate from leaves [kg ha-1 d-1]
         RNTST = Float(-99.)  # N translocation rate from stems [kg ha-1 d-1]
@@ -76,13 +70,12 @@ class NPK_Translocation(SimulationObject):
         self.states = self.StateVariables(kiosk,
             ATNLV=0., ATNST=0., ATNRT=0., ATPLV=0., ATPST=0., ATPRT=0., ATKLV=0., ATKST=0. ,ATKRT=0.,
             NTRANSLOCATABLE=0., PTRANSLOCATABLE=0., KTRANSLOCATABLE=0.,
-            publish=["ATNLV", "ATNST", "ATNRT", "ATPLV", "ATPST", "ATPRT", "ATKLV", "ATKST", "ATKRT",
-                     "NTRANSLOCATABLE", "PTRANSLOCATABLE", "KTRANSLOCATABLE"])
+            publish=["NTRANSLOCATABLE", "PTRANSLOCATABLE", "KTRANSLOCATABLE"])
         self.kiosk = kiosk
         
     @prepare_rates
     def calc_rates(self, day):
-        r  = self.rates
+        r = self.rates
         s = self.states
 
         RNUSO = self.kiosk["RNUSO"]  # N uptake storage organs
@@ -160,15 +153,6 @@ class NPK_Translocation(SimulationObject):
         s.ATKRT = max((s.ATKLV + s.ATKST) * p.NPK_TRANSLRT_FR, AKRT - WRT * p.KRESIDRT)
 
 #       total translocatable NPK amount in the organs [kg N ha-1]
-        ATN = s.ATNLV + s.ATNST + s.ATNRT
-        ATP = s.ATPLV + s.ATPST + s.ATPRT
-        ATK = s.ATKLV + s.ATKST + s.ATKRT
-
-        # NPK amount that can be translocated to the storage organs [kg N ha-1]
-        # translocation occurs after DVSNT
-        if DVS > p.DVSNPK_TRANSL:
-            s.NTRANSLOCATABLE = ATN/p.TCNT
-            s.PTRANSLOCATABLE = ATP/p.TCPT
-            s.KTRANSLOCATABLE = ATK/p.TCKT
-        else:
-            s.NTRANSLOCATABLE = s.PTRANSLOCATABLE = s.KTRANSLOCATABLE = 0.
+        s.NTRANSLOCATABLE = s.ATNLV + s.ATNST + s.ATNRT
+        s.PTRANSLOCATABLE = s.ATPLV + s.ATPST + s.ATPRT
+        s.KTRANSLOCATABLE = s.ATKLV + s.ATKST + s.ATKRT

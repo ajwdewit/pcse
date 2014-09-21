@@ -83,7 +83,7 @@ class NPK_Demand_Uptake(SimulationObject):
             publish=["RNULV", "RNUST", "RNURT", "RNUSO",
                      "RPULV", "RPUST", "RPURT", "RPUSO",
                      "RKULV", "RKUST", "RKURT", "RKUSO",
-                     "RNUPTAKE","RPUPTAKE","RKUPTAKE", "RNFIX"])
+                     "RNUPTAKE", "RPUPTAKE", "RKUPTAKE", "RNFIX"])
 
         self.states = self.StateVariables(kiosk,
             NDEMLV=0., NDEMST=0., NDEMRT=0., NDEMSO=0.,
@@ -114,15 +114,15 @@ class NPK_Demand_Uptake(SimulationObject):
         KDEMTO = s.KDEMLV + s.KDEMST + s.KDEMRT
 
 #       NPK uptake rate in storage organs (kg N ha-1 d-1)
-#       is the mimimum of supply and demand
-        r.RNUSO = min(s.NDEMSO, NTRANSLOCATABLE)
-        r.RPUSO = min(s.PDEMSO, PTRANSLOCATABLE)
-        r.RKUSO = min(s.KDEMSO, KTRANSLOCATABLE)
-
-        TRANRF = TRA/TRAMX
+#       is the mimimum of supply and demand divided by the
+#       time coefficient for N/P/K translocation
+        r.RNUSO = min(s.NDEMSO, NTRANSLOCATABLE)/p.TCNT
+        r.RPUSO = min(s.PDEMSO, PTRANSLOCATABLE)/p.TCPT
+        r.RKUSO = min(s.KDEMSO, KTRANSLOCATABLE)/p.TCKT
 
 #       No nutrients are absorbed after development stage DVSNPK_STOP or
 #       when watershortage occurs i.e. TRANRF <= 0.01
+        TRANRF = TRA/TRAMX
         if DVS < p.DVSNPK_STOP and TRANRF > 0.01:
             NutrientLIMIT = 1.0
         else:
@@ -205,20 +205,20 @@ class NPK_Demand_Uptake(SimulationObject):
         KMAXRT = params.KMAXRT_FR * KMAXLV
         KMAXSO = params.KMAXSO
 
-#       N demand [kg ha-1] - maybe should be [kg ha-1 day-1]
+#       N demand [kg ha-1]
         states.NDEMLV = max(NMAXLV*WLV - ANLV, 0.)  # maybe should be divided by one day, see equation 5 Shibu etal 2010
         states.NDEMST = max(NMAXST*WST - ANST, 0.)
         states.NDEMRT = max(NMAXRT*WRT - ANRT, 0.)
-        states.NDEMSO = max(NMAXSO*WSO - ANSO, 0.)/params.TCNT
+        states.NDEMSO = max(NMAXSO*WSO - ANSO, 0.)
 
 #       P demand [kg ha-1]
         states.PDEMLV = max(PMAXLV*WLV - APLV, 0.)
         states.PDEMST = max(PMAXST*WST - APST, 0.)
         states.PDEMRT = max(PMAXRT*WRT - APRT, 0.)
-        states.PDEMSO = max(PMAXSO*WSO - APSO, 0.)/params.TCPT
+        states.PDEMSO = max(PMAXSO*WSO - APSO, 0.)
 
 #       K demand [kg ha-1]
         states.KDEMLV = max(KMAXLV*WLV - AKLV, 0.)
         states.KDEMST = max(KMAXST*WST - AKST, 0.)
         states.KDEMRT = max(KMAXRT*WRT - AKRT, 0.)
-        states.KDEMSO = max(KMAXSO*WSO - AKSO, 0.)/params.TCKT
+        states.KDEMSO = max(KMAXSO*WSO - AKSO, 0.)
