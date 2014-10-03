@@ -10,6 +10,7 @@ import types
 import logging
 from datetime import date
 import cPickle
+from collections import Counter
 
 from .traitlets import (HasTraits, Any, Float, Int, Instance, Dict, Bool,
                         Enum, AfgenTrait)
@@ -1373,3 +1374,39 @@ class BaseEngine(HasTraits, DispatcherObject):
         if self.subSimObjects is not None:
             for simobj in self.subSimObjects:
                 simobj.zerofy()
+
+
+class ParameterProvider(object):
+    """Simple class providing a single interface for parameter values.
+    """
+
+    def __init__(self, sitedata, timerdata, soildata, cropdata):
+        self._sitedata = sitedata
+        self._timerdata = timerdata
+        self._soildata = soildata
+        self._cropdata = cropdata
+        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+
+        # Check if parameter names are unique
+        parnames = []
+        for mapping in self._maps:
+            parnames.extend(mapping.keys())
+        unique = Counter(parnames)
+        for parname, count in unique.items():
+            if count > 1:
+                msg = "Duplicate parameter found: %s" % count
+                raise RuntimeError(msg)
+
+    def __getitem__(self, key):
+        for mapping in self._maps:
+            try:
+                return mapping[key]
+            except KeyError:
+                pass
+        raise KeyError(key)
+
+    def __contains__(self, key):
+        for mapping in self._maps:
+            if key in mapping:
+                return True
+        return False

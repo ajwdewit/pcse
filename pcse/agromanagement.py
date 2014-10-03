@@ -10,7 +10,7 @@ and harvesting, etc.
 
 import datetime
 
-from .base_classes import StatesTemplate, AncillaryObject, ParamTemplate
+from .base_classes import ParameterProvider, AncillaryObject, ParamTemplate
 from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool
 from . import signals
 from . import exceptions as exc
@@ -56,6 +56,7 @@ class AgroManagementSingleCrop(AncillaryObject):
     mconf = Instance(ConfigurationLoader)
 
     # Placeholders for the parameters that are needed to start the crop
+    parameterprovider = Instance(ParameterProvider)
     timerdata = Instance(dict)
     soildata = Instance(dict)
     cropdata = Instance(dict)
@@ -70,7 +71,7 @@ class AgroManagementSingleCrop(AncillaryObject):
         CROP_END_DATE = Instance(datetime.date)
         CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"])
                  
-    def initialize(self, day, kiosk, mconf, timerdata, soildata, sitedata, cropdata):
+    def initialize(self, day, kiosk, mconf, parameterprovider):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
@@ -80,16 +81,12 @@ class AgroManagementSingleCrop(AncillaryObject):
         :param sitedata: idem for sitedata
         :param cropdata: idem for cropdata
         """
-        self.params = self.Parameters(timerdata)
+        self.params = self.Parameters(parameterprovider)
         self.kiosk = kiosk
         self.mconf = mconf
         self.duration = 0
-        
-        self.timerdata = timerdata
-        self.soildata = soildata
-        self.cropdata = cropdata
-        self.sitedata = sitedata
-        
+        self.parameterprovider = parameterprovider
+
         # TERMINATE signal should be issued directly after signal CROP_FINISH
         # This handler takes care of that
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
@@ -120,17 +117,13 @@ class AgroManagementSingleCrop(AncillaryObject):
 
             # Initialize the crop simulation object and send it to the
             # combined soil/crop system using the CROP_START signal.
-            start_type = self.timerdata["CROP_START_TYPE"]
-            stop_type  = self.timerdata["CROP_END_TYPE"]
-            cropsimulation = self.mconf.CROP(day, self.kiosk, self.cropdata,
-                                             self.soildata, self.sitedata,
-                                             start_type, stop_type)
+            cropsimulation = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
             self._start_new_crop(day, cropsimulation)
         
         finish_cropsimulation = False
         # Check if CROP_END_DATE is reached for CROP_END_TYPE harvest/earliest
-        if self.params.CROP_END_TYPE in ["harvest","earliest"]:
-            if (day >= self.params.CROP_END_DATE):
+        if self.params.CROP_END_TYPE in ["harvest", "earliest"]:
+            if day >= self.params.CROP_END_DATE:
                 finish_cropsimulation = True
                 finish_type = "harvest"
 
@@ -140,7 +133,7 @@ class AgroManagementSingleCrop(AncillaryObject):
             finish_type = "max_duration"
         
         # If finish condition is reached send a signal to finish the crop
-        if finish_cropsimulation == True:
+        if finish_cropsimulation is True:
             self.in_crop_cycle = False
             self._send_signal(signal=signals.crop_finish, day=day,
                               finish_type=finish_type)

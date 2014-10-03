@@ -31,14 +31,13 @@ class _Wofost71Base(Engine):
     # config should be overwritten by superclass
     config = None
 
-    def __init__(self, sitedata, timerdata, soildata, cropdata,
-                 weatherdataprovider):
-        Engine.__init__(self, sitedata, timerdata, soildata, cropdata,
-                        weatherdataprovider, config=self.config)
+    def __init__(self, parameter_provider, weatherdataprovider):
+        Engine.__init__(self, parameter_provider, weatherdataprovider,
+                        config=self.config)
 
         # Run descriptions
-        self.crop_name = cropdata["CRPNAM"]
-        self.year = timerdata["CAMPAIGNYEAR"]
+        self.crop_name = parameter_provider["CRPNAM"]
+        self.year = parameter_provider["CAMPAIGNYEAR"]
 
     #---------------------------------------------------------------------------
     def store_to_database(self, metadata=None, runid=None):

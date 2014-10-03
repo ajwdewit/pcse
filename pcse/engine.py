@@ -98,7 +98,7 @@ class Engine(BaseEngine):
     # Helper variables
     TMNSAV = Instance(deque)
     
-    def __init__(self, sitedata, timerdata, soildata, cropdata,
+    def __init__(self, parameterprovider,
                  weatherdataprovider, config=None):
         """
         :param sitedata: A dictionary(-like) object containing key/value pairs with
@@ -138,8 +138,8 @@ class Engine(BaseEngine):
         self._connect_signal(self._on_TERMINATE, signal=signals.terminate)
 
         # Timer: starting day, final day and model output
-        start_date = timerdata["START_DATE"]
-        end_date = timerdata["END_DATE"]
+        start_date = parameterprovider["START_DATE"]
+        end_date = parameterprovider["END_DATE"]
         self.timer = Timer(start_date, self.kiosk, end_date, self.mconf)
         self.day = self.timer()
 
@@ -148,11 +148,11 @@ class Engine(BaseEngine):
         self.drv = self._get_driving_variables(self.day)
 
         # Component for simulation of soil processes
-        self.soil = self.mconf.SOIL(self.day, self.kiosk, cropdata, soildata, sitedata)
+        self.soil = self.mconf.SOIL(self.day, self.kiosk, parameterprovider)
 
         # Component for agromanagement
         self.agromanagement = self.mconf.AGROMANAGEMENT(self.day, self.kiosk, self.mconf,
-                                                        timerdata, soildata, sitedata, cropdata)
+                                                        parameterprovider)
         # Call AgroManagement module for management actions at initialization
         self.agromanagement(self.day, self.drv)
 

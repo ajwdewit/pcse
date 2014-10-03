@@ -29,4 +29,3 @@ def test_all(dsn=None):
     """
     allsuites = make_test_suite(dsn)
     unittest.TextTestRunner(verbosity=2).run(allsuites)
-

@@ -92,16 +92,16 @@ class DVS_Partitioning(SimulationObject):
         FO = Float(-99.)
         PF = Instance(PartioningFactors)
     
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         """
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.kiosk = kiosk
 
-        # initial partioning factors (pf)
+        # initial partitioning factors (pf)
         DVS = self.kiosk["DVS"]
         FR = self.params.FRTB(DVS)
         FL = self.params.FLTB(DVS)

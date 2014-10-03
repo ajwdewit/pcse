@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, MetaData, Table
 
 from . import db
 from .models import Wofost71_WLP_FD, Wofost71_PP
+from .base_classes import ParameterProvider
 
 def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     """Provides a convenient interface for running PCSE/WOFOST
@@ -40,18 +41,19 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     timerdata = db.pcse.fetch_timerdata(db_metadata, grid, year, crop)
     cropdata = db.pcse.fetch_cropdata(db_metadata, grid, year, crop)
     soildata = db.pcse.fetch_soildata(db_metadata, grid)
+    parvalues = ParameterProvider(sitedata, timerdata, cropdata, soildata)
 
     startdate = timerdata["START_DATE"]
     enddate = timerdata["END_DATE"]
-    meteof = db.pcse.GridWeatherDataProvider(db_metadata, grid_no=grid,
+    wdp = db.pcse.GridWeatherDataProvider(db_metadata, grid_no=grid,
                 startdate=startdate, enddate=enddate)
                              
     # Initialize PCSE/WOFOST
     mode = mode.strip().lower()
     if mode == 'pp':
-        wofsim = Wofost71_PP(sitedata, timerdata, soildata, cropdata, meteof)
+        wofsim = Wofost71_PP(parvalues, wdp)
     elif mode == 'wlp':
-        wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, meteof)
+        wofsim = Wofost71_WLP_FD(parvalues, wdp)
     else:
         msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'" % mode
         raise RuntimeError(msg, mode)

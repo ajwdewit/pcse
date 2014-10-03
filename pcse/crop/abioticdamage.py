@@ -112,9 +112,9 @@ class CrownTemperature(SimulationObject):
         TMIN_CROWN = Float()
         TMAX_CROWN = Float()
 
-    def initialize(self, day, kiosk, sitedata):
+    def initialize(self, day, kiosk, parvalues):
         self.kiosk = kiosk
-        self.params = self.Parameters(sitedata)
+        self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(self.kiosk)
 
     @prepare_rates
@@ -255,18 +255,17 @@ class FROSTOL(SimulationObject):
         IDFST = Int(-99)
 
     #---------------------------------------------------------------------------
-    def initialize(self, day, kiosk, cropdata, sitedata):
+    def initialize(self, day, kiosk, parvalues):
 
         # Initialize module for crown temperature
-        self.crown_temperature = CrownTemperature(day, kiosk, sitedata)
+        self.crown_temperature = CrownTemperature(day, kiosk, parvalues)
 
-        parvalues = merge_dict(cropdata, sitedata)
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish="RF_FROST")
         self.kiosk = kiosk
 
         # Define initial states
-        LT50I = -0.6 + 0.142 *  self.params.LT50C
+        LT50I = -0.6 + 0.142 * self.params.LT50C
         self.states = self.StateVariables(kiosk, LT50T=LT50I, LT50I=LT50I,
                                           IDFST=0)
 
@@ -382,8 +381,8 @@ class CERES_WinterKill(SimulationObject):
 
     def initialize(self, day, kiosk, parvalues):
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk, publish="HIKILLFACTOR")
-        self.kiosk  = kiosk
+        self.rates = self.RateVariables(kiosk, publish="HIKILLFACTOR")
+        self.kiosk = kiosk
 
         # Define initial states
         self.states = self.StateVariables(kiosk, HARDINDEX=0.,

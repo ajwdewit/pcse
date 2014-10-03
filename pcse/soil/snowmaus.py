@@ -99,18 +99,18 @@ class SnowMAUS(SimulationObject):
         RSNOWSUBLIM = Float(-99.)
         RSNOWMELT   = Float(-99.)
 
-    def initialize(self, day, kiosk, sitedata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
         :param sitedata: dictionary with WOFOST sitedata key/value pairs
         """
       
-        if sitedata["SNOWDENSITY"] <= 0.:
-            msg = ("SNOWDENSITY parameter of SnowMAUS module cannot be zero " +
+        if parvalues["SNOWDENSITY"] <= 0.:
+            msg = ("SNOWDENSITY parameter of SnowMAUS module cannot <= zero " +
                    "to avoid division by zero")
             raise exc.ParameterError(msg)
-        self.params = self.Parameters(sitedata)
+        self.params = self.Parameters(parvalues)
         self.rates  = self.RateVariables(kiosk)
 
         SWEDEPTH = self.params.SWEDEPTHI
