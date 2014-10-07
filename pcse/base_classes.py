@@ -1377,7 +1377,7 @@ class BaseEngine(HasTraits, DispatcherObject):
 
 
 class ParameterProvider(object):
-    """Simple class providing a single interface for parameter values.
+    """Simple class providing a dictionary-like single interface for parameter values.
     """
 
     def __init__(self, sitedata, timerdata, soildata, cropdata):
