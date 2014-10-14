@@ -141,7 +141,7 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
         GLAIEX = Float(-99.)
         GLASOL = Float(-99.)
 
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
@@ -149,7 +149,7 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
         """
 
         self.kiosk  = kiosk
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.rates  = self.RateVariables(kiosk)
 
         # CALCULATE INITIAL STATE VARIABLES
@@ -338,7 +338,7 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
         # If adj_oLAI == 0 then add the leave biomass directly to the
         # youngest leave age class (LV[0])
         else:
-            LV[0] = nLAI/states.SLA[0]
+            LV = [nLAI/states.SLA[0]]
 
         states.LASUM = sum([lv*sla for lv, sla in zip(LV, states.SLA)])
         states.LV = deque(LV)
@@ -398,8 +398,8 @@ class CSDM_Leaf_Dynamics(SimulationObject):
 
         return LAI
 
-    def initialize(self, day, kiosk, cropdata):
-        self.params = self.Parameters(cropdata)
+    def initialize(self, day, kiosk, parvalues):
+        self.params = self.Parameters(parvalues)
 
         # calculate LAI on day 1 from CSDM
         LAI = self._CSDM(1)

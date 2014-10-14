@@ -131,8 +131,7 @@ class Wofost_winterkill(SimulationObject):
         DMI   = Float(-99.)
         ADMI  = Float(-99.)
 
-    def initialize(self, day, kiosk, cropdata, soildata, sitedata,
-                   start_type, stop_type):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
@@ -142,21 +141,21 @@ class Wofost_winterkill(SimulationObject):
             "harvest"|"maturity"|"earliest"
         """
         
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.rates  = self.RateVariables(kiosk, publish=["DMI", "ADMI"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
-        self.pheno = Phenology(day, kiosk,  cropdata, start_type, stop_type)
-        self.part  = Partitioning(day, kiosk, cropdata)
-        self.assim = Assimilation(day, kiosk, cropdata)
-        self.mres  = MaintenanceRespiration(day, kiosk, cropdata)
-        self.evtra = Evapotranspiration(day, kiosk, cropdata, soildata)
-        self.frostol = FROSTOL(day, kiosk, cropdata, sitedata)
-        self.ro_dynamics = Root_Dynamics(day, kiosk, cropdata, soildata)
-        self.st_dynamics = Stem_Dynamics(day, kiosk, cropdata)
-        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, cropdata)
-        self.lv_dynamics = Leaf_Dynamics(day, kiosk, cropdata)
+        self.pheno = Phenology(day, kiosk,  parvalues)
+        self.part  = Partitioning(day, kiosk, parvalues)
+        self.assim = Assimilation(day, kiosk, parvalues)
+        self.mres  = MaintenanceRespiration(day, kiosk, parvalues)
+        self.evtra = Evapotranspiration(day, kiosk, parvalues)
+        self.frostol = FROSTOL(day, kiosk, parvalues)
+        self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
+        self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
+        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
+        self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
 
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk["TWLV"] + \
@@ -169,7 +168,7 @@ class Wofost_winterkill(SimulationObject):
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
-        checksum = cropdata["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
+        checksum = parvalues["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
         if abs(checksum) > 0.0001:
             msg = "Error in partitioning of initial biomass (TDWI)!"
             raise exc.PartitioningError(msg)

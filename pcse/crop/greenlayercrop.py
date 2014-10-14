@@ -3,19 +3,18 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 import datetime
 
-from .pydispatch import dispatcher
-from .traitlets import Float, Int, Instance, Enum, Unicode
-from .decorators import prepare_rates, prepare_states
-from .util import limit
-from .base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..traitlets import Float, Int, Instance, Enum, Unicode
+from ..decorators import prepare_rates, prepare_states
+from ..util import limit
+from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
-from . import signals
-from . import exceptions as exc
+from .. import signals
+from .. import exceptions as exc
 
 
-from .crop.evapotranspiration import Simple_Evapotranspiration as Evapotranspiration
-from .crop.root_dynamics import Simple_Root_Dynamics as Root_Dynamics
-from .crop.leaf_dynamics import CSDM_Leaf_Dynamics as Leaf_Dynamics
+from .evapotranspiration import Simple_Evapotranspiration as Evapotranspiration
+from .root_dynamics import Simple_Root_Dynamics as Root_Dynamics
+from .leaf_dynamics import CSDM_Leaf_Dynamics as Leaf_Dynamics
 
 class GreenLayerCrop(SimulationObject):
     """Top level object organizing the different components of the crop
@@ -64,7 +63,7 @@ class GreenLayerCrop(SimulationObject):
         DOF = Instance(datetime.date)
         FINISH = Instance(str)
 
-    def initialize(self, day, kiosk, cropdata, soildata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
@@ -74,9 +73,9 @@ class GreenLayerCrop(SimulationObject):
         self.kiosk = kiosk
         
         # Initialize components of the crop
-        self.evtra = Evapotranspiration(day, kiosk, soildata)
-        self.ro_dynamics = Root_Dynamics(day, kiosk, cropdata, soildata)
-        self.lv_dynamics = Leaf_Dynamics(day, kiosk, cropdata)
+        self.evtra = Evapotranspiration(day, kiosk, parvalues)
+        self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
+        self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
 
         self.states = self.StateVariables(kiosk, CTRAT=0.0, DOF=None, FINISH=None)
             

@@ -135,7 +135,7 @@ class Evapotranspiration(SimulationObject):
         IDOST  = Int(-99)
         IDWST  = Int(-99)
 
-    def initialize(self, day, kiosk, cropdata, soildata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
@@ -143,7 +143,6 @@ class Evapotranspiration(SimulationObject):
         :param soildata: dictionary with WOFOST soildata key/value pairs
         """
 
-        parvalues = merge_dict(cropdata, soildata, overwrite=True)
         self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish=["EVWMX","EVSMX",
@@ -331,7 +330,7 @@ class Simple_Evapotranspiration(SimulationObject):
         TRAMX = Float(-99.)
         TRA   = Float(-99.)
 
-    def initialize(self, day, kiosk, soildata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
@@ -339,7 +338,7 @@ class Simple_Evapotranspiration(SimulationObject):
         """
 
         self.kiosk = kiosk
-        self.params = self.Parameters(soildata)
+        self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish=["EVWMX","EVSMX",
                                                         "TRAMX","TRA"])
 

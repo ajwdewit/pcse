@@ -72,7 +72,7 @@ class WOFOST_Assimilation(SimulationObject):
         TMPFTB = AfgenTrait()
         TMNFTB = AfgenTrait()
 
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
@@ -80,8 +80,8 @@ class WOFOST_Assimilation(SimulationObject):
         :returns: the assimilation rate using __call__()
         """
 
-        self.params = self.Parameters(cropdata)
-        self.kiosk  = kiosk
+        self.params = self.Parameters(parvalues)
+        self.kiosk = kiosk
     
     def __call__(self, day, drv):
         params = self.params
