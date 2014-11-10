@@ -27,7 +27,7 @@ class WOFOST_Assimilation(SimulationObject):
     by integrating the assimilation rates over the leaf layers and over the
     day.
       
-    *Simulation parameters* (To be provided in cropdata dictionary):
+    *Simulation parameters*
     
     =======  ============================================= =======  ============
      Name     Description                                   Type     Unit
@@ -76,8 +76,9 @@ class WOFOST_Assimilation(SimulationObject):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :returns: the assimilation rate using __call__()
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        :returns: the assimilation rate in |kg ha-1 day-1| using __call__()
         """
 
         self.params = self.Parameters(parvalues)

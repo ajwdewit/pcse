@@ -131,13 +131,9 @@ class Wofost(SimulationObject):
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PCSE instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param soildata: dictionary with WOFOST soildata key/value pairs
-        :param sitedata: dictionary with WOFOST sitedata key/value pairs
-        :param start_type: Start type of the simulation: "sowing"|"emergence"
-        :param stop_type: Stop type of the simulation:
-            "harvest"|"maturity"|"earliest"
+        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
         
         self.params = self.Parameters(parvalues)

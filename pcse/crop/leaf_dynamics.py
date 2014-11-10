@@ -145,7 +145,8 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
 
         self.kiosk  = kiosk
@@ -399,6 +400,13 @@ class CSDM_Leaf_Dynamics(SimulationObject):
         return LAI
 
     def initialize(self, day, kiosk, parvalues):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
+        """
+
         self.params = self.Parameters(parvalues)
 
         # calculate LAI on day 1 from CSDM

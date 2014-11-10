@@ -7,6 +7,7 @@ from .engine import Engine
 from .traitlets import Int, Enum, Unicode
 from .util import merge_dict
 from . import exceptions as exc
+from .base_classes import ParameterProvider
 
 
 class _Wofost71Base(Engine):
@@ -18,9 +19,10 @@ class _Wofost71Base(Engine):
     latter is defined below in the subclasses `WOFOST71_PP` and
     `WOFOST71_WLP_FD`
 
-    Moreover, it provides the methods `store_to_database` for sending
+    Moreover, it provides two methods: 1) `store_to_database` for sending
     the WOFOST simulation results to the tables 'sim_results_timeseries'
-    and 'sim_results_summary'.
+    and 'sim_results_summary', and 2) `store_to_file` for sending the
+    WOFOST simulation results to an output file.
     """
     # Definition of run identifiers
     crop_name = Unicode()
@@ -31,7 +33,14 @@ class _Wofost71Base(Engine):
     # config should be overwritten by superclass
     config = None
 
-    def __init__(self, parameter_provider, weatherdataprovider):
+    def __init__(self, sitedata, timerdata, soildata, cropdata, weatherdataprovider):
+        """:param sitedata: dict with WOFOST site parameters
+        :param timerdata: dict with WOFOST timer parameters
+        :param soildata: dict with WOFOST soil parameters
+        :param cropdata: dict with WOFOST crop parameters
+        :param weatherdataprovider: A weatherdataprovider
+        """
+        parameter_provider = ParameterProvider(sitedata, timerdata, soildata, cropdata)
         Engine.__init__(self, parameter_provider, weatherdataprovider,
                         config=self.config)
 

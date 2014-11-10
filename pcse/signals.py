@@ -13,9 +13,8 @@ positional or keyword arguments. However, it is highly discouraged to use
 positional arguments when sending signals in order to avoid conflicts between
 positional and keyword arguments.
 
-An example can help to clarify
-how signals are used in PCSE but check also the documentation of the
-PyDispatcher_ package for more information::
+An example can help to clarify how signals are used in PCSE but check also the
+documentation of the PyDispatcher_ package for more information::
 
     import sys, os
     import math

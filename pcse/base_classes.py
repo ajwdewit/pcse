@@ -1378,6 +1378,16 @@ class BaseEngine(HasTraits, DispatcherObject):
 
 class ParameterProvider(object):
     """Simple class providing a dictionary-like single interface for parameter values.
+
+    The idea behind this class is twofold. First of all by encapsulating the four
+    different parameter types (e.g. sitedata, timerdata, etc) into a single object,
+    the signature of the `initialize()` method of each `SimulationObject` can be
+    harmonized across all SimulationObjects. Second, the ParameterProvider itself
+    can be easily adapted when different sets of parameter values are needed. For
+    example when running PCSE with crop rotations, different sets of timerdata and
+    cropdata are needed, this can now be handled easily by enhancing
+    ParameterProvider to rotate new sets of timerdata and cropdata on a CROP_FINISH
+    signal.
     """
 
     def __init__(self, sitedata, timerdata, soildata, cropdata):
@@ -1394,7 +1404,7 @@ class ParameterProvider(object):
         unique = Counter(parnames)
         for parname, count in unique.items():
             if count > 1:
-                msg = "Duplicate parameter found: %s" % count
+                msg = "Duplicate parameter found: %s" % parname
                 raise RuntimeError(msg)
 
     def __getitem__(self, key):

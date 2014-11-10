@@ -101,19 +101,10 @@ class Engine(BaseEngine):
     def __init__(self, parameterprovider,
                  weatherdataprovider, config=None):
         """
-        :param sitedata: A dictionary(-like) object containing key/value pairs with
-            parameters that are specific for this site but not related to the crop,
-            the crop calendar or the soil. Examples are the initial conditions of
-            the waterbalance such as the initial amount of soil moisture and
-            surface storage.
-        :param timerdata: A dictionary(-like) object containing key/value pairs
-            with parameters related to the system start date, crop calendar, start
-            type (sowing|emergence) and end type (maturity|harvest|earliest)
-        :param soildata: A dictionary(-like) object containing key/value pairs
-            with parameters related to soil where the simulation has to be
-            performed.
-        :param cropdata: A dictionary(-like) object containing key/value pairs with
-            WOFOST crop parameters.
+        :param parameterprovider: A `ParameterProvider` object providing model
+            parameters as key/value pairs. The parameterprovider encapsulates
+            the different parameter files for agromanagement, crop, soil and
+            site.
         :param weatherdataprovider: An instance of a WeatherDataProvider that can
             return weather data in a WeatherDataContainer for a given date.
         :param config: A string describing the model configuration file to use.

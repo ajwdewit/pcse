@@ -7,10 +7,10 @@ from sqlalchemy import create_engine, MetaData, Table
 
 from . import db
 from .models import Wofost71_WLP_FD, Wofost71_PP
-from .base_classes import ParameterProvider
 
 def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
-    """Provides a convenient interface for running PCSE/WOFOST
+    """Provides a convenient interface for running PCSE/WOFOST from a
+    PCSE database.
     
     Starting run_wofost() will start a PCSE/WOFOST instance and let it
     run for 300 days for the given grid, crop, year and mode. Optionally
@@ -21,8 +21,8 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     :param grid: grid number
     :param year: year to start
     :param mode: production mode ('pp' or 'wlp')
-    :param clear_table: If set to True: delete everything from the table
-        `sim_results_timeseries` (defaults to  False)
+    :param clear_table: If set to True: delete everything from the tables
+        `sim_results_timeseries` and `sim_results_summary`(defaults to False)
     """
 
     # Open database connection and empty output table
@@ -41,7 +41,6 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     timerdata = db.pcse.fetch_timerdata(db_metadata, grid, year, crop)
     cropdata = db.pcse.fetch_cropdata(db_metadata, grid, year, crop)
     soildata = db.pcse.fetch_soildata(db_metadata, grid)
-    parvalues = ParameterProvider(sitedata, timerdata, cropdata, soildata)
 
     startdate = timerdata["START_DATE"]
     enddate = timerdata["END_DATE"]
@@ -51,9 +50,9 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     # Initialize PCSE/WOFOST
     mode = mode.strip().lower()
     if mode == 'pp':
-        wofsim = Wofost71_PP(parvalues, wdp)
+        wofsim = Wofost71_PP(sitedata, timerdata, soildata, cropdata, wdp)
     elif mode == 'wlp':
-        wofsim = Wofost71_WLP_FD(parvalues, wdp)
+        wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, wdp)
     else:
         msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'" % mode
         raise RuntimeError(msg, mode)

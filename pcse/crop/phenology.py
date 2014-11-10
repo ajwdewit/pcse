@@ -309,8 +309,8 @@ class DVS_Phenology(SimulationObject):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param timerdata: dictionary with WOFOST timerdata key/value pairs
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
 
         self.params = self.Parameters(parvalues)

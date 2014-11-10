@@ -67,9 +67,10 @@ class GreenLayerCrop(SimulationObject):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
-        :param soildata: dictionary with soil data key/value pairs
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
-        
+
         self.kiosk = kiosk
         
         # Initialize components of the crop

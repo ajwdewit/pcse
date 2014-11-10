@@ -76,10 +76,8 @@ class AgroManagementSingleCrop(AncillaryObject):
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
         :param mconf: ConfigurationLoader instance
-        :param timerdata: dictionary with WOFOST timerdata key/value pairs
-        :param soildata: idem for soildata
-        :param sitedata: idem for sitedata
-        :param cropdata: idem for cropdata
+        :param parameterprovider: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
         self.params = self.Parameters(parameterprovider)
         self.kiosk = kiosk
