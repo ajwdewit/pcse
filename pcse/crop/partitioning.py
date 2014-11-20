@@ -41,7 +41,7 @@ class DVS_Partitioning(SimulationObject):
              development stage.
     FLTB     Partitioning to leaves as a function of         TCr       -
              development stage.
-    FOTB     Partitioning to starge organs as a function     TCr       -
+    FOTB     Partitioning to storage organs as a function    TCr       -
              of development stage.
     =======  ============================================= =======  ============
     
