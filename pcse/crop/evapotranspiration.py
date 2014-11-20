@@ -245,7 +245,7 @@ class Evapotranspiration(SimulationObject):
                     RFOS = 1.
 
                 FRROOT  = max(0.0, (min(RD, DEPTH+SOIL_LAYERS[il]['TSL']) - DEPTH)) / RD
-                TRALY[il] = RFWS * RFOS * TRAMX * FRROOT
+                TRALY[il] = RFWS * RFOS * r.TRAMX * FRROOT
                 DEPTH  += SOIL_LAYERS[il]['TSL']
             r.TRA = sum(TRALY)
             r.TRALY = TRALY
