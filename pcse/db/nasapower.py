@@ -177,7 +177,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         if len(power_records) < 200:
             msg = ("Less then 200 days of data available. Reverting to " +
                    "default Angstrom A/B coefficients (%f, %f)")
-            self.logger.warn(msg % (self.AngstA, self.AngstB))
+            self.logger.warn(msg % (self.angstA, self.angstB))
             return self.angstA, self.angstB
 
         # calculate relative radiation (swv_dwn/toa_dwn) and percentiles
