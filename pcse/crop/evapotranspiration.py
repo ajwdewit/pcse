@@ -86,8 +86,8 @@ class Evapotranspiration(SimulationObject):
     EVSMX    Maximum evaporation rate from a wet soil surface.  Y    |cm day-1|
     TRAMX    Maximum transpiration rate from the plant canopy   Y    |cm day-1|
     TRA      Actual transpiration rate from the plant canopy    Y    |cm day-1|
-    IDOS     Indicates water stress on this day (True|False)    N    -
-    IDWS     Indicates oxygen stress on this day (True|False)   N    -
+    IDOS     Indicates oxygen stress on this day (True|False)   N    -
+    IDWS     Indicates water stress on this day (True|False)    N    -
     =======  ================================================= ==== ============
     
     *Signals send or handled*
