@@ -37,7 +37,7 @@ class Vernalisation(SimulationObject):
     function VERNRTB. Within the optimal temperature range 1 day is added
     to the vernalisation state (VERN). The reduction on the phenological
     development is calculated from the base and saturated vernalisation
-    requirements (VERNBASE and VERNSAT). the reduction factor (VERNFAC) is
+    requirements (VERNBASE and VERNSAT). The reduction factor (VERNFAC) is
     scaled linearly between VERNBASE and VERNSAT.
     
     A critical development stage (VERNDVS) is used to stop the effect of
@@ -213,7 +213,7 @@ class DVS_Phenology(SimulationObject):
     TBASEM   Base temperature for emergence                 SCr        |C|
     TEFFMX   Maximum effective temperature for emergence    SCr        |C|
     TSUM1    Temperature sum from emergence to anthesis     SCr        |C| day
-    TSUM2    Temperature sum for anthesis to maturity       SCr        |C| day
+    TSUM2    Temperature sum from anthesis to maturity      SCr        |C| day
     IDSL     Switch for phenological development options    SCr        -
              temperature only (IDSL=0), including           SCr
              daylength (IDSL=1) and including               
