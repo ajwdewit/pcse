@@ -101,25 +101,14 @@ class Engine(BaseEngine):
     def __init__(self, parameterprovider,
                  weatherdataprovider, config=None):
         """
-        :param sitedata: A dictionary(-like) object containing key/value pairs with
-            parameters that are specific for this site but not related to the crop,
-            the crop calendar or the soil. Examples are the initial conditions of
-            the waterbalance such as the initial amount of soil moisture and
-            surface storage.
-        :param timerdata: A dictionary(-like) object containing key/value pairs
-            with parameters related to the system start date, crop calendar, start
-            type (sowing|emergence) and end type (maturity|harvest|earliest)
-        :param soildata: A dictionary(-like) object containing key/value pairs
-            with parameters related to soil where the simulation has to be
-            performed.
-        :param cropdata: A dictionary(-like) object containing key/value pairs with
-            WOFOST crop parameters.
+        :param parameterprovider: A ParameterProvider object
+            providing access to all simulation parameters as key/value pairs.
         :param weatherdataprovider: An instance of a WeatherDataProvider that can
             return weather data in a WeatherDataContainer for a given date.
         :param config: A string describing the model configuration file to use.
             By only giving a filename PCSE assumes it to be located under
             pcse/conf. If you want to provide you own configuration file, specify
-             it as an absolute or a relative path (e.g. with a leading '.')
+            it as an absolute or a relative path (e.g. with a leading '.')
         """
         BaseEngine.__init__(self)
 
@@ -223,6 +212,29 @@ class Engine(BaseEngine):
             # Rate calculation
             self.calc_rates(self.day, self.drv)
         
+        if self.flag_terminate is True:
+            self.soil.finalize(self.day)
+
+    #---------------------------------------------------------------------------
+    def run_till_terminate(self):
+        """Runs the system until a terminate signal is sent."""
+
+        while self.flag_terminate is False:
+            # Update timer
+            self.day = self.timer()
+
+            # State integration
+            self.integrate(self.day)
+
+            # Driving variables
+            self.drv = self._get_driving_variables(self.day)
+
+            # Agromanagement decisions
+            self.agromanagement(self.day, self.drv)
+
+            # Rate calculation
+            self.calc_rates(self.day, self.drv)
+
         if self.flag_terminate is True:
             self.soil.finalize(self.day)
 

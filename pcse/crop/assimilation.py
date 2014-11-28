@@ -7,14 +7,22 @@ Available SimulationObjects:
 
 * WOFOST_Assimilation
 """
-
+from __future__ import print_function
 from math import sqrt, exp, cos, pi
 
 from ..traitlets import Instance, Float, AfgenTrait
 
-from ..util import limit, astro
+from ..util import limit, astro, doy
 from ..base_classes import ParamTemplate, SimulationObject, \
     VariableKiosk
+
+try:
+    from ..futil import totass as ftotass
+    from ..futil import astro as fastro
+except ImportError as exc:
+    msg = "Failed import fortran objects, reverting to python versions."
+    print(msg)
+    ftotass = fastro = None
 
 class WOFOST_Assimilation(SimulationObject):
     """Class implementing a WOFOST/SUCROS style assimilation routine.
@@ -84,6 +92,47 @@ class WOFOST_Assimilation(SimulationObject):
         self.kiosk = kiosk
     
     def __call__(self, day, drv):
+        # Check if fortran versions can be used otherwise use native python
+        if ftotass is not None:
+            PGASS = self.___call__fortran(day, drv)
+        else:
+            PGASS = self.__call__python(day, drv)
+
+        return PGASS
+
+    def ___call__fortran(self, day, drv):
+        """Calls fortran versions of ASTRO and TOTASS
+        """
+        params = self.params
+
+        # published states from the kiosk
+        DVS = self.kiosk["DVS"]
+        LAI = self.kiosk["LAI"]
+
+        # 2.19  photoperiodic daylength
+        IDAY = doy(day)
+        DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE = \
+             fastro(IDAY, drv.LAT, drv.IRRAD)
+
+        # 2.20  daily dry matter production
+
+        # gross assimilation and correction for sub-optimum
+        # average day temperature
+        AMAX = params.AMAXTB(DVS)
+        AMAX *= params.TMPFTB(drv.DTEMP)
+        KDIF = params.KDIFTB(DVS)
+        EFF  = params.EFFTB(drv.DTEMP)
+        DTGA = ftotass(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP,
+                       DSINBE, SINLD, COSLD)
+
+        # correction for low minimum temperature potential
+        # assimilation in kg CH2O per ha
+        DTGA *= params.TMNFTB(drv.TMINRA)
+        PGASS = DTGA * 30./44.
+
+        return PGASS
+
+    def __call__python(self, day, drv):
         params = self.params
 
         # published states from the kiosk

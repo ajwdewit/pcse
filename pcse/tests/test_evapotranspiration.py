@@ -6,6 +6,7 @@ from datetime import date
 
 from ..crop.evapotranspiration import Evapotranspiration
 from ..base_classes import VariableKiosk
+from ..util import merge_dict
 from .test_data import pot_evtra_testdata, wl_evtra_testdata1,\
     wl_parvalue_dict1, wl_evtra_testdata2, wl_parvalue_dict2
 
@@ -20,11 +21,11 @@ class Test_PotentialEvapotranspiration(unittest.TestCase):
         self.kiosk.register_variable(0, "LAI", type="S", publish=True)
         self.kiosk.register_variable(0, "SM", type="S", publish=True)
         # Initialize ET module
-        cropdata = {"CFET":1.00, "KDIFTB":[0., 0.6, 2.0, 0.6], "DEPNR":4.5,
+        parvalues = {"CFET":1.00, "KDIFTB":[0., 0.6, 2.0, 0.6], "DEPNR":4.5,
                     "IOX":0, "IAIRDU":0, "CRAIRC":-99.}
-        soildata = {"SM0":0.4, "SMFCF":0.3, "SMW":0.1}
+        parvalues.update({"SM0":0.4, "SMFCF":0.3, "SMW":0.1})
         dummyday = date(2000,1,1)
-        self.evtra = Evapotranspiration(dummyday, self.kiosk, cropdata, soildata)
+        self.evtra = Evapotranspiration(dummyday, self.kiosk, parvalues)
     
     def runTest(self):
         day = date(2000,1,1) # dummy date value
@@ -59,8 +60,9 @@ class Test_WaterLimitedEvapotranspiration1(unittest.TestCase):
         soildata = {}
         for key in ["SM0", "SMFCF", "SMW"]:
             soildata[key] = wl_parvalue_dict1[key]
+        parvalues = merge_dict(cropdata, soildata)
         dummyday = date(2000,1,1)
-        self.evtra = Evapotranspiration(dummyday, self.kiosk, cropdata, soildata)
+        self.evtra = Evapotranspiration(dummyday, self.kiosk, parvalues)
     
     def runTest(self):
         day = date(2000,1,1) # dummy date value
@@ -94,8 +96,9 @@ class Test_WaterLimitedEvapotranspiration2(unittest.TestCase):
         soildata = {}
         for key in ["SM0", "SMFCF", "SMW"]:
             soildata[key] = wl_parvalue_dict2[key]
+        parvalues = merge_dict(cropdata, soildata)
         dummyday = date(2000,1,1)
-        self.evtra = Evapotranspiration(dummyday, self.kiosk, cropdata, soildata)
+        self.evtra = Evapotranspiration(dummyday, self.kiosk, parvalues)
     
     def runTest(self):
         day = date(2000,1,1) # dummy date value

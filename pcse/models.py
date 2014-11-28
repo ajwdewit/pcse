@@ -3,6 +3,7 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 import sqlalchemy as sa
 
+from .base_classes import ParameterProvider
 from .engine import Engine
 from .traitlets import Int, Enum, Unicode
 from .util import merge_dict
@@ -31,7 +32,10 @@ class _Wofost71Base(Engine):
     # config should be overwritten by superclass
     config = None
 
-    def __init__(self, parameter_provider, weatherdataprovider):
+    def __init__(self, sitedata, timerdata, soildata, cropdata, 
+                 weatherdataprovider):
+        parameter_provider = ParameterProvider(sitedata, timerdata,
+            soildata, cropdata)
         Engine.__init__(self, parameter_provider, weatherdataprovider,
                         config=self.config)
 

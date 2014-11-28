@@ -359,7 +359,7 @@ class StatesRatesCommon(HasTraits):
         # Make sure that the variable kiosk is provided
         if not isinstance(kiosk, VariableKiosk):
             msg = ("Variable Kiosk must be provided when instantiating rate " +
-                   "variables.")
+                   "or state variables.")
             raise RuntimeError(msg)
         self._kiosk = kiosk
         
@@ -630,7 +630,7 @@ class DispatcherObject(object):
         passed to dispatcher.send()
         """
         
-        self.logger.info("Sent signal: %s" % signal)
+        self.logger.debug("Sent signal: %s" % signal)
         dispatcher.send(signal=signal, sender=self.kiosk, *args, **kwargs)
     
     def _connect_signal(self, handler, signal):
@@ -690,7 +690,7 @@ class SimulationObject(HasTraits, DispatcherObject):
         self.logger = logging.getLogger(loggername)
         self.initialize(day, kiosk, *args, **kwargs)
         self.subSimObjects = self._find_SubSimObjects()
-        self.logger.info("Component successfully initialized on %s!" % day)
+        self.logger.debug("Component successfully initialized on %s!" % day)
 
     def initialize(self, *args, **kwargs):
         msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
@@ -919,7 +919,7 @@ class AncillaryObject(HasTraits, DispatcherObject):
 
         self.logger = logging.getLogger(loggername)
         self.initialize(day, kiosk, *args, **kwargs)
-        self.logger.info("Component succesfully initialized on %s!" % day)
+        self.logger.debug("Component succesfully initialized on %s!" % day)
 
     #---------------------------------------------------------------------------
     def __setattr__(self, attr, value):
@@ -948,7 +948,7 @@ class TopPyWOFOSTObject(HasTraits, DispatcherObject):
 
         self.logger = logging.getLogger(loggername)
         self.initialize(day, *args, **kwargs)
-        self.logger.info("Component successfully initialized on %s!" % day)
+        self.logger.debug("Component successfully initialized on %s!" % day)
 
 
 #-------------------------------------------------------------------------------
