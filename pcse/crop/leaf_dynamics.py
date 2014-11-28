@@ -19,8 +19,8 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
     of leaves. WOFOST keeps track of the biomass that has been partitioned to
     the leaves for each day (variable `LV`), which is called a leaf class).
     For each leaf class the leaf age (variable 'LVAGE') and specific leaf area
-    are (variable `SLA`) are also registered. Total living leaf biomass
-    is calculated by summing the biomass values for all leaf classes. Similarly,
+    (variable `SLA`) are also registered. Total living leaf biomass is
+    calculated by summing the biomass values for all leaf classes. Similarly,
     leaf area is calculated by summing leaf biomass times specific leaf area
     (`LV` * `SLA`).
     

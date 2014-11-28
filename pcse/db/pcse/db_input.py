@@ -320,7 +320,7 @@ def fetch_soilparams(metadata, grid, soilgroup):
                    "soilgroup %s, parameter: %s" % (soilgroup, soil_par))
             raise SoildataError(grid, msg)
 
-        value =  array.array('d', [0.]*(c*2))
+        value =  array.array('d', [0.]*(nrows*2))
         for i, row in enumerate(rows):
             value[i*2] = float(row.parameter_xvalue)
             value[(i*2)+1]= float(row.parameter_yvalue)
@@ -333,7 +333,7 @@ def fetch_soilparams(metadata, grid, soilgroup):
             # soilparams["SM0"] = soilparams["SMTAB"](-1.0);
             # SMsat, soil porosity, SM at Pf = -1.0 (0.0 ?)
             # formation of PFTAB (PFfromSM), the inverse of SMTAB (SMfromPF)
-            value =  array.array('d', [0.]*(c*2))
+            value =  array.array('d', [0.]*(nrows*2))
             for i, row in enumerate(reversed(rows)):
                 value[i*2]    = float(row.parameter_yvalue)
                 value[(i*2)+1]= float(row.parameter_xvalue)
