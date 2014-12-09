@@ -68,9 +68,9 @@ def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
     # Initialize PCSE/WOFOST
     mode = mode.strip().lower()
     if mode == 'pp':
-        wofsim = Wofost71_PP(parvalues, meteof)
+        wofsim = Wofost71_PP(sitedata, timerdata, soildata, cropdata, meteof)
     elif mode == 'wlp':
-        wofsim = Wofost71_WLP_FD(parvalues, meteof)
+        wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, meteof)
     else:
         msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'" % mode
         raise RuntimeError(msg)

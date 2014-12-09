@@ -303,5 +303,5 @@ the Angstrom equation and astronomical calculations such as day length.
     :members:
 .. autofunction:: pcse.util.is_a_month
 .. autofunction:: pcse.util.is_a_dekad
-.. autofunction:: pcse.util.get_dates_in_year_dekad
+.. autofunction:: pcse.util.is_a_week
 .. autofunction:: pcse.util.load_SQLite_dump_file
