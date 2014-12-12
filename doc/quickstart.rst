@@ -109,7 +109,18 @@ the `test()` function at the top of the package::
 
 If the model output matches the expected output the test will report 'OK',
 otherwise an error will be produced with a detailed traceback on where the
-problem occurred.
+problem occurred. Note that the results may deviate from the output above
+because one or more
+tests may have been temporarily disabled (skipped) often due to problems
+with the test (not the model). Moreover, SQLAlchemy may complain with a
+warning that can be safely ignored::
+
+     /usr/lib/python2.7/dist-packages/sqlalchemy/types.py:307: SAWarning:
+     Dialect sqlite+pysqlite does *not* support Decimal objects natively, and
+     SQLAlchemy must convert from floating point - rounding errors and other
+     issues may occur. Please consider storing Decimal numbers as strings or
+     integers on this platform for lossless storage.
+         d[coltype] = rp = d['impl'].result_processor(dialect, coltype)
 
 Part 1: An interactive PCSE/WOFOST session
 ==========================================
@@ -156,10 +167,10 @@ model state you can do::
 Showing that after 11 days the LAI value is 0.287. When we increase time
 with another 25 days, the LAI increases to 1.528. The `get_variable` method
 can retrieve any state or rate variable that is defined somewhere in the
-model. Finally, we can finish the crop season by simply specifying sufficient days
-and store the results to a file 'myresults.csv'::
+model. Finally, we can finish the crop season by letting it run until the
+model terminates and store the results to a file 'myresults.csv'::
 
-    >>> wofost_object.run(days=300)
+    >>> wofost_object.run_till_terminate()
     >>> wofost_object.store_to_file("myresults.txt")
 
 Which should look like this :download:`myresults.txt`
@@ -352,7 +363,8 @@ soildata, timerdata and weather data.
 However, as many users of PCSE only need a particular configuration (for
 example the WOFOST model for potential production), preconfigured Engines
 are provided in `pcse.models`. For the sugarbeet example we will import
-the WOFOST model for water-limited simulation under freely draining soils::
+the WOFOST model for water-limited simulation under freely draining soil
+conditions::
 
     >>> from pcse.models import Wofost71_WLP_FD
     >>> wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, wdp)

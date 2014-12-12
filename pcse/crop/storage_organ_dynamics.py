@@ -64,7 +64,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     ADMI     Above-ground dry matter             CropSimulation     |kg ha-1 d-1|
              increase
     FO       Fraction biomass to storage organs  DVS_Partitioning    - 
-    FS       Fraction biomass to stems           DVS_Partitioning    - 
+    FR       Fraction biomass to roots           DVS_Partitioning    - 
     =======  =================================== =================  ============
     """
 

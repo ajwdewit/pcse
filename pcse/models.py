@@ -3,6 +3,7 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 import sqlalchemy as sa
 
+from .base_classes import ParameterProvider
 from .engine import Engine
 from .traitlets import Int, Enum, Unicode
 from .util import merge_dict

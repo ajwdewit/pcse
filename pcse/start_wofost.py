@@ -6,6 +6,7 @@ import sys, os
 from sqlalchemy import create_engine, MetaData, Table
 
 from . import db
+from .base_classes import ParameterProvider
 from .models import Wofost71_PP, Wofost71_WLP_FD
 from .settings import settings
 
@@ -55,6 +56,7 @@ def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
     timerdata = db.pcse.fetch_timerdata(pywofost_metadata,grid, year, crop)
     cropdata = db.pcse.fetch_cropdata(pywofost_metadata, grid, year, crop)
     soildata = db.pcse.fetch_soildata(pywofost_metadata, grid)
+    parvalues = ParameterProvider(sitedata, timerdata, soildata, cropdata)
 
     startdate = timerdata["START_DATE"]
     enddate = timerdata["END_DATE"]

@@ -63,7 +63,7 @@ class Test_WaterLimitedEvapotranspiration1(unittest.TestCase):
             soildata[key] = wl_parvalue_dict1[key]
         sitedata = timerdata = {}
         parvalues = ParameterProvider(sitedata, timerdata, soildata, cropdata)
-        dummyday = date(2000,1,1)
+        dummyday = date(2000, 1, 1)
         self.evtra = Evapotranspiration(dummyday, self.kiosk, parvalues)
     
     def runTest(self):

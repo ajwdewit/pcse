@@ -110,7 +110,7 @@ class Engine(BaseEngine):
         :param config: A string describing the model configuration file to use.
             By only giving a filename PCSE assumes it to be located under
             pcse/conf. If you want to provide you own configuration file, specify
-             it as an absolute or a relative path (e.g. with a leading '.')
+            it as an absolute or a relative path (e.g. with a leading '.')
         """
         BaseEngine.__init__(self)
 
@@ -166,8 +166,6 @@ class Engine(BaseEngine):
         # Save state variables of the model
         if self.flag_output:
             self._save_output(day)
-        if self.flag_summary_output:
-            self._save_summary_output()
 
         # Check if flag is present to finish crop simulation
         if self.flag_crop_finish:
@@ -214,6 +212,29 @@ class Engine(BaseEngine):
             # Rate calculation
             self.calc_rates(self.day, self.drv)
         
+        if self.flag_terminate is True:
+            self.soil.finalize(self.day)
+
+    #---------------------------------------------------------------------------
+    def run_till_terminate(self):
+        """Runs the system until a terminate signal is sent."""
+
+        while self.flag_terminate is False:
+            # Update timer
+            self.day = self.timer()
+
+            # State integration
+            self.integrate(self.day)
+
+            # Driving variables
+            self.drv = self._get_driving_variables(self.day)
+
+            # Agromanagement decisions
+            self.agromanagement(self.day, self.drv)
+
+            # Rate calculation
+            self.calc_rates(self.day, self.drv)
+
         if self.flag_terminate is True:
             self.soil.finalize(self.day)
 
@@ -284,6 +305,10 @@ class Engine(BaseEngine):
 
         # Run the finalize section of the cropsimulation and sub-components
         self.crop.finalize(day)
+
+        # Generate summary output after finalize() has been run.
+        if self.flag_summary_output:
+            self._save_summary_output()
 
         # Only remove the crop simulation object from the system when the crop
         # is finished, when explicitly asked to do so.

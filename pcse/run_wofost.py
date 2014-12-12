@@ -57,7 +57,7 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
         msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'" % mode
         raise RuntimeError(msg, mode)
 
-    wofsim.run(days=365)
+    wofsim.run_till_terminate()
     
     runid = {"grid_no":grid, "crop_no":crop, "year":year, "member_id":0,
              "simulation_mode":mode}
