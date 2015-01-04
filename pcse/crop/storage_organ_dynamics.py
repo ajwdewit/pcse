@@ -86,7 +86,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param parvalues: `ParameterProvider` object providing parameters as
                 key/value pairs
         """

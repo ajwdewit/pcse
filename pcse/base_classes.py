@@ -637,8 +637,8 @@ class DispatcherObject(object):
         """Connect the handler to the signal using the dispatcher module.
         
         The handler will only react on signals that have the SimulationObjects
-        VariableKiosk as sender. This ensure that different ensemble members in
-        a PyWOFOST ensemble will not react to eachother signals.
+        VariableKiosk as sender. This ensure that different PCSE model instances
+        in the same runtime environment will not react to each others signals.
         """
         
         dispatcher.connect(handler, signal, sender=self.kiosk)
@@ -931,27 +931,7 @@ class AncillaryObject(HasTraits, DispatcherObject):
             msg = "Assignment to non-existing attribute '%s' prevented." % attr
             raise AttributeError(msg)
 
-#-------------------------------------------------------------------------------
-class TopPyWOFOSTObject(HasTraits, DispatcherObject):
-    """Class for the top-level PyWOFOST object.
-    """
 
-    def __init__(self, day, *args, **kwargs):           
-        loggername = "%s.%s" % (self.__class__.__module__,
-                                self.__class__.__name__)
-
-        # Check that day variable is specified
-        if not isinstance(day, date):
-            msg = "%s should be instantiated with the simulation start "+\
-                  "day as first argument!"
-            raise RuntimeError(msg % loggername)
-
-        self.logger = logging.getLogger(loggername)
-        self.initialize(day, *args, **kwargs)
-        self.logger.debug("Component successfully initialized on %s!" % day)
-
-
-#-------------------------------------------------------------------------------
 class SlotPickleMixin(object):
     """This mixin makes it possible to pickle/unpickle objects with __slots__ defined.
 

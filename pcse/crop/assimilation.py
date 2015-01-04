@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""SimulationObjects implementing |CO2| Assimilation for use with PyWOFOST.
+"""SimulationObjects implementing |CO2| Assimilation for use with PCSE.
 
 Available SimulationObjects:
 
@@ -83,10 +83,10 @@ class WOFOST_Assimilation(SimulationObject):
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE instance
         :param parvalues: `ParameterProvider` object providing parameters as
                 key/value pairs
-        :returns: the assimilation rate in |kg ha-1 day-1| using __call__()
+        :returns: the assimilation rate in |kg ha-1 d-1| using __call__()
         """
 
         self.params = self.Parameters(parvalues)

@@ -87,9 +87,6 @@ The PCSE distribution provides several waterbalance modules:
 .. autoclass:: pcse.soil.WaterbalanceFD
     :members:
 
-.. autoclass:: pcse.soil.WaterbalanceFD
-    :members:
-
 .. autoclass:: pcse.soil.SnowMAUS
     :members:
 
@@ -159,8 +156,8 @@ Abiotic damage
 .. autoclass:: pcse.crop.abioticdamage.CrownTemperature
     :members:
 
-.. autoclass:: pcse.crop.abioticdamage.CERES_WinterKill
-    :members:
+.. .. autoclass:: pcse.crop.abioticdamage.CERES_WinterKill
+..    :members:
 
 Base classes
 ============
@@ -219,12 +216,15 @@ parameter files in the CABO format,  the `CABOWeatherDataProvider` for reading
 files from the CABO weather system and the `PCSEFileReader` for reading
 files in PCSE format.
 
+.. _CABOFileReader:
 .. autoclass:: pcse.fileinput.CABOFileReader
     :members:
 
+.. _CABOWeatherDataProvider:
 .. autoclass:: pcse.fileinput.CABOWeatherDataProvider
     :members:
 
+.. _PCSEFileReader:
 .. autoclass:: pcse.fileinput.PCSEFileReader
     :members:
 
@@ -249,6 +249,9 @@ different table names and structure for model output.
 .. autofunction:: pcse.db.pcse.fetch_soildata
 .. autofunction:: pcse.db.pcse.fetch_timerdata
 .. autofunction:: pcse.db.pcse.fetch_sitedata
+
+.. _GridWeatherDataProvider:
+
 .. autoclass:: pcse.db.pcse.GridWeatherDataProvider
     :members:
 
@@ -265,7 +268,16 @@ The CGMS11 database
 ...................
 
 Tools for reading a CGMS11 database are under construction.
-    
+
+The NASA POWER database
+.......................
+
+.. _NASAPowerWeatherDataProvider:
+
+.. autoclass:: pcse.db.NASAPowerWeatherDataProvider
+    :members:
+
+
 Convenience routines
 --------------------
 

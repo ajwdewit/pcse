@@ -71,7 +71,7 @@ following output::
     Value of arg1,2: None, 3.14159265359
     TypeError occurred: handle_mysignal() takes exactly 3 non-keyword arguments (1 given)
 
-Currently the following signals are used within PyWOFOST with the following
+Currently the following signals are used within PCSE with the following
 keywords.*
 
 **CROP_START**

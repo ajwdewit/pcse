@@ -30,7 +30,7 @@ class WaterbalancePP(SimulationObject):
     def initialize(self, day, kiosk, parvalues):
         """    
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param soildata: dictionary with WOFOST soildata key/value pairs
     
         This waterbalance keeps the soil moisture always at field capacity. Therefore   
@@ -258,7 +258,7 @@ class WaterbalanceFD(SimulationObject):
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         :param soildata: dictionary with WOFOST soildata key/value pairs
         :param sitedata: dictionary with WOFOST sitedata key/value pairs

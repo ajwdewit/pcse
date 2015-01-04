@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Miscelaneous utilities for PyWOFOST
+"""Miscellaneous utilities for PCSE
 """
 import os, sys
 import datetime
@@ -859,7 +859,6 @@ class ConfigurationLoader(object):
         except Exception, e:
             msg = "Failed to load configuration from file '%s' due to: %s"
             msg = msg % (model_config_file, e)
-            pdb.set_trace()
             raise exc.PCSEError(msg)
 
         # Add the descriptive header for later use
@@ -946,9 +945,7 @@ def load_SQLite_dump_file(dump_file_name, SQLite_db_name):
 
     with open(dump_file_name) as fp:
         sql_dump = fp.readlines()
-    str_sql_dump = ""
-    for line in sql_dump:
-        str_sql_dump += line
+    str_sql_dump = "".join(sql_dump)
     con = sqlite3.connect(SQLite_db_name)
     con.executescript(str_sql_dump)
     con.close()

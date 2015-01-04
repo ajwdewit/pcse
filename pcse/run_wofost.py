@@ -13,8 +13,9 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     PCSE database.
     
     Starting run_wofost() will start a PCSE/WOFOST instance and let it
-    run for 300 days for the given grid, crop, year and mode. Optionally
-    it can delete everything from the table `sim_results_timeseries`.
+    run until it terminates for the given grid, crop, year and mode.
+    Optionally it can delete everything from tables `sim_results_timeseries`
+    and `sim_results_summary`.
     
     :param dsn: PCSE DB as SQLAlchemy data source name
     :param crop: crop number

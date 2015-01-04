@@ -6,7 +6,11 @@ WOFOST (WOrld FOod STudies) is a simulation model for quantitative analysis of g
 
 WOFOST calculates the attainable crop production, biomass, water use, etc. for a location given knowledge about soil type, crop type, weather data and crop management factors (e.g. sowing date). It has been used  by many researchers world wide and has been applied for various crops over a large range of climatic and management conditions. WOFOST is also implemented in the Crop Growth Monitoring System which is used operationally to monitor arable crops in Europe and to forecast crop yields for the current growing season.
 
-WOFOST originated in the framework of interdisciplinary studies on world food security and on the potential world food production by the Center for World Food Studies (CWFS) in cooperation with the Wageningen Agricultural University, Department of Theoretical Production Ecology (WAU-TPE) and the DLO-Center for Agrobiological Research and Soil Fertility (AB-DLO), Wageningen, the Netherlands. After cessation of CWFS in 1988, the DLO Winand Staring Centre (SC-DLO) has continued the development co-operation with AB-DLO and WAU-TPE.
+WOFOST originated in the framework of interdisciplinary studies on world food security and on the potential world
+food production by the Center for World Food Studies (CWFS) in cooperation with the Wageningen Agricultural
+University, Department of Theoretical Production Ecology (WAU-TPE) and the DLO-Center for Agrobiological Research and
+ Soil Fertility (AB-DLO), Wageningen, the Netherlands. After cessation of CWFS in 1988,
+ the DLO Winand Staring Centre (SC-DLO) has continued the development co-operation with AB-DLO and WAU-TPE.
 
 Currently, the WOFOST model is maintained and further developed by Alterra in co-operation with the Plant Production Systems Group of Wageningen University (http://www.pps.wur.nl/UK) and the Agri4Cast unit of the Joint Research Centre in Italy (http://mars.jrc.it/mars/About-us/AGRI4CAST).
 

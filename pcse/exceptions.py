@@ -5,7 +5,7 @@
 """
 
 class PCSEError(Exception):
-    """Top PyWOFOST Exception"""
+    """Top PCSE Exception"""
     
 class CarbonBalanceError(PCSEError):
     "Raised when carbon flows are not balanced."

@@ -147,7 +147,7 @@ class FROSTOL(SimulationObject):
     """ Implementation of the FROSTOL model for frost damage in winter-wheat.
 
     :param day: start date of the simulation
-    :param kiosk: variable kiosk of this PyWOFOST instance
+    :param kiosk: variable kiosk of this PCSE instance
     :param parvalues: `ParameterProvider` object providing parameters as
             key/value pairs
 
@@ -361,7 +361,7 @@ class CERES_WinterKill(SimulationObject):
     """Implementation of the winter-kill module in the CERES-wheat model (CWWK).
 
     :param day: start date of the simulation
-    :param kiosk: variable kiosk of this PyWOFOST instance
+    :param kiosk: variable kiosk of this PCSE instance
     :param parvalues: `ParameterProvider` object providing parameters as
             key/value pairs
 

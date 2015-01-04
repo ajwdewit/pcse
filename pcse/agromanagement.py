@@ -74,7 +74,7 @@ class AgroManagementSingleCrop(AncillaryObject):
     def initialize(self, day, kiosk, mconf, parameterprovider):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE model instance
         :param mconf: ConfigurationLoader instance
         :param parameterprovider: `ParameterProvider` object providing parameters as
                 key/value pairs
@@ -92,8 +92,8 @@ class AgroManagementSingleCrop(AncillaryObject):
         # Check if sequence of dates is OK, otherwise the crop
         # will never start or finish
         if day > self.params.CROP_START_DATE:
-            msg = ("CROP_START_DATE before simulation start day: " +
-                  "crop simulation will never start.")
+            msg = ("CROP_START_DATE before simulation start day: "
+                   "crop simulation will never start.")
             raise exc.PCSEError(msg)
         if self.params.CROP_END_TYPE in ("harvest","earliest"):
             if self.params.CROP_END_DATE <= self.params.CROP_START_DATE:

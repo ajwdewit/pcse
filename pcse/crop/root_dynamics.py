@@ -109,7 +109,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param parvalues: `ParameterProvider` object providing parameters as
                 key/value pairs
         """
@@ -232,7 +232,7 @@ class Simple_Root_Dynamics(SimulationObject):
     def initialize(self, day, kiosk, cropdata, soildata):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         :param soildata: dictionary with WOFOST soildata key/value pairs
         """
