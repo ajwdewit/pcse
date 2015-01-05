@@ -109,31 +109,34 @@ the `test()` function at the top of the package::
     runTest (pcse.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration1) ... ok
     runTest (pcse.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration2) ... ok
     runTest (pcse.tests.test_respiration.Test_WOFOSTMaintenanceRespiration) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedPotato) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialGrainMaize) ... ok
+    runTest (pcse.tests.test_penmanmonteith.Test_PenmanMonteith1) ... ok
+    runTest (pcse.tests.test_penmanmonteith.Test_PenmanMonteith2) ... ok
+    runTest (pcse.tests.test_penmanmonteith.Test_PenmanMonteith3) ... ok
+    runTest (pcse.tests.test_penmanmonteith.Test_PenmanMonteith4) ... ok
     runTest (pcse.tests.test_wofost.TestPotentialSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterWheat) ... ok
     runTest (pcse.tests.test_wofost.TestPotentialSunflower) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSunflower) ... ok
     runTest (pcse.tests.test_wofost.TestPotentialWinterWheat) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedSpringBarley) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedPotato) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialWinterRapeseed) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialGrainMaize) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterRapeseed) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterWheat) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedSunflower) ... ok
 
     ----------------------------------------------------------------------
-    Ran 19 tests in 29.748s
+    Ran 23 tests in 31.812s
 
     OK
-    >>>
 
 If the model output matches the expected output the test will report 'OK',
 otherwise an error will be produced with a detailed traceback on where the
 problem occurred. Note that the results may deviate from the output above
-because one or more
-tests may have been temporarily disabled (skipped) often due to problems
-with the test. Moreover, SQLAlchemy may complain with a warning that can be safely ignored::
+because one or more tests may have been temporarily disabled (skipped) often
+due to problems with the test. Moreover, SQLAlchemy may complain with a
+warning that can be safely ignored::
 
      /usr/lib/python2.7/dist-packages/sqlalchemy/types.py:307: SAWarning:
      Dialect sqlite+pysqlite does *not* support Decimal objects natively, and

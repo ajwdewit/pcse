@@ -102,6 +102,10 @@ class CrownTemperature(SimulationObject):
                                                   taken from kiosk
     ============ =============================== ========================== =====
     """
+    # This setting is only used when running the unit tests for FROSTOL.
+    # For unit testing, FROSTOL should not rely on the CrownTemperature model,
+    # but instead use the prescribed crown temperature directly.
+    _testing_ = Bool(False)
 
     class Parameters(ParamTemplate):
         CROWNTMPA = Float()
@@ -113,13 +117,20 @@ class CrownTemperature(SimulationObject):
         TMIN_CROWN = Float()
         TMAX_CROWN = Float()
 
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day, kiosk, parvalues, testing=False):
         self.kiosk = kiosk
-        self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(self.kiosk)
+        self._testing_ = testing
+        if not self._testing_:
+            self.params = self.Parameters(parvalues)
+            self.rates = self.RateVariables(self.kiosk)
 
     @prepare_rates
     def __call__(self, day, drv):
+
+        # If unit testing then directly return the prescribed crown temperature
+        if self._testing_:
+            return (0., 10., drv.TEMP_CROWN)
+
         p = self.params
         r = self.rates
 
@@ -257,10 +268,11 @@ class FROSTOL(SimulationObject):
         IDFST = Int(-99)
 
     #---------------------------------------------------------------------------
-    def initialize(self, day, kiosk, parvalues):
+    def initialize(self, day, kiosk, parvalues, testing=False):
 
         # Initialize module for crown temperature
-        self.crown_temperature = CrownTemperature(day, kiosk, parvalues)
+        self.crown_temperature = CrownTemperature(day, kiosk, parvalues,
+                                                  testing)
 
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish="RF_FROST")
