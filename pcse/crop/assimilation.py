@@ -20,8 +20,6 @@ try:
     from ..futil import totass as ftotass
     from ..futil import astro as fastro
 except ImportError as exc:
-    msg = "Failed import fortran objects, reverting to python versions."
-    print(msg)
     ftotass = fastro = None
 
 class WOFOST_Assimilation(SimulationObject):
