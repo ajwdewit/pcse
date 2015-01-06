@@ -34,10 +34,10 @@ setup(
     long_description=long_description,
     packages=find_packages(),
     include_package_data=True,
-    package_data = {
-        # Include any files *.txt, *.rst, *.conf, *.csv or *.sql files:
-        '': ['*.txt', '*.rst', '*.conf', '*.csv', '*.sql'],
-    },
+#    package_data = {
+#        # Include any files *.txt, *.rst, *.conf, *.csv or *.sql files:
+#        '': ['*.txt', '*.rst', '*.conf', '*.csv', '*.sql'],
+#    },
     platforms='any',
     test_suite='pcse.tests.make_test_suite',
     use_2to3=True,
