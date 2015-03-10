@@ -949,3 +949,11 @@ def load_SQLite_dump_file(dump_file_name, SQLite_db_name):
     con = sqlite3.connect(SQLite_db_name)
     con.executescript(str_sql_dump)
     con.close()
+
+def safe_float(x):
+    """Returns the value of x converted to float, if fails return None.
+    """
+    try:
+        return float(x)
+    except (ValueError, TypeError):
+        return None
