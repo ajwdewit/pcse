@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2015
-"""Data providers for weather, soil, crop, timer and site data. Data providers
-are compatible with a CGMS 11 database schema.
 """
-import sys, os
+Data providers for weather, soil, crop, timer and site data. Also
+a class for testing STU suitability for a given crop.
+
+Data providers are compatible with a CGMS 11 database schema.
+"""
+
 import datetime
 
-from sqlalchemy import create_engine, MetaData, select, Table, and_, join
+from sqlalchemy import MetaData, select, Table, and_
 from tabulate import tabulate
 import numpy as np
 
@@ -15,9 +18,13 @@ from ...util import wind10to2, safe_float, check_date
 from ... import exceptions as exc
 from ...base_classes import WeatherDataContainer, WeatherDataProvider
 
+
 def fetch_crop_name(engine, crop_no):
     """Retrieves the name of the crop from the CROP table for
     given crop_no.
+
+    :param engine: SqlAlchemy engine object providing DB access
+    :param crop_no: Integer crop ID, maps to the CROP_NO column in the table
     """
     metadata = MetaData(engine)
     table_crop = Table("crop", metadata, autoload=True)
@@ -32,6 +39,11 @@ def fetch_crop_name(engine, crop_no):
 
 
 class STU_Suitability(set):
+    """Returns a set() of suitable STU's for given crop_no.
+
+    :param engine: SqlAlchemy engine object providing DB access
+    :param crop_no: Integer crop ID, maps to the CROP_NO column in the table
+    """
 
     def __init__(self, engine, crop_no):
         self.crop_no = int(crop_no)
@@ -57,7 +69,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     compatible database.
 
     :param engine: SqlAlchemy engine object providing DB access
-    :param grid_no:  Grid ID to retrieve data for
+    :param grid_no:  Grid number (int) to retrieve data for
     :param start_date: Retrieve meteo data starting with start_date
         (datetime.date object)
     :param end_date: Retrieve meteo data up to and including end_date
@@ -157,7 +169,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
                      "LON": self.longitude, "ELEV": self.elevation}
                 wdc = self._make_WeatherDataContainer(row, t)
                 self._store_WeatherDataContainer(wdc, DAY)
-        except Exception as e:
+        except Exception:
             msg = "Failure reading meteodata for grid %s "
             self.logger.exception(msg, self.grid_no)
             raise exc.PCSEError(msg, self.grid_no)
@@ -216,7 +228,6 @@ class TimerDataProvider(dict):
     #   CROP_END_DATE: date of the end of the crop simulation in case of CROP_END_TYPE == "harvest" | "earliest"
     #    MAX_DURATION: maximum number of days of the crop simulation
 
-
     def __init__(self, engine, grid_no, crop_no, campaign_year):
         dict.__init__(self)
 
@@ -267,6 +278,8 @@ class TimerDataProvider(dict):
         else:
             msg = ("Unrecognized option for END_TYPE in table "
                    "CROP_CALENDAR: %s" % crop_end_type)
+            raise exc.PCSEError(msg)
+
         # Maximum duration of crop cycle
         self["MAX_DURATION"] = int(row.max_duration)
         # simulation end date equals CROP_START_DATE + MAX_DURATION
@@ -349,7 +362,6 @@ class SoilDataProviderSingleLayer(dict):
 
         :param metadata: An SQLAlchemy Metadata object
         :param rd_class: The rooting depth class (integer)
-        :return: None
         """
 
         table_rd = Table("rooting_depth", metadata, autoload=True)
@@ -387,14 +399,27 @@ class SoilDataProviderSingleLayer(dict):
                 raise exc.PCSEError(msg)
             self[wofost_soil_par] = float(row.parameter_xvalue)
 
+
 class SoilDataIterator(list):
     """Class for iterating over the different soils in a CGMS grid.
 
     Instances of this class behave like a list, allowing to iterate
-    over the soils in a CGMS grid. An example:
+    over the soils in a CGMS grid. An example::
 
-    >>soil_iterator = SoilDataIterator(engine, grid_no=15060)
-
+    >>> soil_iterator = SoilDataIterator(engine, grid_no=15060)
+    >>> print(soildata)
+    Soil data for grid_no=15060 derived from oracle+cx_oracle://cgms12eu:***@eurdas.world
+      smu_no=9050131, area=625000000, stu_no=9000282 covering 50% of smu.
+        Soil parameters {'SMLIM': 0.312, 'SMFCF': 0.312, 'SMW': 0.152, 'CRAIRC': 0.06,
+                         'KSUB': 10.0, 'RDMSOL': 10.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.439}
+      smu_no=9050131, area=625000000, stu_no=9000283 covering 50% of smu.
+        Soil parameters {'SMLIM': 0.28325, 'SMFCF': 0.28325, 'SMW': 0.12325, 'CRAIRC': 0.06,
+                         'KSUB': 10.0, 'RDMSOL': 40.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.42075}
+    >>> for smu_no, area, stu_no, percentage, soil_par in soildata:
+    ...     print(smu_no, area, stu_no, percentage)
+    ...
+    (9050131, 625000000, 9000282, 50)
+    (9050131, 625000000, 9000283, 50)
     """
 
     def __init__(self, engine, grid_no):
@@ -448,8 +473,15 @@ class SoilDataIterator(list):
         return msg
 
 class CropDataProvider(dict):
-    """Retrieves the crop parameters for the given grid_no, crop_no and year.
+    """Retrieves the crop parameters for the given grid_no, crop_no and year
+    from the tables CROP_CALENDAR, CROP_PARAMETER_VALUE and VARIETY_PARAMETER_VALUE.
 
+    :param engine: SqlAlchemy engine object providing DB access
+    :param grid_no: Integer grid ID, maps to the GRID_NO column in the table
+    :param crop_no: Integer crop ID, maps to the CROP_NO column in the table
+    :param campaign_year: Integer campaign year, maps to the YEAR column in the table.
+        The campaign year usually refers to the year of the harvest. Thus for crops
+        crossing calendar years, the start_date can be in the previous year.
     """
 
     # Define single and tabular crop parameter values
@@ -464,10 +496,10 @@ class CropDataProvider(dict):
                                "TMPFTB")
     # Some parameters have to be converted from a single to a tabular form
     single2tabular = {"SSA": ("SSATB", [0., None, 2.0, None]),
-                      "KDIF":("KDIFTB", [0., None, 2.0, None]),
+                      "KDIF": ("KDIFTB", [0., None, 2.0, None]),
                       "EFF": ("EFFTB", [0., None, 40., None])}
     # Default values for additional parameters not defined in CGMS
-    parameters_additional = {"DVSI":0.0, "IOX":0}
+    parameters_additional = {"DVSI": 0.0, "IOX": 0}
 
     def __init__(self, engine, grid_no, crop_no, campaign_year):
         dict.__init__(self)
@@ -534,14 +566,13 @@ class CropDataProvider(dict):
                 msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
                 raise exc.PCSEError(msg % (self.crop_no, parameter_code))
             if len(rows) == 1:
-                msg = ("Single parameter value found for crop_no=%s, parameter_code='%s' while " \
+                msg = ("Single parameter value found for crop_no=%s, parameter_code='%s' while "
                        "tabular parameter expected." % (crop_no, parameter_code))
                 raise exc.PCSEError(msg)
             values = []
             for row in rows:
                 values.extend([float(row.parameter_xvalue), float(row.parameter_yvalue)])
             self[parameter_code] = values
-
 
     def _fetch_variety_parameter_values(self, metadata, crop_no, variety_no):
         """Derived the crop parameter values from the VARIETY_PARAMETER_VALUE
@@ -579,7 +610,7 @@ class CropDataProvider(dict):
                 continue
 
             if len(rows) == 1:
-                msg = ("Single parameter value found for crop_no=%s, parameter_code='%s' while " \
+                msg = ("Single parameter value found for crop_no=%s, parameter_code='%s' while "
                        "tabular parameter expected." % (crop_no, parameter_code))
                 raise exc.PCSEError(msg)
             values = []
@@ -597,8 +628,9 @@ class CropDataProvider(dict):
 
     def __str__(self):
         msg = ("Crop parameter values for grid_no=%s, crop_no=%s (%s), variety_no=%s, "
-               "campaign_year=%i derived from %s\n" % (self.grid_no, self.crop_no,
-                self.crop_name, self.variety_no, self.campaign_year, self.db_resource))
+               "campaign_year=%i derived from %s\n" %
+               (self.grid_no, self.crop_no, self.crop_name, self.variety_no,
+                self.campaign_year, self.db_resource))
         single_values = []
         tabular_values = []
         for pcode in sorted(self.iterkeys()):
@@ -612,11 +644,11 @@ class CropDataProvider(dict):
         msg += "Single parameter values:\n"
         # If not of even length add ["",""]
         if not len(single_values) % 2 == 0:
-            single_values.append(["",""])
+            single_values.append(["", ""])
         np_single_values = np.array(single_values, dtype=np.string_)
         shp = np_single_values.shape
         np_single_values.shape = (shp[0]/2, shp[1]*2)
-        msg += tabulate(np_single_values, headers=["Par_code","Value","Par_code","Value"])
+        msg += tabulate(np_single_values, headers=["Par_code", "Value", "Par_code", "Value"])
         msg += "\n"
 
         # Format the tabular parameters in two columns
@@ -641,8 +673,7 @@ class SiteDataProvider(dict):
 
     """
 
-    def __init__(self, engine, grid_no, crop_no, campaign_year, stu_no,
-                 SMLIM=None):
+    def __init__(self, engine, grid_no, crop_no, campaign_year, stu_no):
         dict.__init__(self)
 
         self.grid_no = int(grid_no)
