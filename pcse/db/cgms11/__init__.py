@@ -6,3 +6,8 @@ from a CGMS11 compatible database.
 """
 
 from .data_providers import WeatherObsGridDataProvider
+from .data_providers import TimerDataProvider
+from .data_providers import SoilDataIterator
+from .data_providers import CropDataProvider
+from .data_providers import STU_Suitability
+from .data_providers import SiteDataProvider

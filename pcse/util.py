@@ -957,3 +957,39 @@ def safe_float(x):
         return float(x)
     except (ValueError, TypeError):
         return None
+
+def check_date(indate):
+        """Check representations of date and try to force into a datetime.date
+
+        The following formats are supported:
+
+        1. a date object
+        2. a datetime object
+        3. a string of the format YYYYMMDD
+        4. a string of the format YYYYDDD
+
+        Formats 2-4 are all converted into a date object internally.
+        """
+
+        import datetime as dt
+        if isinstance(indate, dt.datetime):
+            return indate.date()
+        elif isinstance(indate, dt.date):
+            return indate
+        elif isinstance(indate, str):
+            skey = indate.strip()
+            l = len(skey)
+            if l==8:
+                # assume YYYYMMDD
+                dkey = dt.datetime.strptime(skey,"%Y%m%d")
+                return dkey.date()
+            elif l==7:
+                # assume YYYYDDD
+                dkey = dt.datetime.strptime(skey,"%Y%j")
+                return dkey.date()
+            else:
+                msg = "Input value not recognized as date: %s"
+                raise KeyError(msg % indate)
+        else:
+            msg = "Input value not recognized as date: %s"
+            raise KeyError(msg % indate)
