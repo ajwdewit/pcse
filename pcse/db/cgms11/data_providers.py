@@ -58,7 +58,7 @@ class STU_Suitability(set):
         self.cropgroup_no = int(row.cropgroup_no)
         self.crop_name = row.crop_name
 
-        table_ss = Table('suitability', metadata, autoload=True)
+        table_ss = Table('suitability', metadata, autoload=True, )
         r = select([table_ss.c.stu_no], table_ss.c.cropgroup_no == self.cropgroup_no).execute()
         rows = r.fetchall()
         set.__init__(self, [int(row.stu_no) for row in rows])
@@ -487,7 +487,7 @@ class CropDataProvider(dict):
     # Define single and tabular crop parameter values
     parameter_codes_single = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC",
                               "DLO", "DVSEND", "EFF", "IAIRDU", "IDSL", "KDIF",
-                             "LAIEM", "PERDL", "Q10", "RDI", "RDMCR", "RGRLAI",
+                              "LAIEM", "PERDL", "Q10", "RDI", "RDMCR", "RGRLAI",
                               "RML", "RMO", "RMR", "RMS", "RRI", "SPA", "SPAN", "SSA",
                               "TBASE", "TBASEM", "TDWI", "TEFFMX", "TSUM1", "TSUM2",
                               "TSUMEM")
