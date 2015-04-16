@@ -21,6 +21,12 @@ kJ_to_J = lambda x, s: x*1000.
 kPa_to_hPa = lambda x, s: x*10.
 mm_to_cm = lambda x, s: x/10.
 
+class NoDataError(PCSEError):
+    pass
+
+class OutOfRange(PCSEError):
+    pass
+
 def xlsdate_to_date(value, sheet):
     """Convert an excel date into a python date
 
@@ -43,24 +49,31 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         "RAIN": mm_to_cm,
         "SNOWDEPTH": NoConversion
     }
+
+    # row numbers where value start. Note that the row numbers are
+    # zero-based, so add 1 to find the corresponding row in excel.
     site_row = 8
     label_row = 10
     data_start_row = 12
 
-    def __init__(self, fname):
+    def __init__(self, xls_fname, missing_snow_depth=None):
         WeatherDataProvider.__init__(self)
 
-        fp_fname = os.path.abspath(fname)
-        if not os.path.exists(fname):
-            msg = "Cannot find weather file at: %s" % fp_fname
+        self.fp_xls_fname = os.path.abspath(xls_fname)
+        self.missing_snow_depth = missing_snow_depth
+        if not os.path.exists(self.fp_xls_fname):
+            msg = "Cannot find weather file at: %s" % self.fp_xls_fname
             raise PCSEError(msg)
 
-        book = xlrd.open_workbook(fp_fname)
-        sheet = book.sheet_by_index(0)
+        if not self._load_cache_file(self.fp_xls_fname):  # Cache file cannot be loaded
+            book = xlrd.open_workbook(self.fp_xls_fname)
+            sheet = book.sheet_by_index(0)
 
-        self._read_header(sheet)
-        self._read_site_characteristics(sheet)
-        self._read_observations(sheet)
+            self._read_header(sheet)
+            self._read_site_characteristics(sheet)
+            self._read_observations(sheet)
+
+            self._write_cache_file(self.fp_xls_fname)
 
     def _read_header(self, sheet):
 
@@ -69,7 +82,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         desc = sheet.cell_value(3, 1)
         src = sheet.cell_value(4, 1)
         contact = sheet.cell_value(5, 1)
-        self.nodata_value = sheet.cell_value(6, 1)
+        self.nodata_value = float(sheet.cell_value(6, 1))
         self.description = [u"Weather data for:",
                             u"Country: %s" % country,
                             u"Station: %s" % station,
@@ -89,30 +102,94 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
     def _read_observations(self, sheet):
 
+        # First get the column labels
         labels = [cell.value for cell in sheet.row(self.label_row)]
+
         # Start reading all rows with data
         rownums = range(sheet.nrows)
         for rownum in rownums[self.data_start_row:]:
-            row = sheet.row(rownum)
-            d = {}
-            nextrow = False
-            for cell, label in zip(row, labels):
-                try:
+            try:
+                row = sheet.row(rownum)
+                d = {}
+                for cell, label in zip(row, labels):
+                    # explicitly convert to float. If this fails a ValueError will be thrown
                     value = float(cell.value)
-                except ValueError as e:
-                    msg = "Failed reading row: %i. Skipping..." % (rownum + 1)
-                    self.logger.warning(msg)
-                    print(msg)
-                    nextrow = True
 
-                if label == "IRRAD" and self.has_sunshine is True:
-                    d[label] = angstrom(d["DAY"], self.latitude, float(cell.value),
-                                        self.angstA, self.angstB)
-                func = self.obs_conversions[label]
-                d[label] = func(float(cell.value), sheet)
-            e0, es0, et0 = reference_ET(LAT=self.latitude, ELEV=self.elevation, ANGSTA=self.angstA,
-                                        ANGSTB=self.angstB, **d)
-            d["E0"] = e0; d["ES0"] = es0; d["ET0"] = et0
-            wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude, ELEV=self.elevation, **d)
-            self._store_WeatherDataContainer(wdc, d["DAY"])
+                    # Check for observations marked as missing. Currently only missing
+                    # data is allowed for SNOWDEPTH. Otherwise raise an error
+                    eps = 0.0001
+                    if (value - self.nodata_value) < eps:
+                        if label == "SNOWDEPTH":
+                            value = self.missing_snow_depth
+                        else:
+                            raise NoDataError
 
+                    if label == "IRRAD" and self.has_sunshine is True:
+                        if 0 < value < 24:
+                            d[label] = angstrom(d["DAY"], self.latitude, value, self.angstA, self.angstB)
+                        else:
+                            msg = "Sunshine duration not within 0-24 interval for row %i" % (rownum + 1)
+                            raise OutOfRange(msg)
+
+                    func = self.obs_conversions[label]
+                    d[label] = func(value, sheet)
+                e0, es0, et0 = reference_ET(LAT=self.latitude, ELEV=self.elevation, ANGSTA=self.angstA,
+                                            ANGSTB=self.angstB, **d)
+                d["E0"] = e0; d["ES0"] = es0; d["ET0"] = et0
+                wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude, ELEV=self.elevation, **d)
+                self._store_WeatherDataContainer(wdc, d["DAY"])
+
+            except ValueError as e: # strange value in cell
+                msg = "Failed reading row: %i. Skipping..." % (rownum + 1)
+                self.logger.warn(msg)
+                print(msg)
+
+            except NoDataError as e: # Missing value encountered
+                msg = "No data value (%f) encountered at row %i. Skipping..." % (self.nodata_value, (rownum + 1))
+                self.logger.warn(msg)
+
+            except OutOfRange as e:
+                self.logger.warn(e.message)
+
+    def _load_cache_file(self, xls_fname):
+
+        cache_filename = self._find_cache_file(xls_fname)
+        if cache_filename is None:
+            return False
+        else:
+            self._load(cache_filename)
+            return True
+
+    def _find_cache_file(self, xls_fname):
+        """Try to find a cache file for file name
+
+        Returns None if the cache file does not exist, else it returns the full path
+        to the cache file.
+        """
+        cache_filename = self._get_cache_filename(xls_fname)
+        if os.path.exists(cache_filename):
+            cache_date = os.stat(cache_filename).st_mtime
+            xls_date = os.stat(xls_fname).st_mtime
+            if cache_date > xls_date:  # cache is more recent then XLS file
+                return cache_filename
+
+        return None
+
+    def _get_cache_filename(self, xls_fname):
+        """Constructs the filename used for cache files given xls_fname
+        """
+        basename = os.path.basename(xls_fname)
+        filename, ext = os.path.splitext(basename)
+
+        tmp = "%s_%s.cache" % (self.__class__.__name__, filename)
+        cache_filename = os.path.join(settings.METEO_CACHE_DIR, tmp)
+        return cache_filename
+
+    def _write_cache_file(self, xls_fname):
+
+        cache_filename = self._get_cache_filename(xls_fname)
+        try:
+            self._dump(cache_filename)
+        except (IOError, EnvironmentError), e:
+            msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
+            self.logger.warning(msg)
