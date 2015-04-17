@@ -133,9 +133,12 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
                     func = self.obs_conversions[label]
                     d[label] = func(value, sheet)
+
+                # Reference ET in mm/day
                 e0, es0, et0 = reference_ET(LAT=self.latitude, ELEV=self.elevation, ANGSTA=self.angstA,
                                             ANGSTB=self.angstB, **d)
-                d["E0"] = e0; d["ES0"] = es0; d["ET0"] = et0
+                d["E0"] = e0/10.; d["ES0"] = es0/10.; d["ET0"] = et0/10.
+
                 wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude, ELEV=self.elevation, **d)
                 self._store_WeatherDataContainer(wdc, d["DAY"])
 

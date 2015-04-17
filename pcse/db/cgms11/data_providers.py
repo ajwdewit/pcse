@@ -14,7 +14,7 @@ from sqlalchemy import MetaData, select, Table, and_
 from tabulate import tabulate
 import numpy as np
 
-from ...util import wind10to2, safe_float, check_date
+from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import exceptions as exc
 from ...base_classes import WeatherDataContainer, WeatherDataProvider
 
@@ -82,12 +82,17 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     If start_date and end_date are not provided then the entire time-series
     for the grid is retrieved.
     """
-
-    def __init__(self, engine, grid_no, start_date=None, end_date=None):
+    # default values for the Angstrom parameters in the sunshine duration model
+    angstA = 0.18
+    angstB = 0.55
+    def __init__(self, engine, grid_no, start_date=None, end_date=None,
+                 recalc_ET=False):
 
         WeatherDataProvider.__init__(self)
 
         self.grid_no = grid_no
+        self.recalc_ET = recalc_ET
+
         try:
             self.start_date = self.check_keydate(start_date)
         except KeyError:
@@ -188,11 +193,21 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
                   "VAP":  float(row.vapourpressure),
                   "WIND": wind10to2(float(row.windspeed)),
                   "RAIN": float(row.precipitation)/10.,
-                  "E0":  float(row.e0)/10.,
-                  "ES0": float(row.es0)/10.,
-                  "ET0": float(row.et0)/10.,
                   "IRRAD": float(row.radiation)*1000.,
                   "SNOWDEPTH": safe_float(row.snowdepth)})
+
+        if not self.recalc_ET:
+            t.update({"E0":  float(row.e0)/10.,
+                      "ES0": float(row.es0)/10.,
+                      "ET0": float(row.et0)/10.})
+        else:
+            e0, es0, et0 = reference_ET(ANGSTA=self.angstA,
+                                        ANGSTB=self.angstB, **t)
+
+            t.update({"E0":  e0/10.,
+                      "ES0": es0/10.,
+                      "ET0": et0/10.})
+
         wdc = WeatherDataContainer(**t)
         return wdc
 

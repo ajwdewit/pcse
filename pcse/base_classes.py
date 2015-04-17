@@ -976,7 +976,7 @@ class WeatherDataContainer(SlotPickleMixin):
     :keyword TMAX: Daily maximum temperature (Celsius)
     :keyword VAP: Daily mean vapour pressure (hPa)
     :keyword RAIN: Daily total rainfall (cm/day)
-    :keyword WIND: Daily mean wind speed (m/sec)
+    :keyword WIND: Daily mean wind speed at 2m height (m/sec)
     :keyword E0: Daily evaporation rate from open water (cm/day)
     :keyword ES0: Daily evaporation rate from bare soil (cm/day)
     :keyword ET0: Daily evapotranspiration rate from reference crop (cm/day)
