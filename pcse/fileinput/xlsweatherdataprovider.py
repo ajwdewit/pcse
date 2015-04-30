@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
-import os, sys
-import glob
-import calendar
-import numpy as np
+# Copyright (c) 2004-2015 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2015
+"""A weather data provider reading its data from Excel files.
+"""
+import os
 import datetime as dt
-import warnings
 import xlrd
 
 from ..base_classes import WeatherDataContainer, WeatherDataProvider
@@ -31,13 +29,32 @@ def xlsdate_to_date(value, sheet):
     """Convert an excel date into a python date
 
     :param value: A value from an excel cell
+    :param sheet: A reference to the excel sheet for getting the datemode
     :return: a python date
     """
     year, month, day, hr, min, sec = xlrd.xldate_as_tuple(value, sheet.book.datemode)
     return dt.date(year, month, day)
 
 class ExcelWeatherDataProvider(WeatherDataProvider):
-    """Reading weather data from Excel (xls & xlst) files.
+    """Reading weather data from an excel file.
+
+    :param xls_fname: name of the Excel file to be read
+    :param mising_snow_depth: the value that should use for missing SNOW_DEPTH
+    values
+
+    For reading weather data from file, initially on the CABOWeatherDataProvider
+    was available that read its data from text in the CABOWeater format.
+    Nevertheless, building CABO weather files is tedious as for each year a new
+    file must constructed. Moreover it is rather error prone and formatting
+    mistakes are easily leading to errors.
+
+    To simplify providing weather data to PCSE models, a new data provider
+    was written that reads its data from simple excel files
+
+    The ExcelWeatherDataProvider assumes that records are complete and does
+    not make an effort to interpolate data as this can be easily
+    accomplished in Excel itself. Only SNOW_DEPTH is allowed to be missing
+    as this parameter is usually not provided outside the winter season.
     """
     obs_conversions = {
         "TMAX": NoConversion,
@@ -50,7 +67,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         "SNOWDEPTH": NoConversion
     }
 
-    # row numbers where value start. Note that the row numbers are
+    # row numbers where values start. Note that the row numbers are
     # zero-based, so add 1 to find the corresponding row in excel.
     site_row = 8
     label_row = 10
@@ -137,6 +154,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                 # Reference ET in mm/day
                 e0, es0, et0 = reference_ET(LAT=self.latitude, ELEV=self.elevation, ANGSTA=self.angstA,
                                             ANGSTB=self.angstB, **d)
+                # convert to cm/day
                 d["E0"] = e0/10.; d["ES0"] = es0/10.; d["ET0"] = et0/10.
 
                 wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude, ELEV=self.elevation, **d)
