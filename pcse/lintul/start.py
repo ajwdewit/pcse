@@ -4,10 +4,12 @@ from pcse.engine import Engine
 from pcse.fileinput.cabo_weather import CABOWeatherDataProvider
 from datetime import date
 import lintul3parameters
+from pcse.lintul.lintul3 import Lintul3
 
 
 class Lintul3Model(Engine):
-    pass
+
+    
 
     @classmethod
     def readModelParameters(cls, module):
@@ -21,7 +23,8 @@ class Lintul3Model(Engine):
 
 
     @classmethod
-    def start(cls, year=1997):
+    def start(cls, year=1997, outputProc = None):
+        
         # Timer: starting day, final day and model output
         timerdata           = {
                                "CAMPAIGNYEAR": year,                      # year of the agricultural campaign (e.g. harvest year)
@@ -35,9 +38,11 @@ class Lintul3Model(Engine):
                                }
         parameterprovider   = ParameterProvider(Lintul3Model.readModelParameters(lintul3parameters), timerdata, {}, {})
         weatherdataprovider = CABOWeatherDataProvider("NL1", "D:/Projects/pcse/lintul/Lintul-3 model/data/")
-        
+    
+        Lintul3.defaultOutputProc = outputProc    
         return Lintul3Model(parameterprovider, weatherdataprovider, config="lintul3.conf.py")
 
+    
 
 if (__name__ == "__main__"):
     sim = Lintul3Model.start(1997)

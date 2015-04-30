@@ -21,3 +21,7 @@ env/
 
 # PyCharm configuration files
 .idea/
+/org.eclipse.core.resources.prefs
+/.pydevproject
+/.project
+/lintul3-springwheat-test.py

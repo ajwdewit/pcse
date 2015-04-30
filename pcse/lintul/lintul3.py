@@ -8,7 +8,9 @@ from pcse.decorators import prepare_rates, prepare_states
 from pcse.lintul import lintul3lib
 from pcse.lintul.lintul3lib import notNull, INSW, REAAND
 from numpy.ma.core import exp
-from start import Lintul3Model
+from numbers import Number
+from pcse.lintul.stateVariables import StateVariables
+
 
 
 class Lintul3(SimulationObject):
@@ -97,7 +99,7 @@ class Lintul3(SimulationObject):
 
 
         
-    class StateVariables(StatesTemplate):
+    class Lintul3States(StateVariables):
         TSUM  = Float(-99.)
         LAI   = Float(-99.)
         ANLV  = Float(-99.)
@@ -176,10 +178,10 @@ class Lintul3(SimulationObject):
     def defineRateVariables(cls):
         '''
         ensure a rate for each state
-        :param cls: outer class of RateVariables  and StateVariables
+        :param cls: outer class of RateVariables  and Lintul3States
         '''
         attributes = {}
-        for s in cls.StateVariables.listIntegratedStates():
+        for s in cls.Lintul3States.listIntegratedStates():
             attributes['r' + s] = Float(-99.)
 
         return type('RateVariables', (RatesTemplate, ), attributes)
@@ -188,6 +190,9 @@ class Lintul3(SimulationObject):
         
     initialValues = None
     ratesClass = None
+    onOutput = None
+    defaultOutputProc = None
+    header = None
     DSLR  = 0 
     FSHMOD = 0.0       
     OUTPUT_VARS = sorted( ["TIME", "WAI", "DVS", "TSUM", "TAGBM", "WST", "WLVG", "WLVD", "WSO", "LAI", "NTAC", "WRT", 
@@ -199,7 +204,7 @@ class Lintul3(SimulationObject):
     
     def __init__(self, day, kiosk, *args, **kwargs):
         self.find_subroutines()
-        
+        self.onOutput = self.defaultOutputProc
         super(Lintul3, self).__init__(day, kiosk, *args, **kwargs)
         
         
@@ -217,7 +222,7 @@ class Lintul3(SimulationObject):
         # Read initial states
         init                = self.InitialValues(self.params)
         self.initialValues  = init
-        initialStates       = dict((a, 0.0) for a in self.StateVariables.listIntegratedStates())
+        initialStates       = self.Lintul3States.initialValues() # dict((a, 0.0) for a in self.Lintul3States.listIntegratedStates())
         
         
         # Initialize state variables
@@ -234,11 +239,13 @@ class Lintul3(SimulationObject):
         initialStates["ROOTD"]  = init.ROOTDI
         initialStates["WA"]     = init.WAI
 
-        self.states = self.StateVariables(kiosk, publish=[], **initialStates)
+        self.states = self.Lintul3States(kiosk, publish=[], **initialStates)
                 
+        self.states.initialize()
+        
 #         self.rates  = self.RateVariables(kiosk)
-        self.ratesClass = self.defineRateVariables()
-        self.rates  = self.ratesClass(kiosk)
+#         self.ratesClass = self.defineRateVariables()
+#         self.rates  = self.ratesClass(kiosk)
 
         
                 
@@ -268,7 +275,7 @@ class Lintul3(SimulationObject):
     def calc_rates(self, day, drv):
         # dynamic calculations
         p = self.params
-        r = self.rates
+#         r = self.rates
         s = self.states
         i = self.initialValues
         
@@ -517,7 +524,7 @@ class Lintul3(SimulationObject):
                          - (i.WAI + s.TRAIN + s.TEXPLO +s.TIRRIG)) 
                  
 
-            
+        r = s   
         r.rTSUM   = RTSUMP
         r.rLAI    = RLAI  
         r.rANLV   = RNLV  
@@ -546,34 +553,42 @@ class Lintul3(SimulationObject):
         r.rTRAIN  = RAIN  
         r.rTDRAIN = DRAIN
         
+        self.doOutput(TIME, locals().copy())
         
-        if (TIME == 1):
-            for v in self.OUTPUT_VARS:
+        
+    def doOutput(self, time, localVariables):
+        '''
+        outputs output
+        :param time:
+        :param localVariables: locals().copy()
+        '''
+        if self.onOutput != None:
+            if not self.header:
+                self.header = ["TIME"]
+                for v in self.OUTPUT_VARS:
+                    try:
+                        if localVariables.has_key(v):
+                            value = localVariables[v]
+                        else:
+                            value = getattr(self.states, v)
+                        self.header.append(v)
+                    except:
+                        self.OUTPUT_VARS.remove(v)
+                
+                self.onOutput(self.header)
+                            
+            rcd = []
+            for v in self.header:
                 try:
-                    if locals().has_key(v):
-                        value = locals()[v]
-                    else:
-                        value = getattr(self.states, v)
+                        if localVariables.has_key(v):
+                            value = localVariables[v]
+                        else:
+                            value = getattr(self.states, v)
                 except:
-                    self.OUTPUT_VARS.remove(v)
-            
-            print "day\t",
-            for v in self.OUTPUT_VARS:
-                print "%s\t" % v,
-            print
-                        
-        print "%s\t" % day,
-        for v in self.OUTPUT_VARS:
-            try:
-                    if locals().has_key(v):
-                        value = locals()[v]
-                    else:
-                        value = getattr(self.states, v)
-            except:
-                value =-99999
-            print "%f\t" % (value),
-            
-        print
+                    value =-99999
+                rcd.append(value)
+                
+            self.onOutput(rcd)
         
         
 # finish conditions
@@ -596,7 +611,7 @@ class Lintul3(SimulationObject):
         __out__ = (TIME==180)
         
         for s in states.listIntegratedStates():
-            rate = getattr(rates, 'r' + s)
+            rate = getattr(states, 'r' + s)
             state = getattr(states, s)
             newvalue = state + delta * rate
             setattr(states, s, newvalue)
@@ -623,9 +638,21 @@ class Lintul3(SimulationObject):
     def updateRates(self):
         self.rates.rTSUM = 1
         
+        
+        
 if (__name__ == "__main__"):
-
-    sim = Lintul3Model.start(1987)
+    from start import Lintul3Model
+    
+    def printOutput(sender, aRow):
+        for v in aRow:
+            if isinstance(v, Number):
+                print "%f\t" % (v),
+            else:
+                print "%s\t" % (v),
+        print
+        
+    sim = Lintul3Model.start(year=1987, outputProc=printOutput)
     l = sim.crop
-    sim.run(182)
+    
+    sim.run(2)
 
