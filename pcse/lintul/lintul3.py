@@ -9,6 +9,7 @@ from pcse.lintul.lintul3lib import notNull, INSW, REAAND
 from numpy.ma.core import exp
 from numbers import Number
 from pcse.lintul.stateVariables import StateVariables
+from pcse.util import astro
 
 
 class SubModel(SimulationObject):
@@ -259,7 +260,6 @@ class Lintul3(SubModel):
         
                 
     def find_subroutines(self):
-        self.astro  = lintul3lib.ASTRO
         self.deathl = lintul3lib.DEATHL
         self.evaptr = lintul3lib.EVAPTR
         self.gla    = lintul3lib.GLA
@@ -306,7 +306,7 @@ class Lintul3(SubModel):
             
         # **********************Calling Subroutines******************************
         #  Calling the subroutine for calculating the astrological daylength.
-        DAYL = self.astro(TIME, LAT)
+        DAYL = astro(day, LAT, drv.IRRAD).DAYL
         
         # Calling the subroutine for converting TSUM to the developmental stage.
         DVS = self.subdvs(TIME, p.DOYEM, s.TSUM, p.TSUMAN, p.TSUMMT)
