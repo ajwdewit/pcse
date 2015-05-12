@@ -7,11 +7,12 @@ This configuration file defines the crop.
 """
 
 from pcse.lintul.lintul3 import Lintul3
+from pcse.lintul.lintul3soil import Lintul3Soil
 from pcse.empty_model import EmptyModel
 from pcse.agromanagement import AgroManagementSingleCrop
 
 # Module to be used for water balance
-SOIL = EmptyModel
+SOIL = Lintul3Soil
 
 # Module to be used for the crop simulation itself
 CROP = Lintul3

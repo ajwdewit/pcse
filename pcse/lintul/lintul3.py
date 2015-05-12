@@ -1,8 +1,7 @@
 '''
 LINTUL2_N with adaptation to N-Limitation
 '''
-from pcse.base_classes import SimulationObject, ParamTemplate, StatesTemplate,\
-    RatesTemplate
+from pcse.base_classes import SimulationObject, ParamTemplate
 from pcse.traitlets import Float, AfgenTrait
 from pcse.decorators import prepare_rates, prepare_states
 from pcse.lintul import lintul3lib
@@ -12,9 +11,59 @@ from numbers import Number
 from pcse.lintul.stateVariables import StateVariables
 
 
+class SubModel(SimulationObject):
+    
+    initialValues = None
+    onOutput = None
+    output = {}
+    headerPrinted = False
+    
+    OUTPUT_VARS = ["TIME"] + sorted( ["WAI", "DVS", "TSUM", "TAGBM", "WST", "WLVG", "WLVD", "WSO", "LAI", "NTAC", "WRT", 
+               "GTSUM", "CBALAN", "TRANRF", "NNI", "SLA", "FRACT", "FRTWET", "FLVT", "FSTT", "FSOT", 
+               "RWLVG", "RWST", "RWRT", "RWSO", "CUMPAR", "LUECAL", "NUPTT", "TTRAN", "TEVAP", "PEVAP", 
+               "NBALAN", "WATBAL", "NUPTR", "TNSOIL", "NDEMTO", "RNSOIL", "FERTN", "FERTNS", "WA", 
+               "TIRRIG", "TRAIN", "TEXPLO", "TRUNOF", "TDRAIN"])
+    
+    @classmethod
+    def doOutput(cls, model, time, localVariables):
+        '''
+        outputs output
+        :param time:
+        :param localVariables: locals().copy()
+        '''
+        if SubModel.onOutput != None:
+            
+            # delegate output printing:
+            if SubModel.output.has_key("TIME") and (SubModel.output["TIME"] != time ):
+                rcd = []
+                for v in SubModel.OUTPUT_VARS:
+                    try:
+                        value = SubModel.output[v]
+                    except:
+                        value = "-"
+                    rcd.append(value)
+                    
+                SubModel.onOutput(rcd, SubModel.OUTPUT_VARS if not SubModel.headerPrinted else None)
+                SubModel.headerPrinted = True
+                SubModel.output        = {}
+                 
+                
+            # compile value record:              
+            SubModel.output["TIME"] = time
+            
+            for v in SubModel.OUTPUT_VARS:
+                if localVariables.has_key(v):
+                    SubModel.output[v] = localVariables[v]
+                elif hasattr(model.states, v):
+                    SubModel.output[v] = getattr(model.states, v)
+                
+            
+        
+        
 
-class Lintul3(SimulationObject):
+class Lintul3(SubModel):
     """
+* ORIGINAL COPYRGIGHT NOTICE:    
 *-------------------------------------------------------------------------*
 * Copyright 2013. Wageningen University, Plant Production Systems group,  *
 * P.O. Box 430, 6700 AK Wageningen, The Netherlands.                      *
@@ -37,18 +86,17 @@ class Lintul3(SimulationObject):
 *          Test version for spring wheat, using parameters for spring  *
 *          wheat for Flevoland                                         *
 ************************************************************************
+
 """
     # Parameters, rates and states which are relevant at the main crop
     # simulation level
     class Parameters(ParamTemplate):
         DOYEM = Float(-99.)
-        DRATE = Float(-99.)
         DVSDR = Float(-99.)
         DVSNLT= Float(-99.)
         DVSNT = Float(-99.)
         FNTRT = Float(-99.)
         FRNX  = Float(-99.)
-        IRRIGF= Float(-99.)
         K     = Float(-99.)
         LAICR = Float(-99.)
         LRNR  = Float(-99.)
@@ -80,7 +128,6 @@ class Lintul3(SimulationObject):
         WCFC  = Float(-99.)
         WCI   = Float(-99.)
         WCST  = Float(-99.)
-        WCSUBS= Float(-99.)
         WCWET = Float(-99.)
         WCWP  = Float(-99.)
         WMFAC = Float(-99.)
@@ -119,21 +166,7 @@ class Lintul3(SimulationObject):
         GTSUM = Float(-99.)
         WDRT  = Float(-99.)
         CUMPAR= Float(-99.)
-        WA    = Float(-99.)
-        TEXPLO= Float(-99.)
-        TEVAP = Float(-99.)
-        TTRAN = Float(-99.)
-        TRUNOF= Float(-99.)
-        TIRRIG= Float(-99.)
-        TRAIN = Float(-99.)
-        TDRAIN= Float(-99.)
-#         
-#                 
-#         def __getattr__(self, name)
-#             tryState = name[]
-#             if (name.starts_with('r') and hasattr(self, name)):
-#                 
-#             return StatesTemplate.__getattribute__(self, *args, **kwargs)
+
 
         @classmethod
         def listIntegratedStates(cls):
@@ -174,37 +207,12 @@ class Lintul3(SimulationObject):
             
         
         
-    @classmethod
-    def defineRateVariables(cls):
-        '''
-        ensure a rate for each state
-        :param cls: outer class of RateVariables  and Lintul3States
-        '''
-        attributes = {}
-        for s in cls.Lintul3States.listIntegratedStates():
-            attributes['r' + s] = Float(-99.)
-
-        return type('RateVariables', (RatesTemplate, ), attributes)
-        
-        
-        
-    initialValues = None
-    ratesClass = None
-    onOutput = None
-    defaultOutputProc = None
-    header = None
+    # predefined attributes:        
     DSLR  = 0 
     FSHMOD = 0.0       
-    OUTPUT_VARS = sorted( ["TIME", "WAI", "DVS", "TSUM", "TAGBM", "WST", "WLVG", "WLVD", "WSO", "LAI", "NTAC", "WRT", 
-               "GTSUM", "CBALAN", "TRANRF", "NNI", "SLA", "FRACT", "FRTWET", "FLVT", "FSTT", "FSOT", 
-               "RWLVG", "RWST", "RWRT", "RWSO", "CUMPAR", "LUECAL", "NUPTT", "TTRAN", "TEVAP", "PEVAP", 
-               "NBALAN", "WATBAL", "NUPTR", "TNSOIL", "NDEMTO", "RNSOIL", "FERTN", "FERTNS", "WA", 
-               "TIRRIG", "TRAIN", "TEXPLO", "TRUNOF", "TDRAIN"])
- 
     
     def __init__(self, day, kiosk, *args, **kwargs):
         self.find_subroutines()
-        self.onOutput = self.defaultOutputProc
         super(Lintul3, self).__init__(day, kiosk, *args, **kwargs)
         
         
@@ -218,12 +226,13 @@ class Lintul3(SimulationObject):
         """
         self.kiosk  = kiosk
         self.params = self.Parameters(parvalues)
+        
 
         # Read initial states
         init                = self.InitialValues(self.params)
         self.initialValues  = init
-        initialStates       = self.Lintul3States.initialValues() # dict((a, 0.0) for a in self.Lintul3States.listIntegratedStates())
-        
+        initialStates       = self.Lintul3States.initialValues() 
+
         
         # Initialize state variables
         initialStates["TSUM"]   = init.TSUMI
@@ -239,20 +248,19 @@ class Lintul3(SimulationObject):
         initialStates["ROOTD"]  = init.ROOTDI
         initialStates["WA"]     = init.WAI
 
-        self.states = self.Lintul3States(kiosk, publish=[], **initialStates)
+        self.states = self.Lintul3States(kiosk, publish=["LAI", "ROOTD"], **initialStates)
                 
         self.states.initialize()
         
-#         self.rates  = self.RateVariables(kiosk)
-#         self.ratesClass = self.defineRateVariables()
-#         self.rates  = self.ratesClass(kiosk)
-
+        kiosk.register_variable(self, "EMERG", type="R", publish=True)
+        kiosk.register_variable(self, "EVAP", type="R", publish=True)
+        kiosk.register_variable(self, "TRAN", type="R", publish=True)
+        
         
                 
     def find_subroutines(self):
         self.astro  = lintul3lib.ASTRO
         self.deathl = lintul3lib.DEATHL
-        self.drunir = lintul3lib.DRUNIR
         self.evaptr = lintul3lib.EVAPTR
         self.gla    = lintul3lib.GLA
         self.growth = lintul3lib.GROWTH
@@ -282,8 +290,6 @@ class Lintul3(SimulationObject):
         TIME =  day.timetuple().tm_yday
         DELT = 1 # ???
         
-        __out__ = (TIME==180)
-        
         # Variables supplied by the weather system
         LAT              = drv.LAT
         RDD              = drv.IRRAD # ???
@@ -294,10 +300,8 @@ class Lintul3(SimulationObject):
         RAIN             = drv.RAIN * 10 # cm  --> mm CORRECTION FOR NON-STANDARD cm in CABO-WEATHER
                 
         # ----------Emergence, Temperature sum and Developmental stages----------*
-        
         DTR    = RDD/1.E+6  # Actual daily total global radiation (DTR, J m-2 d-1, the factor 1.E06 converts J into MJ)
         DAVTMP = 0.5 * (TMMN + TMMX)
-##      TTSUM  = p.TSUMAN + p.TSUMMT     ## obsolete
         
             
         # **********************Calling Subroutines******************************
@@ -315,13 +319,6 @@ class Lintul3(SimulationObject):
         # *Total vegetative biomass.
         TBGMR = s.WLVG + s.WST
         
-
-        # N concentration (g N g-1 DM) of the leaves, stem, roots and storage
-        # organs
-##      NFLV = s.ANLV/ notNull(s.WLVG)  ## obsolete
-##      NFST = s.ANST/ notNull(s.WST)   ## obsolete
-##      NFRT = s.ANRT/ notNull(s.WRT)   ## obsolete
-##      NFSO = s.ANSO/ notNull(s.WSO)   ## obsolete
         
         # Total N in green matter of the plant.
         NUPGMR = s.ANLV + s.ANST
@@ -330,38 +327,31 @@ class Lintul3(SimulationObject):
         FERTN  = p.FERTAB(TIME)
         NRF    = p.NRFTAB(TIME)
         
-
-        
         #  Relative death rate of leaves due to N stress.
         RDRNS  = 0.03
         
         # Total leaf weight.
         WLV    = s.WLVG + s.WLVD
         
-        #  Water content in the rootzone
-        WC  = 0.001* s.WA /notNull(s.ROOTD)
+#         #  Water content in the rootzone
+        WA = self.kiosk["WA"]
+        WC  = 0.001* WA /notNull(s.ROOTD)
         
         #  Relative death rate of roots.
         RDRRT = 0.03
-        
-        
-        # ----------------------------------------------------------------------*
-        
-##      NTAG   = s.ANLV + s.ANST + s.ANSO   ## obsolete
         
         # Relative death rate of leaves due to senescence/ageing.
         RDRTMP = p.RDRT(DAVTMP)
         
         # Maximum N concentration in the leaves, from which the values of the
         # stem and roots are derived, as a function of development stage.
-        
         NMAXLV = p.NMXLV(DVS)
         
         # Photoperiodic effect.
         PHOTPF  = INSW (s.TSUM-p.TSUMAN, p.PHOTTB(DAYL), 1.)
         
         # * Total above ground biomass
-        TAGBM = WLV + s.WST + s.WSO ## --> output
+        TAGBM = WLV + s.WST + s.WSO ## --> output @UnusedVariable
         
         # N supply to the storage organs.
         NSUPSO = INSW (DVS - p.DVSNT, 0., ATN / p.TCNT)
@@ -397,8 +387,7 @@ class Lintul3(SimulationObject):
         
         # Calling the subroutine for actual rates of evaporation and
         # transpiration.
-#         WCCR, EVAP, TRAN, FR, AVAILF, self.DSLR = self.evaptr(PEVAP, PTRAN, s.ROOTD, s.WA, 
-        EVAP, TRAN, self.DSLR = self.evaptr(PEVAP, PTRAN, s.ROOTD, s.WA, 
+        EVAP, TRAN, self.DSLR = self.evaptr(PEVAP, PTRAN, s.ROOTD, WA, 
                                             p.WCAD, p.WCWP, p.WCFC, p.WCWET, p.WCST, 
                                             p.TRANCO, DELT, p.WMFAC, RAIN, self.DSLR)
         NMAXST = p.LSNR * NMAXLV
@@ -407,19 +396,7 @@ class Lintul3(SimulationObject):
         #  Soil N supply (g N m-2 d-1) through mineralization.
         RTMIN  = 0.10 * EMERG * NLIMIT
         RROOTD = min(p.RRDMAX * INSW(WC - p.WCWP, 0., 1.) * EMERG,  p.ROOTDM - s.ROOTD)
-#         NTAC   = NTAG/notNull(TAGBM)
-#         RTSH   = s.WRT / TAGBM
         RTSUMP = RTSUM * PHOTPF
-        
-        # Calling the subroutine for rates of drainage, runoff and irrigation.
-        DRAIN, RUNOFF, IRRIG = self.drunir(RAIN, EVAP, TRAN, p.IRRIGF, p.DRATE, 
-                                           DELT, s.WA, s.ROOTD, p.WCFC, p.WCST, p.WMFAC)
-        
-        #  Rainfall interception by the crop (strange use; left out)
-        #  RNINTC = min( RAIN, 0.25*LAI )
-        
-        #  Exploration of water in soil when roots grow downward.
-        EXPLOR = 1000. * RROOTD * p.WCSUBS
         
         # *   Growth reduction function for water stress(actual trans/potential)
         TRANRF = TRAN / notNull(PTRAN)
@@ -431,7 +408,7 @@ class Lintul3(SimulationObject):
         # Maximum N content in the plant.
         NOPTS = NOPTST * s.WST
         NOPTL = NOPTLV * s.WLVG
-        RWA = (RAIN+EXPLOR+IRRIG)-(RUNOFF+TRAN+EVAP+DRAIN)
+#         RWA = (RAIN+EXPLOR+IRRIG)-(RUNOFF+TRAN+EVAP+DRAIN)
         NOPTMR = (NOPTL+ NOPTS)/notNull(TBGMR)
         
         # Calling the subroutine for Nitrogen Nutrition Index.
@@ -445,18 +422,12 @@ class Lintul3(SimulationObject):
         # PARINT, ... 
         GTOTAL = self.growth(TIME, p.DOYEM, DTR, p.K, p.NLUE, s.LAI, p.LUE, TRANRF, NNI)
         
-        #  Water-Nitrogen stress factor
-##      RNW = min(TRANRF, NNI)  ## obsolete
-        
         # **-------------Functions and parameters for rice----------------------*
         
         #     Specific Leaf area(m2/g).
         SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
-##      FRACT  = FLV+ FST+ FSO + FRT        ## obsolete
-##      LUECAL = GTOTAL / PAR               ## obsolete
         
         # Calling the subroutine for relative death rate of leaves.
-#         RDRDV, RDRSH, RDR, DLV, DLVS, DLVNS, DLAIS, DLAINS, DLAI = self.deathl(TIME, p.DOYEM, s.TSUM, p.TSUMAG, RDRTMP, 
         DLV, DLAI = self.deathl(TIME, p.DOYEM, s.TSUM, p.TSUMAG, RDRTMP, 
                                 p.RDRSHM, s.LAI, p.LAICR, s.WLVG, RDRNS, NNI, SLA)
         
@@ -520,10 +491,10 @@ class Lintul3(SimulationObject):
         NBALAN = (s.NUPTT + (i.ANLVI + i.ANSTI + i.ANRTI + i.ANSOI)   # @UnusedVariable
                          - (s.ANLV + s.ANST + s.ANRT + s.ANSO + s.NLOSSL + s.NLOSSR)) 
 
-        WATBAL = (s.WA + (s.TRUNOF + s.TTRAN + s.TEVAP + s.TDRAIN)    # @UnusedVariable
-                         - (i.WAI + s.TRAIN + s.TEXPLO +s.TIRRIG)) 
-                 
-
+        self.kiosk.set_variable(self, "EMERG", EMERG)
+        self.kiosk.set_variable(self, "EVAP", EVAP)
+        self.kiosk.set_variable(self, "TRAN", TRAN)
+        
         r = s   
         r.rTSUM   = RTSUMP
         r.rLAI    = RLAI  
@@ -544,52 +515,9 @@ class Lintul3(SimulationObject):
         r.rGTSUM  = GTOTAL
         r.rWDRT   = DRRT  
         r.rCUMPAR = PAR   
-        r.rWA     = RWA   
-        r.rTEXPLO = EXPLOR
-        r.rTEVAP  = EVAP  
-        r.rTTRAN  = TRAN  
-        r.rTRUNOF = RUNOFF
-        r.rTIRRIG = IRRIG 
-        r.rTRAIN  = RAIN  
-        r.rTDRAIN = DRAIN
         
-        self.doOutput(TIME, locals().copy())
-        
-        
-    def doOutput(self, time, localVariables):
-        '''
-        outputs output
-        :param time:
-        :param localVariables: locals().copy()
-        '''
-        if self.onOutput != None:
-            if not self.header:
-                self.header = ["TIME"]
-                for v in self.OUTPUT_VARS:
-                    try:
-                        if localVariables.has_key(v):
-                            value = localVariables[v]
-                        else:
-                            value = getattr(self.states, v)
-                        self.header.append(v)
-                    except:
-                        self.OUTPUT_VARS.remove(v)
-                
-                self.onOutput(self.header)
-                            
-            rcd = []
-            for v in self.header:
-                try:
-                        if localVariables.has_key(v):
-                            value = localVariables[v]
-                        else:
-                            value = getattr(self.states, v)
-                except:
-                    value =-99999
-                rcd.append(value)
-                
-            self.onOutput(rcd)
-        
+        self.doOutput(self, TIME, locals().copy())
+#         
         
 # finish conditions
 #         if (KEEP == 1):
@@ -603,35 +531,15 @@ class Lintul3(SimulationObject):
     
     @prepare_states
     def integrate(self, day):
-        rates = self.rates
         states = self.states
         delta = 1.
-        
-        TIME =  day.timetuple().tm_yday
-        __out__ = (TIME==180)
         
         for s in states.listIntegratedStates():
             rate = getattr(states, 'r' + s)
             state = getattr(states, s)
             newvalue = state + delta * rate
             setattr(states, s, newvalue)
-#             if __out__:
-#                 print "%s: %f = %f + %f" % (s, newvalue, state, rate)
-            
 
-        # crop stage before integration
-#      crop_stage = self.pheno.get_variable("STAGE")
-
-        # Phenology
-#      self.pheno.integrate(day)
-    
-
-
-    @prepare_states
-    def finalize(self, day):
-       
-        SimulationObject.finalize(self, day)
-        
         
         
     @prepare_rates
@@ -643,16 +551,33 @@ class Lintul3(SimulationObject):
 if (__name__ == "__main__"):
     from start import Lintul3Model
     
-    def printOutput(sender, aRow):
-        for v in aRow:
-            if isinstance(v, Number):
-                print "%f\t" % (v),
-            else:
-                print "%s\t" % (v),
-        print
-        
-    sim = Lintul3Model.start(year=1987, outputProc=printOutput)
-    l = sim.crop
-    
-    sim.run(2)
+    class P():            
+        __lineBuffer = {}
+        __headerBuffer = {}
+        __headerPrinted = False
 
+
+        def printRow(self, values):
+            for v in values:
+                if isinstance(v, Number):
+                    print "%f\t" % (v),
+                else:
+                    print "%s\t" % (v),
+            print
+            
+            
+        def __call__(self, values, header = None):
+            if header:
+                self.printRow(header)
+            self.printRow(values)
+
+
+        
+    p = P()
+    sim = Lintul3Model.start(year=1987, outputProc=p)
+    l = sim.crop
+    sim.soil.onOutput = p
+    
+    sim.run(365)
+    SubModel.doOutput(l, 999, [])
+    print "END STOP ENDJOB "*5

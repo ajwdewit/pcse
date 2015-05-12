@@ -8,8 +8,8 @@ class StateVariables(StatesTemplate):
         
     rates = {}
     __initialized = False
-    
-    
+
+            
         
     def __setattr__(self, name, value):
         if self.rates.has_key(name):

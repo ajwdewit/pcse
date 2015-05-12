@@ -4,7 +4,7 @@ from pcse.engine import Engine
 from pcse.fileinput.cabo_weather import CABOWeatherDataProvider
 from datetime import date
 import lintul3parameters
-from pcse.lintul.lintul3 import Lintul3
+from pcse.lintul.lintul3 import Lintul3, SubModel
 
 
 class Lintul3Model(Engine):
@@ -39,13 +39,16 @@ class Lintul3Model(Engine):
         parameterprovider   = ParameterProvider(Lintul3Model.readModelParameters(lintul3parameters), timerdata, {}, {})
         weatherdataprovider = CABOWeatherDataProvider("NL1", "D:/Projects/pcse/lintul/Lintul-3 model/data/")
     
-        Lintul3.defaultOutputProc = outputProc    
+        SubModel.onOutput   = outputProc    
         return Lintul3Model(parameterprovider, weatherdataprovider, config="lintul3.conf.py")
 
     
 
 if (__name__ == "__main__"):
     sim = Lintul3Model.start(1997)
-    print sim
-    print sim.crop
+    
+    sim.run(365)
+    SubModel.doOutput(sim.crop, 99999, [])
+    print "END STOP ENDJOB "*5
+
     

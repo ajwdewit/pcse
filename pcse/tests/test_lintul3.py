@@ -7,8 +7,7 @@ import unittest
 
 from pcse.lintul.start import Lintul3Model
 import os.path
-from numbers import Number
-import numpy
+
 
 class Test(unittest.TestCase):
 
@@ -42,7 +41,7 @@ class Test(unittest.TestCase):
 
                 
                 
-    def compareOutput(self, aRow):
+    def compareOutput(self, aRow, header = None):
 
         def sameValue(a, b, rtol = 0., atol = 0.):
             # contrary to Numpy.allequal this function is symmetric for a and b
@@ -50,22 +49,22 @@ class Test(unittest.TestCase):
             return equality
             # -------------
         
-        if (not isinstance(aRow[0], Number)):
+        if header:
             self.header = aRow
-        else:
-            hdr = self.header
-            assert len(aRow) == len(hdr), "row has %d elements and header has %d" %(len(aRow), len(hdr))
-            time = aRow[0]
-            data = self.csv_data[time]
-            for i in range(len(aRow)):
-                key = hdr[i]
-                if data.has_key(key):
-                    # xBALAN balances suffer from rounding errors... 
-                    rtol = 0.001 
-                    atol = 0.001 if key.endswith("BALAN") else 0.000
-                    equality = sameValue(aRow[i], data[key], rtol, atol)
-                                
-                    assert  equality, "values differ at time = %d for %s: %f vs. %f"  % (time, key, aRow[i], data[key])
+
+        hdr = self.header
+        assert len(aRow) == len(hdr), "row has %d elements and header has %d" %(len(aRow), len(hdr))
+        time = aRow[0]
+        data = self.csv_data[time]
+        for i in range(len(aRow)):
+            key = hdr[i]
+            if data.has_key(key):
+                # xBALAN balances suffer from rounding errors... 
+                rtol = 0.001 
+                atol = 0.001 if key.endswith("BALAN") else 0.000
+                equality = sameValue(aRow[i], data[key], rtol, atol)
+                            
+                assert  equality, "values differ at time = %d for %s: %f vs. %f"  % (time, key, aRow[i], data[key])
         
         
         
