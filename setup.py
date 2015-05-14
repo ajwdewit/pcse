@@ -21,13 +21,15 @@ long_description = read('README.rst')
 setup(
     name='PCSE',
     #version=pcse.__version__,
-    version="5.1.0",
+    version="5.1.1",
     url='http://github.com/ajwdewit/pcse/',
-    download_url='http://github.com/ajwdewit/pcse/tarball/5.1',
+    download_url='http://github.com/ajwdewit/pcse/tarball/5.1.1',
     license='EUPL',
     author='Allard de Wit',
     install_requires=['numpy>=1.6.0',
-                      'SQLAlchemy>=0.8.0'],
+                      'SQLAlchemy>=0.8.0',
+                      'xlrd>0.9.0',
+                      'tabulate>=0.7.0'],
     author_email='allard.dewit@wur.nl',
     description='Framework for developing crop simulation models, includes an '
                 'implementation of the WOFOST crop simulation model.',
