@@ -7,8 +7,8 @@ Copyright (c) 2004-2015 Alterra, Wageningen-UR
 The Python Crop Simulation Environment (PCSE) has been developed
 to facilitate implementing crop simulation models that were 
 developed in Wageningen. PCSE provides a set of building blocks
-that on the one hand facilitate implementing the crop simulation 
-models themselves and other hand allow to interface these models with 
+that on the one hand facilitates implementing the crop simulation
+models themselves and other hand allows to interface these models with
 external inputs and outputs (files, databases, webservers) 
 
 PCSE builds on existing ideas implemented in the FORTRAN
