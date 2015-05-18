@@ -2,14 +2,16 @@
 LINTUL2_N with adaptation to N-Limitation
 '''
 from pcse.base_classes import SimulationObject, ParamTemplate
-from pcse.traitlets import Float, AfgenTrait
+from pcse.traitlets import Float, AfgenTrait, Instance
 from pcse.decorators import prepare_rates, prepare_states
 from pcse.lintul import lintul3lib
 from pcse.lintul.lintul3lib import notNull, INSW, REAAND
 from numpy.ma.core import exp
 from numbers import Number
 from pcse.lintul.stateVariables import StateVariables
-from pcse.util import astro
+from pcse.util import astro, penman
+from pcse.crop.phenology import DVS_Phenology as Phenology
+from pcse.crop.partitioning import DVS_Partitioning as Partitioning
 
 
 class SubModel(SimulationObject):
@@ -24,7 +26,9 @@ class SubModel(SimulationObject):
                "RWLVG", "RWST", "RWRT", "RWSO", "CUMPAR", "LUECAL", "NUPTT", "TTRAN", "TEVAP", "PEVAP", 
                "NBALAN", "WATBAL", "NUPTR", "TNSOIL", "NDEMTO", "RNSOIL", "FERTN", "FERTNS", "WA", 
                "TIRRIG", "TRAIN", "TEXPLO", "TRUNOF", "TDRAIN"])
-    
+
+#     OUTPUT_VARS = ["TIME"] + sorted( ["CHECK", "FRTWET", "FLVT","FSTT","FSOT"])
+     
     @classmethod
     def doOutput(cls, model, time, localVariables):
         '''
@@ -124,7 +128,7 @@ class Lintul3(SubModel):
         TRANCO= Float(-99.)
         TSUMAG= Float(-99.)
         TSUMAN= Float(-99.)
-        TSUMMT= Float(-99.)
+#         TSUMMT= Float(-99.)
         WCAD  = Float(-99.)
         WCFC  = Float(-99.)
         WCI   = Float(-99.)
@@ -148,7 +152,7 @@ class Lintul3(SubModel):
 
         
     class Lintul3States(StateVariables):
-        TSUM  = Float(-99.)
+#         TSUM  = Float(-99.)
         LAI   = Float(-99.)
         ANLV  = Float(-99.)
         ANST  = Float(-99.)
@@ -164,7 +168,7 @@ class Lintul3(SubModel):
         WSO   = Float(-99.)
         WRT   = Float(-99.)
         ROOTD = Float(-99.)
-        GTSUM = Float(-99.)
+        GTSUM = Float(-99.) # ?? obsolete ??
         WDRT  = Float(-99.)
         CUMPAR= Float(-99.)
 
@@ -212,6 +216,12 @@ class Lintul3(SubModel):
     DSLR  = 0 
     FSHMOD = 0.0       
     
+    # sub-model components for crop simulation
+    pheno = Instance(SimulationObject)
+    part  = Instance(SimulationObject)
+    
+
+    
     def __init__(self, day, kiosk, *args, **kwargs):
         self.find_subroutines()
         super(Lintul3, self).__init__(day, kiosk, *args, **kwargs)
@@ -227,7 +237,6 @@ class Lintul3(SubModel):
         """
         self.kiosk  = kiosk
         self.params = self.Parameters(parvalues)
-        
 
         # Read initial states
         init                = self.InitialValues(self.params)
@@ -236,7 +245,7 @@ class Lintul3(SubModel):
 
         
         # Initialize state variables
-        initialStates["TSUM"]   = init.TSUMI
+#         initialStates["TSUM"]   = init.TSUMI
         initialStates["LAI"]    = init.LAII
         initialStates["ANLV"]   = init.ANLVI
         initialStates["ANST"]   = init.ANSTI
@@ -249,8 +258,12 @@ class Lintul3(SubModel):
         initialStates["ROOTD"]  = init.ROOTDI
         initialStates["WA"]     = init.WAI
 
-        self.states = self.Lintul3States(kiosk, publish=["LAI", "ROOTD"], **initialStates)
-                
+        # Initialize components of the crop
+        self.pheno = Phenology(day, kiosk, parvalues)
+        self.part  = Partitioning(day, kiosk, parvalues)
+
+
+        self.states = self.Lintul3States(kiosk, publish=["LAI", "ROOTD"], **initialStates)                
         self.states.initialize()
         
         kiosk.register_variable(self, "EMERG", type="R", publish=True)
@@ -283,7 +296,6 @@ class Lintul3(SubModel):
     def calc_rates(self, day, drv):
         # dynamic calculations
         p = self.params
-#         r = self.rates
         s = self.states
         i = self.initialValues
         
@@ -298,18 +310,27 @@ class Lintul3(SubModel):
         VP               = drv.VAP  / 10 # hPa --> kPa correction from Cabo Weather
         WN               = drv.WIND
         RAIN             = drv.RAIN * 10 # cm  --> mm CORRECTION FOR NON-STANDARD cm in CABO-WEATHER
-                
-        # ----------Emergence, Temperature sum and Developmental stages----------*
+
         DTR    = RDD/1.E+6  # Actual daily total global radiation (DTR, J m-2 d-1, the factor 1.E06 converts J into MJ)
         DAVTMP = 0.5 * (TMMN + TMMX)
         
+        # Phenology
+        self.pheno.calc_rates(day, drv)
+        crop_stage = self.pheno.get_variable("STAGE")
+
+        # if before emergence there is no need to continue
+        # because only the phenology is running.
+        if crop_stage == "emerging":
+            return
+                
             
         # **********************Calling Subroutines******************************
         #  Calling the subroutine for calculating the astrological daylength.
         DAYL = astro(day, LAT, drv.IRRAD).DAYL
         
         # Calling the subroutine for converting TSUM to the developmental stage.
-        DVS = self.subdvs(TIME, p.DOYEM, s.TSUM, p.TSUMAN, p.TSUMMT)
+#         DVS = self.subdvs(TIME, p.DOYEM, s.TSUM, p.TSUMAN, p.TSUMMT)
+        DVS = self.pheno.get_variable("DVS") # self.kiosk["DVS"]
         
         # Calling the subroutine for translocatable N in leaves, stem, roots and
         # storage organs.
@@ -348,7 +369,7 @@ class Lintul3(SubModel):
         NMAXLV = p.NMXLV(DVS)
         
         # Photoperiodic effect.
-        PHOTPF  = INSW (s.TSUM-p.TSUMAN, p.PHOTTB(DAYL), 1.)
+#         PHOTPF  = INSW (s.TSUM-p.TSUMAN, p.PHOTTB(DAYL), 1.)
         
         # * Total above ground biomass
         TAGBM = WLV + s.WST + s.WSO ## --> output @UnusedVariable
@@ -360,6 +381,8 @@ class Lintul3(SubModel):
         # Calling the subroutine for Potential evaporation and transpiration.
         # RLWN, NRADC, PENMRC, PENMD, ...
         PEVAP, PTRAN = self.penman(DAVTMP, VP, DTR, s.LAI, WN)
+        E0, ES0, ET0 = penman(day, LAT, drv.ELEV, drv.TMIN, drv.TMAX, drv.IRRAD, drv.VAP, drv.WIND, ANGSTA=-0.18, ANGSTB= -0.55)
+        # NB: idem in [cm] uit drv te halen....
         NFGMR  = NUPGMR / notNull(TBGMR)
         
         # *Average residual N concentration.
@@ -374,16 +397,24 @@ class Lintul3(SubModel):
         # -------- Growth rates and dry matter production of plant organs-------*
         #  Biomass partitioning functions under (water and nitrogen)non-stressed
         #  situations
-        FRTWET = p.FRTTB( DVS )
-        FLVT   = p.FLVTB( DVS )
-        FSTT   = p.FSTTB( DVS)
-        FSOT   = p.FSOTB( DVS )
+        pf = self.part.calc_rates(day, drv)
+        FRTWET = pf.FR
+        FLVT   = pf.FL
+        FSTT   = pf.FS
+        FSOT   = pf.FO
+ 
+#         FRTWET = p.FRTTB( DVS )
+#         FLVT   = p.FLVTB( DVS )
+#         FSTT   = p.FSTTB( DVS)
+#         FSOT   = p.FSOTB( DVS )
+#         
+#         CHECK = FRTWET + FLVT + FSTT + FSOT
         
         # * For calculation of LUE (it can be removed once after checking, however, 
         #   I have put these new additions in these two (c and N) balances sections
         PAR    = DTR * 0.50
         DTEFF  = max ( 0., DAVTMP - p.TBASE )
-        RTSUM  = DTEFF * EMERG
+#         RTSUM  = DTEFF * EMERG
         
         # Calling the subroutine for actual rates of evaporation and
         # transpiration.
@@ -396,7 +427,7 @@ class Lintul3(SubModel):
         #  Soil N supply (g N m-2 d-1) through mineralization.
         RTMIN  = 0.10 * EMERG * NLIMIT
         RROOTD = min(p.RRDMAX * INSW(WC - p.WCWP, 0., 1.) * EMERG,  p.ROOTDM - s.ROOTD)
-        RTSUMP = RTSUM * PHOTPF
+#         RTSUMP = RTSUM * PHOTPF
         
         # *   Growth reduction function for water stress(actual trans/potential)
         TRANRF = TRAN / notNull(PTRAN)
@@ -428,7 +459,8 @@ class Lintul3(SubModel):
         SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
         
         # Calling the subroutine for relative death rate of leaves.
-        DLV, DLAI = self.deathl(TIME, p.DOYEM, s.TSUM, p.TSUMAG, RDRTMP, 
+        TSUM = self.pheno.get_variable("TSUM")
+        DLV, DLAI = self.deathl(TIME, p.DOYEM, TSUM, p.TSUMAG, RDRTMP, 
                                 p.RDRSHM, s.LAI, p.LAICR, s.WLVG, RDRNS, NNI, SLA)
         
         # ** Leaf growth and LAI.
@@ -495,36 +527,26 @@ class Lintul3(SubModel):
         self.kiosk.set_variable(self, "EVAP", EVAP)
         self.kiosk.set_variable(self, "TRAN", TRAN)
         
-        r = s   
-        r.rTSUM   = RTSUMP
-        r.rLAI    = RLAI  
-        r.rANLV   = RNLV  
-        r.rANST   = RNST  
-        r.rANRT   = RNRT  
-        r.rANSO   = RNSO  
-        r.rNUPTT  = NUPTR 
-        r.rTNSOIL = RNSOIL
-        r.rNLOSSL = RNLDLV
-        r.rNLOSSR = RNLDRT
-        r.rWLVG   = RWLVG 
-        r.rWLVD   = DLV   
-        r.rWST    = RWST  
-        r.rWSO    = RWSO  
-        r.rWRT    = RWRT  
-        r.rROOTD  = RROOTD
-        r.rGTSUM  = GTOTAL
-        r.rWDRT   = DRRT  
-        r.rCUMPAR = PAR   
+        s.rLAI    = RLAI  
+        s.rANLV   = RNLV  
+        s.rANST   = RNST  
+        s.rANRT   = RNRT  
+        s.rANSO   = RNSO  
+        s.rNUPTT  = NUPTR 
+        s.rTNSOIL = RNSOIL
+        s.rNLOSSL = RNLDLV
+        s.rNLOSSR = RNLDRT
+        s.rWLVG   = RWLVG 
+        s.rWLVD   = DLV   
+        s.rWST    = RWST  
+        s.rWSO    = RWSO  
+        s.rWRT    = RWRT  
+        s.rROOTD  = RROOTD
+        s.rGTSUM  = GTOTAL
+        s.rWDRT   = DRRT  
+        s.rCUMPAR = PAR   
         
         self.doOutput(self, TIME, locals().copy())
-#         
-        
-# finish conditions
-#         if (KEEP == 1):
-#             #    ---------------------------------------------------------------------*
-#             #    Run control.
-#             if (DVS >  2.01) or (TSUM > TTSUM): 
-#                 TERMNL = true
 
 
     
@@ -534,6 +556,20 @@ class Lintul3(SubModel):
         states = self.states
         delta = 1.
         
+        # if before emergence there is no need to continue
+        # because only the phenology is running.
+        # Just run a touch() to to ensure that all state variables are available
+        # in the kiosk
+        # crop stage before integration
+        crop_stage = self.pheno.get_variable("STAGE")
+        self.pheno.integrate(day)
+        if crop_stage == "emerging":
+            self.touch()
+            return
+
+        # Partitioning
+        self.part.integrate(day)
+                        
         for s in states.listIntegratedStates():
             rate = getattr(states, 'r' + s)
             state = getattr(states, s)
@@ -551,7 +587,7 @@ class Lintul3(SubModel):
 if (__name__ == "__main__"):
     from start import Lintul3Model
     
-    class P():            
+    class P:            
         __lineBuffer = {}
         __headerBuffer = {}
         __headerPrinted = False
@@ -576,7 +612,6 @@ if (__name__ == "__main__"):
     p = P()
     sim = Lintul3Model.start(year=1987, outputProc=p)
     l = sim.crop
-    sim.soil.onOutput = p
     
     sim.run(365)
     SubModel.doOutput(l, 999, [])

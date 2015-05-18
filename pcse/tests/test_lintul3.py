@@ -7,6 +7,7 @@ import unittest
 
 from pcse.lintul.start import Lintul3Model
 import os.path
+from lib2to3.fixer_util import Number
 
 
 class Test(unittest.TestCase):
@@ -39,8 +40,46 @@ class Test(unittest.TestCase):
                 
 
 
-                
-                
+    class CompareOutput:            
+        __lineBuffer = {}
+        __headerBuffer = {}
+        __headerPrinted = False
+
+        def __init__(self, owner):
+            self.owner = owner
+
+            
+            
+        def __call__(self, values, header = None):
+            if header:
+                self.header = header
+
+            def sameValue(a, b, rtol = 0., atol = 0.):
+                # contrary to Numpy.allequal this function is symmetric for a and b
+                equality = abs(abs(a) - abs(b)) <= (atol + rtol * max(abs(b), abs(a)))
+                return equality
+                # -------------
+            n = 0
+            hdr = self.header
+            assert len(values) == len(hdr), "row has %d elements and header has %d" %(len(values), len(hdr))
+            time = values[0]
+            data = self.owner.csv_data[time]
+            for i in range(len(values)):
+                key = hdr[i]
+                print key,
+                if data.has_key(key):
+                    # xBALAN balances suffer from rounding errors... 
+                    rtol = 0.001 
+                    atol = 0.001 if key.endswith("BALAN") else 0.000
+                    equality = sameValue(values[i], data[key], rtol, atol)
+                                
+                    assert  equality, "values differ at time = %d for %s... found: %f expected: %f"  % (time, key, values[i], data[key])
+                    n += 1
+                    
+            print "%d values checked at time %d" %(n, time)
+        
+        
+    # obsolete
     def compareOutput(self, aRow, header = None):
 
         def sameValue(a, b, rtol = 0., atol = 0.):
@@ -50,26 +89,32 @@ class Test(unittest.TestCase):
             # -------------
         
         if header:
-            self.header = aRow
+            self.header = header
 
         hdr = self.header
         assert len(aRow) == len(hdr), "row has %d elements and header has %d" %(len(aRow), len(hdr))
         time = aRow[0]
         data = self.csv_data[time]
+        n = 0
         for i in range(len(aRow)):
             key = hdr[i]
-            if data.has_key(key):
+            if data.has_key(key) and not (aRow[i] == '-'):
                 # xBALAN balances suffer from rounding errors... 
                 rtol = 0.001 
                 atol = 0.001 if key.endswith("BALAN") else 0.000
                 equality = sameValue(aRow[i], data[key], rtol, atol)
                             
-                assert  equality, "values differ at time = %d for %s: %f vs. %f"  % (time, key, aRow[i], data[key])
+                assert  equality, "values differ at time = %d for %s... found: %f expected: %f"  % (time, key, aRow[i], data[key])
+                n+=1
+                
+        print "%d values checked at time %d" %(n, time)
         
         
         
     def testName(self):
-        sim = Lintul3Model.start(year=1987, outputProc=self.compareOutput)
+        callBack = self.CompareOutput(self)
+        sim = Lintul3Model.start(year=1987, outputProc=callBack)
+        
         sim.run(182)
 
 

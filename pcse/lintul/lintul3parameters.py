@@ -25,50 +25,50 @@ ROOTDI = 0.10
  
 # Model parameters
 # ----------------
-TSUMAG = 800.
-TSUMMT = 1030.
-TSUMAN = 800.
-WCI    = 0.40
+DOYEM  = 90.
+DRATE  = 30.
+DVSDR  = 1.0
+DVSNLT = 1.0
+DVSNT  = 0.8
+FNTRT  = 0.15
+FRNX   = 0.5
+IRRIGF = 1.0
+K      = 0.6
+LAICR  = 4.0
+LRNR   = 0.50
+LSNR   = 0.50
+LUE    = 2.8
 NFRLVI = 0.06
 NFRRTI = 0.03
 NFRSTI = 0.03
+NLAI   = 1.0
+NLUE   = 0.20
 NMAXSO = 0.0165
-LRNR   = 0.50
-LSNR   = 0.50
-FRNX   = 0.5
-DVSNT  = 0.8
-DVSNLT = 1.0
-DVSDR  = 1.0
-WMFAC  = 0.0
-WCSUBS = 0.30
-SLAC   = 0.022
-TBASE  = 0.
-DOYEM  = 90.
-LAICR  = 4.0
+NPART  = 1.0
+NSLA   = 1.0
 RDRSHM = 0.03
 RGRL   = 0.009
-LUE    = 2.8
-K      = 0.6
-ROOTDM = 1.2
-RRDMAX = 0.012
-WCWP   = 0.20
-WCFC   = 0.40
-WCAD   = 0.10
-WCST   = 0.50
-WCWET  = 0.45
-TRANCO = 8.
-DRATE  = 30.
-IRRIGF = 1.0
-TCNT   = 10.
+RNFLV  = 0.004
 RNFRT  = 0.002
 RNFST  = 0.002
-RNFLV  = 0.004
-FNTRT  = 0.15
-NLUE   = 0.20
-NLAI   = 1.0
-NSLA   = 1.0
-NPART  = 1.0
- 
+ROOTDM = 1.2
+RRDMAX = 0.012
+SLAC   = 0.022
+TBASE  = 0.		# TBASEM = Float(-99.)  # Base temp. for emergence
+TCNT   = 10.
+TRANCO = 8.
+TSUMAG = 800.
+TSUMAN = 800.	# TSUM1  = Float(-99.)  # Temperature sum emergence to anthesis
+TSUMMT = 1030.	# TSUM2  = Float(-99.)  # Temperature sum anthesis to maturity
+WCAD   = 0.10
+WCFC   = 0.40
+WCI    = 0.40
+WCST   = 0.50
+WCSUBS = 0.30
+WCWET  = 0.45
+WCWP   = 0.20
+WMFAC  = 0.0
+	
 # Interpolation functions
 # -----------------------
 PHOTTB = [
@@ -161,3 +161,34 @@ NRFTAB = [
 # A non-zero value of SCALE causes Integration errors for the corresponding
 # state variable to be evaluated relative to the value of SCALE.
 SCALExxx = [0.]*27
+
+# lines below inserted to have at least some realistic parameters for Phenology - WdW	
+# -----------------------------------------------------------------------------------
+# ** Rice is transplanted, no simulation before emergence.
+TBASEM = 00.0 	# lower threshold temp. for emergence [cel]
+TEFFMX = 00.0 	# max. eff. temp. for emergence [cel]
+TSUMEM = 00. 	# temperature sum from sowing to emergence [cel d]
+# ** phenology
+IDSL = 0 		# indicates whether pre-anthesis development depends
+				# on temp. (=0), daylength (=1) , or both (=2)
+DLO = 11.5 		# optimum daylength for development [hr]
+DLC = 0.0 		# critical daylength (lower threshold) [hr]
+TSUM1 =1420. 	# temperature sum from emergence to anthesis [cel d]
+TSUM2 = 680. 	# temperature sum from anthesis to maturity [cel d]
+DTSMTB = [0.00, 0.00, 	# daily increase in temp. sum
+          8.00, 0.00, 	# as function of av. temp. [cel; cel d]
+          30.00, 24.00,
+          42.50, 0.00]
+DVSI = 0.187 	# development stage start simulation (after transplanting)
+DVSEND = 2.00 	# development stage at harvest or at
+				# physiological maturity (= 2.0 at maturity [-])
+# ------------- (end of insert) -----------------------------------------------------
+ 
+# lines below inserted to have synonym parameters for Partitioning - WdW	
+# -----------------------------------------------------------------------------------
+FRTB     = FRTTB
+FSTB     = FSTTB
+FLTB     = FLVTB
+FOTB     = FSOTB
+# ------------- (end of insert) -----------------------------------------------------
+ 

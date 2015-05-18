@@ -75,10 +75,6 @@ def SUBDVS(TIME, DOYEM, TSUM, TSUMAN, TSUMMT):
 
     global DVS1, DVS2
         
-    DVS  = 0.
-#     DVS1 = 0.
-#     DVS2 = 0.
-    
     if( TIME  <=  DOYEM ):
         DVS1 = TSUM/TSUMAN
     
@@ -142,12 +138,13 @@ def PENMAN(DAVTMP,  ## degree C
 #                    INPUT,INPUT,INPUT,INPUT,INPUT,...
 #                    OUTPUT,OUTPUT,OUTPUT,OUTPUT,OUTPUT)      
 
+
 def EVAPTR(PEVAP, PTRAN, ROOTD, WA, WCAD, WCWP, WCFC, WCWET, WCST,  
            TRANCO, DELT, WMFAC, RAIN, DSLR):
-    
+    # see also classic_waterbalance.py    
     WC   = 0.001 * WA   / notNull(ROOTD)
     WAAD = 1000. * WCAD * ROOTD
-    WAFC = 1000. * WCFC * ROOTD
+#     WAFC = 1000. * WCFC * ROOTD
    
     
     if (RAIN >=0.5):
@@ -157,8 +154,6 @@ def EVAPTR(PEVAP, PTRAN, ROOTD, WA, WCAD, WCWP, WCFC, WCWET, WCST,
         DSLR   = DSLR+1.
         EVSMXT = PEVAP*(sqrt (DSLR)-sqrt(DSLR-1.))
         EVS    = min (PEVAP, EVSMXT+RAIN)
-      
-      
       
     WCCR = WCWP + max( 0.01, PTRAN/(PTRAN+TRANCO) * (WCFC-WCWP) )
       

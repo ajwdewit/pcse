@@ -1,11 +1,9 @@
-from pcse.base_classes import SimulationObject, ParamTemplate, StatesTemplate
+from pcse.base_classes import ParamTemplate
 from pcse.lintul.stateVariables import StateVariables
 from pcse.lintul import lintul3lib
-from pcse.lintul import lintul3
 from pcse.lintul.lintul3lib import notNull, INSW, REAAND
 from pcse.decorators import prepare_rates, prepare_states
 from pcse.traitlets import Float
-from numpy.ma.core import exp
 from pcse.lintul.lintul3 import SubModel
 
 
