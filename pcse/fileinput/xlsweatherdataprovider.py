@@ -211,6 +211,6 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         cache_filename = self._get_cache_filename(xls_fname)
         try:
             self._dump(cache_filename)
-        except (IOError, EnvironmentError), e:
+        except (IOError, EnvironmentError) as e:
             msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
