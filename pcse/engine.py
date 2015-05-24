@@ -1,6 +1,19 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+"""The PCSE Engine provides the environment where SimulationObjects are 'living'.
+The engine takes care of reading the model configuration, initializing model
+components (e.g. groups of SimulationObjects), driving the simulation
+forward by calling the SimulationObjects, calling the agromanagement
+unit, keeping track of time and providing the weather data needed.
+
+Models are treated together with the Engine, because models are simply
+pre-configured Engines. Any model can be started by starting the Engine
+with the appropriate configuration file. The only difference is that
+models can have methods that deal with specific characteristics of a model.
+This kind of functionality cannot be implemented in the Engine because
+the model details are not known beforehand.
+"""
 import os, sys
 from collections import deque
 import logging
@@ -85,28 +98,19 @@ class Engine(BaseEngine):
     # Helper variables
     TMNSAV = Instance(deque)
     
-    def __init__(self, sitedata, timerdata, soildata, cropdata, fertilizer,
+    def __init__(self, parameterprovider,
                  weatherdataprovider, config=None):
         """
-        :param sitedata: A dictionary(-like) object containing key/value pairs with
-            parameters that are specific for this site but not related to the crop,
-            the crop calendar or the soil. Examples are the initial conditions of
-            the waterbalance such as the initial amount of soil moisture and
-            surface storage.
-        :param timerdata: A dictionary(-like) object containing key/value pairs
-            with parameters related to the system start date, crop calendar, start
-            type (sowing|emergence) and end type (maturity|harvest|earliest)
-        :param soildata: A dictionary(-like) object containing key/value pairs
-            with parameters related to soil where the simulation has to be
-            performed.
-        :param cropdata: A dictionary(-like) object containing key/value pairs with
-            WOFOST crop parameters.
+        :param parameterprovider: A `ParameterProvider` object providing model
+            parameters as key/value pairs. The parameterprovider encapsulates
+            the different parameter files for agromanagement, crop, soil and
+            site.
         :param weatherdataprovider: An instance of a WeatherDataProvider that can
             return weather data in a WeatherDataContainer for a given date.
         :param config: A string describing the model configuration file to use.
-            By only giving filename PCSE assumes it to be located under
-            conf/pcse. If you want to provide you own configuration file, specify
-             it as an absolute or a relative path (e.g. with a leading '.')
+            By only giving a filename PCSE assumes it to be located under
+            pcse/conf. If you want to provide you own configuration file, specify
+            it as an absolute or a relative path (e.g. with a leading '.')
         """
         BaseEngine.__init__(self)
 
@@ -125,8 +129,8 @@ class Engine(BaseEngine):
         self._connect_signal(self._on_TERMINATE, signal=signals.terminate)
 
         # Timer: starting day, final day and model output
-        start_date = timerdata["START_DATE"]
-        end_date = timerdata["END_DATE"]
+        start_date = parameterprovider["START_DATE"]
+        end_date = parameterprovider["END_DATE"]
         self.timer = Timer(start_date, self.kiosk, end_date, self.mconf)
         self.day = self.timer()
 
@@ -135,12 +139,11 @@ class Engine(BaseEngine):
         self.drv = self._get_driving_variables(self.day)
 
         # Component for simulation of soil processes
-        self.soil = self.mconf.SOIL(self.day, self.kiosk, cropdata, soildata, sitedata)
+        self.soil = self.mconf.SOIL(self.day, self.kiosk, parameterprovider)
 
         # Component for agromanagement
         self.agromanagement = self.mconf.AGROMANAGEMENT(self.day, self.kiosk, self.mconf,
-                                                        timerdata, soildata, sitedata, cropdata,
-                                                        fertilizer)
+                                                        parameterprovider)
         # Call AgroManagement module for management actions at initialization
         self.agromanagement(self.day, self.drv)
 
@@ -163,8 +166,6 @@ class Engine(BaseEngine):
         # Save state variables of the model
         if self.flag_output:
             self._save_output(day)
-        if self.flag_summary_output:
-            self._save_summary_output()
 
         # Check if flag is present to finish crop simulation
         if self.flag_crop_finish:
@@ -211,6 +212,29 @@ class Engine(BaseEngine):
             # Rate calculation
             self.calc_rates(self.day, self.drv)
         
+        if self.flag_terminate is True:
+            self.soil.finalize(self.day)
+
+    #---------------------------------------------------------------------------
+    def run_till_terminate(self):
+        """Runs the system until a terminate signal is sent."""
+
+        while self.flag_terminate is False:
+            # Update timer
+            self.day = self.timer()
+
+            # State integration
+            self.integrate(self.day)
+
+            # Driving variables
+            self.drv = self._get_driving_variables(self.day)
+
+            # Agromanagement decisions
+            self.agromanagement(self.day, self.drv)
+
+            # Rate calculation
+            self.calc_rates(self.day, self.drv)
+
         if self.flag_terminate is True:
             self.soil.finalize(self.day)
 
@@ -282,6 +306,10 @@ class Engine(BaseEngine):
         # Run the finalize section of the cropsimulation and sub-components
         self.crop.finalize(day)
 
+        # Generate summary output after finalize() has been run.
+        if self.flag_summary_output:
+            self._save_summary_output()
+
         # Only remove the crop simulation object from the system when the crop
         # is finished, when explicitly asked to do so.
         if self.flag_crop_delete:
@@ -348,14 +376,15 @@ class Engine(BaseEngine):
 
     #---------------------------------------------------------------------------
     def set_variable(self, varname, value):
-        """ Sets the value of the specified state or rate variable.
+        """Sets the value of the specified state or rate variable.
 
         :param varname: Name of the variable to be updated (string).
         :param value: Value that it should be updated to (float)
 
         :returns: a dict containing the increments of the variables
-        that were updated (new - old). If the call was unsuccessful
-        in finding the class method (see below) it will return an empty dict.
+            that were updated (new - old). If the call was unsuccessful
+            in finding the class method (see below) it will return an empty
+            dict.
 
         Note that 'setting' a variable (e.g. updating a model state) is much more
         complex than just `getting` a variable, because often some other

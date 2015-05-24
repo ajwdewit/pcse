@@ -20,9 +20,13 @@ class CABOFileReader(dict):
     The parameter definitions of Wageningen crop models are generally
     written in the CABO format. This class reads the contents, parses
     the parameter names/values and returns them as a dictionary.
-    
+
     :param fname: parameter file to read and parse
     :returns: dictionary like object with parameter key/value pairs.
+
+    Note that this class does not yet fully support reading all features
+    of CABO files. For example, the parsing of booleans, date/times and
+    tabular parameters is not supported and will lead to errors.
 
     The header of the CABO file (marked with ** at the first line) is
     read and can be retrieved by the get_header() method or just by
@@ -192,7 +196,7 @@ class CABOFileReader(dict):
                 else:
                     value = int(valuestr)
                 self[parname] = value
-            except (ValueError), exc:
+            except (ValueError) as exc:
                 msg = "Failed to parse parameter, value: %s, %s" 
                 raise PCSEError(msg % (parstr, valuestr))
 
@@ -202,7 +206,7 @@ class CABOFileReader(dict):
                 parname = parname.strip()
                 value = (valuestr.replace("'","")).replace('"','')
                 self[parname] = value
-            except (ValueError), exc:
+            except (ValueError) as exc:
                 msg = "Failed to parse parameter, value: %s, %s" 
                 raise PCSEError(msg % (parstr, valuestr))
 

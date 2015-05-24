@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""This module defines and describes the signals used by PyWOFOST
+"""This module defines and describes the signals used by PCSE
 
-Signals are used by PyWOFOST to notify components of events such as sowing,
+Signals are used by PCSE to notify components of events such as sowing,
 harvest and termination. Events can be send by any SimulationObject through
 its `SimulationObject._send_signal()` method. Similarly, any SimulationObject
 can receive signals by registering a handler through the
@@ -13,17 +13,16 @@ positional or keyword arguments. However, it is highly discouraged to use
 positional arguments when sending signals in order to avoid conflicts between
 positional and keyword arguments.
 
-An example can help to clarify
-how signals are used in PyWOFOST but check also the documentation of the
-PyDispatcher_ package for more information::
+An example can help to clarify how signals are used in PCSE but check also the
+documentation of the PyDispatcher_ package for more information::
 
     import sys, os
     import math
-    sys.path.append('/home/wit015/Sources/python/PYWOFOST')
+    sys.path.append('/home/wit015/Sources/python/pcse/')
     import datetime as dt
     
-    import pywofost
-    from pywofost.base_classes import SimulationObject, VariableKiosk
+    import pcse
+    from pcse.base_classes import SimulationObject, VariableKiosk
     
     mysignal = "My first signal"
     
@@ -72,7 +71,7 @@ following output::
     Value of arg1,2: None, 3.14159265359
     TypeError occurred: handle_mysignal() takes exactly 3 non-keyword arguments (1 given)
 
-Currently the following signals are used within PyWOFOST with the following
+Currently the following signals are used within PCSE with the following
 keywords.*
 
 **CROP_START**
@@ -118,6 +117,17 @@ keyword arguments with signals.crop_finish:
  self._send_signal(signal=signals.output)
  
  No keyword arguments are defined for this signal
+
+**SUMMARY_OUTPUT**
+
+ Indicates that the model state should be saved for later use,
+ SUMMARY_OUTPUT is only generated when a CROP_FINISH signal is
+ received indicating that the crop simulation must finish.
+
+ self._send_signal(signal=signals.output)
+
+ No keyword arguments are defined for this signal
+
 
 .. _PyDispatcher: http://pydispatcher.sourceforge.net/
 """

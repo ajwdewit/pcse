@@ -10,6 +10,7 @@ import types
 import logging
 from datetime import date
 import cPickle
+from collections import Counter
 
 from .traitlets import (HasTraits, Any, Float, Int, Instance, Dict, Bool,
                         Enum, AfgenTrait)
@@ -358,7 +359,7 @@ class StatesRatesCommon(HasTraits):
         # Make sure that the variable kiosk is provided
         if not isinstance(kiosk, VariableKiosk):
             msg = ("Variable Kiosk must be provided when instantiating rate " +
-                   "variables.")
+                   "or state variables.")
             raise RuntimeError(msg)
         self._kiosk = kiosk
         
@@ -629,15 +630,15 @@ class DispatcherObject(object):
         passed to dispatcher.send()
         """
         
-        self.logger.info("Sent signal: %s" % signal)
+        self.logger.debug("Sent signal: %s" % signal)
         dispatcher.send(signal=signal, sender=self.kiosk, *args, **kwargs)
     
     def _connect_signal(self, handler, signal):
         """Connect the handler to the signal using the dispatcher module.
         
         The handler will only react on signals that have the SimulationObjects
-        VariableKiosk as sender. This ensure that different ensemble members in
-        a PyWOFOST ensemble will not react to eachother signals.
+        VariableKiosk as sender. This ensure that different PCSE model instances
+        in the same runtime environment will not react to each others signals.
         """
         
         dispatcher.connect(handler, signal, sender=self.kiosk)
@@ -689,7 +690,7 @@ class SimulationObject(HasTraits, DispatcherObject):
         self.logger = logging.getLogger(loggername)
         self.initialize(day, kiosk, *args, **kwargs)
         self.subSimObjects = self._find_SubSimObjects()
-        self.logger.info("Component successfully initialized on %s!" % day)
+        self.logger.debug("Component successfully initialized on %s!" % day)
 
     def initialize(self, *args, **kwargs):
         msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
@@ -918,7 +919,7 @@ class AncillaryObject(HasTraits, DispatcherObject):
 
         self.logger = logging.getLogger(loggername)
         self.initialize(day, kiosk, *args, **kwargs)
-        self.logger.info("Component succesfully initialized on %s!" % day)
+        self.logger.debug("Component succesfully initialized on %s!" % day)
 
     #---------------------------------------------------------------------------
     def __setattr__(self, attr, value):
@@ -930,27 +931,7 @@ class AncillaryObject(HasTraits, DispatcherObject):
             msg = "Assignment to non-existing attribute '%s' prevented." % attr
             raise AttributeError(msg)
 
-#-------------------------------------------------------------------------------
-class TopPyWOFOSTObject(HasTraits, DispatcherObject):
-    """Class for the top-level PyWOFOST object.
-    """
 
-    def __init__(self, day, *args, **kwargs):           
-        loggername = "%s.%s" % (self.__class__.__module__,
-                                self.__class__.__name__)
-
-        # Check that day variable is specified
-        if not isinstance(day, date):
-            msg = "%s should be instantiated with the simulation start "+\
-                  "day as first argument!"
-            raise RuntimeError(msg % loggername)
-
-        self.logger = logging.getLogger(loggername)
-        self.initialize(day, *args, **kwargs)
-        self.logger.info("Component successfully initialized on %s!" % day)
-
-
-#-------------------------------------------------------------------------------
 class SlotPickleMixin(object):
     """This mixin makes it possible to pickle/unpickle objects with __slots__ defined.
 
@@ -985,6 +966,7 @@ class WeatherDataContainer(SlotPickleMixin):
     TMAX with value 15.
 
     The following keywords are compulsory:
+
     :keyword LAT: Latitude of location (decimal degree)
     :keyword LON: Longitude of location (decimal degree)
     :keyword ELEV: Elevation of location (meters)
@@ -994,12 +976,13 @@ class WeatherDataContainer(SlotPickleMixin):
     :keyword TMAX: Daily maximum temperature (Celsius)
     :keyword VAP: Daily mean vapour pressure (hPa)
     :keyword RAIN: Daily total rainfall (cm/day)
-    :keyword WIND: Daily mean wind speed (m/sec)
+    :keyword WIND: Daily mean wind speed at 2m height (m/sec)
     :keyword E0: Daily evaporation rate from open water (cm/day)
     :keyword ES0: Daily evaporation rate from bare soil (cm/day)
     :keyword ET0: Daily evapotranspiration rate from reference crop (cm/day)
 
     There are two optional keywords arguments:
+
     :keyword TEMP: Daily mean temperature (Celsius), will otherwise be
                    derived from (TMAX+TMIN)/2.
     :keyword SNOWDEPTH: Depth of snow cover (cm)
@@ -1043,9 +1026,9 @@ class WeatherDataContainer(SlotPickleMixin):
             value = kwargs.pop(varname, None)
             try:
                 setattr(self, varname, float(value))
-            except (KeyError, ValueError) as e:
+            except (KeyError, ValueError, TypeError) as e:
                 msg = "%s: Weather attribute '%s' missing or invalid numerical value: %s"
-                logging.warning(msg, self.DAY, varname, e)
+                logging.warning(msg, self.DAY, varname, value)
 
         # Loop over optional arguments
         for varname in self.optional:
@@ -1055,9 +1038,9 @@ class WeatherDataContainer(SlotPickleMixin):
             else:
                 try:
                     setattr(self, varname, float(value))
-                except ValueError as e:
-                    msg = "%s: Weather attribute '%s' has invalid numerical value: %s"
-                    logging.warning(msg, self.DAY, varname, e)
+                except (KeyError, ValueError, TypeError) as e:
+                    msg = "%s: Weather attribute '%s' missing or invalid numerical value: %s"
+                    logging.warning(msg, self.DAY, varname, value)
 
         # Check for remaining unknown arguments
         if len(kwargs) > 0:
@@ -1256,8 +1239,11 @@ class WeatherDataProvider(object):
 
         msg = "Weather data provided by: %s\n" % self.__class__.__name__
         msg += "--------Description---------\n"
-        for l in self.description:
-            msg += ("%s\n" % str(l))
+        if isinstance(self.description, str):
+            msg += ("%s\n" % self.description)
+        else:
+            for l in self.description:
+                msg += ("%s\n" % str(l))
         msg += "----Site characteristics----\n"
         msg += "Elevation: %6.1f\n" % self.elevation
         msg += "Latitude:  %6.3f\n" % self.latitude
@@ -1368,3 +1354,49 @@ class BaseEngine(HasTraits, DispatcherObject):
         if self.subSimObjects is not None:
             for simobj in self.subSimObjects:
                 simobj.zerofy()
+
+
+class ParameterProvider(object):
+    """Simple class providing a dictionary-like single interface for parameter values.
+
+    The idea behind this class is twofold. First of all by encapsulating the four
+    different parameter types (e.g. sitedata, timerdata, etc) into a single object,
+    the signature of the `initialize()` method of each `SimulationObject` can be
+    harmonized across all SimulationObjects. Second, the ParameterProvider itself
+    can be easily adapted when different sets of parameter values are needed. For
+    example when running PCSE with crop rotations, different sets of timerdata and
+    cropdata are needed, this can now be handled easily by enhancing
+    ParameterProvider to rotate new sets of timerdata and cropdata on a CROP_FINISH
+    signal.
+    """
+
+    def __init__(self, sitedata, timerdata, soildata, cropdata):
+        self._sitedata = sitedata
+        self._timerdata = timerdata
+        self._soildata = soildata
+        self._cropdata = cropdata
+        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+
+        # Check if parameter names are unique
+        parnames = []
+        for mapping in self._maps:
+            parnames.extend(mapping.keys())
+        unique = Counter(parnames)
+        for parname, count in unique.items():
+            if count > 1:
+                msg = "Duplicate parameter found: %s" % parname
+                raise RuntimeError(msg)
+
+    def __getitem__(self, key):
+        for mapping in self._maps:
+            try:
+                return mapping[key]
+            except KeyError:
+                pass
+        raise KeyError(key)
+
+    def __contains__(self, key):
+        for mapping in self._maps:
+            if key in mapping:
+                return True
+        return False

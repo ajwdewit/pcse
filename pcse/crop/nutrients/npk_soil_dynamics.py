@@ -52,17 +52,13 @@ class NPK_Soil_Dynamics(SimulationObject):
         RPAVAIL = Float(-99.)
         RKAVAIL = Float(-99.)
         
-    def initialize(self, day, kiosk, cropdata, fertilizer):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         """
-        # Merge dictionaries in order to pass them to the Parameters class.
-        # use merge_dict iso deepcopy?
-        parvalues = deepcopy(cropdata)
-        parvalues.update(fertilizer)
-        
+
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk

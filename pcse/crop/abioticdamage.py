@@ -57,11 +57,12 @@ class CrownTemperature(SimulationObject):
 
     :param day: day when model is initialized
     :param kiosk: VariableKiosk of this instance
-    :param sitedata: sitedata where model parameters are taken from
+    :param parvalues: `ParameterProvider` object providing parameters as
+            key/value pairs
     :returns: a tuple containing minimum, maximum and daily average crown
               temperature. 
 
-    *Simulation parameters* (provide in sitedata dictionary)
+    *Simulation parameters*
     
     ========= ============================================== =======  ==========
      Name     Description                                    Type     Unit
@@ -101,6 +102,10 @@ class CrownTemperature(SimulationObject):
                                                   taken from kiosk
     ============ =============================== ========================== =====
     """
+    # This setting is only used when running the unit tests for FROSTOL.
+    # For unit testing, FROSTOL should not rely on the CrownTemperature model,
+    # but instead use the prescribed crown temperature directly.
+    _testing_ = Bool(False)
 
     class Parameters(ParamTemplate):
         CROWNTMPA = Float()
@@ -112,13 +117,20 @@ class CrownTemperature(SimulationObject):
         TMIN_CROWN = Float()
         TMAX_CROWN = Float()
 
-    def initialize(self, day, kiosk, sitedata):
+    def initialize(self, day, kiosk, parvalues, testing=False):
         self.kiosk = kiosk
-        self.params = self.Parameters(sitedata)
-        self.rates = self.RateVariables(self.kiosk)
+        self._testing_ = testing
+        if not self._testing_:
+            self.params = self.Parameters(parvalues)
+            self.rates = self.RateVariables(self.kiosk)
 
     @prepare_rates
     def __call__(self, day, drv):
+
+        # If unit testing then directly return the prescribed crown temperature
+        if self._testing_:
+            return (0., 10., drv.TEMP_CROWN)
+
         p = self.params
         r = self.rates
 
@@ -146,10 +158,11 @@ class FROSTOL(SimulationObject):
     """ Implementation of the FROSTOL model for frost damage in winter-wheat.
 
     :param day: start date of the simulation
-    :param kiosk: variable kiosk of this PyWOFOST instance
-    :param cropdata: dictionary with WOFOST cropdata key/value pairs
+    :param kiosk: variable kiosk of this PCSE instance
+    :param parvalues: `ParameterProvider` object providing parameters as
+            key/value pairs
 
-    *Simulation parameters* (provide in cropdata dictionary)
+    *Simulation parameters*
     
     ============== ============================================= =======  ============
      Name          Description                                   Type     Unit
@@ -255,18 +268,18 @@ class FROSTOL(SimulationObject):
         IDFST = Int(-99)
 
     #---------------------------------------------------------------------------
-    def initialize(self, day, kiosk, cropdata, sitedata):
+    def initialize(self, day, kiosk, parvalues, testing=False):
 
         # Initialize module for crown temperature
-        self.crown_temperature = CrownTemperature(day, kiosk, sitedata)
+        self.crown_temperature = CrownTemperature(day, kiosk, parvalues,
+                                                  testing)
 
-        parvalues = merge_dict(cropdata, sitedata)
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish="RF_FROST")
         self.kiosk = kiosk
 
         # Define initial states
-        LT50I = -0.6 + 0.142 *  self.params.LT50C
+        LT50I = -0.6 + 0.142 * self.params.LT50C
         self.states = self.StateVariables(kiosk, LT50T=LT50I, LT50I=LT50I,
                                           IDFST=0)
 
@@ -358,7 +371,43 @@ class FROSTOL(SimulationObject):
 #-------------------------------------------------------------------------------
 class CERES_WinterKill(SimulationObject):
     """Implementation of the winter-kill module in the CERES-wheat model (CWWK).
-    
+
+    :param day: start date of the simulation
+    :param kiosk: variable kiosk of this PCSE instance
+    :param parvalues: `ParameterProvider` object providing parameters as
+            key/value pairs
+
+    *Simulation parameters*
+
+    ============== ============================================= =======  ============
+     Name          Description                                   Type     Unit
+    ============== ============================================= =======  ============
+    CWWK_HC_S1      CERES hardening coefficient for stage 1        SCr      TBD
+    CWWK_HC_S2      CERES hardening coefficient for stage 1        SCr      TBD
+    CWWK_DHC        CERES dehardening coefficient                  Scr      TBD
+    CWWK_KILLTEMP   CERES Killing temperature per HI               Scr      |C|
+    ============== ============================================= =======  ============
+
+    *State variables*
+
+    =========== ================================================= ==== ======
+     Name          Description                                     Pbl  Unit
+    =========== ================================================= ==== ======
+     HARDINDEX    Hardening index                                   N     -
+     HIKILLTEMP   Killing temperature as function of HI             N    |C|
+    =========== ================================================= ==== ======
+
+
+    *Rate variables*
+
+    ============ ================================================= ==== ============
+     Name     Description                                      Pbl      Unit
+    ============ ================================================= ==== ============
+    RH           Rate of hardening                                  N    |day-1|
+    RDH          Rate of dehardening                                N    |day-1|
+    HIKILLFACTOR Fraction of biomass killed by low temp             N    -
+    ============ ================================================= ==== ============
+
     Reference:
     Savdie, I., R. Whitewood, et al. (1991). Potential for winter wheat 
     production in western Canada: A CERES model winterkill risk 
@@ -376,14 +425,14 @@ class CERES_WinterKill(SimulationObject):
         HIKILLTEMP = Float(-99.) # Kill temperature given Hardening Index
 
     class RateVariables(RatesTemplate):
-        HARDINDEX_INCR = Float(-99.)
-        HARDINDEX_DECR = Float(-99.)
+        RH = Float(-99.)
+        RDH = Float(-99.)
         HIKILLFACTOR = Float(-99.)
 
     def initialize(self, day, kiosk, parvalues):
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk, publish="HIKILLFACTOR")
-        self.kiosk  = kiosk
+        self.rates = self.RateVariables(kiosk, publish="HIKILLFACTOR")
+        self.kiosk = kiosk
 
         # Define initial states
         self.states = self.StateVariables(kiosk, HARDINDEX=0.,
@@ -402,24 +451,24 @@ class CERES_WinterKill(SimulationObject):
             if drv.TEMP_CROWN < 0.:
                 # 12 days of hardening are enough to reach stage 2
                 # default value 0.083333 = 1/12
-                rates.HARDINDEX_INCR = params.CERESWK_HC_S2
+                rates.RH = params.CWWK_HC_S2
             else:
-                rates.HARDINDEX_INCR = 0.
+                rates.RH = 0.
         else:  # HI between 0 and 1
             if (drv.TEMP_CROWN > -1.) and (drv.TEMP_CROWN < 8.):
                 # At 3.5 degree HI increase 0.1 (max) and with 0.06 (min) 
                 # at -1 and 8 degree. Default vaue for CERESWK_HC_S1=0.1
-                rates.HARDINDEX_INCR = params.CERESWK_HC_S1 - \
+                rates.RH = params.CWWK_HC_S1 - \
                                        ((3.5 - drv.TEMP_CROWN)**2/506.)
             else:
-                rates.HARDINDEX_INCR = 0.
+                rates.RH = 0.
 
         # Dehardening
         if drv.TMAX_CROWN > 10:
             #for each degree above 10, HI decreases with 0.02
-            rates.HARDINDEX_DECR = (10 - drv.TMAX_CROWN) * params.CERESWK_DHC
+            rates.RDH = (10 - drv.TMAX_CROWN) * params.CWWK_DHC
         else:
-            rates.HARDINDEX_DECR = 0.
+            rates.RDH = 0.
 
         # Calculate the killing factor based on the current kill temperature
         if drv.TMIN_CROWN < states.HIKILLTEMP:
@@ -442,6 +491,6 @@ class CERES_WinterKill(SimulationObject):
         rates  = self.rates
         params = self.params
 
-        states.HARDINDEX += (rates.HARDINDEX_INCR + rates.HARDINDEX_DECR)
+        states.HARDINDEX += (rates.RH + rates.RDH)
         states.HIKILLTEMP = (states.HARDINDEX + 1.) * params.CWWK_KILLTEMP
 

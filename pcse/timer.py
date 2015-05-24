@@ -7,7 +7,7 @@ from .pydispatch import dispatcher
 from .base_classes import AncillaryObject, VariableKiosk
 from .traitlets import HasTraits, Instance, Bool, Int, Enum
 from . import signals
-from .util import is_a_dekad, is_a_month
+from .util import is_a_dekad, is_a_month, is_a_week
 
 
 class Timer(AncillaryObject):
@@ -35,11 +35,13 @@ class Timer(AncillaryObject):
     final_date = Instance(datetime.date)
     current_date = Instance(datetime.date)
     time_step = Instance(datetime.timedelta)
-    interval_type = Enum(["daily", "dekadal", "monthly"])
+    interval_type = Enum(["daily", "weekly", "dekadal", "monthly"])
+    output_weekday = Int
     interval_days = Int
     generate_output = Bool()
     day_counter = Int
-    first_call = Bool
+    first_call = Bool()
+    _in_crop_cycle = Bool()
 
     def initialize(self, start_date, kiosk, final_date, mconf):
         """
@@ -64,6 +66,7 @@ class Timer(AncillaryObject):
         # in that case no OUTPUT signals will be generated.
         self.generate_output = bool(mconf.OUTPUT_VARS)
         self.interval_type = mconf.OUTPUT_INTERVAL.lower()
+        self.output_weekday = mconf.OUTPUT_WEEKDAY
         self.interval_days = mconf.OUTPUT_INTERVAL_DAYS
         self.time_step = datetime.timedelta(days=1)
         self.first_call = True
@@ -73,7 +76,8 @@ class Timer(AncillaryObject):
         # On first call only return the current date, do not increase time
         if self.first_call is True:
             self.first_call = False
-            self.logger.info("Model time at first call: %s" % self.current_date)
+            self.logger.debug("Model time at first call: %s" % self
+                             .current_date)
         else:
             self.current_date += self.time_step
             self.day_counter += 1
@@ -85,6 +89,9 @@ class Timer(AncillaryObject):
             if self.interval_type == "daily":
                 if (self.day_counter % self.interval_days) == 0:
                     output = True
+            elif self.interval_type == "weekly":
+                if is_a_week(self.current_date, self.output_weekday):
+                    output = True 
             elif self.interval_type == "dekadal":
                 if is_a_dekad(self.current_date):
                     output = True
@@ -93,14 +100,18 @@ class Timer(AncillaryObject):
                     output = True
 
         # Send output signal if True
+        #output = True
         if output:
             self._send_signal(signal=signals.output)
             
         # If final date is reached send the terminate signal
         if self.current_date >= self.final_date:
+            msg = "Reached end of simulation period as specified by END_DATE."
+            self.logger.warning(msg)
             self._send_signal(signal=signals.terminate)
             
         return self.current_date
+
 
 def simple_test():
     "Only used for testing timer routine"

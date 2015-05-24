@@ -1,6 +1,6 @@
-********************
-Introduction on PCSE
-********************
+******************
+Background of PCSE
+******************
 
 The `Python Crop Simulation Environment` was developed because of a need to re-implement crop simulation
 models that were developed in Wageningen. Many of the Wageningen crop simulation models were originally developed in
@@ -20,7 +20,7 @@ evident:
 
 To overcome many of the limitations above, the Python Crop Simulation Environment (PCSE) was developed which provides
 an environment for developing simulation models as well as a number of implementations of crop simulation models.
-PCSE is written in pure python code which makes it more flexible, easier to modify and extendable allowing easy
+PCSE is written in pure python code which makes it more flexible, easier to modify and extensible allowing easy
 interfacing with databases, graphical user interfaces, visualization tools and numerical/statistical packages. PCSE has
 several interesting features:
 
@@ -35,7 +35,7 @@ several interesting features:
   of state variables and actions needed to finalize the simulation.
 
 * Input/Output is completely separated from the simulation model itself. Therefore PCSE models can easily
-  read from and write to files, databases, etc.
+  read from and write to text files, databases and scientific formats such as HDF or NetCDF.
 
 * Built-in testing of program modules ensuring integrity of the system
 

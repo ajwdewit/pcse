@@ -7,14 +7,10 @@ Classes defined here:
 - DVS_Phenology: Implements the algorithms for phenologic development
 - Vernalisation: 
 """
-import os, os.path
-from collections import deque
 import datetime
-import logging
 
 from ..traitlets import Float, Int, Instance, Enum, Bool, AfgenTrait
 from ..decorators import prepare_rates, prepare_states
-from ..pydispatch import dispatcher
 
 from ..util import limit, daylength
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
@@ -37,7 +33,7 @@ class Vernalisation(SimulationObject):
     function VERNRTB. Within the optimal temperature range 1 day is added
     to the vernalisation state (VERN). The reduction on the phenological
     development is calculated from the base and saturated vernalisation
-    requirements (VERNBASE and VERNSAT). the reduction factor (VERNFAC) is
+    requirements (VERNBASE and VERNSAT). The reduction factor (VERNFAC) is
     scaled linearly between VERNBASE and VERNSAT.
     
     A critical development stage (VERNDVS) is used to stop the effect of
@@ -82,8 +78,8 @@ class Vernalisation(SimulationObject):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    VERNR    Rate of vernalisation                              N    -
-    VERNFAC  Reduction factor on development rate due to        Y    -
+    VERNR    Rate of vernalisation                              N     -
+    VERNFAC  Reduction factor on development rate due to        Y     -
              vernalisation effect.
     =======  ================================================= ==== ============
 
@@ -93,7 +89,7 @@ class Vernalisation(SimulationObject):
     ============ =============================== ========================== =====
      Name        Description                         Provided by             Unit
     ============ =============================== ========================== =====
-    DVS          Development Stage                 Phenology                 |-|
+    DVS          Development Stage                 Phenology                 -
                  Used only to determine if the
                  critical development stage for
                  vernalisation (VERNDVS) is
@@ -121,14 +117,14 @@ class Vernalisation(SimulationObject):
                                             # Forced when DVS > VERNDVS
 
     #---------------------------------------------------------------------------
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
 
         """
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish=["VERNFAC"])
         self.kiosk = kiosk
 
@@ -213,7 +209,7 @@ class DVS_Phenology(SimulationObject):
     TBASEM   Base temperature for emergence                 SCr        |C|
     TEFFMX   Maximum effective temperature for emergence    SCr        |C|
     TSUM1    Temperature sum from emergence to anthesis     SCr        |C| day
-    TSUM2    Temperature sum for anthesis to maturity       SCr        |C| day
+    TSUM2    Temperature sum from anthesis to maturity      SCr        |C| day
     IDSL     Switch for phenological development options    SCr        -
              temperature only (IDSL=0), including           SCr
              daylength (IDSL=1) and including               
@@ -272,8 +268,6 @@ class DVS_Phenology(SimulationObject):
     """
     # Placeholder for start/stop types and vernalisation module
     vernalisation = Instance(Vernalisation)
-    start_type = Enum(["sowing", "emergence"])
-    stop_type  = Enum(["maturity","harvest","earliest"])
 
     class Parameters(ParamTemplate):
         TSUMEM = Float(-99.)  # Temp. sum for emergence
@@ -288,6 +282,8 @@ class DVS_Phenology(SimulationObject):
         DVSEND = Float(-99.)  # Final development stage
         DTSMTB = AfgenTrait() # Temperature response function for phenol.
                               # development.
+        CROP_START_TYPE = Enum(["sowing", "emergence"])
+        CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"])
 
     #-------------------------------------------------------------------------------
     class RateVariables(RatesTemplate):
@@ -309,19 +305,15 @@ class DVS_Phenology(SimulationObject):
         STAGE  = Enum([None, "emerging", "vegetative", "reproductive", "mature"])
 
     #---------------------------------------------------------------------------
-    def initialize(self, day, kiosk, cropdata, start_type="sowing",
-                    stop_type="maturity"):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :keyword start_type: Defines the start of the phenology algorithm:
-         `sowing|emergence`. The default value is `sowing`
-        :keyword end_type: Defines the end of the phenology algorithm:
-         `maturity|harvest|earliest`. The default value is `maturity`
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
 
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
 
@@ -329,7 +321,7 @@ class DVS_Phenology(SimulationObject):
 
         # Define initial states
         DVS = self.params.DVSI
-        DOS, DOE, STAGE = self._get_initial_stage(day, start_type, stop_type)
+        DOS, DOE, STAGE = self._get_initial_stage(day)
         self.states = self.StateVariables(kiosk, publish="DVS",
                                           TSUM=0., TSUME=0., DVS=DVS,
                                           DOS=DOS, DOE=DOE, DOA=None, DOM=None,
@@ -337,19 +329,16 @@ class DVS_Phenology(SimulationObject):
 
         # initialize vernalisation for IDSL=2
         if self.params.IDSL >= 2:
-            self.vernalisation = Vernalisation(day, kiosk, cropdata)
+            self.vernalisation = Vernalisation(day, kiosk, parvalues)
     
     #---------------------------------------------------------------------------
-    def _get_initial_stage(self, day, start_type, stop_type):
+    def _get_initial_stage(self, day):
         """"""
-        # Register start_type
-        self.start_type = start_type
-        # Register stop_type
-        self.stop_type = stop_type
-        
+        p = self.params
+
         # Define initial stage type (emergence/sowing) and fill the
         # respective day of sowing/emergence (DOS/DOE)
-        if self.start_type == "emergence":
+        if p.CROP_START_TYPE == "emergence":
             STAGE = "vegetative"
             DOE = day
             DOS = None
@@ -357,13 +346,13 @@ class DVS_Phenology(SimulationObject):
             # send signal to indicate crop emergence
             self._send_signal(signals.crop_emerged)
 
-        elif self.start_type == "sowing":
+        elif p.CROP_START_TYPE == "sowing":
             STAGE = "emerging"
             DOS = day
             DOE = None
 
         else:
-            msg = "Unknown start type: %s" % self.start_type
+            msg = "Unknown start type: %s" % p.CROP_START_TYPE
             raise exc.PCSEError(msg)
             
         return (DOS, DOE, STAGE)
@@ -467,25 +456,27 @@ class DVS_Phenology(SimulationObject):
     #---------------------------------------------------------------------------
     def _next_stage(self, day):
         """Moves states.STAGE to the next phenological stage"""
-        
-        this_stage = self.states.STAGE
-        if this_stage == "emerging":
-            self.states.STAGE = "vegetative"
-            self.states.DOE = day
+        s = self.states
+        p = self.params
+
+        current_STAGE = s.STAGE
+        if s.STAGE == "emerging":
+            s.STAGE = "vegetative"
+            s.DOE = day
             # send signal to indicate crop emergence
             self._send_signal(signals.crop_emerged)
             
-        elif this_stage == "vegetative":
-            self.states.STAGE = "reproductive"
-            self.states.DOA = day
+        elif s.STAGE == "vegetative":
+            s.STAGE = "reproductive"
+            s.DOA = day
                         
-        elif this_stage == "reproductive":
-            self.states.STAGE = "mature"
-            self.states.DOM = day
-            if self.stop_type in ["maturity","earliest"]:
+        elif s.STAGE == "reproductive":
+            s.STAGE = "mature"
+            s.DOM = day
+            if p.CROP_END_TYPE in ["maturity","earliest"]:
                 self._send_signal(signal=signals.crop_finish,
                                   day=day, finish_type="maturity")
-        elif this_stage == "mature":
+        elif s.STAGE == "mature":
             msg = "Cannot move to next phenology stage: maturity already reached!"
             raise exc.PCSEError(msg)
 
@@ -494,7 +485,7 @@ class DVS_Phenology(SimulationObject):
             raise exc.PCSEError(msg)
         
         msg = "Changed phenological stage '%s' to '%s' on %s"
-        self.logger.info(msg % (this_stage, self.states.STAGE, day))
+        self.logger.info(msg % (current_STAGE, s.STAGE, day))
 
     #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, finish_type=None):
@@ -504,3 +495,25 @@ class DVS_Phenology(SimulationObject):
         """
         if finish_type == 'harvest':
             self._for_finalize["DOH"] = day
+
+
+class DVS_Phenology_Wrapper(SimulationObject):
+    """This is wrapper class that wraps the DVS_phenology simulation object
+    in such a way that it can run directly in the Engine. This means that
+    it can be used direct in a configuration file::
+
+        CROP = DVS_Phenology_Wrapper
+
+    This is useful for running only the phenology instead of the entire
+    crop simulation.
+    """
+    phenology = Instance(SimulationObject)
+
+    def initialize(self, day, kiosk, cropdata, soildata, sitedata, start_type, stop_type):
+        self.phenology = DVS_Phenology(day, kiosk, cropdata, start_type,  stop_type)
+
+    def calc_rates(self, day, drv):
+        self.phenology.calc_rates(day, drv)
+
+    def integrate(self, day):
+        self.phenology.integrate(day)

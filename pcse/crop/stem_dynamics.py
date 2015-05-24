@@ -88,14 +88,15 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         DRST = Float(-99.)
         GWST = Float(-99.)
         
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
         
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.rates  = self.RateVariables(kiosk, publish="DRST")
         self.kiosk  = kiosk
 

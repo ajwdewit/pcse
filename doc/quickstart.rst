@@ -1,118 +1,14 @@
-*************************
-Getting started with PCSE
-*************************
+***************
+Getting started
+***************
 
 This quickstart guide will help you to install PCSE and provides
 some examples to get you started with modelling. All examples are currently focused on applying
 the WOFOST crop simulation model, although other crop simulations may become available within
 PCSE in the future.
 
-Installing PCSE
-===============
-
-Requirements and dependencies
------------------------------
-
-PCSE is being developed on Ubuntu Linux 10.04 using python 2.7.6 and is known to work with
-the 3.x series (using the 2to3 tool). As python is a platform independent language, PCSE
-works equally well on Windows or Mac OSX.  The most straightforward approach for installing
-python is through one of the prepackaged python distributions such as `Enthought Canopy`_,
-`Anaconda`_ or `PythonXY`_. The following screen dump shows the version of python, numpy and
-SQLAlchemy that were used to develop PCSE::
-
-    Python 2.7.6 (default, Dec 16 2013, 12:39:22)
-    [GCC 4.4.3] on linux2
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>> import numpy as np
-    >>> np.__version__
-    '1.8.0'
-    >>> import sqlalchemy as sa
-    >>> sa.__version__
-    '0.8.4'
-
-.. _Enthought Canopy: https://www.enthought.com/products/canopy/
-.. _Anaconda: https://store.continuum.io/cshop/anaconda/
-.. _PythonXY: https://code.google.com/p/pythonxy/wiki/Welcome
-
-All examples in this quickstart guide were developed under Windows 7 with the Enthought Python distribution
-(version 7.0) which is by now superseeded by Enthought Canopy.
-
-Downloading PCSE
-----------------
-
-The PCSE package can be downloaded as a zip file from GitHub.com using the link `here`_. Just unzip
-the package at a suitable location, for this tutorial we assume that PCSE is installed
-under 'D:\\USERDATA\\pylib\\'. Note that the top directory in the zip file is `pcse-<branchname>`.
-The actual PCSE is package is inside this folder and needs to be put on your file system. After
-unzipping the 'D:\\USERDATA\\pylib\\' folder should resemble the screenshot below.
-
-.. image:: pylib.png
-
-.. _here: https://github.com/ajwdewit/pcse/archive/develop.zip
-
-
-Testing the PCSE package
-------------------------
-To guarantee its integrity, the PCSE package includes a number of self
-tests that test individual components as well as the entire simulation. These tests
-verify that the output produced by the different components matches with the
-expected outputs. Test data for the individual components can be found
-in the `pcse.tests.test_data` package, while the test data for the entire chain
-is stored in an SQLite database (pcse.db). This database can be found under
-`.pcse` in your home folder and will be automatically generated when importing
-PCSE for the first time. When you delete the database file manually it will be
-regenerated..
-
-We assume here that PCSE is installed under 'D:\\USERDATA\\pylib\\' and
-this location needs to be added to the search path of python::
-
-    C:\>python
-    Enthought Python Distribution -- www.enthought.com
-    Version: 7.0-2 (32-bit)
-
-    Python 2.7.1 |EPD 7.0-2 (32-bit)| (r271:86832, Dec  2 2010, 10:35:02) [MSC v.1500 32 bit (Intel)] on win32
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>> import sys
-    >>> sys.path.append(r"D:\USERDATA\pylib")
-
-Next, PCSE can be imported and the tests can be executed by calling
-the `test()` function at the top of the package::
-
-    >>> import pcse
-    Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db
-    >>> pcse.test()
-    runTest (pcse.tests.test_abioticdamage.Test_FROSTOL) ... ok
-    runTest (pcse.tests.test_assimilation.Test_WOFOST_Assimilation) ... ok
-    runTest (pcse.tests.test_partitioning.Test_DVS_Partitioning) ... ok
-    runTest (pcse.tests.test_evapotranspiration.Test_PotentialEvapotranspiration) ... ok
-    runTest (pcse.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration1) ... ok
-    runTest (pcse.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration2) ... ok
-    runTest (pcse.tests.test_respiration.Test_WOFOSTMaintenanceRespiration) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedPotato) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterWheat) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialSunflower) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSunflower) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterWheat) ... ok
-
-    ----------------------------------------------------------------------
-    Ran 19 tests in 29.748s
-
-    OK
-    >>>
-
-If the model output matches the expected output the test will report 'OK',
-otherwise an error will be produced with a detailed traceback on where the
-problem occurred.
-
-Part 1: An interactive PCSE/WOFOST session
-==========================================
+1: An interactive PCSE/WOFOST session
+=====================================
 
 The easiest way to demonstrate PCSE is to import WOFOST from PCSE and run it from
 an interactive Python session. We will be using the `start_wofost()` script that
@@ -156,16 +52,16 @@ model state you can do::
 Showing that after 11 days the LAI value is 0.287. When we increase time
 with another 25 days, the LAI increases to 1.528. The `get_variable` method
 can retrieve any state or rate variable that is defined somewhere in the
-model. Finally, we can finish the crop season by simply specifying sufficient days
-and store the results to a file 'myresults.csv'::
+model. Finally, we can finish the crop season by letting it run until the
+model terminates and store the results to a file 'myresults.csv'::
 
-    >>> wofost_object.run(days=300)
+    >>> wofost_object.run_till_terminate()
     >>> wofost_object.store_to_file("myresults.txt")
 
 Which should look like this :download:`myresults.txt`
 
-Part 2: Running PCSE/WOFOST with custom input data
-==================================================
+2: Running PCSE/WOFOST with custom input data
+=============================================
 
 For setting up PCSE/WOFOST with your
 own data sources you should understand that WOFOST uses 5 different types of
@@ -175,8 +71,8 @@ misnomer as they contain a mixture of parameter values, boundary conditions
 and events rather than data, except for the driving variables which
 can be considered as (observed) data. This terminology was inherited from the 
 previous WOFOST versions and it was kept because changing it would
-cause more confusion. PCSE provides several tools for reading parameters and weather data from files
-or databases.
+cause more confusion. PCSE provides several tools for reading parameters and
+weather data from files or databases.
 
 For the second example we will run a simulation for sugar beet in
 Wageningen (Netherlands) and we will read the input data step by step from
@@ -185,8 +81,9 @@ script. For the example we will assume that data files are in the directory
 `D:\\userdata\\pcse_examples` and all the parameter files needed can be
 found by unpacking this zip file :download:`quickstart_part2.zip`.
 
-First we will import the necessary modules and
-import set the data directory::
+First we will import the necessary modules and define the data directory.
+We also assume that you have the matplotlib package installed on your
+system.::
 
     >>> import os
     >>> import pcse
@@ -208,8 +105,8 @@ is taken from the crop files in the `WOFOST Control Centre`_.
 The crop parameter values for many models in
 Wageningen are often provided in the CABO format that could be read
 with the `TTUTIL <http://edepot.wur.nl/17847>`_ FORTRAN library. PCSE
-tries to be backward compatible as much as possible and provides a
-tool for reading parameter files in CABO format::
+tries to be backward compatible as much as possible and provides the
+:ref:`CABOFileReader <CABOFileReader>` for reading parameter files in CABO format::
 
     >>> from pcse.fileinput import CABOFileReader
     >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
@@ -256,9 +153,11 @@ need to be specified in the `timerdata` dictionary::
        CROP_END_DATE: date of the end of the crop simulation in case of CROP_END_TYPE == 'harvest' | 'earliest'
         MAX_DURATION: maximum number of days of the crop simulation
 
-The CABO format has no support for dates, therefore the PCSE file format was
-developed that does allow to use dates. The crop calendar file for sugar beet
-in Wageningen `sugarbeet_calendar.pcse` can be read with the PCSEFileReader::
+The CABO format does provide support date/time values, but the CABOFilereader
+cannot yet parse them. Moreover, python supports date/time value natively and
+they can be defined using the python-based PCSE file format. The crop calendar
+file for sugar beet in Wageningen `sugarbeet_calendar.pcse` can be read with
+the :ref:`PCSEFileReader <PCSEFileReader>`::
 
     >>> from pcse.fileinput import PCSEFileReader
     >>> crop_calendar_file = os.path.join(data_dir, 'sugarbeet_calendar.pcse')
@@ -300,12 +199,12 @@ options are available in PCSE for retrieving weather data:
 
     1. The database structure as provided by the Crop Growth Monitoring
        System. Weather data will be read from the GRID_WEATHER table which
-       is implemented using `pcse.db.pcse.GridWeatherDataProvider`.
+       is implemented using :ref:`GridWeatherDataProvider <GridWeatherDataProvider>`.
     2. The file structure as defined by the `CABO Weather System`_ which is
-       implemented using `pcse.fileinput.CABOWeatherDataProvider`.
+       implemented using :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`.
     3. The global weather data provided by the agroclimatology from the
        `NASA Power database`_ at a resolution of 1x1 degree. PCSE
-       provides the `pcse.db.NASAPowerWeatherDataProvider` which retrieves
+       provides the :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
        the NASA Power data from the internet for a given latitude and
        longitude.
 
@@ -349,7 +248,8 @@ soildata, timerdata and weather data.
 However, as many users of PCSE only need a particular configuration (for
 example the WOFOST model for potential production), preconfigured Engines
 are provided in `pcse.models`. For the sugarbeet example we will import
-the WOFOST model for water-limited simulation under freely draining soils::
+the WOFOST model for water-limited simulation under freely draining soil
+conditions::
 
     >>> from pcse.models import Wofost71_WLP_FD
     >>> wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, wdp)

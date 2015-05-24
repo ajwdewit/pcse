@@ -64,14 +64,14 @@ class NPK_Stress(SimulationObject):
         NLUE_NPK   = Float(-99.)  # coefficient for the reduction of RUE due to nutrient (N-P-K) stress
         
 
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param kiosk: variable kiosk of this PyWOFOST instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         :returns: nutrient stress using __call__()
         """
 
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.kiosk = kiosk
               
         

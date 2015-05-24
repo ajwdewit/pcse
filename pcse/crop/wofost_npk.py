@@ -137,8 +137,7 @@ class WofostNPK(SimulationObject):
         NPKI = Float(-99.)  # nutrient stress index
         NNI = Float(-99.)  # N nutrition index
 
-    def initialize(self, day, kiosk, cropdata, soildata, fertilizer,
-                   start_type, stop_type):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PyWOFOST instance
@@ -148,24 +147,24 @@ class WofostNPK(SimulationObject):
             "harvest"|"maturity"|"earliest"
         """
         
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI", "NPKREF", "NPKI", "NNI"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
-        self.pheno = Phenology(day, kiosk,  cropdata, start_type, stop_type)
-        self.part = Partitioning(day, kiosk, cropdata)
-        self.assim = Assimilation(day, kiosk, cropdata)
-        self.mres = MaintenanceRespiration(day, kiosk, cropdata)
-        self.evtra = Evapotranspiration(day, kiosk, cropdata, soildata)
-        self.ro_dynamics = Root_Dynamics(day, kiosk, cropdata, soildata)
-        self.st_dynamics = Stem_Dynamics(day, kiosk, cropdata)
-        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, cropdata)
-        self.lv_dynamics = Leaf_Dynamics(day, kiosk, cropdata)
+        self.pheno = Phenology(day, kiosk,  parvalues)
+        self.part = Partitioning(day, kiosk, parvalues)
+        self.assim = Assimilation(day, kiosk, parvalues)
+        self.mres = MaintenanceRespiration(day, kiosk, parvalues)
+        self.evtra = Evapotranspiration(day, kiosk, parvalues)
+        self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
+        self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
+        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
+        self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
 #       added IS
-        self.npk_crop_dynamics = NPK_crop(day, kiosk, cropdata)
-        self.npk_soil_dynamics = NPK_soil(day, kiosk, cropdata, fertilizer)
-        self.npk_stress = NPK_Stress(day, kiosk, cropdata)
+        self.npk_crop_dynamics = NPK_crop(day, kiosk, parvalues)
+        self.npk_soil_dynamics = NPK_soil(day, kiosk, parvalues)
+        self.npk_stress = NPK_Stress(day, kiosk, parvalues)
         
 
         # Initial total (living+dead) above-ground biomass of the crop
@@ -180,7 +179,7 @@ class WofostNPK(SimulationObject):
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
-        checksum = cropdata["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
+        checksum = parvalues["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
         if abs(checksum) > 0.0001:
             msg = "Error in partitioning of initial biomass (TDWI)!"
             raise exc.PartitioningError(msg)

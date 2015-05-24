@@ -69,14 +69,15 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
         RMO = Float(-99.)
         RFSETB = AfgenTrait()
 
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
-        
-        self.params = self.Parameters(cropdata)
+
+        self.params = self.Parameters(parvalues)
         self.kiosk = kiosk
         
     def __call__(self, day, drv):

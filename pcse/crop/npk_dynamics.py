@@ -208,20 +208,20 @@ class NPK_Crop_Dynamics(SimulationObject):
         RPLOSS = Float(-99.)
         RKLOSS = Float(-99.)
         
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param kiosk: variable kiosk of this PyWOFOST instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         """  
         
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
         
 #       Initialize components of the npk_crop_dynamics
 #        self.losses = NPK_Losses(day, kiosk, cropdata)
-        self.translocation = NPK_Translocation(day, kiosk, cropdata)
-        self.demand_uptake = NPK_Demand_Uptake(day, kiosk, cropdata)
+        self.translocation = NPK_Translocation(day, kiosk, parvalues)
+        self.demand_uptake = NPK_Demand_Uptake(day, kiosk, parvalues)
 
         # INITIAL STATES
         params = self.params
