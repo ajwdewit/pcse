@@ -128,7 +128,6 @@ class Lintul3(SubModel):
         TRANCO= Float(-99.)
         TSUMAG= Float(-99.)
         TSUMAN= Float(-99.)
-#         TSUMMT= Float(-99.)
         WCAD  = Float(-99.)
         WCFC  = Float(-99.)
         WCI   = Float(-99.)
@@ -136,6 +135,9 @@ class Lintul3(SubModel):
         WCWET = Float(-99.)
         WCWP  = Float(-99.)
         WMFAC = Float(-99.)
+        RDRNS = Float(-99.)
+        RDRRT = Float(-99.)
+        
 
         FERTAB = AfgenTrait()
         FLVTB  = AfgenTrait()
@@ -152,14 +154,12 @@ class Lintul3(SubModel):
 
         
     class Lintul3States(StateVariables):
-#         TSUM  = Float(-99.)
         LAI   = Float(-99.)
         ANLV  = Float(-99.)
         ANST  = Float(-99.)
         ANRT  = Float(-99.)
         ANSO  = Float(-99.)
         NUPTT = Float(-99.)
-        TNSOIL= Float(-99.)
         NLOSSL= Float(-99.)
         NLOSSR= Float(-99.)
         WLVG  = Float(-99.)
@@ -323,13 +323,12 @@ class Lintul3(SubModel):
         if crop_stage == "emerging":
             return
                 
-            
+
         # **********************Calling Subroutines******************************
         #  Calling the subroutine for calculating the astrological daylength.
         DAYL = astro(day, LAT, drv.IRRAD).DAYL
         
         # Calling the subroutine for converting TSUM to the developmental stage.
-#         DVS = self.subdvs(TIME, p.DOYEM, s.TSUM, p.TSUMAN, p.TSUMMT)
         DVS = self.pheno.get_variable("DVS") # self.kiosk["DVS"]
         
         # Calling the subroutine for translocatable N in leaves, stem, roots and
@@ -337,45 +336,45 @@ class Lintul3(SubModel):
         ATNLV, ATNST, ATNRT, ATN = self.ntrloc(s.ANLV, s.ANST, s.ANRT, s.WLVG, s.WST, s.WRT, 
                                                p.RNFLV, p.RNFST, p.RNFRT, p.FNTRT)
         
+        
+                # Calling the subroutine for relative growth rate of roots, leaves, stem
+        # and storage organs.
+        RWLVG, RWRT, RWST, RWSO = self.relgr(TIME, p.DOYEM, EMERG, 
+                                             i.WLVGI, i.WRTLI, i.WSTI, i.WSOI, 
+                                             GTOTAL, FLV, FRT, FST, FSO, DLV, DRRT, DELT)
+        
+# Leaf growth and LAI.
+        GLV    = FLV * GTOTAL
+        
+        # Calling the subroutine for daily increase of leaf area index.
+        GLAI = self.gla(TIME, p.DOYEM, DTEFF, i.LAII, p.RGRL, DELT, SLA, s.LAI, GLV, p.NLAI, WC, p.WCWP, DVS, TRANRF, NNI)
+        
+        # Net rate of change of Leaf area.
+        RLAI   = GLAI - DLAI
+        
+        # Relative death rate of leaves due to senescence/ageing.
+        RDRTMP = p.RDRT(DAVTMP)
+        
         # *Total vegetative biomass.
         TBGMR = s.WLVG + s.WST
-        
         
         # Total N in green matter of the plant.
         NUPGMR = s.ANLV + s.ANST
         
-        # ---------------Fertilizer application---------------------------------*
-        FERTN  = p.FERTAB(TIME)
-        NRF    = p.NRFTAB(TIME)
-        
-        #  Relative death rate of leaves due to N stress.
-        RDRNS  = 0.03
-        
         # Total leaf weight.
         WLV    = s.WLVG + s.WLVD
         
-#         #  Water content in the rootzone
+        #  Water content in the rootzone
         WA = self.kiosk["WA"]
         WC  = 0.001* WA /notNull(s.ROOTD)
-        
-        #  Relative death rate of roots.
-        RDRRT = 0.03
-        
-        # Relative death rate of leaves due to senescence/ageing.
-        RDRTMP = p.RDRT(DAVTMP)
         
         # Maximum N concentration in the leaves, from which the values of the
         # stem and roots are derived, as a function of development stage.
         NMAXLV = p.NMXLV(DVS)
         
-        # Photoperiodic effect.
-#         PHOTPF  = INSW (s.TSUM-p.TSUMAN, p.PHOTTB(DAYL), 1.)
-        
         # * Total above ground biomass
         TAGBM = WLV + s.WST + s.WSO ## --> output @UnusedVariable
         
-        # N supply to the storage organs.
-        NSUPSO = INSW (DVS - p.DVSNT, 0., ATN / p.TCNT)
         EMERG  = REAAND(TIME - p.DOYEM + 1., WC - p.WCWP)* INSW(-s.LAI, 1., 0.)
         
         # Calling the subroutine for Potential evaporation and transpiration.
@@ -383,7 +382,6 @@ class Lintul3(SubModel):
         PEVAP, PTRAN = self.penman(DAVTMP, VP, DTR, s.LAI, WN)
         E0, ES0, ET0 = penman(day, LAT, drv.ELEV, drv.TMIN, drv.TMAX, drv.IRRAD, drv.VAP, drv.WIND, ANGSTA=-0.18, ANGSTB= -0.55)
         # NB: idem in [cm] uit drv te halen....
-        NFGMR  = NUPGMR / notNull(TBGMR)
         
         # *Average residual N concentration.
         NRMR   = (s.WLVG * p.RNFLV + s.WST * p.RNFST) / notNull(TBGMR)
@@ -392,7 +390,6 @@ class Lintul3(SubModel):
         #  rooted soil layer before anthesis. After anthesis there is no
         #  uptake from the soil anymore.
         NLIMIT = INSW(DVS - p.DVSNLT, INSW(WC - p.WCWP, 0., 1.), 0.0)
-        FERTNS = FERTN * NRF
         
         # -------- Growth rates and dry matter production of plant organs-------*
         #  Biomass partitioning functions under (water and nitrogen)non-stressed
@@ -402,14 +399,7 @@ class Lintul3(SubModel):
         FLVT   = pf.FL
         FSTT   = pf.FS
         FSOT   = pf.FO
- 
-#         FRTWET = p.FRTTB( DVS )
-#         FLVT   = p.FLVTB( DVS )
-#         FSTT   = p.FSTTB( DVS)
-#         FSOT   = p.FSOTB( DVS )
-#         
-#         CHECK = FRTWET + FLVT + FSTT + FSOT
-        
+         
         # * For calculation of LUE (it can be removed once after checking, however, 
         #   I have put these new additions in these two (c and N) balances sections
         PAR    = DTR * 0.50
@@ -424,12 +414,9 @@ class Lintul3(SubModel):
         NMAXST = p.LSNR * NMAXLV
         NMAXRT = p.LRNR * NMAXLV
         
-        #  Soil N supply (g N m-2 d-1) through mineralization.
-        RTMIN  = 0.10 * EMERG * NLIMIT
         RROOTD = min(p.RRDMAX * INSW(WC - p.WCWP, 0., 1.) * EMERG,  p.ROOTDM - s.ROOTD)
-#         RTSUMP = RTSUM * PHOTPF
         
-        # *   Growth reduction function for water stress(actual trans/potential)
+        # Growth reduction function for water stress(actual trans/potential)
         TRANRF = TRAN / notNull(PTRAN)
         
         # Calling the subroutine for maximum nitrogen concentration of leaves
@@ -439,10 +426,10 @@ class Lintul3(SubModel):
         # Maximum N content in the plant.
         NOPTS = NOPTST * s.WST
         NOPTL = NOPTLV * s.WLVG
-#         RWA = (RAIN+EXPLOR+IRRIG)-(RUNOFF+TRAN+EVAP+DRAIN)
         NOPTMR = (NOPTL+ NOPTS)/notNull(TBGMR)
         
         # Calling the subroutine for Nitrogen Nutrition Index.
+        NFGMR  = NUPGMR / notNull(TBGMR)
         NNI = self.nnindx(TIME, p.DOYEM, EMERG, NFGMR, NRMR, NOPTMR)
         
         # Calling the subroutine for relative modification for root and shoot
@@ -453,33 +440,18 @@ class Lintul3(SubModel):
         # PARINT, ... 
         GTOTAL = self.growth(TIME, p.DOYEM, DTR, p.K, p.NLUE, s.LAI, p.LUE, TRANRF, NNI)
         
-        # **-------------Functions and parameters for rice----------------------*
+        # -------------Functions and parameters for rice----------------------
         
-        #     Specific Leaf area(m2/g).
+        # Specific Leaf area(m2/g).
         SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
         
         # Calling the subroutine for relative death rate of leaves.
         TSUM = self.pheno.get_variable("TSUM")
         DLV, DLAI = self.deathl(TIME, p.DOYEM, TSUM, p.TSUMAG, RDRTMP, 
-                                p.RDRSHM, s.LAI, p.LAICR, s.WLVG, RDRNS, NNI, SLA)
-        
-        # ** Leaf growth and LAI.
-        GLV    = FLV * GTOTAL
-        
-        # Calling the subroutine for daily increase of leaf area index.
-        GLAI = self.gla(TIME, p.DOYEM, DTEFF, i.LAII, p.RGRL, DELT, SLA, s.LAI, GLV, p.NLAI, WC, p.WCWP, DVS, TRANRF, NNI)
+                                p.RDRSHM, s.LAI, p.LAICR, s.WLVG, p.RDRNS, NNI, SLA)
         
         # Calling the subroutine for N loss due to death of leaves and roots.
-        DRRT, RNLDLV, RNLDRT = self.rnld(DVS, s.WRT, RDRRT, p.RNFLV, DLV, p.RNFRT, p.DVSDR)
-        
-        # Net rate of change of Leaf area.
-        RLAI   = GLAI - DLAI
-        
-        # Calling the subroutine for relative growth rate of roots, leaves, stem
-        # and storage organs.
-        RWLVG, RWRT, RWST, RWSO = self.relgr(TIME, p.DOYEM, EMERG, 
-                                             i.WLVGI, i.WRTLI, i.WSTI, i.WSOI, 
-                                             GTOTAL, FLV, FRT, FST, FSO, DLV, DRRT, DELT)
+        DRRT, RNLDLV, RNLDRT = self.rnld(DVS, s.WRT, p.RDRRT, p.RNFLV, DLV, p.RNFRT, p.DVSDR)
         
         # Calling the subroutine for N demand of leaves, roots and stem storage
         # organs.
@@ -487,16 +459,19 @@ class Lintul3(SubModel):
                                                   s.WLVG, s.WST, s.WRT, s.WSO, RWLVG, RWST, RWRT, RWSO, 
                                                   s.ANLV, s.ANST, s.ANRT, s.ANSO, p.TCNT, DELT)
         
-        # ****************SOIL NITROGEN SUPPLY***********************************
         #     Total Nitrogen demand.
         NDEMTO = max(0.0, (NDEML + NDEMS + NDEMR))
         
+        # N supply to the storage organs.
+        NSUPSO = INSW (DVS - p.DVSNT, 0., ATN / p.TCNT)
+
         # Rate of N uptake in grains.
         RNSO =  min(NDEMSO, NSUPSO)
         
         # --------------------Fertilizer N---------------------------------------
         #     Total nutrient uptake.
-        NUPTR = (max(0., min(NDEMTO, s.TNSOIL))* NLIMIT ) / DELT * INSW(TIME - p.DOYEM, 0., 1.)
+        TNSOIL = self.kiosk["TNSOIL"]
+        NUPTR = (max(0., min(NDEMTO, TNSOIL))* NLIMIT ) / DELT * INSW(TIME - p.DOYEM, 0., 1.)
         
         # Calling the subroutine for N translocated from leaves, stem, and roots.
         RNTLV, RNTST, RNTRT = self.ntrans(RNSO, ATNLV, ATNST, ATNRT, ATN)
@@ -506,9 +481,6 @@ class Lintul3(SubModel):
         RNULV, RNUST, RNURT = self.rnusub(TIME, p.DOYEM, EMERG, NDEML, NDEMS, NDEMR, NUPTR, NDEMTO, 
                                           i.ANLVI, i.ANSTI, i.ANRTI, DELT)
         
-        #  Change in inorganic N in soil as function of fertilizer
-        #  input, soil N mineralization and crop uptake.
-        RNSOIL = FERTNS/DELT -NUPTR + RTMIN
         RNST = RNUST-RNTST
         RNRT = RNURT-RNTRT-RNLDRT
         
@@ -526,6 +498,8 @@ class Lintul3(SubModel):
         self.kiosk.set_variable(self, "EMERG", EMERG)
         self.kiosk.set_variable(self, "EVAP", EVAP)
         self.kiosk.set_variable(self, "TRAN", TRAN)
+        self.kiosk.set_variable(self, "NLIMIT", NLIMIT)
+        self.kiosk.set_variable(self, "NUPTR", NUPTR)
         
         s.rLAI    = RLAI  
         s.rANLV   = RNLV  
@@ -533,7 +507,6 @@ class Lintul3(SubModel):
         s.rANRT   = RNRT  
         s.rANSO   = RNSO  
         s.rNUPTT  = NUPTR 
-        s.rTNSOIL = RNSOIL
         s.rNLOSSL = RNLDLV
         s.rNLOSSR = RNLDRT
         s.rWLVG   = RWLVG 
