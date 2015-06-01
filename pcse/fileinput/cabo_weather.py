@@ -156,7 +156,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
         if any([cbd > cache_date for cbd in cb_dates]):
             try:
                 os.remove(cache_file)
-            except OSError, exc:
+            except OSError as exc:
                 msg = "Failed to remove cache file '%s' due to: %s" % (cache_file, exc)
                 warnings.warn(msg)
             return False
@@ -165,7 +165,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             try:
                 self._load(cache_file)
                 return True
-            except Exception, e:
+            except Exception as e:
                 msg = "Cache file failed loading! Try to delete cache file: %s"
                 self.logger.warn(msg, cache_file)
                 return False
@@ -197,7 +197,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             year = int(values[1])
             doy  = int(values[2])
             weather_obs = np.array(values[3:], dtype=np.float64)
-        except (ValueError,IndexError), exc:
+        except (ValueError,IndexError) as exc:
             msg = ("Failed to parse line: %s" % rec)
             raise RuntimeError(msg)
         
@@ -349,10 +349,10 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                 else:
                     if abs(current_value - fvalue) > 0.001:
                         raise AttributeError
-            except ValueError, e:
+            except ValueError as e:
                 msg = "Failed to parse location parameter %s on file %s, value: %s"
                 raise PCSEError(msg % (parname, cb_file, strvalue))
-            except AttributeError, e:
+            except AttributeError as e:
                 msg = "Inconsistent '%s' location parameter in file %s compared to file %s."
                 raise PCSEError(msg % (parname, cb_file, prev_cb_file))
     

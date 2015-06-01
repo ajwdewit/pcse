@@ -123,7 +123,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         labels = [cell.value for cell in sheet.row(self.label_row)]
 
         # Start reading all rows with data
-        rownums = range(sheet.nrows)
+        rownums = list(range(sheet.nrows))
         for rownum in rownums[self.data_start_row:]:
             try:
                 row = sheet.row(rownum)

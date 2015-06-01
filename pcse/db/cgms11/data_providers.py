@@ -648,7 +648,7 @@ class CropDataProvider(dict):
                 self.campaign_year, self.db_resource))
         single_values = []
         tabular_values = []
-        for pcode in sorted(self.iterkeys()):
+        for pcode in sorted(self.keys()):
             value = self[pcode]
             if not isinstance(value, list):
                 single_values.append((pcode, value))

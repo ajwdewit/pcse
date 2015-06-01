@@ -18,7 +18,7 @@ stations = {8011: (43.5667, -6.0442, 130., 0.243, 0.541),
 
 class DottedContainer(object):
     def __init__(self, d):
-        for key, value in d.iteritems():
+        for key, value in d.items():
             if key == 'DAY':
                 value = (datetime.strptime(value, '%d-%b-%y').date())
             elif key == 'STATION_NUMBER':

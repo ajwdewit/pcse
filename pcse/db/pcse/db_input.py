@@ -640,12 +640,12 @@ def fetch_sitedata(metadata, grid, year):
             sitedata['SMLIM']  = float(row.smlim)
         else:
             raise RuntimeError("No rows found")
-    except Exception, e:
+    except Exception as e:
         errstr = "Failed to get site data for year %i and grid %i: " + str(e)
         logger.error(errstr % (year, grid))
         raise SitedataError(errstr % (year, grid))
 
-    logger.info("Succesfully retrieved site variables from database")
+    logger.info("Successfully retrieved site variables from database")
     return sitedata
 
 #----------------------------------------------------------------------------
@@ -696,7 +696,7 @@ class GridWeatherDataProvider(WeatherDataProvider):
             r.close()
             if row is None:
                 raise Exception
-        except Exception, exc:
+        except Exception as exc:
             msg = "Failed deriving location info for grid %s" % self.grid_no
             raise MeteodataError(msg)
 
@@ -819,7 +819,7 @@ class EnsembleGridWeatherDataProvider(WeatherDataProvider):
             r.close()
             if row is None:
                 raise Exception
-        except Exception, exc:
+        except Exception as exc:
             msg = "Failed deriving location info for grid %s" % self.grid_no
             raise MeteodataError(msg)
 
