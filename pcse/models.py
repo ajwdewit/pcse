@@ -123,7 +123,7 @@ class _Wofost71Base(Engine):
 
         # Find variables available in daily records
         if len(self._saved_output) == 0:
-            print "No simulation results available yet."
+            print("No simulation results available yet.")
             return
 
         tmsg = "TIME-SERIES RESULTS:\n"

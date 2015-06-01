@@ -70,8 +70,8 @@ if sys.version_info[0] >= 3:
     
     def execfile(fname, glob, loc=None):
         loc = loc if (loc is not None) else glob
-        exec compile(open(fname).read(), fname, 'exec') in glob, loc
-    
+        exec(compile(open(fname).read(), fname, 'exec'), glob, loc)
+
     # Refactor print statements in doctests.
     _print_statement_re = re.compile(r"\bprint (?P<expr>.*)$", re.MULTILINE)
     def _print_statement_sub(match):

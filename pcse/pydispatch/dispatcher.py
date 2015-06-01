@@ -378,7 +378,7 @@ def _removeReceiver(receiver):
 	else:
 		for senderkey in backSet:
 			try:
-				signals = connections[senderkey].keys()
+				signals = list(connections[senderkey].keys())
 			except KeyError:
 				pass
 			else:
@@ -435,7 +435,7 @@ def _removeBackrefs( senderkey):
 	except KeyError:
 		signals = None
 	else:
-		items = signals.items()
+		items = list(signals.items())
 		def allReceivers( ):
 			for signal,set in items:
 				for item in set:
@@ -463,7 +463,7 @@ def _removeOldBackRefs(senderkey, signal, receiver, receivers):
 		found = 0
 		signals = connections.get(signal)
 		if signals is not None:
-			for sig,recs in connections.get(signal,{}).iteritems():
+			for sig,recs in connections.get(signal,{}).items():
 				if sig != signal:
 					for rec in recs:
 						if rec is oldReceiver:

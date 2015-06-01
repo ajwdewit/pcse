@@ -4,13 +4,13 @@
 """ Collection of tests for PyWOFOST and individual components.
 """
 import unittest
-import test_assimilation
-import test_abioticdamage
-import test_partitioning
-import test_evapotranspiration
-import test_respiration
-import test_wofost
-import test_penmanmonteith
+from . import test_assimilation
+from . import test_abioticdamage
+from . import test_partitioning
+from . import test_evapotranspiration
+from . import test_respiration
+from . import test_wofost
+from . import test_penmanmonteith
 
 def make_test_suite(dsn=None):
     """Assemble test suite and return it

@@ -41,7 +41,7 @@ for strline in pot_raw_data:
 # Evapotranspiration parameter values for testing
 parvalues = (1, 0, 0, (0,0.60000002,2.0,0.60000002), 1.0000000, 4.5000000, 0.40000001, 0.26300001, 0.10000000, 9.00000036E-02)
 parnames = ("IWB", "IOX", "IAIRDU", "KDIFTB", "CFET", "DEPNR", "SM0", "SMFCF", "SMW", "CRAIRC")
-wl_parvalue_dict1 = dict(zip(parnames,parvalues))
+wl_parvalue_dict1 = dict(list(zip(parnames, parvalues)))
 
 # evapotranspiration test data
 wl1_headers = "IWB,E0,ES0,ET0,LAI,SM,EVWMX,EVSMX,TRAMX,TRA,DVS"
@@ -84,7 +84,7 @@ for strline in wl1_raw_data:
 # Evapotranspiration parameter values for testing
 parvalues = (1, 0, 0, (0,0.60000002,2.0,0.60000002), 1.0000000, 2.5000000, 0.40000001, 0.26300001, 0.10000000, 9.00000036E-02)
 parnames = ("IWB", "IOX", "IAIRDU", "KDIFTB", "CFET", "DEPNR", "SM0", "SMFCF", "SMW", "CRAIRC")
-wl_parvalue_dict2 = dict(zip(parnames,parvalues))
+wl_parvalue_dict2 = dict(list(zip(parnames,parvalues)))
 
 # evapotranspiration test data
 wl2_headers = "IWB,E0,ES0,ET0,LAI,SM,EVWMX,EVSMX,TRAMX,TRA,DVS"
