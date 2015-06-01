@@ -96,59 +96,57 @@ class Lintul3(SubModel):
     # Parameters, rates and states which are relevant at the main crop
     # simulation level
     class Parameters(ParamTemplate):
-        DOYEM = Float(-99.)
-        DVSDR = Float(-99.)
-        DVSNLT= Float(-99.)
-        DVSNT = Float(-99.)
-        FNTRT = Float(-99.)
-        FRNX  = Float(-99.)
-        K     = Float(-99.)
-        LAICR = Float(-99.)
-        LRNR  = Float(-99.)
-        LSNR  = Float(-99.)
-        LUE   = Float(-99.)
-        NFRLVI= Float(-99.)
-        NFRRTI= Float(-99.)
-        NFRSTI= Float(-99.)
-        NLAI  = Float(-99.)
-        NLUE  = Float(-99.)
-        NMAXSO= Float(-99.)
-        NPART = Float(-99.)
-        NSLA  = Float(-99.)
-        RDRSHM= Float(-99.)
-        RGRL  = Float(-99.)
-        RNFLV = Float(-99.)
-        RNFRT = Float(-99.)
-        RNFST = Float(-99.)
-        ROOTDM= Float(-99.)
-        RRDMAX= Float(-99.)
-        SLAC  = Float(-99.)
-        TBASE = Float(-99.)
-        TCNT  = Float(-99.)
-        TRANCO= Float(-99.)
-        TSUMAG= Float(-99.)
-        TSUMAN= Float(-99.)
-        WCAD  = Float(-99.)
-        WCFC  = Float(-99.)
-        WCI   = Float(-99.)
-        WCST  = Float(-99.)
-        WCWET = Float(-99.)
-        WCWP  = Float(-99.)
-        WMFAC = Float(-99.)
-        RDRNS = Float(-99.)
-        RDRRT = Float(-99.)
-        
+        DOYEM  = Float(-99)    # The day of the year on which crop emerges.
+        DVSDR  = Float(-99)    # Development stage above which death of leaves and roots start.
+        DVSNLT = Float(-99)    # development stage N-limit
+        DVSNT  = Float(-99)    # development stage N-threshold
+        FNTRT  = Float(-99)    # Nitrogen translocation from roots as a fraction of the total amount of nitrogen translocated from leaves and stem.
+        FRNX   = Float(-99)    # Optimal N concentration as the fraction of maximum N concentration.
+        K      = Float(-99)    # light extinction coefficient
+        LAICR  = Float(-99)    # (oC d)-1, critical LAI above which mutual shading of leaves occurs,
+        LRNR   = Float(-99)    # 
+        LSNR   = Float(-99)    # 
+        LUE    = Float(-99)    # Light use efficiency.
+        NFRLVI = Float(-99)    # Initial fraction of N (g N g-1 DM) in leaves.
+        NFRRTI = Float(-99)    # Initial fraction of N (g N g-1 DM) in roots.
+        NFRSTI = Float(-99)    # Initial fraction of N (g N g-1 DM) in stem.
+        NLAI   = Float(-99)    # Coefficient for the effect of N stress on LAI reduction(during juvenile phase)
+        NLUE   = Float(-99)    # Extinction coefficient for  Nitrogen distribution down the canopy
+        NMAXSO = Float(-99)    # 
+        NPART  = Float(-99)    # Coefficient for the effect of N stress on leaf biomass reduction
+        NSLA   = Float(-99)    # Coefficient for the effect of N stress on SLA reduction
+        RDRSHM = Float(-99)    # and the maximum relative death rate of leaves due to shading.
+        RGRL   = Float(-99)    # Relative growth rate of LAI at the exponential growth phase
+        RNFLV  = Float(-99)    # Residual N concentration in leaves
+        RNFRT  = Float(-99)    # Residual N concentration in roots.
+        RNFST  = Float(-99)    # Residual N concentration in stem
+        ROOTDM = Float(-99)    # Maximum root depth for a rice crop.
+        RRDMAX = Float(-99)    # Maximum rate of increase in rooting depth (m d-1) for a rice crop.
+        SLAC   = Float(-99)    # Specific leaf area constant.
+        TBASE  = Float(-99)    # Base temperature for spring wheat crop.
+        TCNT   = Float(-99)    # Time coefficient(days) for N translocation.
+        TRANCO = Float(-99)    # Transpiration constant (mm/day) indicating the level of drought tolerance of the wheat crop.
+        TSUMAG = Float(-99)    # Temperature sum for ageing of leaves
+        TSUMAN = Float(-99)    # Temperature sum for anthesis  [corresponds to TSUM1= Float(-99.)# Temperature sum emergence to anthesis]
+        WCAD   = Float(-99)    # Soil hydraulic properties
+        WCFC   = Float(-99)    # Soil hydraulic properties
+        WCI    = Float(-99)    # Initial water content in cm3 of water/(cm3 of soil).
+        WCST   = Float(-99)    # Soil hydraulic properties
+        WCWET  = Float(-99)    # Soil hydraulic properties
+        WCWP   = Float(-99)    # Soil hydraulic properties
+        WMFAC  = Float(-99)    # water management (0                                =irrigated up to the field capacity, 1= irrigated up to saturation)
+        RDRNS  = Float(-99)    # Relative death rate of leaves due to N stress.
+        RDRRT  = Float(-99)    # Relative death rate of roots.
+        RDRRT  = Float(-99)    # Relative death rate of roots.        
 
-        FERTAB = AfgenTrait()
-        FLVTB  = AfgenTrait()
-        FRTTB  = AfgenTrait()
-        FSOTB  = AfgenTrait()
-        FSTTB  = AfgenTrait()
-        NMXLV  = AfgenTrait()
-        NRFTAB = AfgenTrait()
-        PHOTTB = AfgenTrait()
-        RDRT   = AfgenTrait()
-        SLACF  = AfgenTrait()
+        FLVTB  = AfgenTrait()  # Partitioning coefficients
+        FRTTB  = AfgenTrait()  # Partitioning coefficients
+        FSOTB  = AfgenTrait()  # Partitioning coefficients
+        FSTTB  = AfgenTrait()  # Partitioning coefficients
+        NMXLV  = AfgenTrait()  # Maximum N concentration in the leaves as a function of development stage.
+        PHOTTB = AfgenTrait()  # Function to include the effect of photoperiodicity
+        RDRT   = AfgenTrait()  # 
+        SLACF  = AfgenTrait()  # Leaf area correction function as a function of development stage, DVS.        
         
 
 
@@ -185,12 +183,13 @@ class Lintul3(SubModel):
         
         def __init__(self, parameters):
             # Read initial states
-            self.ROOTDI= 0.1
+            self.ROOTDI= 0.10   # Initial root depth (m).
             self.TSUMI = 0.0
             self.WLVGI = 2.4
             self.WRTLI = 3.6
             self.WSOI  = 0.0
-            self.WSTI  = 0.0    
+            self.WSTI  = 0.0 
+            self.WCI   = 0.40   # Initial water content in cm3 of water/(cm3 of soil).   
             
             # initial calculations
             DVSI= self.TSUMI / parameters.TSUMAN
@@ -267,8 +266,10 @@ class Lintul3(SubModel):
         self.states.initialize()
         
         kiosk.register_variable(self, "EMERG", type="R", publish=True)
-        kiosk.register_variable(self, "EVAP", type="R", publish=True)
-        kiosk.register_variable(self, "TRAN", type="R", publish=True)
+        kiosk.register_variable(self, "EVAP",  type="R", publish=True)
+        kiosk.register_variable(self, "TRAN",  type="R", publish=True)
+        kiosk.register_variable(self, "NLIMIT",type="R", publish=True)
+        kiosk.register_variable(self, "NUPTR", type="R", publish=True)
         
         
                 
@@ -323,8 +324,7 @@ class Lintul3(SubModel):
         if crop_stage == "emerging":
             return
                 
-
-        # **********************Calling Subroutines******************************
+            
         #  Calling the subroutine for calculating the astrological daylength.
         DAYL = astro(day, LAT, drv.IRRAD).DAYL
         
@@ -336,24 +336,6 @@ class Lintul3(SubModel):
         ATNLV, ATNST, ATNRT, ATN = self.ntrloc(s.ANLV, s.ANST, s.ANRT, s.WLVG, s.WST, s.WRT, 
                                                p.RNFLV, p.RNFST, p.RNFRT, p.FNTRT)
         
-        
-                # Calling the subroutine for relative growth rate of roots, leaves, stem
-        # and storage organs.
-        RWLVG, RWRT, RWST, RWSO = self.relgr(TIME, p.DOYEM, EMERG, 
-                                             i.WLVGI, i.WRTLI, i.WSTI, i.WSOI, 
-                                             GTOTAL, FLV, FRT, FST, FSO, DLV, DRRT, DELT)
-        
-# Leaf growth and LAI.
-        GLV    = FLV * GTOTAL
-        
-        # Calling the subroutine for daily increase of leaf area index.
-        GLAI = self.gla(TIME, p.DOYEM, DTEFF, i.LAII, p.RGRL, DELT, SLA, s.LAI, GLV, p.NLAI, WC, p.WCWP, DVS, TRANRF, NNI)
-        
-        # Net rate of change of Leaf area.
-        RLAI   = GLAI - DLAI
-        
-        # Relative death rate of leaves due to senescence/ageing.
-        RDRTMP = p.RDRT(DAVTMP)
         
         # *Total vegetative biomass.
         TBGMR = s.WLVG + s.WST
@@ -367,6 +349,9 @@ class Lintul3(SubModel):
         #  Water content in the rootzone
         WA = self.kiosk["WA"]
         WC  = 0.001* WA /notNull(s.ROOTD)
+        
+        # Relative death rate of leaves due to senescence/ageing.
+        RDRTMP = p.RDRT(DAVTMP)
         
         # Maximum N concentration in the leaves, from which the values of the
         # stem and roots are derived, as a function of development stage.
@@ -414,6 +399,7 @@ class Lintul3(SubModel):
         NMAXST = p.LSNR * NMAXLV
         NMAXRT = p.LRNR * NMAXLV
         
+        # Root growth
         RROOTD = min(p.RRDMAX * INSW(WC - p.WCWP, 0., 1.) * EMERG,  p.ROOTDM - s.ROOTD)
         
         # Growth reduction function for water stress(actual trans/potential)
@@ -440,8 +426,6 @@ class Lintul3(SubModel):
         # PARINT, ... 
         GTOTAL = self.growth(TIME, p.DOYEM, DTR, p.K, p.NLUE, s.LAI, p.LUE, TRANRF, NNI)
         
-        # -------------Functions and parameters for rice----------------------
-        
         # Specific Leaf area(m2/g).
         SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
         
@@ -450,8 +434,23 @@ class Lintul3(SubModel):
         DLV, DLAI = self.deathl(TIME, p.DOYEM, TSUM, p.TSUMAG, RDRTMP, 
                                 p.RDRSHM, s.LAI, p.LAICR, s.WLVG, p.RDRNS, NNI, SLA)
         
+        # Leaf growth and LAI.
+        GLV    = FLV * GTOTAL
+        
+        # Calling the subroutine for daily increase of leaf area index.
+        GLAI = self.gla(TIME, p.DOYEM, DTEFF, i.LAII, p.RGRL, DELT, SLA, s.LAI, GLV, p.NLAI, WC, p.WCWP, DVS, TRANRF, NNI)
+        
+        # Net rate of change of Leaf area.
+        RLAI   = GLAI - DLAI
+        
         # Calling the subroutine for N loss due to death of leaves and roots.
         DRRT, RNLDLV, RNLDRT = self.rnld(DVS, s.WRT, p.RDRRT, p.RNFLV, DLV, p.RNFRT, p.DVSDR)
+        
+        # Calling the subroutine for relative growth rate of roots, leaves, stem
+        # and storage organs.
+        RWLVG, RWRT, RWST, RWSO = self.relgr(TIME, p.DOYEM, EMERG, 
+                                             i.WLVGI, i.WRTLI, i.WSTI, i.WSOI, 
+                                             GTOTAL, FLV, FRT, FST, FSO, DLV, DRRT, DELT)
         
         # Calling the subroutine for N demand of leaves, roots and stem storage
         # organs.

@@ -120,9 +120,13 @@ def PENMAN(DAVTMP,  ## degree C
     WDF    = 2.63 * (1.0 + 0.54 * WN)
     PENMD  = LHVAP * WDF * (SVP-VP) * PSYCH/(SLOPE+PSYCH)
     
-    PEVAP  = exp(-0.5*LAI)  * (PENMRS + PENMD) / LHVAP
+#     E0, ES0, ET0
+#         E0      -  Penman potential evaporation from a free water surface [mm/d]
+#         ES0     -  Penman potential evaporation from a moist bare soil surface [mm/d] != PENMRS
+#         ET0     -  Penman potential transpiration from a crop canopy [mm/d] != PENMRC
+    PEVAP  = exp(-0.5*LAI)  * (PENMRS + PENMD) / LHVAP # (PENMRS + PENMD) / LHVAP == ES0
     PEVAP  = max (0., PEVAP)
-    PTRAN  = (1.-exp(-0.5*LAI)) * (PENMRC + PENMD) / LHVAP
+    PTRAN  = (1.-exp(-0.5*LAI)) * (PENMRC + PENMD) / LHVAP # (PENMRC + PENMD) / LHVAP == ET0
     PTRAN  = max( 0., PTRAN)
     
 #     return RLWN, NRADC, PENMRC, PENMD, PEVAP, PTRAN

@@ -193,7 +193,7 @@ def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
 
     # Penman formula (1948)
     E0 = (DELTA*RNW+GAMMA*EA)/(DELTA+GAMMA)
-    ES0 = (DELTA*RNS+GAMMA*EA)/(DELTA+GAMMA)
+    ES0 = (DELTA*RNS+GAMMA*EA)/(DELTA+GAMMA) 
     ET0 = (DELTA*RNC+GAMMA*EAC)/(DELTA+GAMMA)
 
     # Ensure reference evaporation >= 0.

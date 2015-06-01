@@ -3,7 +3,7 @@ from pcse.lintul.stateVariables import StateVariables
 from pcse.lintul import lintul3lib
 from pcse.lintul.lintul3lib import notNull, INSW, REAAND
 from pcse.decorators import prepare_rates, prepare_states
-from pcse.traitlets import Float
+from pcse.traitlets import Float, AfgenTrait
 from pcse.lintul.lintul3 import SubModel
 
 
@@ -35,17 +35,20 @@ class Lintul3Soil(SubModel):
     """
     
     class Parameters(ParamTemplate):
-        DRATE   = Float(-99)
-        IRRIGF  = Float(-99)
-        ROOTDM  = Float(-99)
-        RRDMAX  = Float(-99)
-        WCFC    = Float(-99)
-        WCI     = Float(-99)
-        WCST    = Float(-99)
-        WCSUBS  = Float(-99)
-        WCWP    = Float(-99)
-        WMFAC   = Float(-99)
-    
+        DRATE   = Float(-99)   # Maximum drainage rate of the soil (mm/day)
+        IRRIGF  = Float(-99)   # Irrigation factor (1 =yes, 0 = no)
+        ROOTDM  = Float(-99)   # Maximum root depth for a rice crop.
+        RRDMAX  = Float(-99)   # Maximum rate of increase in rooting depth (m d-1) for a rice crop.
+        WCFC    = Float(-99)   # Soil hydraulic properties
+        WCI     = Float(-99)   # Initial water content in cm3 of water/(cm3 of soil).
+        WCST    = Float(-99)   # Soil hydraulic properties
+        WCSUBS  = Float(-99)   # water content subsoil (?)
+        WCWP    = Float(-99)   # Soil hydraulic properties
+        WMFAC   = Float(-99)   # water management (0=irrigated up to the field capacity, 1 = irrigated up to saturation)        
+
+        FERTAB = AfgenTrait()  # Fertilizer application as a function of TIME (g N m-2).
+        NRFTAB = AfgenTrait()  # Fertilizer nitrogen recovery fraction
+
     
     class Lintul3SoilStates(StateVariables):
         WA      = Float(-99.)
@@ -56,6 +59,7 @@ class Lintul3Soil(SubModel):
         TRAIN   = Float(-99.)
         TEXPLO  = Float(-99.)
         TIRRIG  = Float(-99.)
+        TNSOIL  = Float(-99.)
         
              
     
@@ -98,7 +102,7 @@ class Lintul3Soil(SubModel):
         initialStates["WA"] = init.WAI
         
         # Initialize state variables
-        self.states = self.Lintul3SoilStates(kiosk, publish=["WA"], **initialStates)
+        self.states = self.Lintul3SoilStates(kiosk, publish=["WA", "TNSOIL"], **initialStates)
         self.states.initialize()
         
         
@@ -119,19 +123,21 @@ class Lintul3Soil(SubModel):
         DELT = 1 # ???
         
         
-        ROOTD = self.kiosk["ROOTD"]
-        EMERG = self.kiosk["EMERG"]
-        EVAP = self.kiosk["EVAP"]
-        TRAN = self.kiosk["TRAN"]
+        ROOTD   = self.kiosk["ROOTD"]
+        EMERG   = self.kiosk["EMERG"]
+        EVAP    = self.kiosk["EVAP"]
+        TRAN    = self.kiosk["TRAN"]
+        NLIMIT  = self.kiosk["NLIMIT"]
+        NUPTR   = self.kiosk["NUPTR"]
         
         # Variables supplied by the weather system
-        RAIN             = drv.RAIN * 10 # cm  --> mm CORRECTION FOR NON-STANDARD cm in CABO-WEATHER
+        RAIN    = drv.RAIN * 10 # cm  --> mm CORRECTION FOR NON-STANDARD cm in CABO-WEATHER
                 
         
         #  Water content in the rootzone
-        WC  = 0.001* s.WA /notNull(ROOTD)
+        WC      = 0.001* s.WA /notNull(ROOTD)
                       
-        RROOTD = min(p.RRDMAX * INSW(WC - p.WCWP, 0., 1.) * EMERG,  p.ROOTDM - ROOTD)
+        RROOTD  = min(p.RRDMAX * INSW(WC - p.WCWP, 0., 1.) * EMERG,  p.ROOTDM - ROOTD)
         
         # Calling the subroutine for rates of drainage, runoff and irrigation.
         DRAIN, RUNOFF, IRRIG = self.drunir(RAIN, EVAP, TRAN, p.IRRIGF, p.DRATE, 
@@ -139,22 +145,38 @@ class Lintul3Soil(SubModel):
         
         
         #  Exploration of water in soil when roots grow downward.
-        EXPLOR = 1000. * RROOTD * p.WCSUBS
+        EXPLOR  = 1000. * RROOTD * p.WCSUBS
                 
-        RWA = (RAIN+EXPLOR+IRRIG)-(RUNOFF+TRAN+EVAP+DRAIN)
+        RWA     = (RAIN+EXPLOR+IRRIG)-(RUNOFF+TRAN+EVAP+DRAIN)
 
+        # ****************SOIL NITROGEN SUPPLY***********************************
+
+        #  Soil N supply (g N m-2 d-1) through mineralization.
+        RTMIN   = 0.10 * EMERG * NLIMIT
+
+        # ---------------Fertilizer application---------------------------------*
+        TIME    = day.timetuple().tm_yday
+        FERTN   = p.FERTAB(TIME)
+        NRF     = p.NRFTAB(TIME)
+        
+        #  Change in inorganic N in soil as function of fertilizer
+        #  input, soil N mineralization and crop uptake.
+        FERTNS = FERTN * NRF
+        RNSOIL = FERTNS/DELT -NUPTR + RTMIN
+
+        
+        
         s.rWA     = RWA   
         s.rTEXPLO = EXPLOR
-        
         s.rTEVAP  = EVAP  
         s.rTTRAN  = TRAN  
         s.rTRUNOF = RUNOFF
         s.rTIRRIG = IRRIG 
         s.rTRAIN  = RAIN  
         s.rTDRAIN = DRAIN
+        s.rTNSOIL = RNSOIL
         
-        TIME =  day.timetuple().tm_yday
-        self.doOutput(self, TIME, locals().copy())
+#         self.doOutput(self, TIME, locals().copy())
 
         WATBAL = (s.WA + (s.TRUNOF + s.TTRAN + s.TEVAP + s.TDRAIN)    # @UnusedVariable
                          - (i.WAI + s.TRAIN + s.TEXPLO + s.TIRRIG))         
