@@ -234,6 +234,6 @@ class CABOFileReader(dict):
         for line in self.header:
             msg += line+"\n"
         msg += "------------------------------------\n"
-        for key, value in self.iteritems():
+        for key, value in self.items():
             msg += ("%s: %s %s\n" % (key, value, type(value)))
         return msg

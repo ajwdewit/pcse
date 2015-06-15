@@ -357,7 +357,8 @@ def ea_from_tdew(tdew):
     # Raise exception:
     if (tdew < -95.0 or tdew > 65.0):
         # Are these reasonable bounds?
-        raise ValueError, 'tdew=%g is not in range -95 to +60 deg C' % tdew
+        msg = 'tdew=%g is not in range -95 to +60 deg C' % tdew
+        raise ValueError(msg)
 
     tmp = (17.27 * tdew) / (tdew + 237.3)
     ea = 0.6108 * exp(tmp)
@@ -642,7 +643,7 @@ class Afgen(object):
         n = len(x_list)
         
         # Check if x range is ascending continuously
-        rng = range(1, n)
+        rng = list(range(1, n))
         x_asc = [True if (x_list[i] > x_list[i-1]) else False for i in rng]
         
         # Check for breaks in the series where the ascending sequence stops.
@@ -671,9 +672,9 @@ class Afgen(object):
         self.unit = unit
 
         x_list, y_list = self._check_x_ascending(tbl_xy)
-        x_list = self.x_list = map(float, x_list)
-        y_list = self.y_list = map(float, y_list)
-        intervals = zip(x_list, x_list[1:], y_list, y_list[1:])
+        x_list = self.x_list = list(map(float, x_list))
+        y_list = self.y_list = list(map(float, y_list))
+        intervals = list(zip(x_list, x_list[1:], y_list, y_list[1:]))
         self.slopes = [(y2 - y1)/(x2 - x1) for x1, x2, y1, y2 in intervals]
 
     def __call__(self, x):
@@ -855,8 +856,9 @@ class ConfigurationLoader(object):
         # Load file using execfile
         try:
             loc = {}
-            execfile(model_config_file, {}, loc)
-        except Exception, e:
+            bytecode = compile(open(model_config_file).read(), model_config_file, 'exec')
+            exec(bytecode, {}, loc)
+        except Exception as e:
             msg = "Failed to load configuration from file '%s' due to: %s"
             msg = msg % (model_config_file, e)
             raise exc.PCSEError(msg)
@@ -870,7 +872,7 @@ class ConfigurationLoader(object):
                     self.description += "\n"
 
         # Loop through the attributes in the configuration file
-        for key, value in loc.items():
+        for key, value in list(loc.items()):
             if key.isupper():
                 self.defined_attr.append(key)
                 setattr(self, key, value)

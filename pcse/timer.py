@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+from __future__ import print_function
 import datetime
 
 from .pydispatch import dispatcher
@@ -120,10 +121,10 @@ def simple_test():
         pass
 
     def on_OUTPUT():
-        print "Output generated."
+        print("Output generated.")
     
-    Start = datetime.date(2000,1,1)
-    End = datetime.date(2000,2,1)
+    Start = datetime.date(2000, 1, 1)
+    End = datetime.date(2000, 2, 1)
     kiosk = VariableKiosk()
     dispatcher.connect(on_OUTPUT, signal=signals.output,
                        sender=dispatcher.Any)
@@ -133,24 +134,24 @@ def simple_test():
     mconf.OUTPUT_INTERVAL_DAYS = 4
     mconf.OUTPUT_VARS = ["dummy"]
 
-    print "-----------------------------------------"
-    print "Dekadal output"
-    print "-----------------------------------------"
+    print("-----------------------------------------")
+    print("Dekadal output")
+    print("-----------------------------------------")
     timer = Timer(Start, kiosk, End, mconf)
     for i in range(100):
         today = timer()
 
-    print "-----------------------------------------"
-    print "Monthly output"
-    print "-----------------------------------------"
+    print("-----------------------------------------")
+    print("Monthly output")
+    print("-----------------------------------------")
     mconf.OUTPUT_INTERVAL = "monthly"
     timer = Timer(Start, kiosk, End, mconf)
     for i in range(150):
         today = timer()
 
-    print "-----------------------------------------"
-    print "daily output with 4 day intervals"
-    print "-----------------------------------------"
+    print("-----------------------------------------")
+    print("daily output with 4 day intervals")
+    print("-----------------------------------------")
     mconf.OUTPUT_INTERVAL = "daily"
     timer = Timer(Start, kiosk, End, mconf)
     for i in range(150):

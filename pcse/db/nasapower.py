@@ -126,7 +126,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                 msg = "Cache file older then 90 days, reloading data from NASA Power."
                 self.logger.debug(msg)
                 self._get_and_process_NASAPower(self.latitude, self.longitude)
-            except Exception, e:
+            except Exception as e:
                 msg = ("Reloading data from NASA failed, reverting to (outdated) " +
                        "cache file")
                 self.logger.debug(msg)
@@ -188,7 +188,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
         try:
             check_angstromAB(angstrom_a, angstrom_b)
-        except PCSEError, e:
+        except PCSEError as e:
             msg = ("Angstrom A/B values (%f, %f) outside valid range: %s. " +
                    "Reverting to default values.")
             msg = msg % (angstrom_a, angstrom_b, e)
@@ -262,7 +262,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         cache_filename = self._get_cache_filename(self.latitude, self.longitude)
         try:
             self._dump(cache_filename)
-        except (IOError, EnvironmentError), e:
+        except (IOError, EnvironmentError) as e:
             msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
 
@@ -275,7 +275,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             msg = "Cache file successfully loaded."
             self.logger.debug(msg)
             return True
-        except (IOError, EnvironmentError, EOFError), e:
+        except (IOError, EnvironmentError, EOFError) as e:
             msg = "Failed to load cache from file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
             return False

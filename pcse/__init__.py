@@ -27,6 +27,7 @@ See Also
 * http://www.wageningenur.nl/wofost
 * http://wofost.wikispaces.com
 """
+from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
 __version__ = "5.0.0"
@@ -85,12 +86,12 @@ from .start_wofost import start_wofost
 # If no PCSE demo database, build it!
 pcse_db_file = os.path.join(settings.PCSE_USER_HOME, "pcse.db")
 if not os.path.exists(pcse_db_file):
-    print ("Building PCSE demo database at: %s ..." % pcse_db_file),
+    print("Building PCSE demo database at: %s ..." % pcse_db_file, end=" ")
     pcse_home = os.path.dirname(__file__)
     pcse_db_dump_file = os.path.join(pcse_home, "db", "pcse", "pcse_dump.sql")
     try:
         util.load_SQLite_dump_file(pcse_db_dump_file, pcse_db_file)
-        print "OK"
+        print("OK")
     except Exception as e:
         logger = logging.getLogger()
         msg1 = "Failed to create the PCSE demo database: %s" % e
@@ -99,7 +100,7 @@ if not os.path.exists(pcse_db_file):
         logger.warn(msg2)
 
 if not __stable__:
-    print "Warning: You are running a PCSE development version:  %s" % __version__
+    print("Warning: You are running a PCSE development version:  %s" % __version__)
 
 def test(dsn=None):
     """Run all available tests for PCSE."""
