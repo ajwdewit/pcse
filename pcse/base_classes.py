@@ -550,6 +550,77 @@ class StatesTemplate(StatesRatesCommon):
     
 
 #-------------------------------------------------------------------------------
+class StatesWithImplicitRatesTemplate(StatesTemplate):
+    """Container class for state variables that have an associated rate.
+    The rates will be generated upon initialization having the same name as their states,
+    prefixed by a lowercase character 'r'.
+    After initialization no more attributes can be implicitly added.
+    Call integrate() to integrate all states with their current rates; the rates are reset to 0.0.
+    
+    States are all attributes descending from Float and not prefixed by an underscore.
+    """
+        
+    rates = {}
+    __initialized = False
+
+            
+        
+    def __setattr__(self, name, value):
+        if self.rates.has_key(name):
+            # known attribute: set value:             
+            self.rates[name] = value
+        elif not self.__initialized:
+            # new attribute: allow whe not yet initialized:
+            object.__setattr__(self, name, value)
+        else:
+            # new attribute: disallow according ancestorial ruls:
+            super(StatesWithImplicitRatesTemplate, self).__setattr__(name, value)
+            
+            
+    def __getattr__(self, name):
+        if self.rates.has_key(name):
+            return self.rates[name]
+        else:
+            object.__getattribute__(self, name)
+
+
+    def initialize(self):
+        self.rates = {}
+        self.__initialized = True
+        
+        for s in self.__class__.listIntegratedStates():
+            self.rates['r' + s] = 0.0
+
+
+    def integrate(self, delta):
+        # integrate all:
+        for s in self.listIntegratedStates():
+            rate = getattr(self, 'r' + s)
+            state = getattr(self, s)
+            newvalue = state + delta * rate
+            setattr(self, s, newvalue)
+          
+        # reset all rates  
+        for r in self.rates:
+          self.rates[r] = 0.0
+          
+          
+            
+    @classmethod
+    def listIntegratedStates(cls):
+        return sorted([a for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_')])
+
+
+
+    @classmethod
+    def initialValues(cls):
+        return dict((a, 0.0) for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_'))
+
+
+
+
+
+#-------------------------------------------------------------------------------
 class RatesTemplate(StatesRatesCommon):
     """Takes care of registering variables in the kiosk and monitoring
     assignments to variables that are published.

@@ -1,4 +1,5 @@
-from pcse.base_classes import StatesTemplate, VariableKiosk
+from pcse.base_classes import StatesTemplate, VariableKiosk,\
+  StatesWithImplicitRatesTemplate
 from pcse.traitlets import Float
 
 
@@ -48,7 +49,7 @@ class StateVariables(StatesTemplate):
 
 
 
-class States(StateVariables):
+class States(StatesWithImplicitRatesTemplate):
     TSUM  = Float(-99.)
     LAI   = Float(-99.)
     ANLV  = Float(-99.)
@@ -77,10 +78,16 @@ class States(StateVariables):
     TRAIN = Float(-99.)
     TDRAIN= Float(-99.)
     
+
     
 
 if (__name__ == "__main__"):
     
+    def integrate():
+      states.unlock()
+      states.integrate(1);
+      print states.TSUM, states.rTSUM
+
     kiosk  = VariableKiosk()
     init = States.initialValues()
     states = States(kiosk, publish=[], **init) 
@@ -93,4 +100,8 @@ if (__name__ == "__main__"):
           
     states.rTSUM = 123.
     
-    print states.rTSUM
+    print states.TSUM, states.rTSUM
+
+    for i in range(3):    
+      states.rTSUM = 123.
+      integrate();

@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 from pcse.base_classes import ParamTemplate
-from pcse.lintul.stateVariables import StateVariables
-from pcse.lintul import lintul3lib
-from pcse.lintul.lintul3lib import notNull, INSW, REAAND
+from pcse.base_classes import StatesWithImplicitRatesTemplate as StateVariables
+from pcse.lintul.lintul3lib import notNull, INSW
 from pcse.decorators import prepare_rates, prepare_states
 from pcse.traitlets import Float, AfgenTrait
 from pcse.lintul.lintul3 import SubModel
+from pcse.util import limit
 
 
 class Lintul3Soil(SubModel):
@@ -23,43 +24,72 @@ class Lintul3Soil(SubModel):
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.*
 *-------------------------------------------------------------------------*
 
-************************************************************************
-*   LINTUL3 is an extended version of LINTUL1 (the version of LINTUL   *
-*          for optimal growth conditions) and LINTUL2 includes a simple*
-*          water balance for studying effects of drought. LINTUL2-N    *
-*          includes N-limitation on crop growth. The latter program is *
-*          called LINTUL3.                                             *
-*          Test version for spring wheat, using parameters for spring  *
-*          wheat for Flevoland                                         *
-************************************************************************
+The water balance in the model does not deal with a flooded rice system, but the 
+soil is maintained at saturation so that the crop does not experience water 
+stress. The soil water balance is calculated for a single soil layer, whose 
+thickness increases with downward root elongation. The model does not simulate 
+root elongation, but only average root increase in depth. The assumption that 
+the root elongation does not depend on the dryness of the soil until wilting 
+point is originally from LINTUL1 (Spitters, 1990). In the rice situation, we 
+have a saturated soil and the wilting point is not expected occur. Water and 
+nutrient uptake by the crop is limited to the rooted soil depth. Addition of 
+water to the available store through root extension is calculated from the rate 
+of extension and the (saturated) water content (Spitters and Schapendonk, 1990; 
+Farr� et al., 2000). 
+
+Nitrogen supply from soil 
+
+Mineral nitrogen available for crop uptake (TNSOIL) originates from three 
+sources: nitrogen present in the soil profile at germination/transplanting, 
+nitrogen from biological fixation and mineralization from soil organic matter 
+during the growing season and nitrogen applied as fertilizer. Under aerobic 
+conditions, indigenous soil nitrogen supply can be quantified reasonably 
+accurately on the basis of soil organic matter content (Sinclair and Amir, 
+1992). Under anaerobic conditions, however, differences in mineral N supply 
+between fields or seasons could not be explained on the basis of soil organic 
+carbon, total nitrogen or initial inorganic nitrogen (Cassman et al., 1996; 
+Bouman et al., 2001). Hence, indigenous nitrogen supply is introduced as a 
+site-specific exogenous input, rather than simulating nitrogen mineralization. 
+Ten Berge et al. (1997) found indigenous nitrogen supply values for tropical 
+soils in the range of 0.5�0.9 kg ha-1 d-1. Fertilizer nitrogen available for 
+plant uptake, taking into account possible losses due to volatilization, 
+denitrification, and leaching, is included in the model as a variable fraction, 
+named nitrogen recovery fraction, NRF. A low N recovery value in flooded rice 
+systems (30�39%, Cassman et al., 1996) is mainly due to volatilization losses. 
+Any form of inorganic nitrogen (NH4 + or NO3 -) when available in free form, if 
+not taken up by the crop, is vulnerable to loss either through volatilization, 
+denitrification or leaching. On a daily basis, the average N recovery value 
+would be more or less stable under flooded conditions. The variable NRF used in 
+the model represents the net recovery fraction of applied fertilizer, which 
+depends on soil type, development stage of the crop, fertilizer type and time 
+and mode of nitrogen application (De Datta, 1986) is determined by calibration.
+
     """
     
     class Parameters(ParamTemplate):
         DRATE   = Float(-99)   # Maximum drainage rate of the soil (mm/day)
         IRRIGF  = Float(-99)   # Irrigation factor (1 =yes, 0 = no)
-        ROOTDM  = Float(-99)   # Maximum root depth for a rice crop.
-        RRDMAX  = Float(-99)   # Maximum rate of increase in rooting depth (m d-1) for a rice crop.
+#         ROOTDM  = Float(-99)   # Maximum root depth for a rice crop.
+#         RRDMAX  = Float(-99)   # Maximum rate of increase in rooting depth (m d-1) for a rice crop.
         WCFC    = Float(-99)   # Soil hydraulic properties
         WCI     = Float(-99)   # Initial water content in cm3 of water/(cm3 of soil).
         WCST    = Float(-99)   # Soil hydraulic properties
         WCSUBS  = Float(-99)   # water content subsoil (?)
         WCWP    = Float(-99)   # Soil hydraulic properties
         WMFAC   = Float(-99)   # water management (0=irrigated up to the field capacity, 1 = irrigated up to saturation)        
+        ROOTDI  = Float(-99)   # initial rooting depth [m] 
 
-        FERTAB = AfgenTrait()  # Fertilizer application as a function of TIME (g N m-2).
-        NRFTAB = AfgenTrait()  # Fertilizer nitrogen recovery fraction
 
     
     class Lintul3SoilStates(StateVariables):
-        WA      = Float(-99.)
-        TRUNOF  = Float(-99.)
-        TTRAN   = Float(-99.)
-        TEVAP   = Float(-99.)
-        TDRAIN  = Float(-99.)
-        TRAIN   = Float(-99.)
-        TEXPLO  = Float(-99.)
-        TIRRIG  = Float(-99.)
-        TNSOIL  = Float(-99.)
+        WA      = Float(-99.) # soil water content
+        TRUNOF  = Float(-99.) # total run off
+        TTRAN   = Float(-99.) # Crop transpiration accumulated over growth period
+        TEVAP   = Float(-99.) # soil evaporation accumulated over growth period
+        TDRAIN  = Float(-99.) # todtal drained
+        TRAIN   = Float(-99.) # total rain
+        TEXPLO  = Float(-99.) # Total Exploration
+        TIRRIG  = Float(-99.) # total irrigation
         
              
     
@@ -70,15 +100,13 @@ class Lintul3Soil(SubModel):
 
             # Initial amount of water present in the rooted depth at the start of
             # the calculations, based on the initial water content (in mm).
-            ROOTDI= 0.1
-            self.WAI  = 1000. * ROOTDI * parameters.WCI
+            self.WAI  = 1000. * parameters.ROOTDI * parameters.WCI
             
         
        
         
         
     def __init__(self, day, kiosk, *args, **kwargs):
-        self.find_subroutines()
         super(Lintul3Soil, self).__init__(day, kiosk, *args, **kwargs)
         
     
@@ -102,15 +130,16 @@ class Lintul3Soil(SubModel):
         initialStates["WA"] = init.WAI
         
         # Initialize state variables
-        self.states = self.Lintul3SoilStates(kiosk, publish=["WA", "TNSOIL"], **initialStates)
+        self.states = self.Lintul3SoilStates(kiosk, publish=["WA"], **initialStates)
         self.states.initialize()
         
         
-        
-    def find_subroutines(self):
-        self.drunir = lintul3lib.DRUNIR
-        self.penman = lintul3lib.PENMAN
-        
+    def safeGetFromKiosk(self, varName, default = 0.0):
+        if (self.kiosk.variable_exists(varName)):
+            return self.kiosk[varName]
+        return default
+    
+    
         
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -123,12 +152,10 @@ class Lintul3Soil(SubModel):
         DELT = 1 # ???
         
         
-        ROOTD   = self.kiosk["ROOTD"]
-        EMERG   = self.kiosk["EMERG"]
-        EVAP    = self.kiosk["EVAP"]
-        TRAN    = self.kiosk["TRAN"]
-        NLIMIT  = self.kiosk["NLIMIT"]
-        NUPTR   = self.kiosk["NUPTR"]
+        ROOTD   = self.safeGetFromKiosk("ROOTD", p.ROOTDI)
+        RROOTD  = self.safeGetFromKiosk("RROOTD")
+        EVAP    = self.safeGetFromKiosk("EVAP")
+        TRAN    = self.safeGetFromKiosk("TRAN")
         
         # Variables supplied by the weather system
         RAIN    = drv.RAIN * 10 # cm  --> mm CORRECTION FOR NON-STANDARD cm in CABO-WEATHER
@@ -137,8 +164,6 @@ class Lintul3Soil(SubModel):
         #  Water content in the rootzone
         WC      = 0.001* s.WA /notNull(ROOTD)
                       
-        RROOTD  = min(p.RRDMAX * INSW(WC - p.WCWP, 0., 1.) * EMERG,  p.ROOTDM - ROOTD)
-        
         # Calling the subroutine for rates of drainage, runoff and irrigation.
         DRAIN, RUNOFF, IRRIG = self.drunir(RAIN, EVAP, TRAN, p.IRRIGF, p.DRATE, 
                                            DELT, s.WA, ROOTD, p.WCFC, p.WCST, p.WMFAC)
@@ -149,22 +174,6 @@ class Lintul3Soil(SubModel):
                 
         RWA     = (RAIN+EXPLOR+IRRIG)-(RUNOFF+TRAN+EVAP+DRAIN)
 
-        # ****************SOIL NITROGEN SUPPLY***********************************
-
-        #  Soil N supply (g N m-2 d-1) through mineralization.
-        RTMIN   = 0.10 * EMERG * NLIMIT
-
-        # ---------------Fertilizer application---------------------------------*
-        TIME    = day.timetuple().tm_yday
-        FERTN   = p.FERTAB(TIME)
-        NRF     = p.NRFTAB(TIME)
-        
-        #  Change in inorganic N in soil as function of fertilizer
-        #  input, soil N mineralization and crop uptake.
-        FERTNS = FERTN * NRF
-        RNSOIL = FERTNS/DELT -NUPTR + RTMIN
-
-        
         
         s.rWA     = RWA   
         s.rTEXPLO = EXPLOR
@@ -174,9 +183,8 @@ class Lintul3Soil(SubModel):
         s.rTIRRIG = IRRIG 
         s.rTRAIN  = RAIN  
         s.rTDRAIN = DRAIN
-        s.rTNSOIL = RNSOIL
         
-#         self.doOutput(self, TIME, locals().copy())
+        self.doOutput(self, day.timetuple().tm_yday, locals().copy())
 
         WATBAL = (s.WA + (s.TRUNOF + s.TTRAN + s.TEVAP + s.TDRAIN)    # @UnusedVariable
                          - (i.WAI + s.TRAIN + s.TEXPLO + s.TIRRIG))         
@@ -194,6 +202,40 @@ class Lintul3Soil(SubModel):
             newvalue = state + delta * rate
             setattr(states, s, newvalue)
         
+        
+        
+    # ---------------------------------------------------------------------*
+    #  def DRUNIR                                                   *:
+    #  Purpose: To compute rates of drainage, runoff and irrigation.       *
+    # ---------------------------------------------------------------------*
+    
+    # DEFINE_CALL DRUNIR(INPUT,INPUT,INPUT,INPUT,INPUT,INPUT,INPUT, ...
+    #                    INPUT,INPUT,INPUT,INPUT,  OUTPUT,OUTPUT,OUTPUT)
+    
+    def drunir(self, RAIN, EVAP, TRAN, IRRIGF,                         
+                DRATE, DELT, WA, ROOTD, WCFC, WCST, WMFAC):
+        
+        WAFC = 1000. * WCFC * ROOTD
+        WAST = 1000. * WCST * ROOTD
+        
+        DRAIN  = limit( 0., DRATE, (WA-WAFC)/DELT + (RAIN - EVAP - TRAN)                  )
+        RUNOFF =          max( 0., (WA-WAST)/DELT + (RAIN - EVAP - TRAN - DRAIN)          )
+        
+        if (WMFAC  >= 1.0):
+            #     If a soil is irrigated by flooding, : soil water content is
+            #     kept at saturation via "irrigation events".
+            IRRIG  = IRRIGF * max( 0., (WAST-WA)/DELT - (RAIN - EVAP - TRAN - DRAIN - RUNOFF) )
+        else:
+            
+            #     If soil is irrigated but not flooded, : soil water content
+            #     is kept at field capacity via "irrigation events".
+            IRRIG  = IRRIGF * max( 0., (WAFC-WA)/DELT - (RAIN - EVAP - TRAN - DRAIN - RUNOFF) )
+    
+        return DRAIN, RUNOFF, IRRIG
+    
+    
+    
+    
 
         
         

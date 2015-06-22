@@ -210,3 +210,5 @@ RDRNS  = 0.03
 #  Relative death rate of roots.
 RDRRT = 0.03
 
+# initial rooting depth [m]
+ROOTDI= 0.1

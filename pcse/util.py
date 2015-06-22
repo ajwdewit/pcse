@@ -145,7 +145,7 @@ def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     # latent heat of evaporation of water (J/kg=J/mm)
     # Stefan Boltzmann constant (in J/m2/d/K4, e.g multiplied by 24*60*60)
     PSYCON = 0.67; REFCFW = 0.05; REFCFS = 0.15; REFCFC = 0.25
-    LHVAP = 2.45E6; STBC = 4.9E-3
+    LHVAP = 2.45E6; STBC =  5.670373E-8 * 24*60*60 # (=4.9E-3)
 
     # preparatory calculations
     # mean daily temperature and temperature difference (Celsius)
@@ -188,16 +188,16 @@ def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     RNC = (AVRAD*(1.-REFCFC)-RB)/LHVAP
 
     # evaporative demand of the atmosphere (mm/d)
-    EA = 0.26 * max(0.,(SVAP-VAP)) * (0.5+BU*WIND2)
+    EA  = 0.26 * max(0.,(SVAP-VAP)) * (0.5+BU*WIND2)
     EAC = 0.26 * max(0.,(SVAP-VAP)) * (1.0+BU*WIND2)
 
     # Penman formula (1948)
-    E0 = (DELTA*RNW+GAMMA*EA)/(DELTA+GAMMA)
+    E0  = (DELTA*RNW+GAMMA*EA)/(DELTA+GAMMA)
     ES0 = (DELTA*RNS+GAMMA*EA)/(DELTA+GAMMA) 
     ET0 = (DELTA*RNC+GAMMA*EAC)/(DELTA+GAMMA)
 
     # Ensure reference evaporation >= 0.
-    E0 = max(0., E0)
+    E0  = max(0., E0)
     ES0 = max(0., ES0)
     ET0 = max(0., ET0)
     
@@ -403,7 +403,7 @@ def limit(min, max, v):
     """
 
     if min > max:
-        raise RuntimeError("Min value larger than max")
+        raise RuntimeError("Min value (%f) larger than max (%f)" % (min, max))
     
     if v < min:       # V below range: return min
         return min
