@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 import os
+import csv
 import datetime as dt
 import pcse
 from pcse.engine import Engine
@@ -8,6 +9,15 @@ from pcse.base_classes import ParameterProvider
 
 start_day = dt.date(1976,1,1)
 
+def write_CSV(outfile, data):
+
+    rows = [d for d in data if d is not None]
+    with open(outfile, 'wb') as fp:
+        firstrow = rows[0]
+        writer = csv.DictWriter(fp, sorted(firstrow.keys()))
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
 def main():
     end_day = dt.date(1976,12,31)
     timer = {"GRID_NO":1,
@@ -35,6 +45,7 @@ def main():
     print("TWSO should be 1014.083 = %8.3f" % r[-1]["TWSO"])
     print("TWST should be 2678.155 = %8.3f" % r[-1]["TWST"])
 
+    write_CSV("NPK_reference_results.csv", pw._saved_output)
 
 if __name__ == '__main__':
         main()
