@@ -1,0 +1,94 @@
+**
+** Management data file for use with LINTUL model, May 2011
+**
+** Management type ??
+
+
+SMLIM = 0.3
+IFUNRN = 0
+SSMAX = 0.
+SSI = 0
+WAV = 50
+NOTINF = 0
+
+
+** Fertiliser N application 
+FERNTAB  =     0.0,   0.13,  !  kg N/ha
+            119.0,    0.13,
+            120.0,    0.13,
+            121.0,    0.13,
+            167.0,    0.13,
+            168.0,    0.13,
+            169.0,    0.13,
+            300.0,    0.13
+
+* Background supply of N [kg/ha/day]
+BACKGROUND_N_SUPPLY = 0.13
+
+
+** Recovery fraction of applied fertiliser N
+NRFTAB  =  0.,  0.70,  !  kg N uptake by the crop per kg fertilser-N applied
+         300., 0.70   !  as function of day number
+
+
+* Soil N mineralization
+NSOILBASE   =     10.  !  total mineral soil N available at start of growth period [kg N/ha]
+NSOILBASE_FR  =   0.025  ! fraction of soil mineral coming available per day [day-1]
+
+** Fertiliser P application 
+FERPTAB  =     0.0,  0.13,  !  kg P/ha
+            119.0,   0.13,
+            120.0,   40.13,
+            121.0,   0.13,
+            167.0,   0.13,
+            168.0,   10.13,
+            169.0,   0.13,
+            300.0,   0.13
+
+* Background supply of P [kg/ha/day]
+BACKGROUND_P_SUPPLY = 0.13
+
+
+** Recovery fraction of applied fertiliser P
+PRFTAB  =  0.,  0.70,  !  kg N uptake by the crop per kg fertilser-P applied
+         300., 0.70   !  as function of day number
+
+* Soil P mineralization
+PSOILBASE   =    10.  !  total mineral soil N available at start of growth period [kg P/ha]
+PSOILBASE_FR  =   0.025  ! fraction of soil mineral coming available per day [day-1]
+
+** Fertiliser K application 
+FERKTAB  =     0.0,  0.13,  !  kg K/ha
+            119.0,   0.13,
+            120.0, 	 20.13,
+            121.0,   0.13,
+            167.0,   0.13,
+            168.0,   20.13,
+            169.0,   0.13,
+            300.0,   0.13
+
+* Background supply of K [kg/ha/day]
+BACKGROUND_K_SUPPLY = 0.13
+
+** Recovery fraction of applied fertiliser K
+KRFTAB  =  0.,  0.70,  !  kg K uptake by the crop per kg fertilser-K applied
+         300., 0.70   !  as function of day number
+
+* Soil K mineralization
+KSOILBASE   =    10.  !  total mineral soil K available at start of growth period [kg K/ha]
+KSOILBASE_FR  =   0.025  ! fraction of soil mineral coming available per day [day-1]
+
+
+* irrigation water applied 
+IRRTAB   =   0., 0.0,  !  irrigation water applied per day [cm]
+             164., 0.0, !  as function of day number
+             165., 0.0,
+             166., 0.0,
+             200., 0.0,
+             201., 0.0,
+             202., 0.0,
+             220., 0.0,
+             221., 0.0,
+             222., 0.0,
+             365., 0.0 
+
