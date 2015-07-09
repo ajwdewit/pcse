@@ -33,7 +33,7 @@ class Timer(AncillaryObject):
   """
 
     start_date = Instance(datetime.date)
-    final_date = Instance(datetime.date)
+    end_date = Instance(datetime.date)
     current_date = Instance(datetime.date)
     time_step = Instance(datetime.timedelta)
     interval_type = Enum(["daily", "weekly", "dekadal", "monthly"])
@@ -44,11 +44,11 @@ class Timer(AncillaryObject):
     first_call = Bool()
     _in_crop_cycle = Bool()
 
-    def initialize(self, start_date, kiosk, final_date, mconf):
+    def initialize(self, kiosk, start_date, end_date, mconf):
         """
         :param day: Start date of the simulation
         :param kiosk: Variable kiosk of the PCSE instance
-        :param final_date: Final date of the simulation. For example, this date
+        :param end_date: Final date of the simulation. For example, this date
             represents (START_DATE + MAX_DURATION) for a single cropping season.
             This date is *not* the harvest date because signalling harvest is taken
             care of by the `AgroManagement` module.
@@ -60,7 +60,7 @@ class Timer(AncillaryObject):
         
         self.kiosk = kiosk
         self.start_date = start_date
-        self.final_date = final_date
+        self.end_date = end_date
         self.current_date = start_date
         self.day_counter = 0
         # Settings for generating output. Note that if no OUTPUT_VARS are listed
@@ -77,8 +77,7 @@ class Timer(AncillaryObject):
         # On first call only return the current date, do not increase time
         if self.first_call is True:
             self.first_call = False
-            self.logger.debug("Model time at first call: %s" % self
-                             .current_date)
+            self.logger.debug("Model time at first call: %s" % self.current_date)
         else:
             self.current_date += self.time_step
             self.day_counter += 1
@@ -101,14 +100,13 @@ class Timer(AncillaryObject):
                     output = True
 
         # Send output signal if True
-        #output = True
         if output:
             self._send_signal(signal=signals.output)
             
-        # If final date is reached send the terminate signal
-        if self.current_date >= self.final_date:
+        # If end date is reached send the terminate signal
+        if self.current_date >= self.end_date:
             msg = "Reached end of simulation period as specified by END_DATE."
-            self.logger.warning(msg)
+            self.logger.info(msg)
             self._send_signal(signal=signals.terminate)
             
         return self.current_date
