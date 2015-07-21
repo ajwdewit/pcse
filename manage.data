@@ -23,7 +23,7 @@ FERNTAB  =     0.0,   0.13,  !  kg N/ha
             300.0,    0.13
 
 * Background supply of N [kg/ha/day]
-BACKGROUND_N_SUPPLY = 0.091
+BG_N_SUPPLY = 0.091
 
 
 ** Recovery fraction of applied fertiliser N
@@ -46,7 +46,7 @@ FERPTAB  =     0.0,  0.13,  !  kg P/ha
             300.0,   0.13
 
 * Background supply of P [kg/ha/day]
-BACKGROUND_P_SUPPLY = 0.091
+BG_P_SUPPLY = 0.091
 
 
 ** Recovery fraction of applied fertiliser P
@@ -68,7 +68,7 @@ FERKTAB  =     0.0,  0.13,  !  kg K/ha
             300.0,   0.13
 
 * Background supply of K [kg/ha/day]
-BACKGROUND_K_SUPPLY = 0.091
+BG_K_SUPPLY = 0.091
 
 ** Recovery fraction of applied fertiliser K
 KRFTAB  =  0.,  0.70,  !  kg K uptake by the crop per kg fertilser-K applied

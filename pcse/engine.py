@@ -29,8 +29,7 @@ from .timer import Timer
 from . import signals
 from . import exceptions as exc
 from .settings import settings
-sys.path.append("D:\UserData\sources\pcse\pcse")
-from agromanager import AgroManager
+from .agromanager import AgroManager
 
 class Engine(BaseEngine):
     """Simulation engine for simulating the combined soil/crop system.
@@ -110,7 +109,7 @@ class Engine(BaseEngine):
         :param weatherdataprovider: An instance of a WeatherDataProvider that can
             return weather data in a WeatherDataContainer for a given date.
         :param agromanagement: AgroManagement data. The data format is described
-            in the section on agro management.
+            in the section on agronomic management.
         :param config: A string describing the model configuration file to use.
             By only giving a filename PCSE assumes it to be located under
             pcse/conf. If you want to provide you own configuration file, specify

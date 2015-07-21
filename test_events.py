@@ -11,15 +11,15 @@ from pcse.traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Di
 from pcse import exceptions as exc
 
 class TestSignals(object):
-    APPLY_NPK = "APPLY_NPK"
-    IRRIGATE = "IRRIGATE"
+    apply_npk = "APPLY_NPK"
+    irrigate = "IRRIGATE"
 signals = TestSignals()
 
 class MyModel(SimulationObject):
     def initialize(self, day, kiosk, *args):
 
-        self._connect_signal(self._on_SIGNAL, signals.APPLY_NPK)
-        self._connect_signal(self._on_SIGNAL, signals.IRRIGATE)
+        self._connect_signal(self._on_SIGNAL, signals.apply_npk)
+        self._connect_signal(self._on_SIGNAL, signals.irrigate)
 
     def _on_SIGNAL(self, signal, sender, **kwargs):
         msg = "signal %s received with args: %s" % (signal, kwargs)
@@ -51,7 +51,8 @@ class TimedEventsDispatcher(HasTraits, DispatcherObject):
         if not hasattr(signals, event_signal):
             msg = "Signal '%s'  not defined in pcse.signals module."
             raise exc.PCSEError(msg % event_signal)
-        self.event_signal = getattr(signals, event_signal)
+        # self.event_signal = getattr(signals, event_signal)
+        self.event_signal = event_signal
 
         # Build a counter for the days with events.
         self.days_with_events = Counter()
@@ -81,6 +82,7 @@ class TimedEventsDispatcher(HasTraits, DispatcherObject):
 
 
 class StateEventsDispatcher(HasTraits, DispatcherObject):
+
     event_signal = None
     event_state = Unicode()
     zero_condition = Enum(['rising', 'falling', 'either'])
@@ -93,6 +95,7 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
 
     def __init__(self, kiosk, event_signal, event_state, zero_condition, name,
                  comment, events_table):
+
 
         # set up logging
         loggername = "%s.%s" % (self.__class__.__module__,

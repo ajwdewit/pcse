@@ -10,61 +10,71 @@ from .nutrients import NPK_Translocation
 from .nutrients import NPK_Demand_Uptake
 
 class NPK_Crop_Dynamics(SimulationObject):
-    """Implementation of npk dynamics.
-    
+    """Implementation of overall NPK crop dynamics.
+
+    NPK_Crop_Dynamics implements the overall logic of N/P/K book-keeping within the
+    crop.
+
     **Simulation parameters**
     
-    =======  ============================================= =======  ============
-     Name     Description                                   Type     Unit
-    =======  ============================================= =======  ============
-    DVSNLT  DVS above which no crop N-P-K uptake occurs
-    LRNR    maximum N concentration in roots as fraction
-            of maximum N concentration in leaves
-    LSNR    maximum N concentration in stems as fraction
-            of maximum N concentration in leaves
-    LRPR    maximum P concentration in roots as fraction
-            of maximum P concentration in leaves
-    LSPR    maximum P concentration in stems as fraction
-            of maximum P concentration in leaves
-    LRKR    maximum K concentration in roots as fraction
-            of maximum K concentration in leaves
-    LSKR    maximum K concentration in stems as fraction
-            of maximum K concentration in leaves
-    NMAXLV  maximum N concentration in leaves as function
-            of development stage                                    |kg N kg-1 dry biomass|
-    PMAXLV  maximum P concentration in leaves as function
-            of development stage                                    |kg P kg-1 dry biomass|
-    KMAXLV  maximum K concentration in leaves as function
-            of development stage                                    |kg K kg-1 dry biomass|
-    TDWI    Initial total crop dry weight                  SCr      |kg ha-1|
-    SPA     Specific Pod Area                              SCr      |ha kg-1|
-    =======  ============================================= =======  ============    
+    ===========  ================================================ =======  ======================
+     Name         Description                                      Type     Unit
+    ===========  ================================================ =======  ======================
+    DVSNPK_STOP   DVS above which no crop N-P-K uptake occurs      SCr       -
+
+    NMAXLV_TB      Maximum N concentration in leaves as            TCr     kg N kg-1 dry biomass
+                   function of dvs
+    PMAXLV_TB      As for P                                        TCr     kg P kg-1 dry biomass
+    KMAXLV_TB      As for K                                        TCr     kg K kg-1 dry biomass
+
+    NMAXRT_FR      Maximum N concentration in roots as fraction    SCr     -
+                   of maximum N concentration in leaves
+    PMAXRT_FR      As for P                                        SCr     -
+    KMAXRT_FR      As for K                                        SCr     -
+
+    NMAXST_FR      Maximum N concentration in stems as fraction    SCr     -
+                   of maximum N concentration in leaves
+    KMAXST_FR      As for K                                        SCr     -
+    PMAXST_FR      As for P                                        SCr     -
+
+    NRESIDLV       Residual N fraction in leaves                   SCr     kg N kg-1 dry biomass
+    PRESIDLV       Residual P fraction in leaves                   SCr     kg P kg-1 dry biomass
+    KRESIDLV       Residual K fraction in leaves                   SCr     kg K kg-1 dry biomass
+
+    NRESIDRT       Residual N fraction in roots                    SCr     kg N kg-1 dry biomass
+    PRESIDRT       Residual P fraction in roots                    SCr     kg P kg-1 dry biomass
+    KRESIDRT       Residual K fraction in roots                    SCr     kg K kg-1 dry biomass
+
+    NRESIDST       Residual N fraction in stems                    SCr     kg N kg-1 dry biomass
+    PRESIDST       Residual P fraction in stems                    SCr     kg P kg-1 dry biomass
+    KRESIDST       Residual K fraction in stems                    SCr     kg K kg-1 dry biomass
+    ===========  ================================================ =======  ======================
 
     **State variables**
 
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    ANLV     Actual N amount in living leaves                       |kg N ha-1|
-    APLV     Actual P amount in living leaves                       |kg P ha-1|
-    AKLV     Actual K amount in living leaves                       |kg K ha-1|
+    ANLV     Actual N amount in living leaves                   Y   |kg N ha-1|
+    APLV     Actual P amount in living leaves                   Y   |kg P ha-1|
+    AKLV     Actual K amount in living leaves                   Y   |kg K ha-1|
         
-    ANST     Actual N amount in living stems                        |kg N ha-1|
-    APST     Actual P amount in living stems                        |kg P ha-1|
-    AKST     Actual K amount in living stems                        |kg K ha-1|
+    ANST     Actual N amount in living stems                    Y   |kg N ha-1|
+    APST     Actual P amount in living stems                    Y   |kg P ha-1|
+    AKST     Actual K amount in living stems                    Y   |kg K ha-1|
 
-    ANSO     Actual N amount in living storage organs               |kg N ha-1|
-    APSO     Actual P amount in living storage organs               |kg P ha-1|
-    AKSO     Actual K amount in living storage organs               |kg K ha-1|
+    ANSO     Actual N amount in living storage organs           Y   |kg N ha-1|
+    APSO     Actual P amount in living storage organs           Y   |kg P ha-1|
+    AKSO     Actual K amount in living storage organs           Y   |kg K ha-1|
     
-    ANRT     Actual N amount in living roots                        |kg N ha-1|
-    APRT     Actual P amount in living roots                        |kg P ha-1|
-    AKRT     Actual K amount in living roots                        |kg K ha-1|
+    ANRT     Actual N amount in living roots                    Y   |kg N ha-1|
+    APRT     Actual P amount in living roots                    Y   |kg P ha-1|
+    AKRT     Actual K amount in living roots                    Y   |kg K ha-1|
     
-    NUPTAKE_T    total absorbed N amount                                |kg N ha-1|
-    PUPTAKE_T    total absorbed P amount                                |kg P ha-1|
-    KUPTAKE_T    total absorbed K amount                                |kg K ha-1|
-    NFIX_T   total biological fixated N amount                      |kg N ha-1|
+    NUPTAKE_T    total absorbed N amount                        N   |kg N ha-1|
+    PUPTAKE_T    total absorbed P amount                        N   |kg P ha-1|
+    KUPTAKE_T    total absorbed K amount                        N   |kg K ha-1|
+    NFIX_T   total biological fixated N amount                  N   |kg N ha-1|
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -87,12 +97,22 @@ class NPK_Crop_Dynamics(SimulationObject):
     RNSO     Weight increase (N) in storage organs              N   |kg ha-1 d-1|
     RPSO     Weight increase (P) in storage organs              N   |kg ha-1 d-1|
     RKSO     Weight increase (K) in storage organs              N   |kg ha-1 d-1|
-           
-    NLOSSR   N loss due to senescence                               |kg ha-1 d-1| 
-    PLOSSR   P loss due to senescence                               |kg ha-1 d-1|
-    KLOSSR   K loss due to senescence                               |kg ha-1 d-1|
 
-    
+    RNDLV    Rate of N loss in leaves                           N   |kg ha-1 d-1|
+    RPDLV    as for P                                           N   |kg ha-1 d-1|
+    RKDLV    as for K                                           N   |kg ha-1 d-1|
+
+    RNDST    Rate of N loss in roots                            N   |kg ha-1 d-1|
+    RPDST    as for P                                           N   |kg ha-1 d-1|
+    RKDST    as for K                                           N   |kg ha-1 d-1|
+
+    RNDRT    Rate of N loss in stems                            N   |kg ha-1 d-1|
+    RPDRT    as for P                                           N   |kg ha-1 d-1|
+    RKDRT    as for K                                           N   |kg ha-1 d-1|
+
+    RNLOSS   N loss due to senescence                           N   |kg ha-1 d-1|
+    RPLOSS   P loss due to senescence                           N   |kg ha-1 d-1|
+    RKLOSS   K loss due to senescence                           N   |kg ha-1 d-1|
     =======  ================================================= ==== ============
     
     **Signals send or handled**
@@ -101,13 +121,17 @@ class NPK_Crop_Dynamics(SimulationObject):
     
     **External dependencies**
     
-    =======  =================================== =================  ============
-     Name     Description                         Provided by         Unit
-    =======  =================================== =================  ============
+    =======  =================================== ====================  ============
+     Name     Description                         Provided by            Unit
+    =======  =================================== ====================  ============
     DVS      Crop development stage              DVS_Phenology           -
-    WST      Dry weight of living stems          WOFOST_Stem_Dynamics  |kg ha-1|
     WLV      Dry weight of living leaves         WOFOST_Leaf_Dynamics  |kg ha-1|
-    =======  =================================== =================  ============
+    WRT      Dry weight of living roots          WOFOST_Root_Dynamics  |kg ha-1|
+    WST      Dry weight of living stems          WOFOST_Stem_Dynamics  |kg ha-1|
+    DRLV     Death rate of leaves                WOFOST_Leaf_Dynamics  |kg ha-1 d-|
+    DRRT     Death rate of roots                 WOFOST_Root_Dynamics  |kg ha-1 d-|
+    DRST     Death rate of stems                 WOFOST_Stem_Dynamics  |kg ha-1 d-|
+    =======  =================================== ====================  ============
     """
 
     translocation = Instance(SimulationObject)
@@ -210,8 +234,8 @@ class NPK_Crop_Dynamics(SimulationObject):
         
     def initialize(self, day, kiosk, parvalues):
         """
-        :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        :param kiosk: variable kiosk of this PCSE instance
+        :param parvalues: dictionary with parameters as key/value pairs
         """  
         
         self.params = self.Parameters(parvalues)
@@ -219,7 +243,6 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.kiosk = kiosk
         
 #       Initialize components of the npk_crop_dynamics
-#        self.losses = NPK_Losses(day, kiosk, cropdata)
         self.translocation = NPK_Translocation(day, kiosk, parvalues)
         self.demand_uptake = NPK_Demand_Uptake(day, kiosk, parvalues)
 
@@ -230,6 +253,8 @@ class NPK_Crop_Dynamics(SimulationObject):
         WLV = self.kiosk["WLV"]
         WST = self.kiosk["WST"]
         WRT = self.kiosk["WRT"]
+
+        # Initial amounts
         self.ANLVI = ANLV = WLV * params.NMAXLV_TB(DVS)
         self.ANSTI = ANST = WST * params.NMAXLV_TB(DVS) * params.NMAXST_FR
         self.ANRTI = ANRT = WRT * params.NMAXLV_TB(DVS) * params.NMAXRT_FR
@@ -246,21 +271,21 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.AKSOI = AKSO = 0.
 
         self.states = self.StateVariables(kiosk,
-                        publish=["ANLV","ANST","ANRT","ANSO", "APLV","APST",
-                                 "APRT","APSO", "AKLV","AKST","AKRT","AKSO"],
+                        publish=["ANLV", "ANST", "ANRT", "ANSO", "APLV", "APST",
+                                 "APRT", "APSO", "AKLV", "AKST", "AKRT", "AKSO"],
                         ANLV=ANLV, ANST=ANST, ANRT=ANRT, ANSO=ANSO,
                         APLV=APLV, APST=APST, APRT=APRT, APSO=APSO,
                         AKLV=AKLV, AKST=AKST, AKRT=AKRT, AKSO=AKSO,
-                        NUPTAKE_T=0 ,PUPTAKE_T=0., KUPTAKE_T=0., NFIX_T=0.,
-                        NLOSSES_T=0 ,PLOSSES_T=0., KLOSSES_T=0.)
+                        NUPTAKE_T=0, PUPTAKE_T=0., KUPTAKE_T=0., NFIX_T=0.,
+                        NLOSSES_T=0, PLOSSES_T=0., KLOSSES_T=0.)
 
     @prepare_rates
-    def calc_rates(self, day):
+    def calc_rates(self, day, drv):
         rates = self.rates
         params = self.params
         
-        self.demand_uptake.calc_rates(day)
-        self.translocation.calc_rates(day)
+        self.demand_uptake.calc_rates(day, drv)
+        self.translocation.calc_rates(day, drv)
 
         # Compute loss of NPK due to death of plant material
         DRLV = self.kiosk["DRLV"]  # death rate leaves [kg dry matter ha-1 d-1]
@@ -279,7 +304,8 @@ class NPK_Crop_Dynamics(SimulationObject):
         rates.RKDST = params.KRESIDST * DRST
         rates.RKDRT = params.KRESIDRT * DRRT
 
-        # N rates in leaves, stems, root and storage organs computed as uptake - translocation - death.
+        # N rates in leaves, stems, root and storage organs computed as
+        # uptake - translocation - death.
         # except for storage organs which only take up as a result of translocation.
         rates.RNLV = self.kiosk["RNULV"] - self.kiosk["RNTLV"] - rates.RNDLV
         rates.RNST = self.kiosk["RNUST"] - self.kiosk["RNTST"] - rates.RNDST
@@ -376,20 +402,20 @@ class NPK_Crop_Dynamics(SimulationObject):
         states = self.states
         PUPTAKE_T = states.PUPTAKE_T
 
-        APLVI  = self.APLVI
-        APSTI  = self.APSTI
-        APRTI  = self.APRTI
-        APSOI  = self.APSOI
+        APLVI = self.APLVI
+        APSTI = self.APSTI
+        APRTI = self.APRTI
+        APSOI = self.APSOI
 
-        APLV  = states.APLV
-        APST  = states.APST
-        APRT  = states.APRT
-        APSO  = states.APSO
+        APLV = states.APLV
+        APST = states.APST
+        APRT = states.APRT
+        APSO = states.APSO
 
         PLOSST = states.PLOSSES_T
 
-        checksum = abs(PUPTAKE_T + (APLVI + APSTI + APRTI + APSOI) - \
-                    (APLV + APST + APRT + APSO + PLOSST))
+        checksum = abs(PUPTAKE_T + (APLVI + APSTI + APRTI + APSOI) -
+                       (APLV + APST + APRT + APSO + PLOSST))
 
         if abs(checksum) >= 1.:
             msg = "P flows not balanced on day %s\n" % day
@@ -401,22 +427,22 @@ class NPK_Crop_Dynamics(SimulationObject):
 
     def _check_K_balance(self, day):
         states = self.states
-        KUPTAKE_T  = states.KUPTAKE_T
+        KUPTAKE_T = states.KUPTAKE_T
 
-        AKLVI  = self.AKLVI
-        AKSTI  = self.AKSTI
-        AKRTI  = self.AKRTI
-        AKSOI  = self.AKSOI
+        AKLVI = self.AKLVI
+        AKSTI = self.AKSTI
+        AKRTI = self.AKRTI
+        AKSOI = self.AKSOI
 
-        AKLV  = states.AKLV
-        AKST  = states.AKST
-        AKRT  = states.AKRT
-        AKSO  = states.AKSO
+        AKLV = states.AKLV
+        AKST = states.AKST
+        AKRT = states.AKRT
+        AKSO = states.AKSO
 
         KLOSST = states.KLOSSES_T
 
-        checksum = abs(KUPTAKE_T + (AKLVI + AKSTI + AKRTI + AKSOI) - \
-                    (AKLV + AKST + AKRT + AKSO + KLOSST))
+        checksum = abs(KUPTAKE_T + (AKLVI + AKSTI + AKRTI + AKSOI) -
+                       (AKLV + AKST + AKRT + AKSO + KLOSST))
 
         if abs(checksum) >= 1.:
             msg = "K flows not balanced on day %s\n" % day

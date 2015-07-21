@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2015 Alterra, Wageningen-UR
+# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
+# Approach based on LINTUL N/P/K made by Joost Wolf
 
 from ...traitlets import Float, Instance
 from ...decorators import prepare_rates, prepare_states
@@ -6,6 +9,13 @@ from ...base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 
 class NPK_Translocation(SimulationObject):
+    """Calculates the translocatable amounts of N/P/K for the different organs.
+
+    The translocatable amount of N/P/K is defined as the amount above the
+    residual concentration which is locked into the plant structural biomass
+    and which cannot be mobilized anymore.
+
+    """
     
     class Parameters(ParamTemplate):
         NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
@@ -74,7 +84,7 @@ class NPK_Translocation(SimulationObject):
         self.kiosk = kiosk
         
     @prepare_rates
-    def calc_rates(self, day):
+    def calc_rates(self, day, drv):
         r = self.rates
         s = self.states
 
