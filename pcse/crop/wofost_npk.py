@@ -267,8 +267,8 @@ class WofostNPK(SimulationObject):
         self.lv_dynamics.calc_rates(day, drv)
         
         # added IS
-        self.npk_crop_dynamics.calc_rates(day)
-        self.npk_soil_dynamics.calc_rates(day)
+        self.npk_crop_dynamics.calc_rates(day, drv)
+        self.npk_soil_dynamics.calc_rates(day, drv)
         
 
         

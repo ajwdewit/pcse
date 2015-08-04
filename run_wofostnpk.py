@@ -2,14 +2,10 @@ from __future__ import print_function
 import sys
 import os
 import csv
-import datetime as dt
 import pcse
 from pcse.engine import Engine
 from pcse.base_classes import ParameterProvider, MultiCropParameterProvider
-from agromanager import AgroManager
 import yaml
-
-start_day = dt.date(1976,1,1)
 
 def write_CSV(outfile, data):
 
@@ -21,12 +17,14 @@ def write_CSV(outfile, data):
         for row in rows:
             writer.writerow(row)
 def main():
+    # Load the agromanagement definition file and extract the
+    # section 'AgroManagement'
     agromanagement = yaml.load(open('wofost_npk.amgt'))['AgroManagement']
 
     soil = pcse.fileinput.CABOFileReader('ec4.soil')
     crop = {'winter-wheat': pcse.fileinput.CABOFileReader('wwh102.crop')}
-    site = pcse.fileinput.CABOFileReader('manage.data')
-    weather = pcse.fileinput.CABOWeatherDataProvider('NL1', fpath=r"D:\UserData\WOFOST Control Centre\METEO\CABOWE")
+    site = pcse.fileinput.CABOFileReader('ec4.site')
+    weather = pcse.fileinput.CABOWeatherDataProvider('NL1')
     parvalues = MultiCropParameterProvider(sitedata=site, soildata=soil, multi_cropdata=crop)
     pw = Engine(parvalues,  weather, agromanagement=agromanagement, config="Wofost71_NPK.conf")
     pw.run(days=300)

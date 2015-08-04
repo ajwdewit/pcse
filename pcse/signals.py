@@ -147,7 +147,7 @@ Keyword arguments with signals.apply_npk:
 
 Is used for sending irrigation events.
 
-self._send_signal(signal=signals.irrigated, amount=<float>, efficiency=<float>)
+self._send_signal(signal=signals.irrigate, amount=<float>, efficiency=<float>)
 
 Keyword arguments with signals.irrigate:
 

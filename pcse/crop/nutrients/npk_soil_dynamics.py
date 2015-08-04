@@ -181,7 +181,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
         
     @prepare_rates
-    def calc_rates(self, day):
+    def calc_rates(self, day, drv):
         r = self.rates
         s = self.states
         p = self.params
