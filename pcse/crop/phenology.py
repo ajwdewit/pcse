@@ -475,7 +475,8 @@ class DVS_Phenology(SimulationObject):
             s.DOM = day
             if p.CROP_END_TYPE in ["maturity","earliest"]:
                 self._send_signal(signal=signals.crop_finish,
-                                  day=day, finish_type="maturity")
+                                  day=day, finish_type="maturity",
+                                  crop_delete=True)
         elif s.STAGE == "mature":
             msg = "Cannot move to next phenology stage: maturity already reached!"
             raise exc.PCSEError(msg)

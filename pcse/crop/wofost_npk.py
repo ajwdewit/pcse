@@ -23,11 +23,11 @@ from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
 from .nutrients.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
 from .nutrients.npk_stress import NPK_Stress as NPK_Stress
 
-#-------------------------------------------------------------------------------
+
 class WofostNPK(SimulationObject):
     
-    """Top level object organizing the different components of the crop
-    simulation.
+    """Top level object organizing the different components of the WOFOST crop
+    simulation including the implementation of N/P/K dynamics.
             
     The CropSimulation object organizes the different processes of the crop
     simulation. Moreover, it contains the parameters, rate and state variables
@@ -43,6 +43,9 @@ class WofostNPK(SimulationObject):
         7. Stem dynamics (self.st_dynamics)
         8. Root dynamics (self.ro_dynamics)
         9. Storage organ dynamics (self.so_dynamics)
+        10. N/P/K crop dynamics (self.npk_crop_dynamics)
+        11. N/P/K soil dynamics (self.npk_soil_dynamics)
+        12. N/P/K stress (self.npk_stress)
 
     **Simulation parameters:**
     
@@ -59,20 +62,20 @@ class WofostNPK(SimulationObject):
     
     **State variables:**
 
-    =======  ================================================= ==== ============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================= ==== ============
-    TAGP     Total above-ground Production                      N    |kg ha-1|
-    GASST    Total gross assimilation                           N    |kg CH2O ha-1|
-    MREST    Total gross maintenance respiration                N    |kg CH2O ha-1|
-    CTRAT    Total crop transpiration                           N    cm
-    HI       Harvest Index (only calculated during              N    -
-             `finalize()`)
-    DOF      Date representing the day of finish of the crop    N    -
-             simulation. 
-    FINISH   String representing the reason for finishing the   N    -
-             simulation: maturity, harvest, leave death, etc.
-    =======  ================================================= ==== ============
+    ============  ================================================= ==== ===============
+     Name          Description                                      Pbl      Unit
+    ============  ================================================= ==== ===============
+    TAGP          Total above-ground Production                      N    |kg ha-1|
+    GASST         Total gross assimilation                           N    |kg CH2O ha-1|
+    MREST         Total gross maintenance respiration                N    |kg CH2O ha-1|
+    CTRAT         Total crop transpiration                           N    cm
+    HI            Harvest Index (only calculated during              N    -
+                  `finalize()`)
+    DOF           Date representing the day of finish of the crop    N    -
+                  simulation.
+    FINISH_TYPE   String representing the reason for finishing the   N    -
+                  simulation: maturity, harvest, leave death, etc.
+    ============  ================================================= ==== ===============
 
  
      **Rate variables:**
@@ -132,23 +135,16 @@ class WofostNPK(SimulationObject):
         ASRC = Float(-99.)
         DMI = Float(-99.)
         ADMI = Float(-99.)
-        
-        NPKREF = Float(-99.)  # nutrient stress reduction for assimilation
-        NPKI = Float(-99.)  # nutrient stress index
-        NNI = Float(-99.)  # N nutrition index
 
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param start_type: Start type of the simulation: "sowing"|"emergence"
-        :param stop_type: Stop type of the simulation:
-            "harvest"|"maturity"|"earliest"
+        :param kiosk: variable kiosk of this PCSE model instance
+        :param parvalues: dictionary with parameter key/value pairs
         """
         
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI", "NPKREF", "NPKI", "NNI"])
+        self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
@@ -161,7 +157,7 @@ class WofostNPK(SimulationObject):
         self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
         self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
-#       added IS
+        # Added for book keeping of N/P/K in crop and soil
         self.npk_crop_dynamics = NPK_crop(day, kiosk, parvalues)
         self.npk_soil_dynamics = NPK_soil(day, kiosk, parvalues)
         self.npk_stress = NPK_Stress(day, kiosk, parvalues)
@@ -186,7 +182,7 @@ class WofostNPK(SimulationObject):
             
         # assign handler for CROP_FINISH signal
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
-    #---------------------------------------------------------------------------
+
     @staticmethod
     def _check_carbon_balance(day, DMI, GASS, MRES, CVF, pf):
         (FR, FL, FS, FO) = pf
@@ -199,7 +195,6 @@ class WofostNPK(SimulationObject):
                    (FR,FL,FS,FO,DMI,CVF)
             raise exc.CarbonBalanceError(msg)
 
-    #---------------------------------------------------------------------------
     @prepare_rates
     def calc_rates(self, day, drv):
         params = self.params
@@ -220,31 +215,24 @@ class WofostNPK(SimulationObject):
         # (evapo)transpiration rates
         self.evtra(day, drv)
 
-        # nutrient stress stage
-        rates.NNI, rates.NPKI, rates.NPKREF = self.npk_stress(day)
+        # nutrient status and reduction factor
+        NNI, NPKI, NPKREF = self.npk_stress(day, drv)
 
         # water stress reduction
         TRA = self.kiosk["TRA"]
         TRAMX = self.kiosk["TRAMX"]
         
-        # nutrient stress reduction
-        NPKREF = self.kiosk["NPKREF"]
+        # Select minimum of nutrient and water stress
+        reduction = min(NPKREF, TRA/TRAMX)
 
-        # if nutrient stress is more severe than water stress
-        # than the nutrient stress factor is selected
-        if NPKREF < TRA/TRAMX:
-            reduction = NPKREF
-        else:
-            reduction = TRA/TRAMX
-        
         rates.GASS = rates.PGASS * reduction
 
         # Respiration
         rates.PMRES = self.mres(day, drv)
-        rates.MRES  = min(rates.GASS, rates.PMRES)
+        rates.MRES = min(rates.GASS, rates.PMRES)
 
         # Net available assimilates
-        rates.ASRC  = rates.GASS - rates.MRES
+        rates.ASRC = rates.GASS - rates.MRES
 
         # DM partitioning factors (pf), conversion factor (CVF),
         # dry matter increase (DMI) and check on carbon balance
@@ -266,14 +254,10 @@ class WofostNPK(SimulationObject):
         self.so_dynamics.calc_rates(day, drv)
         self.lv_dynamics.calc_rates(day, drv)
         
-        # added IS
+        # Update nutrient rates in crop and soil
         self.npk_crop_dynamics.calc_rates(day, drv)
         self.npk_soil_dynamics.calc_rates(day, drv)
         
-
-        
-
-    #---------------------------------------------------------------------------
     @prepare_states
     def integrate(self, day):
         rates = self.rates
@@ -301,7 +285,8 @@ class WofostNPK(SimulationObject):
         self.so_dynamics.integrate(day)
         self.st_dynamics.integrate(day)
         self.lv_dynamics.integrate(day)
-        # added IS
+
+        # Update nutrient states in crop and soil
         self.npk_crop_dynamics.integrate(day)
         self.npk_soil_dynamics.integrate(day)
         
@@ -318,7 +303,6 @@ class WofostNPK(SimulationObject):
         # total crop transpiration (CTRAT)
         states.CTRAT += self.kiosk["TRA"]
         
-    #---------------------------------------------------------------------------
     @prepare_states
     def finalize(self, day):
 
@@ -332,10 +316,9 @@ class WofostNPK(SimulationObject):
         
         SimulationObject.finalize(self, day)
 
-    #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, finish_type=None):
         """Handler for setting day of finish (DOF) and reason for
         crop finishing (FINISH).
         """
         self._for_finalize["DOF"] = day
-        self._for_finalize["FINISH_TYPE"]= finish_type
+        self._for_finalize["FINISH_TYPE"] = finish_type

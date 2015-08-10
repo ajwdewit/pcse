@@ -168,7 +168,6 @@ class NPK_Soil_Dynamics(SimulationObject):
         
         # INITIAL STATES
         p = self.params
-       
         self.NSOILI = p.NSOILBASE
         self.PSOILI = p.PSOILBASE
         self.KSOILI = p.KSOILBASE
@@ -176,7 +175,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         self.states = self.StateVariables(kiosk,
             publish=["NAVAIL", "PAVAIL", "KAVAIL"],
             NSOIL=p.NSOILBASE, PSOIL=p.PSOILBASE, KSOIL=p.KSOILBASE,
-            NAVAIL=0.091, PAVAIL=0.091, KAVAIL=0.091)
+            NAVAIL=0., PAVAIL=0., KAVAIL=0.)
 
         self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
         

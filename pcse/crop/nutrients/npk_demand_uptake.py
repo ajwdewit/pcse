@@ -256,7 +256,7 @@ class NPK_Demand_Uptake(SimulationObject):
         r.RKUSO = min(s.KDEMSO, KTRANSLOCATABLE)/p.TCKT
 
 #       No nutrients are absorbed after development stage DVSNPK_STOP or
-#       when water shortage occurs i.e. TRANRF <= 0.01
+#       when severe water shortage occurs i.e. TRANRF <= 0.01
         TRANRF = TRA/TRAMX
         if DVS < p.DVSNPK_STOP and TRANRF > 0.01:
             NutrientLIMIT = 1.0

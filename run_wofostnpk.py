@@ -29,9 +29,9 @@ def main():
     pw = Engine(parvalues,  weather, agromanagement=agromanagement, config="Wofost71_NPK.conf")
     pw.run(days=300)
     r = pw.get_output()
-    print("TAGP should be 4608.467 = %8.3f" % r[-1]["TAGP"])
-    print("TWSO should be 1014.083 = %8.3f" % r[-1]["TWSO"])
-    print("TWST should be 2678.155 = %8.3f" % r[-1]["TWST"])
+    print("TAGP should be 4597.891 = %8.3f" % r[-1]["TAGP"])
+    print("TWSO should be 1011.101 = %8.3f" % r[-1]["TWSO"])
+    print("TWST should be 2672.711 = %8.3f" % r[-1]["TWST"])
 
     write_CSV("NPK_reference_results_B.csv", pw._saved_output)
 

@@ -9,8 +9,10 @@ Available classes:
   * TimedEventDispatcher: A class for handling timed events (e.g. events connected to a date)
   * StateEventDispatcher: A class for handling state events (e.g. events that happen when a state variable reaches
     a certain values.
-  * AgroManager: A class for handling all agromanagement events which encapsulates the CropCalendar and Timed/State events.
+  * AgroManager: A class for handling all agromanagement events which encapsulates
+    the CropCalendar and Timed/State events.
 """
+
 from datetime import date, timedelta
 import logging
 from collections import Counter
@@ -20,6 +22,7 @@ from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Dict, 
 from . import exceptions as exc
 from .util import ConfigurationLoader
 from . import signals
+from . import exceptions as exc
 
 def check_date_range(day, start, end):
     """returns True if start <= day < end
@@ -334,7 +337,7 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
 
     Each StateEventDispatcher is defined by an `event_signal`, an `event_state` (e.g. the model
     state that triggers the event) and a `zero condition`. Moreover, an optional name and an
-    optional comment can be provided. Finally the events_table specifies at which model states
+    optional comment can be provided. Finally the events_table specifies at which model state values
     the event occurs. The events_table is a list which provides for each state the parameters that
     should be dispatched with the given event_signal.
 
@@ -508,21 +511,24 @@ class AgroManager(AncillaryObject):
     application, irrigation, mowing and spraying.
 
     The agromanagement during the simulation is implemented as a sequence of campaigns. Campaigns start on a
-    prescribed calendar date and finalize when the next campaign starts. For the last campaign, the end date is taken
-    as the harvest date of the crop or the date of the last timed event.
+    prescribed calendar date and finalize when the next campaign starts. The simulation ends either explicitly by
+    provided a trailing empty campaign or by deriving the end date from the crop calendar and timed events in the
+    last campaign. See also the section below on `end_date` property.
+
     Each campaign is characterized by zero or one crop calendar, zero or more timed events and zero or more
     state events.
-
     The structure of the data needed as input for AgroManager is most easily understood with the example
     (in YAML) below. The definition consists of three campaigns, the first starting on 1999-08-01, the second
     starting on 2000-09-01 and the last campaign starting on 2001-03-01. The first campaign consists of a crop
     calendar for winter-wheat starting with sowing at the given crop_start_date. During the campaign there are
-    timed events for irrigation at 2000-05-25 and 2000-06-30. Moreover, there are fertilizer application events
-    (event_signal: apply_npk) given by development stage (DVS) at DVS 0.3, 0.6 and 1.12.
+    timed events for irrigation at 2000-05-25 and 2000-06-30. Moreover, there are state events for  fertilizer
+    application (event_signal: apply_npk) given by development stage (DVS) at DVS 0.3, 0.6 and 1.12.
 
     The second campaign has no crop calendar, timed events or state events. This means that this is a period of
     bare soil with only the water balance running. The third campaign is for fodder maize sown at 2001-04-15
     with two series of timed events (one for irrigation and one for N/P/K application) and no state events.
+
+    The end date of the simulation in this case will be 2001-11-01 (2001-04-15 + 200 days).
 
         AgroManagement:
         - 1999-08-01:
@@ -536,10 +542,10 @@ class AgroManager(AncillaryObject):
             TimedEvents:
             -   event_signal: irrigate
                 name:  Timed irrigation events
-                comment: All irrigation amounts in mm
+                comment: All irrigation amounts in cm
                 events_table:
-                - 2000-05-25: {irrigation_amount: 30}
-                - 2000-06-30: {irrigation_amount: 25}
+                - 2000-05-25: {irrigation_amount: 3.0}
+                - 2000-06-30: {irrigation_amount: 2.5}
             StateEvents:
             -   event_signal: apply_npk
                 event_state: DVS
@@ -565,12 +571,12 @@ class AgroManager(AncillaryObject):
             TimedEvents:
             -   event_signal: irrigate
                 name:  Timed irrigation events
-                comment: All irrigation amounts in mm
+                comment: All irrigation amounts in cm
                 events_table:
-                - 2001-06-01: {irrigation_amount: 20}
-                - 2001-07-21: {irrigation_amount: 50}
-                - 2001-08-18: {irrigation_amount: 30}
-                - 2001-09-19: {irrigation_amount: 25}
+                - 2001-06-01: {irrigation_amount: 2.0}
+                - 2001-07-21: {irrigation_amount: 5.0}
+                - 2001-08-18: {irrigation_amount: 3.0}
+                - 2001-09-19: {irrigation_amount: 2.5}
             -   event_signal: apply_npk
                 name:  Timed N/P/K application table
                 comment: All fertilizer amounts in kg/ha
@@ -597,12 +603,21 @@ class AgroManager(AncillaryObject):
     _icampaign = 0  # count the campaigns
 
     def initialize(self, kiosk, agromanagement):
+        """Initialize the AgroManager.
+
+        :param kiosk: A PCSE variable Kiosk
+        :param agromanagement: the agromanagement definition, see the example above in YAML.
+        """
+
 
         self.kiosk = kiosk
         self.crop_calendars = []
         self.timed_event_dispatchers = []
         self.state_event_dispatchers = []
         self.campaign_start_dates = []
+
+        # Connect CROP_FINISH signal with handler
+        self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
 
         # First get and validate the dates of the different campaigns
         for campaign in agromanagement:
@@ -623,7 +638,7 @@ class AgroManager(AncillaryObject):
             # Get the campaign definition for the start date
             campaign_def = campaign[campaign_start]
 
-            if campaign_def is None:  # no campaign definition for this campaign, e.g. fallow
+            if self._is_empty_campaign(campaign_def):  # no campaign definition for this campaign, e.g. fallow
                 self.crop_calendars.append(None)
                 self.timed_event_dispatchers.append(None)
                 self.state_event_dispatchers.append(None)
@@ -656,6 +671,25 @@ class AgroManager(AncillaryObject):
             else:
                 self.state_event_dispatchers.append(None)
 
+    def _is_empty_campaign(self, campaign_def):
+        """"Check if the campaign definition is empty"""
+
+        if campaign_def is None:
+            return True
+
+        attrs = ["CropCalendar", "TimedEvents", "StateEvents"]
+        r = []
+        for attr in attrs:
+            if attr in campaign_def:
+                if campaign_def[attr] is None:
+                    r.append(True)
+                else:
+                    r.append(False)
+        if r == [True]*3:
+            return True
+
+        return False
+
     @property
     def start_date(self):
         """Retrieves the start date of the agromanagement sequence, e.g. the first simulation date
@@ -671,24 +705,108 @@ class AgroManager(AncillaryObject):
     def end_date(self):
         """Retrieves the end date of the agromanagement sequence, e.g. the last simulation date.
 
-        Getting the last simulation date is more complicated because it depends on end date of the
-        crop calendar and possible timed events which are scheduled in that campaign.
-        In practice the end date of all CropCalendar and TimedEventDispatchers objects is retrieved
-        by iterating over them. Then the maximum value of the end dates is taken. This approach
-        has the advantage that any trailing empty campaigns are removed.
-
-        Two examples of "trailing empty campaigns" in the agromanagement file (YAML format) are::
-
-            2001-01-01:
-                CropCalendar: null
-                TimedEvents: null
-                StateEvents: null
-            2002-01-01: null
-
         :return: a date object
+
+        Getting the last simulation date is more complicated because there are two options.
+
+        **1. Adding an explicit trailing empty campaign**
+
+        The first option is to explicitly define the end date of the simulation by adding a
+        'trailing empty campaign' to the agromanagement definition.
+        An example of an agromanagement definition with a 'trailing empty campaigns' (YAML format) is
+        given below. This example will run the simulation until 2001-01-01::
+
+            Version: 1.0
+            AgroManagement:
+            - 1999-08-01:
+                CropCalendar:
+                    crop_id: winter-wheat
+                    crop_start_date: 1999-09-15
+                    crop_start_type: sowing
+                    crop_end_date:
+                    crop_end_type: maturity
+                    max_duration: 300
+                TimedEvents:
+                StateEvents:
+            - 2001-01-01:
+
+        Note that in configurations where the last campaign contains a definition for state events, a trailing
+        empty campaign *must* be provided because the end date cannot be determined. The following campaign
+        definition will therefore lead to an error::
+
+            Version: 1.0
+            AgroManagement:
+            - 2001-01-01:
+                CropCalendar:
+                    crop_id: fodder-maize
+                    crop_start_date: 2001-04-15
+                    crop_start_type: sowing
+                    crop_end_date:
+                    crop_end_type: maturity
+                    max_duration: 200
+                TimedEvents:
+                StateEvents:
+                -   event_signal: apply_npk
+                    event_state: DVS
+                    zero_condition: rising
+                    name: DVS-based N/P/K application table
+                    comment: all fertilizer amounts in kg/ha
+                    events_table:
+                    - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4}
+                    - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14}
+                    - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24}
+
+
+        **2. Without an explicit trailing campaign**
+
+        The second option is that there is no trailing empty campaign and in that case the end date of the simulation
+        is retrieved from the crop calendar and/or the timed events that are scheduled. In the example below, the
+        end date will be 2000-08-05 as this is the harvest date and there are no timed events scheduled after this
+        date::
+
+            Version: 1.0
+            AgroManagement:
+            - 1999-09-01:
+                CropCalendar:
+                    crop_id: winter-wheat
+                    crop_start_date: 1999-10-01
+                    crop_start_type: sowing
+                    crop_end_date: 2000-08-05
+                    crop_end_type: harvest
+                    max_duration: 330
+                TimedEvents:
+                -   event_signal: irrigate
+                    name:  Timed irrigation events
+                    comment: All irrigation amounts in cm
+                    events_table:
+                    - 2000-05-01: {irrigation_amount: 2, efficiency: 0.7}
+                    - 2000-06-21: {irrigation_amount: 5, efficiency: 0.7}
+                    - 2000-07-18: {irrigation_amount: 3, efficiency: 0.7}
+                StateEvents:
+
+        In the case that there is no harvest date provided and the crop runs till maturity, the end date from
+        the crop calendar will be estimated as the crop_start_date plus the max_duration.
+
         """
         if self._end_date is None:
 
+            # First check if the last campaign definition is an empty trailing campaign and use that date.
+            if self.crop_calendars[-1] is None and \
+               self.timed_event_dispatchers[-1] is None and \
+               self.state_event_dispatchers[-1] is None:
+                self._end_date = self.campaign_start_dates[-2]  # use -2 here because None is
+                                                                # appended to campaign_start_dates
+                return self._end_date
+
+            # Check if there are state events defined in the last campaign without specifying the end date
+            # explicitly with an trailing empty campaign
+            if self.state_event_dispatchers[-1] is not None:
+                msg = "In the AgroManagement definition, the last campaign with start date '%s' contains StateEvents. " \
+                      "When specifying StateEvents, the end date of the campaign must be explicitly" \
+                      "given by a trailing empty campaign."
+                raise exc.PCSEError(msg)
+
+            # Walk over the crop calendars and timed events to get the last date.
             cc_dates = []
             te_dates = []
             for cc, teds in zip(self.crop_calendars, self.timed_event_dispatchers):
@@ -697,13 +815,13 @@ class AgroManager(AncillaryObject):
                 if teds is not None:
                     te_dates.extend([t.get_end_date() for t in teds])
 
-            # If not end dates can be found raise and error because the agromanagement sequnce
+            # If no end dates can be found raise an error because the agromanagement sequence
             # consists only of empty campaigns
             if not cc_dates and not te_dates:
                 msg = "Empty agromanagement definition: no campaigns with crop calendars or timed events provided!"
                 raise exc.PCSEError(msg)
 
-            end_date = date(1,1,1)
+            end_date = date(1, 1, 1)
             if cc_dates:
                 end_date = max(max(cc_dates), end_date)
             if te_dates:
@@ -725,8 +843,8 @@ class AgroManager(AncillaryObject):
             self._tmp_date = campaign_start_date
         else:
             if campaign_start_date <= self._tmp_date:
-                msg = "Definition of agricultural campaigns is not sequential " \
-                      "in definition of agromanagement"
+                msg = "The agricultural campaigns are not sequential " \
+                      "in the agromanagement definition."
                 raise exc.PCSEError(msg)
 
     def _build_TimedEventDispatchers(self, kiosk, event_definitions):
@@ -771,8 +889,25 @@ class AgroManager(AncillaryObject):
             for ev_dsp in self.state_event_dispatchers[0]:
                 ev_dsp(day)
 
-    def _on_CROP_FINISH(self):
-        """Send signal to terminate if the number of campaigns is exhausted.
+    def _on_CROP_FINISH(self, day):
+        """Send signal to terminate after the crop cycle finishes.
+
+        The simulation will be terminated when the following conditions are met:
+        1. There are no campaigns defined after the current campaign
+        2. There are no StateEvents active
+        3. There are no TimedEvents scheduled after the current date.
         """
-        if not self.crop_calendars:
-            self._send_signal(signal=signals.terminate)
+
+
+        if self.campaign_start_dates[self._icampaign+1] is not None:
+            return  #  e.g. There is a next campaign defined
+
+        if self.state_event_dispatchers[0] is not None:
+            return  # there are state events active that may trigger in the future
+
+        end_dates = [t.get_end_date() for t in self.timed_event_dispatchers[0]]
+        if end_dates:
+            if max(end_dates) > day:  # There is at least one scheduled event after the current day
+                return
+
+        self._send_signal(signal=signals.terminate)
