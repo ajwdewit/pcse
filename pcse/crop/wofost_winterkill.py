@@ -301,9 +301,9 @@ class Wofost_winterkill(SimulationObject):
         SimulationObject.finalize(self, day)
 
     #---------------------------------------------------------------------------
-    def _on_CROP_FINISH(self, day, finish):
+    def _on_CROP_FINISH(self, day, finish_type):
         """Handler for setting day of finish (DOF) and reason for
         crop finishing (FINISH).
         """
         self._for_finalize["DOF"] = day
-        self._for_finalize["FINISH"]= finish
+        self._for_finalize["FINISH_TYPE"]= finish_type
