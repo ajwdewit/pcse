@@ -7,7 +7,6 @@ import unittest
 
 from pcse.lintul.start import Lintul3Model
 import os.path
-from lib2to3.fixer_util import Number
 
 
 class Test(unittest.TestCase):

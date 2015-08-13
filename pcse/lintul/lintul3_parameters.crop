@@ -21,17 +21,15 @@ WLVGI  = 2.4
 WSTI   = 0.0
 WRTLI  = 3.6
 WSOI   = 0.0
+
+# TODO: initial rooting depth now defined in the soil parameter file
+# However, dependency in initial rooting depth between soil and crop is unwanted
+# Soil layer configuration should be made independent from crop initial rooting
+# depth. See classic_waterbalance reset_rootzone() for a possible solution. 
 ROOTDI = 0.10
 
-# Soil hydraulic properties
-WCAD   = 0.10 			
-WCWP   = 0.20
-WCFC   = 0.40
-WCWET  = 0.45
-WCST   = 0.50
 
 DOYEM  = 90.  			# The day of the year on which crop emerges.
-DRATE  = 30.  			# Maximum drainage rate of the soil (mm/day) 
 DVSDR  = 1.0  			# Development stage above which death of leaves and roots start.
 DVSNLT = 1.0  			# development stage N-limit
 DVSNT  = 0.8  			# development stage N-threshold
@@ -65,16 +63,7 @@ TRANCO = 8.   			# Transpiration constant (mm/day) indicating the level of droug
 TSUMAG = 800. 			# Temperature sum for ageing of leaves
 TSUMAN = 800. 			# Temperature sum for anthesis  [corresponds to TSUM1 = Float(-99.)# Temperature sum emergence to anthesis]
 TSUMMT = 1030.			# Temperature sum for maturity  [corresponds to TSUM2= Float(-99.) # Temperature sum anthesis to maturity
-WCI    = 0.40 			# Initial water content in cm3 of water/(cm3 of soil).
-WCSUBS = 0.30 			# water content subsoil (?)
 
-# Water management
-# We will represent two water management situations in the model
-# as irrigated up to the field capacity:                  WMFAC= False
-# as irrigated up to saturation, thus mimicking flooding; WMFAC= True
-# In both cases parameter IRRIGF must be taken 1.0. "Irrigation" thus
-WMFAC  = False
-IRRIGF = True			# Irrigation factor 
 
 # Interpolation functions
 # -----------------------
@@ -145,6 +134,26 @@ FSOTB = [
     1.01, 0.75,
     2.00, 1.00 ]
 
+# Fertilizer application as a function of TIME (g N m-2).
+FERTAB = [
+    0.0, 0.0,
+    99., 0.0,
+    100., 10.0,
+    101., 0.0,
+    124.0, 0.0,
+    125., 5.0,
+    126., 0.0,
+    200., 0.0 ]
+
+# Fertilizer nitrogen recovery fraction
+NRFTAB = [
+    0.0, 0.70,
+    100., 0.70,
+    125., 0.70,
+    150., 0.70,
+    200., 0.70 ]
+
+ 
 # Size scale of state variables, used by the driver RKDRIV
 # --------------------------------------------------------
 # Zero's lead to relative integration errors EPS for states above 1.0

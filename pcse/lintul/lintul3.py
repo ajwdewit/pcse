@@ -13,6 +13,7 @@ from pcse.crop.phenology import DVS_Phenology as Phenology
 from numpy.ma.core import exp
 from numbers import Number
 from pcse.exceptions import CarbonBalanceError, NitrogenBalanceError
+from pcse import signals
 
 
 class SubModel(SimulationObject):
@@ -28,7 +29,7 @@ class SubModel(SimulationObject):
     OUTPUT_VARS = ["TIME"] + sorted( ["WAI", "DVS", "TSUM", "TAGBM", "WST", "WLVG", "WLVD", "WSO", "LAI", "NTAC", "WRT", 
                "GTSUM", "CBALAN", "TRANRF", "NNI", "SLA", "FRACT", "FRTWET", "FLVT", "FSTT", "FSOT", 
                "RWLVG", "RWST", "RWRT", "RWSO", "CUMPAR", "LUECAL", "NUPTT", "TTRAN", "TEVAP", "PEVAP", 
-               "NBALAN", "WATBAL", "NUPTR", "TNSOIL", "NDEMTO", "RNSOIL", "FERTN", "FERTNS", "WA", 
+               "NBALAN", "WATBAL", "NUPTR", "TNSOIL", "NDEMTO", "RNSOIL", "WA", 
                "TIRRIG", "TRAIN", "TEXPLO", "TRUNOF", "TDRAIN"])
 
 #     OUTPUT_VARS = ["TIME"] + sorted( ["CHECK", "FRTWET", "FLVT","FSTT","FSOT"])
@@ -63,7 +64,7 @@ class SubModel(SimulationObject):
             for v in SubModel.OUTPUT_VARS:
                 if localVariables.has_key(v):
                     SubModel.output[v] = localVariables[v]
-                elif hasattr(model.states, v):
+                elif (model != None) and (hasattr(model.states, v)):
                     SubModel.output[v] = getattr(model.states, v)
                 
             
@@ -204,8 +205,6 @@ class Lintul3(SubModel):
                  ten Berge, H.F.M. and Riethoven, J.J.M. 1994, 
                  p.10. (Complete reference under Observed data.)
                       
-        FERTAB   Fertilizer application as a function of time               gN/m²
-        NRFTAB   Fertilizer nitrogen recovery fraction
         
         * initial states *
         ======== =============================================== =======  ==========
@@ -297,8 +296,6 @@ class Lintul3(SubModel):
         PHOTTB = AfgenTrait()  # Function to include the effect of photoperiodicity
         RDRT   = AfgenTrait()  # 
         SLACF  = AfgenTrait()  # Leaf area correction function as a function of development stage, DVS.        
-        FERTAB = AfgenTrait()  # Fertilizer application as a function of TIME (g N m-2).
-        NRFTAB = AfgenTrait()  # Fertilizer nitrogen recovery fraction
 
         ROOTDI = Float(-99)   # initial rooting depth [m] 
         NFRLVI = Float(-99)    # Initial fraction of N (g N g-1 DM) in leaves.
@@ -358,10 +355,10 @@ class Lintul3(SubModel):
             self.ANRTI = parameters.NFRRTI * parameters.WRTLI
             self.ANSOI = 0.0
 
-
         
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
+    FERTNS= 0.0    # effective N application
     #     part  = Instance(SimulationObject) - not used 
     
 
@@ -375,6 +372,8 @@ class Lintul3(SubModel):
         """
         self.kiosk  = kiosk
         self.params = self.Parameters(parvalues)
+        
+        self._connect_signal(self.onAPPLY_N, signals.apply_n)
 
         # Read initial states
         init                = self.InitialValues(self.params)
@@ -405,7 +404,13 @@ class Lintul3(SubModel):
         kiosk.register_variable(self, "TRAN",  type="R", publish=True)
         kiosk.register_variable(self, "RROOTD",  type="R", publish=True)
         
-        
+
+
+    def onAPPLY_N(self, amount, recovery):
+        # ---------------Fertilizer application---------------------------------*
+        self.FERTNS = amount * recovery
+            
+
                 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -717,15 +722,11 @@ class Lintul3(SubModel):
             #  Soil N supply (g N m-2 d-1) through mineralization.
             RTMIN   = 0.10 * NLIMIT
     
-            # ---------------Fertilizer application---------------------------------*
-            TIME    = day.timetuple().tm_yday
-            FERTN   = p.FERTAB(TIME)
-            NRF     = p.NRFTAB(TIME)
-            
             #  Change in inorganic N in soil as function of fertilizer
             #  input, soil N mineralization and crop uptake.
-            FERTNS = FERTN * NRF
-            RNSOIL = FERTNS/DELT -NUPTR + RTMIN
+            
+            RNSOIL = self.FERTNS/DELT -NUPTR + RTMIN
+            self.FERTNS = 0.0
             
             # Total leaf weight.
             WLV     = s.WLVG + s.WLVD
