@@ -70,11 +70,11 @@ WCSUBS = 0.30 			# water content subsoil (?)
 
 # Water management
 # We will represent two water management situations in the model
-# as irrigated up to the field capacity:                  WMFAC= 0.0
-# as irrigated up to saturation, thus mimicking flooding; WMFAC= 1.0
+# as irrigated up to the field capacity:                  WMFAC= False
+# as irrigated up to saturation, thus mimicking flooding; WMFAC= True
 # In both cases parameter IRRIGF must be taken 1.0. "Irrigation" thus
-WMFAC  = 0.0
-IRRIGF = 1.0  			# Irrigation factor (1 =yes, 0 = no)
+WMFAC  = False
+IRRIGF = True			# Irrigation factor 
 
 # Interpolation functions
 # -----------------------
@@ -210,5 +210,3 @@ RDRNS  = 0.03
 #  Relative death rate of roots.
 RDRRT = 0.03
 
-# initial rooting depth [m]
-ROOTDI= 0.1

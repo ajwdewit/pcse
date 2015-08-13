@@ -10,6 +10,9 @@ class PCSEError(Exception):
 class CarbonBalanceError(PCSEError):
     "Raised when carbon flows are not balanced."
 
+class NitrogenBalanceError(PCSEError):
+    "Raised when nitrogen flows are not balanced."
+
 class WaterBalanceError(PCSEError):
     "Raised when water balance does not close"
     

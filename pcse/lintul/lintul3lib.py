@@ -5,7 +5,7 @@ def notNull(X):
     by zero" errors in division. The function result is defined as notNull =
     X if X is not 0 and notNull = 1 when X is 0.
     """
-    return X if (X <> 0.) else 1.
+    return X if (X <> 0.) else X
 
 
 

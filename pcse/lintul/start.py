@@ -4,7 +4,7 @@ from pcse.engine import Engine
 from pcse.fileinput.cabo_weather import CABOWeatherDataProvider
 from datetime import date
 import lintul3parameters
-from pcse.lintul.lintul3 import Lintul3, SubModel
+from pcse.lintul.lintul3 import SubModel
 from numbers import Number
 
 
@@ -74,7 +74,7 @@ if (__name__ == "__main__"):
     sim = Lintul3Model.start(1987, outputProc=p)
     
     sim.run(365)
-    SubModel.doOutput(sim.crop, 99999, [])
+    SubModel.doOutput(sim.crop, 99999, {})
     print "END STOP ENDJOB "*5
 
     
