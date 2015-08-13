@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-
+from __future__ import print_function
 import datetime
 from copy import deepcopy
 
@@ -15,7 +15,7 @@ from ..util import limit, Afgen, merge_dict
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 from .. import signals
-
+from .. import exceptions as exc
 
 def zeros(n):
     """Mimic np.zeros() by returning a list of zero floats of length n.
@@ -417,13 +417,13 @@ class WaterbalanceLayered(SimulationObject):
             WSUB0 = 0
 
         if p.GW:
-            print "WATER LIMITED CROP PRODUCTION WITH GROUNDWATER"
+            print("WATER LIMITED CROP PRODUCTION WITH GROUNDWATER")
         else:
-            print "WATER LIMITED CROP PRODUCTION WITHOUT GROUNDWATER"
-        print "================================================="
-        print " fixed fraction       RDMso=%3.0f   NOTinf=%.3f" % (p.RDMSOL, p.NOTINF)
-        print "                      SMLIM=%.3f   RDM=%3.0i  WAV=%3.0f  SSmax=%3.0f" % \
-                                           (p.SMLIM, self.RDMSLB, p.WAV, p.SSMAX)
+            print("WATER LIMITED CROP PRODUCTION WITHOUT GROUNDWATER")
+        print("=================================================")
+        print(" fixed fraction       RDMso=%3.0f   NOTinf=%.3f" % (p.RDMSOL, p.NOTINF))
+        print("                      SMLIM=%.3f   RDM=%3.0i  WAV=%3.0f  SSmax=%3.0f" % \
+                                           (p.SMLIM, self.RDMSLB, p.WAV, p.SSMAX))
             
         # water content for each layer + a few fixed points often used
         for il in range (0, p.NSL):
@@ -436,9 +436,9 @@ class WaterbalanceLayered(SimulationObject):
             #print "layer %i: TSL %f WC %f SM %f SMfcf %f SMsat %f" % (il, \
             # p.SOIL_LAYERS[il]['TSL'], p.SOIL_LAYERS[il]['WC'], p.SOIL_LAYERS[il]['SM'], \
             # p.SOIL_LAYERS[il]['SOILTYPE']['SMFCF'], p.SOIL_LAYERS[il]['SOILTYPE']['SM0'])
-            print "layer  %i  %3.1f cm: SM0=%.3f SMFC=%.3f SMW=%.3f" % (il, p.SOIL_LAYERS[il]['TSL'], \
+            print("layer  %i  %3.1f cm: SM0=%.3f SMFC=%.3f SMW=%.3f" % (il, p.SOIL_LAYERS[il]['TSL'], \
                 p.SOIL_LAYERS[il]['SOILTYPE']['SM0'], p.SOIL_LAYERS[il]['SOILTYPE']['SMFCF'], \
-                p.SOIL_LAYERS[il]['SOILTYPE']['SMW'])
+                p.SOIL_LAYERS[il]['SOILTYPE']['SMW']))
 
         # rootzone and subsoil water
         WI    = W
@@ -489,7 +489,7 @@ class WaterbalanceLayered(SimulationObject):
 
         DELT = 1
         RD = self._determine_rooting_depth()
-        if RD <> self.RDold:
+        if RD != self.RDold:
             msg = "Rooting depth changed unexpectedly"
             raise RuntimeError(msg)
 
@@ -561,7 +561,7 @@ class WaterbalanceLayered(SimulationObject):
         # preliminary infiltration rate
         if s.SS <= 0.1:   # without surface storage
             if p.IFUNRN==0.: RINPRE = (1.-p.NOTINF)*r.RAIN + r.RIRR + s.SS/DELT
-            if p.IFUNRN==1.: RINPRE = (1.-p.NOTINF*NINFTB(r.RAIN))*r.RAIN + r.RIRR + s.SS/DELT
+            if p.IFUNRN==1.: RINPRE = (1.-p.NOTINF*self.NINFTB(r.RAIN))*r.RAIN + r.RIRR + s.SS/DELT
         else:
             # with surface storage, infiltration limited by SOPE (topsoil)
             AVAIL  = s.SS + (r.RAIN * (1.-p.NOTINF) + r.RIRR - r.EVW) * DELT
@@ -1008,27 +1008,27 @@ class WaterbalanceLayered(SimulationObject):
             s.WBALTT = p.SSI + s.RAINT + s.TOTIRR + s.WI - s.W + s.WLOWI - \
                        s.WLOW - s.WTRAT - s.EVWT - s.EVST - s.TSR - s.LOSST - s.SS
 
-            print "\n       WATER BALANCE WHOLE SYSTEM (1 DIMENS. COLUMN ; cm)"
-            print " init max root zone   %5.1f  final max root zone  %5.1f    change: %5.1f" % (s.WWLOWI, s.WWLOW, s.WWLOW-s.WWLOWI)
-            print "  init surf storage   %5.1f  final surf storage   %5.1f    change: %5.1f" % (p.SSI, s.SS, s.SS-p.SSI)
-            print "         irrigation   %5.1f  evap water surface   %5.1f"                  % (s.TOTIRR, s.EVWT)
-            print "           rainfall   %5.1f  evap soil surface    %5.1f"                  % (s.RAINT, s.EVST)
-            print "                             transpiration        %5.1f  to atmos: %5.1f" % (s.WTRAT, s.EVWT+s.EVST+s.WTRAT)
-            print "                             surface runoff       %5.1f"                  % (s.TSR)
-            print "                             lost to deep soil    %5.1f"                  % (s.LOSST)
-            print "  TOTAL INIT + IN     %5.1f  TOTAL FINAL + OUT    %5.1f  checksum: %5.1f" % (s.WWLOWI+p.SSI+s.TOTIRR+s.RAINT, \
+            print("\n       WATER BALANCE WHOLE SYSTEM (1 DIMENS. COLUMN ; cm)")
+            print(" init max root zone   %5.1f  final max root zone  %5.1f    change: %5.1f" % (s.WWLOWI, s.WWLOW, s.WWLOW-s.WWLOWI))
+            print("  init surf storage   %5.1f  final surf storage   %5.1f    change: %5.1f" % (p.SSI, s.SS, s.SS-p.SSI))
+            print("         irrigation   %5.1f  evap water surface   %5.1f"                  % (s.TOTIRR, s.EVWT))
+            print("           rainfall   %5.1f  evap soil surface    %5.1f"                  % (s.RAINT, s.EVST))
+            print("                             transpiration        %5.1f  to atmos: %5.1f" % (s.WTRAT, s.EVWT+s.EVST+s.WTRAT))
+            print("                             surface runoff       %5.1f"                  % (s.TSR))
+            print("                             lost to deep soil    %5.1f"                  % (s.LOSST))
+            print("  TOTAL INIT + IN     %5.1f  TOTAL FINAL + OUT    %5.1f  checksum: %5.1f" % (s.WWLOWI+p.SSI+s.TOTIRR+s.RAINT, \
                                                                                                 s.WWLOW+s.SS+s.EVWT+s.EVST+s.WTRAT+s.TSR+s.LOSST, \
-                                                                                                s.WBALTT)
+                                                                                                s.WBALTT))
             
-            print "\n               WATER BALANCE ROOT ZONE"
-            print " initial water stock  %5.1f  final water stock    %5.1f"                  % (s.WI, s.W)
-            print "        infiltration  %5.1f  evap soil surface    %5.1f"                  % (s.TOTINF, s.EVST)
-            print " added by root growth %5.1f      transpiration    %5.1f"                  % (s.WDRT, s.WTRAT)
-            print "                                   percolation    %5.1f"                  % (s.PERCT)
-            print " TOTAL INIT + IN      %5.1f  FINAL + OUT          %5.1f  checksum: %5.1f" % (s.WI+s.TOTINF+s.WDRT, \
+            print("\n               WATER BALANCE ROOT ZONE")
+            print(" initial water stock  %5.1f  final water stock    %5.1f"                  % (s.WI, s.W))
+            print("        infiltration  %5.1f  evap soil surface    %5.1f"                  % (s.TOTINF, s.EVST))
+            print(" added by root growth %5.1f      transpiration    %5.1f"                  % (s.WDRT, s.WTRAT))
+            print("                                   percolation    %5.1f"                  % (s.PERCT))
+            print(" TOTAL INIT + IN      %5.1f  FINAL + OUT          %5.1f  checksum: %5.1f" % (s.WI+s.TOTINF+s.WDRT, \
                                                                                                 s.W+s.EVST+s.WTRAT+s.PERCT, \
-                                                                                                s.WBALRT)
-            print "\n"
+                                                                                                s.WBALRT))
+            print("\n")
             
         if abs(s.WBALRT) > 0.0001 or abs(s.WBALTT) > 0.0001:
             msg = "Error in layered waterbalance!"

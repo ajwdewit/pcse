@@ -22,12 +22,14 @@ import datetime
 from .traitlets import Instance, Bool
 from .base_classes import (VariableKiosk, WeatherDataProvider,
                            AncillaryObject, WeatherDataContainer,
-                           SimulationObject, BaseEngine)
+                           SimulationObject, BaseEngine,
+                           ParameterProvider, MultiCropParameterProvider)
 from .util import ConfigurationLoader
 from .timer import Timer
 from . import signals
 from . import exceptions as exc
 from .settings import settings
+from .agromanager import AgroManager
 
 class Engine(BaseEngine):
     """Simulation engine for simulating the combined soil/crop system.
@@ -72,11 +74,12 @@ class Engine(BaseEngine):
     """
     # system configuration
     mconf = Instance(ConfigurationLoader)
+    parameterprovider = Instance(ParameterProvider)
 
     # sub components for simulation
     crop = Instance(SimulationObject)
     soil = Instance(SimulationObject)
-    agromanagement = Instance(AncillaryObject)
+    agromanager = Instance(AncillaryObject)
     weatherdataprovider = Instance(WeatherDataProvider)
     drv = Instance(WeatherDataContainer)
     kiosk = Instance(VariableKiosk)
@@ -98,27 +101,33 @@ class Engine(BaseEngine):
     # Helper variables
     TMNSAV = Instance(deque)
     
-    def __init__(self, parameterprovider,
-                 weatherdataprovider, config=None):
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement=None, config=None):
         """
         :param parameterprovider: A `ParameterProvider` object providing model
             parameters as key/value pairs. The parameterprovider encapsulates
-            the different parameter files for agromanagement, crop, soil and
-            site.
+            the different parameter files crop, soil and site parameters.
         :param weatherdataprovider: An instance of a WeatherDataProvider that can
             return weather data in a WeatherDataContainer for a given date.
+        :param agromanagement: AgroManagement data. The data format is described
+            in the section on agronomic management.
         :param config: A string describing the model configuration file to use.
             By only giving a filename PCSE assumes it to be located under
             pcse/conf. If you want to provide you own configuration file, specify
             it as an absolute or a relative path (e.g. with a leading '.')
+
         """
         BaseEngine.__init__(self)
 
         # Load the model configuration
         self.mconf = ConfigurationLoader(config)
+        self.parameterprovider = parameterprovider
 
         # Variable kiosk for registering and publishing variables
         self.kiosk = VariableKiosk()
+
+        # Placeholder for variables to be saved during a model run
+        self._saved_output = list()
+        self._saved_summary_output = list()
 
         # register handlers for starting/finishing the crop simulation, for
         # handling output and terminating the system
@@ -128,10 +137,18 @@ class Engine(BaseEngine):
         self._connect_signal(self._on_SUMMARY_OUTPUT, signal=signals.summary_output)
         self._connect_signal(self._on_TERMINATE, signal=signals.terminate)
 
+        # Component for agromanagement
+        if agromanagement is None:  # use AgroManagementSingleCrop
+            self.agromanager = self.mconf.AGROMANAGEMENT(self.kiosk, self.parameterprovider)
+            start_date = parameterprovider["START_DATE"]
+            end_date = parameterprovider["END_DATE"]
+        else:
+            self.agromanager = AgroManager(self.kiosk, agromanagement)
+            start_date = self.agromanager.start_date
+            end_date = self.agromanager.end_date
+
         # Timer: starting day, final day and model output
-        start_date = parameterprovider["START_DATE"]
-        end_date = parameterprovider["END_DATE"]
-        self.timer = Timer(start_date, self.kiosk, end_date, self.mconf)
+        self.timer = Timer(self.kiosk, start_date, end_date, self.mconf)
         self.day = self.timer()
 
         # Driving variables
@@ -139,17 +156,11 @@ class Engine(BaseEngine):
         self.drv = self._get_driving_variables(self.day)
 
         # Component for simulation of soil processes
-        self.soil = self.mconf.SOIL(self.day, self.kiosk, parameterprovider)
+        if self.mconf.SOIL is not None:
+            self.soil = self.mconf.SOIL(self.day, self.kiosk, parameterprovider)
 
-        # Component for agromanagement
-        self.agromanagement = self.mconf.AGROMANAGEMENT(self.day, self.kiosk, self.mconf,
-                                                        parameterprovider)
         # Call AgroManagement module for management actions at initialization
-        self.agromanagement(self.day, self.drv)
-
-        # Placeholder for variables to be saved during a model run
-        self._saved_output = list()
-        self._saved_summary_output = list()
+        self.agromanager(self.day, self.drv)
 
         # Calculate initial rates
         self.calc_rates(self.day, self.drv)
@@ -161,7 +172,8 @@ class Engine(BaseEngine):
         if self.crop is not None:
             self.crop.calc_rates(day, drv)
 
-        self.soil.calc_rates(day, drv)
+        if self.soil is not None:
+            self.soil.calc_rates(day, drv)
 
         # Save state variables of the model
         if self.flag_output:
@@ -180,7 +192,8 @@ class Engine(BaseEngine):
         if self.crop is not None:
             self.crop.integrate(day)
 
-        self.soil.integrate(day)
+        if self.soil is not None:
+            self.soil.integrate(day)
 
         # Set all rate variables to zero
         if settings.ZEROFY:
@@ -207,7 +220,7 @@ class Engine(BaseEngine):
             self.drv = self._get_driving_variables(self.day)
 
             # Agromanagement decisions
-            self.agromanagement(self.day, self.drv)            
+            self.agromanager(self.day, self.drv)
 
             # Rate calculation
             self.calc_rates(self.day, self.drv)
@@ -230,13 +243,14 @@ class Engine(BaseEngine):
             self.drv = self._get_driving_variables(self.day)
 
             # Agromanagement decisions
-            self.agromanagement(self.day, self.drv)
+            self.agromanager(self.day, self.drv)
 
             # Rate calculation
             self.calc_rates(self.day, self.drv)
 
         if self.flag_terminate is True:
-            self.soil.finalize(self.day)
+            if self.soil is not None:
+                self.soil.finalize(self.day)
 
     #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, crop_delete=False):
@@ -258,22 +272,23 @@ class Engine(BaseEngine):
         self.flag_summary_output = True
         
     #---------------------------------------------------------------------------
-    def _on_CROP_START(self, day, cropsimulation):
-        """Receives a crop simulation object from the agromanagement unit.
-        This object is than assigned to self.cropsimulation and will used
-        for simulation of crop dynamics.
-
+    def _on_CROP_START(self, day, crop_id=None, crop_start_type=None,
+                       crop_end_type=None):
+        """Starts
         """
         self.logger.debug("Received signal 'CROP_START' on day %s" % day)
 
         if self.crop is not None:
-            msg = ("A CROP_START signal was received while self.cropsimulation "+
-                   "still holds a valid cropsimulation object. It looks like " +
-                   "you forgot to send a CROP_FINISH signal with option" +
+            msg = ("A CROP_START signal was received while self.cropsimulation "
+                   "still holds a valid cropsimulation object. It looks like "
+                   "you forgot to send a CROP_FINISH signal with option "
                    "crop_delete=True")
             raise exc.PCSEError(msg)
-        self.crop = cropsimulation
-    
+
+        if isinstance(self.parameterprovider, MultiCropParameterProvider):
+            self.parameterprovider.set_crop_type(crop_id, crop_start_type,
+                                                 crop_end_type)
+        self.crop = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
     #---------------------------------------------------------------------------
     def _on_TERMINATE(self):
         """Sets the variable 'flag_terminate' to True when the signal TERMINATE

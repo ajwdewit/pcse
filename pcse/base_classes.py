@@ -971,26 +971,20 @@ class AncillaryObject(HasTraits, DispatcherObject):
     params = Instance(ParamTemplate)
     
     #---------------------------------------------------------------------------
-    def __init__(self, day, kiosk, *args, **kwargs):           
+    def __init__(self, kiosk, *args, **kwargs):
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
-
-        # Check that day variable is specified
-        if not isinstance(day, date):
-            msg = "%s should be instantiated with the simulation start "+\
-                  "day as first argument!"
-            raise RuntimeError(msg % loggername)
+        self.logger = logging.getLogger(loggername)
 
         # Check that kiosk variable is specified and assign to self
         if not isinstance(kiosk, VariableKiosk):
             msg = "%s should be instantiated with the VariableKiosk "+\
                   "as second argument!"
             raise RuntimeError(msg % loggername)
-        self.kiosk = kiosk
 
-        self.logger = logging.getLogger(loggername)
-        self.initialize(day, kiosk, *args, **kwargs)
-        self.logger.debug("Component succesfully initialized on %s!" % day)
+        self.kiosk = kiosk
+        self.initialize(kiosk, *args, **kwargs)
+        self.logger.debug("Component successfully initialized!")
 
     #---------------------------------------------------------------------------
     def __setattr__(self, attr, value):
@@ -1427,7 +1421,7 @@ class BaseEngine(HasTraits, DispatcherObject):
                 simobj.zerofy()
 
 
-class ParameterProvider(object):
+class ParameterProvider(HasTraits):
     """Simple class providing a dictionary-like single interface for parameter values.
 
     The idea behind this class is twofold. First of all by encapsulating the four
@@ -1439,7 +1433,14 @@ class ParameterProvider(object):
     cropdata are needed, this can now be handled easily by enhancing
     ParameterProvider to rotate new sets of timerdata and cropdata on a CROP_FINISH
     signal.
+
+    See also the `MultiCropParameterProvider`
     """
+    _maps = list()
+    _sitedata = dict()
+    _soildata = dict()
+    _cropdata = dict()
+    _timerdata = dict()
 
     def __init__(self, sitedata, timerdata, soildata, cropdata):
         self._sitedata = sitedata
@@ -1447,7 +1448,9 @@ class ParameterProvider(object):
         self._soildata = soildata
         self._cropdata = cropdata
         self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+        self._test_uniqueness()
 
+    def _test_uniqueness(self):
         # Check if parameter names are unique
         parnames = []
         for mapping in self._maps:
@@ -1471,3 +1474,85 @@ class ParameterProvider(object):
             if key in mapping:
                 return True
         return False
+
+class MultiCropParameterProvider(ParameterProvider):
+    """Parameter provider that allows multiple crop
+    parameter sets to be specified. This ParameterProvider is
+    designed to be combined with the AgroManager in order to
+    facilitate crop rotations.
+
+    Note that timerdata does not have to be provided anymore
+    because this role has been taken over by the AgroManager.
+
+    :param sitedata: A dictionary with site parameters
+    :param soildata: A dictionary with soil parameters
+    :param multi_cropdata: A dict of dicts with the crop parameters
+        keyed on the `crop_id` used in the crop calendar. For
+        example:  multi_cropdata = {'winter-wheat': {<parameters for winter-wheat>},
+                                    'maize': {<parameters for maize>},
+                                    etc...
+    :keyword max_root_depth_name: The name of the crop parameter specifying the
+        maximum crop rooting depth. Defaults to "RDMCR"
+    :keyword init_root_depth_name: The name of the crop parameter specifying the
+        initial crop rooting depth. Defaults to "RDI".
+
+    warning:: The WOFOST ClassicWaterBalance needs to know the maximum rooting depth
+    of all crops (RDMCR) in order to define its soil layers. Therefore all
+    sets of crop parameters are searched for the maximum value of RDMCR. Moreover, the
+    initial rooting depth (RDI) needs to be the same across all crop types. The names
+    of these parameter can be provided through the keywords specified above but default
+    to 'RDMCR' and 'RDI'.
+    """
+    _multi_cropdata = dict()
+    _RDMCR_max = 0.  # maximum rooting depth across all crop types for the water balance
+    _RDI = 0.   # Initial rooting depth
+
+    def __init__(self, sitedata, soildata, multi_cropdata, max_root_depth_name="RDMCR",
+                 init_root_depth_name="RDI"):
+
+        self._sitedata = sitedata
+        self._soildata = soildata
+        self._cropdata = {}
+        self._timerdata = {}
+        self._multi_cropdata = multi_cropdata
+
+        # Get maximum rooting depth and initial rooting depth over all crops
+        RDI = []
+        for crop_id, cropdata in self._multi_cropdata.items():
+            if cropdata[max_root_depth_name] > self._RDMCR_max:
+                self._RDMCR_max = cropdata[max_root_depth_name]
+            RDI.append(cropdata[init_root_depth_name])
+
+        # Test if all crops have the same initial rooting depth
+        if len(set(RDI)) > 1:
+            msg = "Initial rooting depth (%s) not the same across all crop types." % init_root_depth_name
+            raise exc.PCSEError(msg)
+        self._RDI = RDI[0]
+
+        # update the cropdata to provide default values for RDI and RDMCR which
+        # are need by the waterbalance at the initialization.
+        self._cropdata[max_root_depth_name] = self._RDMCR_max
+        self._cropdata[init_root_depth_name] = self._RDI
+
+        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+        self._test_uniqueness()
+
+    def set_crop_type(self, crop_id=None, crop_start_type=None, crop_end_type=None):
+        """Switch the crop parameters in the MultiCropParameterProvider to crop type given by crop_id.
+
+        :param crop_id: string identifying the crop type
+        :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
+        :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
+        """
+
+        if not crop_id in self._multi_cropdata:
+            msg = "Crop parameters for crop (%s) cannot be found in the multi_cropdata." % crop_id
+            raise exc.PCSEError(msg)
+
+        self._cropdata.clear()
+        self._cropdata.update(self._multi_cropdata[crop_id])
+        self._timerdata["CROP_START_TYPE"] = crop_start_type
+        self._timerdata["CROP_END_TYPE"] = crop_end_type
+
+        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+        self._test_uniqueness()

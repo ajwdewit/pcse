@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-""" Collection of tests for PyWOFOST and individual components.
+""" Collection of tests for PCSE.
 """
 import unittest
-import test_assimilation
-import test_abioticdamage
-import test_partitioning
-import test_evapotranspiration
-import test_respiration
-import test_wofost
-import test_penmanmonteith
+from . import test_assimilation
+from . import test_abioticdamage
+from . import test_partitioning
+from . import test_evapotranspiration
+from . import test_respiration
+from . import test_wofost
+from . import test_penmanmonteith
+from . import test_agromanager
+from . import test_wofost_npk
 
 def make_test_suite(dsn=None):
     """Assemble test suite and return it
@@ -21,7 +23,9 @@ def make_test_suite(dsn=None):
                                     test_evapotranspiration.suite(),
                                     test_respiration.suite(),
                                     test_penmanmonteith.suite(),
-                                    test_wofost.suite(dsn)])
+                                    test_agromanager.suite(),
+                                    test_wofost.suite(dsn),
+                                    test_wofost_npk.suite()])
     return allsuites
 
 def test_all(dsn=None):
