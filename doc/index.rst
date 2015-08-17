@@ -34,6 +34,10 @@ test coverage of the implementation of the biophysical processes. Finally, the c
 has no dependencies outside the standard library although SQLAlchemy and NumPy are
 required for some components.
 
+What's new
+----------
+.. toctree::
+   :maxdepth: 1
 
 User guide
 ----------
