@@ -8,7 +8,6 @@ This configuration file defines the crop.
 
 from pcse.lintul.lintul3 import Lintul3
 from pcse.lintul.lintul3soil import Lintul3Soil
-from pcse.empty_model import EmptyModel
 from pcse.agromanagement import AgroManagementSingleCrop
 
 # Module to be used for water balance
@@ -22,12 +21,9 @@ AGROMANAGEMENT = AgroManagementSingleCrop
 
 # variables to save at OUTPUT signals
 # Set to an empty list if you do not want any OUTPUT
-OUTPUT_VARS = ["TIME", "WAI", "DVS", "TSUM", "TAGBM", "WST", "WLVG", "WLVD", "WSO", "LAI", "NTAC", "WRT", 
-               "GTSUM", "CBALAN", "TRANRF", "NNI", "SLA", "FRACT", "FRTWET", "FLVT", "FSTT", "FSOT", 
-               "rWLVG", "rWST", "rWRT", "rWSO", "CUMPAR", "LUECAL", "NUPTT", "TTRAN", "TEVAP", "PEVAP", 
-               "NBALAN", "WATBAL", "NUPTR", "TNSOIL", "NDEMTO", "RNSOIL", "FERTN", "FERTNS", "WA", 
-               "TIRRIG", "TRAIN", "TEXPLO", "TRUNOF", "TDRAIN"]
-
+OUTPUT_VARS = ["CUMPAR", "DVS", "GTSUM", "LAI", "NUPTT", "PEVAP", "TDRAIN", "TEVAP",
+               "TEXPLO", "TIRRIG", "TNSOIL", "TRAIN", "TRANRF", "TRUNOF", "TSUM",
+               "TTRAN", "WA", "WLVD", "WLVG", "WRT", "WSO", "WST"]
 
 # interval for OUTPUT signals, either "daily"|"dekadal"|"monthly"                                    
 # For daily output you change the number of days between successive

@@ -130,8 +130,8 @@ class Lintul3(SubModel):
         ======== =============================================== =======  ==========
          Name     Description                                     Type     Unit
         ======== =============================================== =======  ==========
-        DOYEM    The day of the year on which crop emerges.                d        
-        DVSDR    Development stage above which deathOfLeaves of 
+        DVSI     Initial temperature sum (DVSI= TSUMI / TSUMAN)             -
+        DVSDR    Development stage above which deathOfLeaves of
                  leaves and roots start                                     -
         DVSNLT   development stage N-limit                                  -
         DVSNT    development stage N-threshold                              -
@@ -214,7 +214,6 @@ class Lintul3(SubModel):
         NFRLVI   Initial fraction of N in leaves                            gN/gDM
         NFRRTI   Initial fraction of N in roots                             gN/gDM
         NFRSTI   Initial fraction of N in stem                              gN/gDM    
-        TSUMI    Initial temperature sum (DVSI= TSUMI / TSUMAN)             °C.d
         WCI      Initial water content in soil                              m³/³
         WLVGI    Initial Weight of green leaves                             g/m²
         WSTI     Initial Weight of stem                                     g/m²
@@ -249,7 +248,7 @@ class Lintul3(SubModel):
         
     # Parameters, rates and states which are relevant at the main crop simulation level
     class Parameters(ParamTemplate):
-        DOYEM  = Float(-99)    # The day of the year on which crop emerges.
+        DVSI   = Float(-99.)   # Development stage at start of the crop
         DVSDR  = Float(-99)    # Development stage above which deathOfLeaves of leaves and roots start.
         DVSNLT = Float(-99)    # development stage N-limit
         DVSNT  = Float(-99)    # development stage N-threshold
@@ -277,7 +276,6 @@ class Lintul3(SubModel):
         TCNT   = Float(-99)    # Time coefficient(days) for N translocation.
         TRANCO = Float(-99)    # Transpiration constant (mm/day) indicating the level of drought tolerance of the wheat crop.
         TSUMAG = Float(-99)    # Temperature sum for ageing of leaves
-        TSUMAN = Float(-99)    # Temperature sum for anthesis  [corresponds to TSUM1= Float(-99.)# Temperature sum emergence to anthesis]
         WCFC   = Float(-99)    # Water content at field capacity (0.03 MPa) m3/ m3
         WCI    = Float(-99)    # Initial water content in cm3 of water/(cm3 of soil).
         WCST   = Float(-99)    # Water content at full saturation m3/ m3
@@ -301,8 +299,7 @@ class Lintul3(SubModel):
         NFRLVI = Float(-99)    # Initial fraction of N (g N g-1 DM) in leaves.
         NFRRTI = Float(-99)    # Initial fraction of N (g N g-1 DM) in roots.
         NFRSTI = Float(-99)    # Initial fraction of N (g N g-1 DM) in stem.
-        TSUMI  = Float(-99)   #  
-        WLVGI  = Float(-99)   # 
+        WLVGI  = Float(-99)   #
         WSTI   = Float(-99)   # 
         WRTLI  = Float(-99)   # 
         WSOI   = Float(-99)   # 
@@ -338,8 +335,7 @@ class Lintul3(SubModel):
         
         def __init__(self, parameters):
             # initial calculations
-            DVSI   = parameters.TSUMI / parameters.TSUMAN
-            SLACFI = parameters.SLACF(DVSI)
+            SLACFI = parameters.SLACF(parameters.DVSI)
             ISLA   = parameters.SLAC * SLACFI
             
             #   Initial LAI.
@@ -394,7 +390,6 @@ class Lintul3(SubModel):
 
         # Initialize components of the crop
         self.pheno = Phenology(day, kiosk, parvalues)
-        #         self.part  = Partitioning(day, kiosk, parvalues)
 
 
         self.states = self.Lintul3States(kiosk, publish=["LAI", "ROOTD"], **initialStates)                
@@ -671,7 +666,7 @@ class Lintul3(SubModel):
             NDEMTO  = max(0.0, (NDEML + NDEMS + NDEMR))
             
             """
-            About 75�90% of the total N uptake at harvest takes place before
+            About 75-90% of the total N uptake at harvest takes place before
             anthesis and, in conditions of high soil fertility, post-anthesis N uptake
             may contribute up to 25% but would exclusively end up in the grain
             as protein. Therefore, this nitrogen would not play any role in the
@@ -720,11 +715,10 @@ class Lintul3(SubModel):
             """
             
             #  Soil N supply (g N m-2 d-1) through mineralization.
-            RTMIN   = 0.10 * NLIMIT
+            RTMIN = 0.10 * NLIMIT
     
             #  Change in inorganic N in soil as function of fertilizer
             #  input, soil N mineralization and crop uptake.
-            
             RNSOIL = self.FERTNS/DELT -NUPTR + RTMIN
             self.FERTNS = 0.0
             
@@ -787,10 +781,7 @@ class Lintul3(SubModel):
             self.touch()
             return
 
-        # Partitioning
-        # self.part.integrate(day)
-
-        self.states.integrate(delta = 1.)              
+        self.states.integrate(delta = 1.)
         
 
         
@@ -841,10 +832,7 @@ class Lintul3(SubModel):
                 FR = limit( 0., 1., (p.WCST - WC)/(p.WCST - p.WCWET))
         
         return PTRAN * FR
-        
-        
-    
-    
+
     def gla(self, DTEFF, LAII,  DELT, SLA, GLV, WC, DVS, TRANRF, NNI):
         """
         This subroutine computes daily increase of leaf area index 
