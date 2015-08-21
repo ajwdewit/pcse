@@ -171,23 +171,21 @@ class Lintul3Soil(SubModel):
         
         # Initialize state variables
         self.states = self.Lintul3SoilStates(kiosk, publish=["WA"], **initialStates)
-        self.states.initialize()
+        self.states.initialize_rates()
         
 
         
-    def safeGetFromKiosk(self, varName, default = 0.0):
+    def safeGetFromKiosk(self, varname, default = 0.0):
         """
         Get named value from the kiosk; return default if it isn't available
-        :param varName:    variable name
+        :param varname:    variable name
         :param default:    returned if the value is not available from the kiosk
                            (optional, default 0.) 
         """
-        if (self.kiosk.variable_exists(varName)):
-            return self.kiosk[varName]
+        if varname in self.kiosk:
+            return self.kiosk[varname]
         return default
-    
-    
-        
+
     @prepare_rates
     def calc_rates(self, day, drv):
 
@@ -199,8 +197,7 @@ class Lintul3Soil(SubModel):
         i = self.initialValues
         
         DELT = 1 # ???
-        
-        
+
         ROOTD   = self.safeGetFromKiosk("ROOTD", p.ROOTDI)
         RROOTD  = self.safeGetFromKiosk("RROOTD")
         PEVAP   = self.safeGetFromKiosk("PEVAP", cm2mm(drv.ES0))

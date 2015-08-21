@@ -21,7 +21,7 @@ AGROMANAGEMENT = AgroManagementSingleCrop
 
 # variables to save at OUTPUT signals
 # Set to an empty list if you do not want any OUTPUT
-OUTPUT_VARS = ["CUMPAR", "DVS", "GTSUM", "LAI", "NUPTT", "PEVAP", "TDRAIN", "TEVAP",
+OUTPUT_VARS = ["CUMPAR", "DVS", "TGROWTH", "LAI", "NUPTT", "PEVAP", "TDRAIN", "TEVAP",
                "TEXPLO", "TIRRIG", "TNSOIL", "TRAIN", "TRANRF", "TRUNOF", "TSUM",
                "TTRAN", "WA", "WLVD", "WLVG", "WRT", "WSO", "WST"]
 

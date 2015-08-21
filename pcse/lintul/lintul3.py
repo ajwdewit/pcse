@@ -4,16 +4,16 @@
 """
 LINTUL3
 """
-from pcse.base_classes import SimulationObject, ParamTemplate
-from pcse.base_classes import StatesWithImplicitRatesTemplate as StateVariables
-from pcse.traitlets import Float, AfgenTrait, Instance, Bool
-from pcse.decorators import prepare_rates, prepare_states
-from pcse.util import limit
-from pcse.crop.phenology import DVS_Phenology as Phenology
+from ..base_classes import SimulationObject, ParamTemplate, RatesTemplate
+from ..base_classes import StatesWithImplicitRatesTemplate as StateVariables
+from ..traitlets import Float, AfgenTrait, Instance, Bool
+from ..decorators import prepare_rates, prepare_states
+from ..util import limit
+from ..crop.phenology import DVS_Phenology as Phenology
 from numpy.ma.core import exp
 from numbers import Number
-from pcse.exceptions import CarbonBalanceError, NitrogenBalanceError
-from pcse import signals
+from ..exceptions import CarbonBalanceError, NitrogenBalanceError
+from .. import signals
 
 
 class SubModel(SimulationObject):
@@ -71,7 +71,7 @@ class SubModel(SimulationObject):
         
         
 
-class Lintul3(SubModel):
+class Lintul3(SimulationObject):
     """
         * ORIGINAL COPYRGIGHT NOTICE:    
         *-------------------------------------------------------------------------*
@@ -177,10 +177,9 @@ class Lintul3(SubModel):
         TRANCO   Transpiration constant indicating the level of             
                  drought tolerance of the wheat crop                        mm/d
         TSUMAG   Temperature sum for ageing of leaves                       °C.d
-        TSUMAN   Temperature sum for anthesis                               °C.d
         WCFC     Water content at field capacity (0.03 MPa)                 m³/m³
         WCST     Water content at full saturation                           m³/m³
-        WCWET    Critical Water conten for oxygen stress                    m³/m³
+        WCWET    Critical Water content for oxygen stress                   m³/m³
         WCWP     Water content at wilting point (1.5 MPa)                   m³/m³
         WMFAC    water management (False = irrigated up to the 
                  field capacity, true= irrigated up to saturation)          (bool)  
@@ -245,7 +244,18 @@ class Lintul3(SubModel):
         WST         Weight of stem                                              g/m²                        
         """
         
-        
+    # sub-model components for crop simulation
+    pheno = Instance(SimulationObject)
+    # placeholder for effective N application rate from the _on_APPLY_N event handler.
+    FERTNS = 0.0
+    # placeholder for initial leaf area index
+    LAII = 0.
+    # placeholders for initial nitrogen contents for leaves, stems, roots and storage organs
+    ANLVI = 0.
+    ANSTI = 0.
+    ANRTI = 0.
+    ANSOI = 0.
+
     # Parameters, rates and states which are relevant at the main crop simulation level
     class Parameters(ParamTemplate):
         DVSI   = Float(-99.)   # Development stage at start of the crop
@@ -291,74 +301,46 @@ class Lintul3(SubModel):
         FSOTB  = AfgenTrait()  # Partitioning coefficients
         FSTTB  = AfgenTrait()  # Partitioning coefficients
         NMXLV  = AfgenTrait()  # Maximum N concentration in the leaves as a function of development stage.
-        PHOTTB = AfgenTrait()  # Function to include the effect of photoperiodicity
-        RDRT   = AfgenTrait()  # 
+        RDRT   = AfgenTrait()  #
         SLACF  = AfgenTrait()  # Leaf area correction function as a function of development stage, DVS.        
 
         ROOTDI = Float(-99)   # initial rooting depth [m] 
-        NFRLVI = Float(-99)    # Initial fraction of N (g N g-1 DM) in leaves.
-        NFRRTI = Float(-99)    # Initial fraction of N (g N g-1 DM) in roots.
-        NFRSTI = Float(-99)    # Initial fraction of N (g N g-1 DM) in stem.
-        WLVGI  = Float(-99)   #
-        WSTI   = Float(-99)   # 
-        WRTLI  = Float(-99)   # 
-        WSOI   = Float(-99)   # 
-        
-
+        NFRLVI = Float(-99)   # Initial fraction of N (g N g-1 DM) in leaves.
+        NFRRTI = Float(-99)   # Initial fraction of N (g N g-1 DM) in roots.
+        NFRSTI = Float(-99)   # Initial fraction of N (g N g-1 DM) in stem.
+        WLVGI  = Float(-99)   # Initial weight of green leaves
+        WSTI   = Float(-99)   # Initial weight of stems
+        WRTLI  = Float(-99)   # Initial weight of roots
+        WSOI   = Float(-99)   # Initial weight of storage organs
         
     class Lintul3States(StateVariables):
-        LAI   = Float(-99.) # leaf area index
-        ANLV  = Float(-99.) # Actual N content in leaves
-        ANST  = Float(-99.) # Actual N content in stem 
-        ANRT  = Float(-99.) # Actual N content in root
-        ANSO  = Float(-99.) # Actual N content in storage organs
+        LAI = Float(-99.) # leaf area index
+        ANLV = Float(-99.) # Actual N content in leaves
+        ANST = Float(-99.) # Actual N content in stem
+        ANRT= Float(-99.) # Actual N content in root
+        ANSO = Float(-99.) # Actual N content in storage organs
         NUPTT = Float(-99.) # Total uptake of N over time (g N m-2)
-        NLOSSL= Float(-99.) # total N loss by leaves
-        NLOSSR= Float(-99.) # total N loss by roots
+        NLOSSL = Float(-99.) # total N loss by leaves
+        NLOSSR = Float(-99.) # total N loss by roots
         WLVG  = Float(-99.) # Weight of green leaves
         WLVD  = Float(-99.) # Weight of dead leaves
-        WST   = Float(-99.) # Weight of stem
-        WSO   = Float(-99.) # Weight of storage organs 
-        WRT   = Float(-99.) # Weight of roots
-        ROOTD = Float(-99.)
-        GTSUM = Float(-99.) # ?? obsolete ??
-        WDRT  = Float(-99.) # dead roots (?)
-        CUMPAR= Float(-99.)
-        TNSOIL= Float(-99.) # Amount of inorganic N available for crop uptake.
+        WST = Float(-99.) # Weight of stem
+        WSO = Float(-99.) # Weight of storage organs
+        WRT = Float(-99.) # Weight of roots
+        ROOTD = Float(-99.) # Actual root depth [m]
+        TGROWTH = Float(-99.) # Total growth
+        WDRT = Float(-99.) # weight of dead roots
+        CUMPAR = Float(-99.)
+        TNSOIL = Float(-99.) # Amount of inorganic N available for crop uptake.
+        TAGBM = Float(-99.) # Total aboveground biomass [g /m-2)
+        NNI = Float(-99) # Nitrogen nutrition index
 
+    # class Lintul3Rates(RatesTemplate):
+    #     PEVAP = Float()
+    #     PTRAN = Float()
+    #     TRAN = Float()
+    #     RROOTD = Float()
 
-
-    class InitialValues(object):
-        """
-        helper class to create and store calculated initial values
-        """
-        
-        def __init__(self, parameters):
-            # initial calculations
-            SLACFI = parameters.SLACF(parameters.DVSI)
-            ISLA   = parameters.SLAC * SLACFI
-            
-            #   Initial LAI.
-            self.LAII   = parameters.WLVGI * ISLA
-            
-            # Initial amount of water present in the rooted depth at the start of
-            # the calculations, based on the initial water content (in mm).
-            self.WAI  = 1000. * parameters.ROOTDI * parameters.WCI
-            
-            # Initial amount of N (g/m2) in leaves, stem, roots, and storage organs.
-            self.ANLVI = parameters.NFRLVI * parameters.WLVGI
-            self.ANSTI = parameters.NFRSTI * parameters.WSTI
-            self.ANRTI = parameters.NFRRTI * parameters.WRTLI
-            self.ANSOI = 0.0
-
-        
-    # sub-model components for crop simulation
-    pheno = Instance(SimulationObject)
-    FERTNS= 0.0    # effective N application
-    #     part  = Instance(SimulationObject) - not used 
-    
-
-    
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -368,40 +350,52 @@ class Lintul3(SubModel):
         """
         self.kiosk  = kiosk
         self.params = self.Parameters(parvalues)
-        
-        self._connect_signal(self.onAPPLY_N, signals.apply_n)
+        # self.rates = self.Lintul3Rates(self.kiosk,
+        #                                publish=["PEVAP", "TRAN", "RROOTD"])
 
-        # Read initial states
-        init                = self.InitialValues(self.params)
-        self.initialValues  = init
-        initialStates       = self.Lintul3States.initialValues() 
+        self._connect_signal(self._on_APPLY_N, signals.apply_n)
 
-        # Initialize state variables
-        initialStates["LAI"]    = init.LAII
-        initialStates["ANLV"]   = init.ANLVI
-        initialStates["ANST"]   = init.ANSTI
-        initialStates["ANRT"]   = init.ANRTI
-        initialStates["WLVG"]   = self.params.WLVGI
-        initialStates["WST"]    = self.params.WSTI
-        initialStates["WSO"]    = self.params.WSOI
-        initialStates["WRT"]    = self.params.WRTLI
-        initialStates["ROOTD"]  = self.params.ROOTDI
-        initialStates["WA"]     = init.WAI
-
-        # Initialize components of the crop
+        # Initialize phenology component of the crop
         self.pheno = Phenology(day, kiosk, parvalues)
 
+        # Calculate initial LAI
+        p = self.params
+        SLACFI = p.SLACF(p.DVSI)
+        ISLA = p.SLAC * SLACFI
+        self.LAII = p.WLVGI * ISLA
 
-        self.states = self.Lintul3States(kiosk, publish=["LAI", "ROOTD"], **initialStates)                
-        self.states.initialize()
-        
+        # Initial amount of N (g/m2) in leaves, stem, roots, and storage organs.
+        self.ANLVI = p.NFRLVI * p.WLVGI
+        self.ANSTI = p.NFRSTI * p.WSTI
+        self.ANRTI = p.NFRRTI * p.WRTLI
+        self.ANSOI = 0.0
+
+        # Generate a dict with 'default' initial states (e.g. zero)
+        init = self.Lintul3States.initialValues()
+
+        # Initialize state variables
+        init["LAI"] = self.LAII
+        init["ANLV"] = self.ANLVI
+        init["ANST"] = self.ANSTI
+        init["ANRT"] = self.ANRTI
+        init["WLVG"] = p.WLVGI
+        init["WST"] = p.WSTI
+        init["WSO"] = p.WSOI
+        init["WRT"] = p.WRTLI
+        init["ROOTD"] = p.ROOTDI
+
+        # Initialize the states objects
+        self.states = self.Lintul3States(kiosk, publish=["LAI", "ROOTD"], **init)
+        # Initialize the associated rates of the states
+        self.states.initialize_rates()
+
         kiosk.register_variable(self, "PEVAP",  type="R", publish=True)
         kiosk.register_variable(self, "TRAN",  type="R", publish=True)
         kiosk.register_variable(self, "RROOTD",  type="R", publish=True)
         
 
 
-    def onAPPLY_N(self, amount, recovery):
+    def _on_APPLY_N(self, amount, recovery):
         # ---------------Fertilizer application---------------------------------*
         self.FERTNS = amount * recovery
             
@@ -412,12 +406,12 @@ class Lintul3(SubModel):
         # dynamic calculations
         p = self.params
         s = self.states
-        i = self.initialValues
-        
+        r = self.rates
+
         DELT    = 1 # ???
 
         WA      = self.kiosk["WA"]
-        DVS     = self.pheno.get_variable("DVS")    # self.kiosk["DVS"]
+        DVS     = self.pheno.get_variable("DVS")
         TSUM    = self.pheno.get_variable("TSUM")
         
         # Variables supplied by the weather system
@@ -431,25 +425,12 @@ class Lintul3(SubModel):
         DAVTMP  = 0.5 * (TMMN + TMMX)
         DTEFF   = max ( 0., DAVTMP - p.TBASE )
         
-        #  calculating the astrological daylength.
-        """
-        A new sub-routine has been added in LINTUL3 to calculate the daylength, which 
-        affects crop development. Normally, photoperiodic daylength exceeds astronomical 
-        daylength (Wormer, 1954; Vergara and Chang, 1985). Photoperiodic daylength is 
-        calculated in the model as a function of solar elevation (angle of sun above horizon), 
-        determined by latitude and day of the year (Goudriaan and Van Laar, 1994). 
-        Photoperiodsensitivity of the rice crop, defined as a function of daylength is 
-        included in the model by modifying the daily increment of the heat sum. 
-        """
-        #         DAYL    = astro(day, drv.LAT, drv.IRRAD).DAYL # obsolete
-        
         # potential rates of evaporation and transpiration:
-        PEVAP, PTRAN = self.potentialEvapoTranspiration(drv)
+        PEVAP, PTRAN = self._calc_potential_evapotranspiration(drv)
                
         # actual rates of evaporation and transpiration:
-        TRAN = self.transpiration(PTRAN, WA) 
+        TRAN = self._calc_actual_transpiration(PTRAN, WA)
 
-        # ----------Emergence,Temperature sum and Developmental stages----------*
         # Water content in the rootzone
         WC      = 0.001* WA /s.ROOTD
 
@@ -460,7 +441,7 @@ class Lintul3(SubModel):
         reproductive organs, is defined in terms of phenological developmental stage 
         (DVS) as a function of heat sum, which is the cumulative daily effective 
         temperature. Daily effective temperature is the average temperature above a 
-        crop-specific base temperature (for rice 8C). Some rice varieties are 
+        crop-specific base temperature (for rice 8C). Some crop or crop varieties are
         photoperiodsensitive, i.e. flowering depends on the length of the light period 
         during the day in addition to the temperature during the vegetative stage. 
         """
@@ -483,7 +464,7 @@ class Lintul3(SubModel):
             ATNLV, ATNST, ATNRT, ATN = self.translocatable_N()
             
             # Relative deathOfLeaves rate of leaves due to senescence/ageing.
-            RDRTMP  = p.RDRT(DAVTMP)
+            RDRTMP = p.RDRT(DAVTMP)
             
             # *Total vegetative biomass.
             TBGMR   = s.WLVG + s.WST
@@ -504,7 +485,7 @@ class Lintul3(SubModel):
             # Maximum N content in the plant.
             NOPTS   = NOPTST * s.WST
             NOPTL   = NOPTLV * s.WLVG
-            NOPTMR  = (NOPTL+ NOPTS)/TBGMR
+            NOPTMR  = (NOPTL + NOPTS)/TBGMR
             
             # Total N in green matter of the plant.
             NUPGMR  = s.ANLV + s.ANST
@@ -529,8 +510,8 @@ class Lintul3(SubModel):
             nitrate accumulated beyond the criticalNconcentration was about 50% for 
             different stages. 
             """
-            NFGMR   = NUPGMR / TBGMR
-            NNI     = limit (0.001, 1.0, ((NFGMR-NRMR)/(NOPTMR-NRMR))) 
+            NFGMR = NUPGMR / TBGMR
+            NNI = limit(0.001, 1.0, ((NFGMR-NRMR)/(NOPTMR-NRMR)))
     
             # -------- Growth rates and dry matter production of plant organs-------*
             #  Biomass partitioning functions under (water and nitrogen)non-stressed
@@ -538,7 +519,7 @@ class Lintul3(SubModel):
             """
             Biomass partitioning
             
-            Biomass formed at any time during crop growth is partitioned amongits organs 
+            Biomass formed at any time during crop growth is partitioned amongst organs
             (Fig. 1), i.e. roots, stems, leaves and storage organs, with partitioning 
             factors defined as a function of development stage (Fig. 2) (Drenth et al., 
             1994), which thus provides the rates of growth of these organs: 
@@ -553,10 +534,10 @@ class Lintul3(SubModel):
             growth rates, i.e. growth rates minus death rates, the latter being defined as a 
             function of physiological age, shading and stress. 
             """
-            FRTWET  = p.FRTTB( DVS )
-            FLVT    = p.FLVTB( DVS )
-            FSTT    = p.FSTTB( DVS)
-            FSOT    = p.FSOTB( DVS )        
+            FRTWET = p.FRTTB(DVS)
+            FLVT = p.FLVTB(DVS)
+            FSTT = p.FSTTB(DVS)
+            FSOT = p.FSOTB(DVS)
             
             
             """
@@ -592,13 +573,13 @@ class Lintul3(SubModel):
             FRT, FLV, FST, FSO = self.dryMatterPartitioningFractions(p.NPART, TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT)
             
             # total totalGrowthRate rate.
-            GTOTAL = self.totalGrowthRate(DTR, TRANRF, NNI)
+            RGROWTH = self.totalGrowthRate(DTR, TRANRF, NNI)
     
             # Leaf totalGrowthRate and LAI.
-            GLV    = FLV * GTOTAL
+            GLV    = FLV * RGROWTH
             
             # daily increase of leaf area index.
-            GLAI = self.gla(DTEFF, i.LAII, DELT, SLA, GLV, WC, DVS, TRANRF, NNI)
+            GLAI = self.gla(DTEFF, self.LAII, DELT, SLA, GLV, WC, DVS, TRANRF, NNI)
             
             # relative deathOfLeaves rate of leaves.
             DLV, DLAI = self.deathRateOfLeaves(TSUM, RDRTMP, NNI, SLA)
@@ -629,7 +610,7 @@ class Lintul3(SubModel):
             
             # relative totalGrowthRate rate of roots, leaves, stem
             # and storage organs.
-            RWLVG, RWRT, RWST, RWSO = self.relativeGrowthRates(GTOTAL, FLV, FRT, FST, FSO, DLV, DRRT)
+            RWLVG, RWRT, RWST, RWSO = self.relativeGrowthRates(RGROWTH, FLV, FRT, FST, FSO, DLV, DRRT)
             
             
             """
@@ -651,9 +632,9 @@ class Lintul3(SubModel):
             """
     
             # N demand of leaves, roots and stem storage organs.
-            NDEML   =  max(NMAXLV   * s.WLVG - s.ANLV, 0.)
-            NDEMS   =  max(NMAXST   * s.WST  - s.ANST, 0.)
-            NDEMR   =  max(NMAXRT   * s.WRT  - s.ANRT, 0.)
+            NDEMLV   =  max(NMAXLV   * s.WLVG - s.ANLV, 0.)
+            NDEMST   =  max(NMAXST   * s.WST  - s.ANST, 0.)
+            NDEMRT   =  max(NMAXRT   * s.WRT  - s.ANRT, 0.)
             NDEMSO  =  max(p.NMAXSO * s.WSO  - s.ANSO, 0.) / p.TCNT
             
             # N supply to the storage organs.
@@ -663,7 +644,7 @@ class Lintul3(SubModel):
             RNSO    =  min(NDEMSO, NSUPSO)
             
             # Total Nitrogen demand.
-            NDEMTO  = max(0.0, (NDEML + NDEMS + NDEMR))
+            NDEMTO  = max(0.0, (NDEMLV + NDEMST + NDEMRT))
             
             """
             About 75-90% of the total N uptake at harvest takes place before
@@ -689,7 +670,7 @@ class Lintul3(SubModel):
             RNTRT   = RNSO* ATNRT/ ATN
             
             # compute the partitioning of the total N uptake rate (NUPTR) over the leaves, stem and roots.
-            RNULV, RNUST, RNURT = self.N_uptakeRates(NDEML, NDEMS, NDEMR, NUPTR, NDEMTO)
+            RNULV, RNUST, RNURT = self.N_uptakeRates(NDEMLV, NDEMST, NDEMRT, NUPTR, NDEMTO)
                     
             RNST    = RNUST-RNTST
             RNRT    = RNURT-RNTRT-RNLDRT
@@ -722,24 +703,24 @@ class Lintul3(SubModel):
             RNSOIL = self.FERTNS/DELT -NUPTR + RTMIN
             self.FERTNS = 0.0
             
-            # Total leaf weight.
+            # # Total leaf weight.
             WLV     = s.WLVG + s.WLVD
+            #
+            # # Total above ground biomass
+            # TAGBM   = WLV + s.WST + s.WSO
             
-            # Total above ground biomass
-            TAGBM   = WLV + s.WST + s.WSO ## --> output @UnusedVariable
-            
-            # Carbon, Nitrogen, Water balance
-            CBALAN = (s.GTSUM + (p.WRTLI + p.WLVGI + p.WSTI + p.WSOI)     # @UnusedVariable
-                             - (WLV + s.WST + s.WSO + s.WRT + s.WDRT))   
+            # Carbon, Nitrogen balance
+            CBALAN = (s.TGROWTH + (p.WRTLI + p.WLVGI + p.WSTI + p.WSOI)
+                             - (WLV + s.WST + s.WSO + s.WRT + s.WDRT))
     
-            NBALAN = (s.NUPTT + (i.ANLVI + i.ANSTI + i.ANRTI + i.ANSOI)   # @UnusedVariable
-                             - (s.ANLV + s.ANST + s.ANRT + s.ANSO + s.NLOSSL + s.NLOSSR)) 
-    
+            NBALAN = (s.NUPTT + (self.ANLVI + self.ANSTI + self.ANRTI + self.ANSOI)
+                      - (s.ANLV + s.ANST + s.ANRT + s.ANSO + s.NLOSSL + s.NLOSSR))
+
             # export local variables for latyer use in other models
             self.kiosk.set_variable(self, "PEVAP", PEVAP)
             self.kiosk.set_variable(self, "TRAN", TRAN)
             self.kiosk.set_variable(self, "RROOTD", RROOTD)
-            
+
             s.rLAI    = RLAI  
             s.rANLV   = RNLV  
             s.rANST   = RNST  
@@ -754,21 +735,17 @@ class Lintul3(SubModel):
             s.rWSO    = RWSO  
             s.rWRT    = RWRT  
             s.rROOTD  = RROOTD
-            s.rGTSUM  = GTOTAL
+            s.rTGROWTH = RGROWTH
             s.rWDRT   = DRRT  
             s.rCUMPAR = PAR   
             s.rTNSOIL = RNSOIL
-        
-        self.doOutput(self, day.timetuple().tm_yday, locals().copy())
 
         if (abs(NBALAN) > 0.0001):
             raise NitrogenBalanceError("Nitrogen un-balance in crop model at day %s" % day)
         
         if (abs(CBALAN) > 0.0001):
             raise CarbonBalanceError("Carbon un-balance in crop model at day %s" % day)
-        
-    
-    
+
     @prepare_states
     def integrate(self, day):
         # if before emergence there is no need to continue
@@ -781,11 +758,14 @@ class Lintul3(SubModel):
             self.touch()
             return
 
-        self.states.integrate(delta = 1.)
-        
+        # run automatic integration on states object.
+        s = self.states
+        s.integrate(delta = 1.)
 
-        
-    def potentialEvapoTranspiration(self, drv):
+        # Compute some derived states
+        s.TAGBM = s.WLVG + s.WLVD + s.WST + s.WSO
+
+    def _calc_potential_evapotranspiration(self, drv):
         """
         Potential evaporation and transpiration.
         """
@@ -798,7 +778,7 @@ class Lintul3(SubModel):
 
         
         
-    def transpiration(self, PTRAN, WA): 
+    def _calc_actual_transpiration(self, PTRAN, WA):
         """
         compute actual rates of evaporation and transpiration.
         Obsolete subroutine name: EVAPTR                  
@@ -806,7 +786,7 @@ class Lintul3(SubModel):
         p = self.params
                 
         # critical water content    
-        WC   = 0.001 * WA   / self.states.ROOTD
+        WC   = 0.001 * WA / self.states.ROOTD
         WCCR = p.WCWP + max( 0.01, PTRAN/(PTRAN + p.TRANCO) * (p.WCFC - p.WCWP))
           
         #  If the soil is flooded for rice, : the soil is assumed to be
@@ -824,7 +804,7 @@ class Lintul3(SubModel):
         #  assumed to be at field capacity and the critical water content
         #  that affects crop totalGrowthRate (FR) is formulated as below:      
         else:
-            if (WCCR <= WC <= p.WCWET):  # Betwee critical
+            if (WCCR <= WC <= p.WCWET):  # Between critical
                 FR = 1.0
             elif (WC < WCCR):                
                 FR = limit( 0., 1., (WC - p.WCWP)/(WCCR - p.WCWP))

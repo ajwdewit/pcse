@@ -584,7 +584,7 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
             object.__getattribute__(self, name)
 
 
-    def initialize(self):
+    def initialize_rates(self):
         self.rates = {}
         self.__initialized = True
         
