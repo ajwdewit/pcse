@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from pcse.base_classes import ParamTemplate
-from pcse.base_classes import StatesWithImplicitRatesTemplate as StateVariables
-from pcse.decorators import prepare_rates, prepare_states
-from pcse.traitlets import Float, Bool
-from pcse.lintul.lintul3 import SubModel
-from pcse.util import limit
+from ..base_classes import ParamTemplate, SimulationObject
+from ..base_classes import StatesWithImplicitRatesTemplate as StateVariables
+from ..decorators import prepare_rates, prepare_states
+from ..traitlets import Float, Bool
+from ..util import limit
 from numpy import sqrt
-from pcse.exceptions import WaterBalanceError
+from ..exceptions import WaterBalanceError
 
+cm2mm = lambda cm: 10. * cm
 
-class Lintul3Soil(SubModel):
+class Lintul3Soil(SimulationObject):
     """
         * ORIGINAL COPYRGIGHT NOTICE:    
         *-------------------------------------------------------------------------*
@@ -100,7 +100,7 @@ class Lintul3Soil(SubModel):
         TEXPLO      Exploration accumulator                                  mm
         TIRRIG      Irrigation accumulator                                   mm        
     """
-    
+
     class Parameters(ParamTemplate):
         DRATE   = Float(-99)    # Maximum drainage rate of the soil (mm/day)
         IRRIGF  = Bool()        # Irrigation factor 
@@ -113,8 +113,6 @@ class Lintul3Soil(SubModel):
         WMFAC   = Bool()        # water management (0=irrigated up to the field capacity, 1 = irrigated up to saturation)        
         ROOTDI  = Float(-99)    # initial rooting depth [m] 
 
-
-    
     class Lintul3SoilStates(StateVariables):
         WA      = Float(-99.)   # soil water content
         TRUNOF  = Float(-99.)   # total run off
@@ -124,32 +122,12 @@ class Lintul3Soil(SubModel):
         TRAIN   = Float(-99.)   # total rain
         TEXPLO  = Float(-99.)   # Total Exploration
         TIRRIG  = Float(-99.)   # total irrigation
-        
-             
-    
-    class InitialValues(object):
-        """
-        helper class to create and store calculated initial values
-        """
-        
-        def __init__(self, parameters):
-            # Read initial states
 
-            # Initial amount of water present in the rooted depth at the start of
-            # the calculations, based on the initial water content (in mm).
-            self.WAI  = 1000. * parameters.ROOTDI * parameters.WCI
-            
-        
-       
-        
-        
-    # predefined attributes:        
-    DSLR  = 0 
+    # Counter for days since last rain
+    DSLR  = 0
+    # Initial amount of water in upper layer (rooted zone)
+    WAI = 0.
 
-    def __init__(self, day, kiosk, *args, **kwargs):
-        super(Lintul3Soil, self).__init__(day, kiosk, *args, **kwargs)
-        
-    
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -160,21 +138,17 @@ class Lintul3Soil(SubModel):
         self.kiosk  = kiosk
         self.params = self.Parameters(parvalues)
 
-        # Read initial states
-        init                = self.InitialValues(self.params)
-        self.initialValues  = init
-        initialStates       = self.Lintul3SoilStates.initialValues() 
+        init = self.Lintul3SoilStates.initialValues()
 
         # Initial amount of water present in the rooted depth at the start of
         # the calculations, based on the initial water content (in mm).
-        initialStates["WA"] = init.WAI
+        self.WAI = 1000. * self.params.ROOTDI * self.params.WCI
+        init["WA"] = self.WAI
         
         # Initialize state variables
-        self.states = self.Lintul3SoilStates(kiosk, publish=["WA"], **initialStates)
+        self.states = self.Lintul3SoilStates(kiosk, publish=["WA"], **init)
         self.states.initialize_rates()
-        
 
-        
     def safeGetFromKiosk(self, varname, default = 0.0):
         """
         Get named value from the kiosk; return default if it isn't available
@@ -189,13 +163,10 @@ class Lintul3Soil(SubModel):
     @prepare_rates
     def calc_rates(self, day, drv):
 
-        cm2mm = lambda cm: 10. * cm
-        
         # dynamic calculations
         p = self.params
         s = self.states
-        i = self.initialValues
-        
+
         DELT = 1 # ???
 
         ROOTD   = self.safeGetFromKiosk("ROOTD", p.ROOTDI)
@@ -204,24 +175,22 @@ class Lintul3Soil(SubModel):
         TRAN    = self.safeGetFromKiosk("TRAN")
         
         # Variables supplied by the weather system
-        RAIN    = drv.RAIN * 10 # cm  --> mm CORRECTION FOR NON-STANDARD cm in WOFOST-WEATHER
-                
-        
+        RAIN = cm2mm(drv.RAIN)  # cm  --> mm CORRECTION FOR NON-STANDARD cm in WOFOST-WEATHER
+
         #  Water content in the rootzone
-        WC      = 0.001* s.WA / ROOTD                      
-        EVAP    = self.soilEvaporation(RAIN, PEVAP, ROOTD, DELT)
+        WC = 0.001* s.WA / ROOTD
+        EVAP = self.soilEvaporation(RAIN, PEVAP, ROOTD, DELT)
         
         # Calling the subroutine for rates of drainage, runoff and irrigation.
         DRAIN, RUNOFF, IRRIG = self.drunir(RAIN, EVAP, TRAN, p.IRRIGF, p.DRATE, 
                                            DELT, s.WA, ROOTD, p.WCFC, p.WCST, p.WMFAC)
-        
-        
-        #  Exploration of water in soil when roots grow downward.
-        EXPLOR  = 1000. * RROOTD * p.WCSUBS
-                
-        RWA     = (RAIN+EXPLOR+IRRIG)-(RUNOFF+TRAN+EVAP+DRAIN)
 
-        
+        #  Exploration of water in soil when roots grow downward.
+        EXPLOR = 1000. * RROOTD * p.WCSUBS
+                
+        RWA = (RAIN + EXPLOR + IRRIG)-(RUNOFF + TRAN + EVAP + DRAIN)
+
+        # Assign rate variables for associated states
         s.rWA     = RWA   
         s.rTEXPLO = EXPLOR
         s.rTEVAP  = EVAP  
@@ -231,23 +200,16 @@ class Lintul3Soil(SubModel):
         s.rTRAIN  = RAIN  
         s.rTDRAIN = DRAIN
         
-        WATBAL = (s.WA + (s.TRUNOF + s.TTRAN + s.TEVAP + s.TDRAIN)    # @UnusedVariable
-                         - (i.WAI + s.TRAIN + s.TEXPLO + s.TIRRIG))         
- 
-        self.doOutput(self, day.timetuple().tm_yday, locals().copy())
+        WATBAL = (s.WA + (s.TRUNOF + s.TTRAN + s.TEVAP + s.TDRAIN)
+                       - (self.WAI + s.TRAIN + s.TEXPLO + s.TIRRIG))
 
         if (abs(WATBAL) > 0.0001):
             raise WaterBalanceError("water un-balance in root zone at day %s" % day)
-        
 
-        
     @prepare_states
     def integrate(self, day):
         self.states.integrate(delta = 1.)
-        
 
-        
-        
     def drunir(self, RAIN, EVAP, TRAN, IRRIGF,                         
                 DRATE, DELT, WA, ROOTD, WCFC, WCST, WMFAC):
         """
@@ -257,8 +219,8 @@ class Lintul3Soil(SubModel):
         WAFC = 1000. * WCFC * ROOTD
         WAST = 1000. * WCST * ROOTD
         
-        DRAIN  = limit( 0., DRATE, (WA-WAFC)/DELT + (RAIN - EVAP - TRAN)                  )
-        RUNOFF =          max( 0., (WA-WAST)/DELT + (RAIN - EVAP - TRAN - DRAIN)          )
+        DRAIN  = limit(0., DRATE, (WA-WAFC)/DELT + (RAIN - EVAP - TRAN))
+        RUNOFF = max(0., (WA-WAST)/DELT + (RAIN - EVAP - TRAN - DRAIN))
         
         if WMFAC:
             # If a soil is irrigated by flooding, : soil water content is

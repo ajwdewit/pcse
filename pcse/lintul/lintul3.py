@@ -11,65 +11,13 @@ from ..decorators import prepare_rates, prepare_states
 from ..util import limit
 from ..crop.phenology import DVS_Phenology as Phenology
 from numpy.ma.core import exp
-from numbers import Number
 from ..exceptions import CarbonBalanceError, NitrogenBalanceError
 from .. import signals
 
-
-class SubModel(SimulationObject):
-    """
-    Super class to enable simple output
-    """
-    
-    initialValues = None
-    onOutput = None
-    output = {}
-    headerPrinted = False
-    
-    OUTPUT_VARS = ["TIME"] + sorted( ["WAI", "DVS", "TSUM", "TAGBM", "WST", "WLVG", "WLVD", "WSO", "LAI", "NTAC", "WRT", 
-               "GTSUM", "CBALAN", "TRANRF", "NNI", "SLA", "FRACT", "FRTWET", "FLVT", "FSTT", "FSOT", 
-               "RWLVG", "RWST", "RWRT", "RWSO", "CUMPAR", "LUECAL", "NUPTT", "TTRAN", "TEVAP", "PEVAP", 
-               "NBALAN", "WATBAL", "NUPTR", "TNSOIL", "NDEMTO", "RNSOIL", "WA", 
-               "TIRRIG", "TRAIN", "TEXPLO", "TRUNOF", "TDRAIN"])
-
-#     OUTPUT_VARS = ["TIME"] + sorted( ["CHECK", "FRTWET", "FLVT","FSTT","FSOT"])
-     
-    @classmethod
-    def doOutput(cls, model, time, localVariables):
-        """
-        outputs output
-        :param time:
-        :param localVariables: locals().copy()
-        """
-        if SubModel.onOutput != None:
-            
-            # delegate output printing:
-            if SubModel.output.has_key("TIME") and (SubModel.output["TIME"] != time ):
-                rcd = []
-                for v in SubModel.OUTPUT_VARS:
-                    try:
-                        value = SubModel.output[v]
-                    except:
-                        value = "-"
-                    rcd.append(value)
-                    
-                SubModel.onOutput(rcd, SubModel.OUTPUT_VARS if not SubModel.headerPrinted else None)
-                SubModel.headerPrinted = True
-                SubModel.output        = {}
-                 
-                
-            # compile value record:              
-            SubModel.output["TIME"] = time
-            
-            for v in SubModel.OUTPUT_VARS:
-                if localVariables.has_key(v):
-                    SubModel.output[v] = localVariables[v]
-                elif (model != None) and (hasattr(model.states, v)):
-                    SubModel.output[v] = getattr(model.states, v)
-                
-            
-        
-        
+# some lambdas to make unit conversion explicit.
+cm2mm = lambda x: x*10.
+joule2megajoule = lambda x: x/1e6
+m2mm = lambda x: x*1000
 
 class Lintul3(SimulationObject):
     """
@@ -130,7 +78,7 @@ class Lintul3(SimulationObject):
         ======== =============================================== =======  ==========
          Name     Description                                     Type     Unit
         ======== =============================================== =======  ==========
-        DVSI     Initial temperature sum (DVSI= TSUMI / TSUMAN)             -
+        DVSI     Initial development stage                                  -
         DVSDR    Development stage above which deathOfLeaves of
                  leaves and roots start                                     -
         DVSNLT   development stage N-limit                                  -
@@ -195,9 +143,7 @@ class Lintul3(SimulationObject):
         NMXLV    Maximum N concentration in the leaves, from 
                  which the values of the stem and roots are derived,  
                  as a  function of development stage
-        PHOTTB   Function to include the effect of 
-                 photoperiodicity
-        RDRT     Relative death rate of leaves as a function of 
+        RDRT     Relative death rate of leaves as a function of
                  Developmental stage                                        1/d
         SLACF    Leaf area correction function as a function of 
                  development stage, DVS. Reference: Drenth, H.,
@@ -220,7 +166,6 @@ class Lintul3(SimulationObject):
         WSOI     Initial Weight of storage organs                           g/m²
         
         
-        
         **State variables:**
         =========== ================================================= ==== ===============
          Name        Description                                      Pbl      Unit
@@ -241,7 +186,9 @@ class Lintul3(SimulationObject):
         WLVG        Weight of green leaves                                      g/m²
         WRT         Weight of roots                                             g/m²
         WSO         Weight of storage organs                                    g/m²
-        WST         Weight of stem                                              g/m²                        
+        WST         Weight of stem                                              g/m²
+        TAGBM       Total aboveground biomass                                   g/m²
+        TGROWTH     Total biomass growth (above and below ground)               g/m²
         """
         
     # sub-model components for crop simulation
@@ -335,11 +282,13 @@ class Lintul3(SimulationObject):
         TAGBM = Float(-99.) # Total aboveground biomass [g /m-2)
         NNI = Float(-99) # Nitrogen nutrition index
 
-    # class Lintul3Rates(RatesTemplate):
-    #     PEVAP = Float()
-    #     PTRAN = Float()
-    #     TRAN = Float()
-    #     RROOTD = Float()
+    # These are some rates which are not directly connected to a state (PEVAP, TRAN) of which must be published
+    # (RROOTD) for the water balance module. Therefore, we explicitly define them here.
+    class Lintul3Rates(RatesTemplate):
+        PEVAP = Float()
+        PTRAN = Float()
+        TRAN = Float()
+        RROOTD = Float()
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -348,10 +297,10 @@ class Lintul3(SimulationObject):
         :param parvalues: `ParameterProvider` object providing parameters as
                 key/value pairs
         """
-        self.kiosk  = kiosk
+        self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
-        # self.rates = self.Lintul3Rates(self.kiosk,
-        #                                publish=["PEVAP", "TRAN", "RROOTD"])
+        self.rates = self.Lintul3Rates(self.kiosk,
+                                       publish=["PEVAP", "TRAN", "RROOTD"])
 
         self._connect_signal(self._on_APPLY_N, signals.apply_n)
 
@@ -389,50 +338,38 @@ class Lintul3(SimulationObject):
         # Initialize the associated rates of the states
         self.states.initialize_rates()
 
-        kiosk.register_variable(self, "PEVAP",  type="R", publish=True)
-        kiosk.register_variable(self, "TRAN",  type="R", publish=True)
-        kiosk.register_variable(self, "RROOTD",  type="R", publish=True)
-        
-
-
     def _on_APPLY_N(self, amount, recovery):
-        # ---------------Fertilizer application---------------------------------*
+        """Receive signal for N application with amount the nitrogen amount in g N m-2 and
+        recovery the recovery fraction.
+        """
         self.FERTNS = amount * recovery
-            
 
-                
     @prepare_rates
     def calc_rates(self, day, drv):
-        # dynamic calculations
+
         p = self.params
         s = self.states
         r = self.rates
 
-        DELT    = 1 # ???
+        DELT    = 1
 
-        WA      = self.kiosk["WA"]
         DVS     = self.pheno.get_variable("DVS")
         TSUM    = self.pheno.get_variable("TSUM")
-        
-        # Variables supplied by the weather system
-        RDD     = drv.IRRAD # ???
-        TMMN    = drv.TMIN
-        TMMX    = drv.TMAX
-        RAIN    = drv.RAIN * 10 # cm  --> mm CORRECTION FOR NON-STANDARD cm in CABO-WEATHER
 
-        DTR     = RDD/1.E+6  # Actual daily total global radiation (DTR, J m-2 d-1, the factor 1.E06 converts J into MJ)
+        DTR     = joule2megajoule(drv.IRRAD)
         PAR     = DTR * 0.50
-        DAVTMP  = 0.5 * (TMMN + TMMX)
-        DTEFF   = max ( 0., DAVTMP - p.TBASE )
+        DAVTMP  = 0.5 * (drv.TMIN + drv.TMAX)
+        DTEFF   = max(0., DAVTMP - p.TBASE)
         
         # potential rates of evaporation and transpiration:
-        PEVAP, PTRAN = self._calc_potential_evapotranspiration(drv)
-               
-        # actual rates of evaporation and transpiration:
-        TRAN = self._calc_actual_transpiration(PTRAN, WA)
+        r.PEVAP, r.PTRAN = self._calc_potential_evapotranspiration(drv)
 
         # Water content in the rootzone
-        WC      = 0.001* WA /s.ROOTD
+        WA = self.kiosk["WA"]
+        WC = WA / m2mm(s.ROOTD)
+
+        # actual rates of evaporation and transpiration:
+        r.TRAN = self._calc_actual_transpiration(r.PTRAN, WA)
 
         """
         Crop phenology
@@ -450,12 +387,10 @@ class Lintul3(SimulationObject):
 
         # if before emergence there is no need to continue
         # because only the phenology is running.
-        if (crop_stage == "emerging"):
+        if crop_stage == "emerging":
             
-            # -------------------------------------------------
-            return # no aboveground crop to calculate yet
-            # -------------------------------------------------
-        
+            return  # no aboveground crop to calculate yet
+
         else:                    
             # code below is executed only POST-emergence
                 
@@ -466,11 +401,11 @@ class Lintul3(SimulationObject):
             # Relative deathOfLeaves rate of leaves due to senescence/ageing.
             RDRTMP = p.RDRT(DAVTMP)
             
-            # *Total vegetative biomass.
-            TBGMR   = s.WLVG + s.WST
+            # Total living vegetative biomass.
+            TBGMR = s.WLVG + s.WST
             
-            # *Average residual N concentration.
-            NRMR    = (s.WLVG * p.RNFLV + s.WST * p.RNFST) / TBGMR
+            # Average residual N concentration.
+            NRMR = (s.WLVG * p.RNFLV + s.WST * p.RNFST) / TBGMR
             
             # Maximum N concentration in the leaves, from which the values of the
             # stem and roots are derived, as a function of development stage.
@@ -567,7 +502,7 @@ class Lintul3(SimulationObject):
             SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
             
             # Growth reduction function for water stress(actual trans/potential)
-            TRANRF = TRAN / PTRAN
+            TRANRF = r.TRAN / r.PTRAN
             
             # relative modification for root and shoot allocation.
             FRT, FLV, FST, FSO = self.dryMatterPartitioningFractions(p.NPART, TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT)
@@ -579,7 +514,7 @@ class Lintul3(SimulationObject):
             GLV    = FLV * RGROWTH
             
             # daily increase of leaf area index.
-            GLAI = self.gla(DTEFF, self.LAII, DELT, SLA, GLV, WC, DVS, TRANRF, NNI)
+            GLAI = self._growth_leaf_area(DTEFF, self.LAII, DELT, SLA, GLV, WC, DVS, TRANRF, NNI)
             
             # relative deathOfLeaves rate of leaves.
             DLV, DLAI = self.deathRateOfLeaves(TSUM, RDRTMP, NNI, SLA)
@@ -601,7 +536,7 @@ class Lintul3(SimulationObject):
             flooded situation, soil will always be at saturation and, therefore, the maximum 
             rooting depth corresponds to the physiological maximum, which is taken as 0.7m 
             """
-            RROOTD = min(p.RRDMAX,  p.ROOTDM - s.ROOTD) if (WC > p.WCWP) else 0.0
+            r.RROOTD = min(p.RRDMAX,  p.ROOTDM - s.ROOTD) if (WC > p.WCWP) else 0.0
             
             # N loss due to deathOfLeaves of leaves and roots.
             DRRT    = 0. if (DVS < p.DVSDR) else s.WRT * p.RDRRT        
@@ -705,10 +640,7 @@ class Lintul3(SimulationObject):
             
             # # Total leaf weight.
             WLV     = s.WLVG + s.WLVD
-            #
-            # # Total above ground biomass
-            # TAGBM   = WLV + s.WST + s.WSO
-            
+
             # Carbon, Nitrogen balance
             CBALAN = (s.TGROWTH + (p.WRTLI + p.WLVGI + p.WSTI + p.WSOI)
                              - (WLV + s.WST + s.WSO + s.WRT + s.WDRT))
@@ -716,12 +648,7 @@ class Lintul3(SimulationObject):
             NBALAN = (s.NUPTT + (self.ANLVI + self.ANSTI + self.ANRTI + self.ANSOI)
                       - (s.ANLV + s.ANST + s.ANRT + s.ANSO + s.NLOSSL + s.NLOSSR))
 
-            # export local variables for latyer use in other models
-            self.kiosk.set_variable(self, "PEVAP", PEVAP)
-            self.kiosk.set_variable(self, "TRAN", TRAN)
-            self.kiosk.set_variable(self, "RROOTD", RROOTD)
-
-            s.rLAI    = RLAI  
+            s.rLAI    = RLAI
             s.rANLV   = RNLV  
             s.rANST   = RNST  
             s.rANRT   = RNRT  
@@ -734,7 +661,7 @@ class Lintul3(SimulationObject):
             s.rWST    = RWST  
             s.rWSO    = RWSO  
             s.rWRT    = RWRT  
-            s.rROOTD  = RROOTD
+            s.rROOTD  = r.RROOTD
             s.rTGROWTH = RGROWTH
             s.rWDRT   = DRRT  
             s.rCUMPAR = PAR   
@@ -769,15 +696,14 @@ class Lintul3(SimulationObject):
         """
         Potential evaporation and transpiration.
         """
-        ES0, ET0 = [10 * e for e in [drv.ES0, drv.ET0]]
+        ES0 = cm2mm(drv.ES0)
+        ET0 = cm2mm(drv.ET0)
         pevap = exp(-0.5 * self.states.LAI) * ES0
         pevap = max(0., pevap)
         ptran = (1. - exp(-0.5 * self.states.LAI)) * ET0
         ptran = max(0., ptran)
         return pevap, ptran
 
-        
-        
     def _calc_actual_transpiration(self, PTRAN, WA):
         """
         compute actual rates of evaporation and transpiration.
@@ -813,29 +739,25 @@ class Lintul3(SimulationObject):
         
         return PTRAN * FR
 
-    def gla(self, DTEFF, LAII,  DELT, SLA, GLV, WC, DVS, TRANRF, NNI):
-        """
-        This subroutine computes daily increase of leaf area index 
-        (ha leaf/ ha ground/ d).
-        Obsolete subroutine name: GLA
-        """
+    def _growth_leaf_area(self, DTEFF, LAII,  DELT, SLA, GLV, WC, DVS, TRANRF, NNI):
+        """This subroutine computes daily increase of leaf area index."""
+
         p = self.params
         LAI = self.states.LAI
         
         #---- Growth during maturation stage:
         GLAI = SLA * GLV
-        
+
         #---- Growth during juvenile stage:
         if ((DVS  <  0.2) and (LAI  <  0.75)):
             GLAI = (LAI * (exp(p.RGRL * DTEFF * DELT) - 1.)/ DELT )* TRANRF* exp(-p.NLAI* (1.0 - NNI))
-        
+
         #---- Growth at day of seedling emergence:
         if ((LAI == 0.) and (WC > p.WCWP)):
             GLAI = LAII / DELT  
         
         return GLAI
-    
-    
+
     def dryMatterPartitioningFractions(self, NPART, TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT):
         """
         Purpose: Dry matter partitioning fractions: leaves, stem and storage organs.
@@ -845,19 +767,15 @@ class Lintul3(SimulationObject):
         if(TRANRF  <  NNI):
             #  Water stress is more severe as compared to nitrogen stress and
             #  partitioning will follow the original assumptions of LINTUL2*
-      
-            FRTMOD = max( 1., 1./(TRANRF+0.5))
+            FRTMOD = max(1., 1./(TRANRF+0.5))
             FRT    = FRTWET * FRTMOD
             FSHMOD = (1.-FRT) / (1.-FRT/FRTMOD)
             FLV    = FLVT * FSHMOD
             FST    = FSTT * FSHMOD
             FSO    = FSOT * FSHMOD
-            
         else:
-            
             # Nitrogen stress is more severe as compared to water stress and the
             # less partitioning to leaves will go to the roots*
-            
             FLVMOD = exp(-NPART* (1.0-NNI))
             FLV    = FLVT * FLVMOD
             MODIF  = (1.-FLV)/(1.-(FLV/FLVMOD))
@@ -866,8 +784,6 @@ class Lintul3(SimulationObject):
             FSO    = FSOT *  MODIF
     
         return FRT, FLV, FST, FSO # FLVMOD removed from signature - WdW
-    
-    
     
     def totalGrowthRate(self, DTR, TRANRF, NNI):
         """
@@ -889,42 +805,32 @@ class Lintul3(SimulationObject):
         """
         p = self.params
         PARINT = 0.5 * DTR * (1.- exp(-p.K * self.states.LAI))
-        
-        GTOTAL = p.LUE * PARINT
+        RGROWTH = p.LUE * PARINT
         
         if(TRANRF  <=  NNI):
             #  Water stress is more severe as compared to nitrogen stress and
             #  partitioning will follow the original assumptions of LINTUL2*
-            
-            GTOTAL *= TRANRF
-        
+            RGROWTH *= TRANRF
         else:
-        
             #  Nitrogen stress is more severe as compared to water stress and the
             #  less partitioning to leaves will go to the roots*
-            
-            GTOTAL *= exp(-p.NLUE * (1.0 - NNI))
-      
-        return GTOTAL
-    
-    
-    
-    def relativeGrowthRates(self, GTOTAL, FLV, FRT, FST, FSO, DLV, DRRT):
+            RGROWTH *= exp(-p.NLUE * (1.0 - NNI))
+        return RGROWTH
+
+    def relativeGrowthRates(self, RGROWTH, FLV, FRT, FST, FSO, DLV, DRRT):
         """
         compute the relative totalGrowthRate rate of roots, leaves, stem 
         and storage organs.
         Obsolete subroutine name: RELGR                   
         """
       
-        RWLVG = GTOTAL * FLV - DLV
-        RWRT  = GTOTAL * FRT - DRRT
-        RWST  = GTOTAL * FST
-        RWSO  = GTOTAL * FSO
+        RWLVG = RGROWTH * FLV - DLV
+        RWRT  = RGROWTH * FRT - DRRT
+        RWST  = RGROWTH * FST
+        RWSO  = RGROWTH * FSO
 
         return RWLVG, RWRT, RWST, RWSO
-    
-    
-    
+
     def N_uptakeRates(self, NDEML, NDEMS, NDEMR, NUPTR, NDEMTO):
         """
         compute the partitioning of the total N uptake rate (NUPTR) 
@@ -940,9 +846,7 @@ class Lintul3(SimulationObject):
             return RNULV, RNUST, RNURT
         else:
             return 0.0, 0.0, 0.0
-    
-    
-    
+
     def translocatable_N(self):      
         """
         compute the translocatable N in the organs.
@@ -957,8 +861,6 @@ class Lintul3(SimulationObject):
         
         return ATNLV, ATNST, ATNRT, ATN
 
-    
-    
     def deathRateOfLeaves(self, TSUM, RDRTMP, NNI, SLA):
         """
         compute the relative deathOfLeaves rate of leaves due to age, 
@@ -982,10 +884,9 @@ class Lintul3(SimulationObject):
             DLAINS  = 0.
         
         DLVS  = s.WLVG * RDR
-        DLAIS = s.LAI  * RDR
+        DLAIS = s.LAI * RDR
         
         DLV   = DLVS + DLVNS
         DLAI  = DLAIS + DLAINS
     
         return DLV, DLAI
-    

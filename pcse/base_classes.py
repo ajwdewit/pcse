@@ -563,8 +563,10 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
     rates = {}
     __initialized = False
 
-            
-        
+    # def __init__(self, *args, **kwargs):
+    #     super(StatesWithImplicitRatesTemplate, self).__init__(*args, **kwargs)
+    #     self.initialize_rates()
+
     def __setattr__(self, name, value):
         if self.rates.has_key(name):
             # known attribute: set value:             
