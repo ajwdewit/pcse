@@ -4,13 +4,14 @@
 """
 LINTUL3
 """
+from math import exp
+
 from ..base_classes import SimulationObject, ParamTemplate, RatesTemplate
 from ..base_classes import StatesWithImplicitRatesTemplate as StateVariables
 from ..traitlets import Float, AfgenTrait, Instance, Bool
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit
 from ..crop.phenology import DVS_Phenology as Phenology
-from numpy.ma.core import exp
 from ..exceptions import CarbonBalanceError, NitrogenBalanceError
 from .. import signals
 
@@ -149,7 +150,8 @@ class Lintul3(SimulationObject):
                  development stage, DVS. Reference: Drenth, H.,
                  ten Berge, H.F.M. and Riethoven, J.J.M. 1994, 
                  p.10. (Complete reference under Observed data.)
-                      
+        ======== =============================================== =======  ==========
+
         
         * initial states *
         ======== =============================================== =======  ==========
@@ -164,7 +166,8 @@ class Lintul3(SimulationObject):
         WSTI     Initial Weight of stem                                     g/m²
         WRTLI    Initial Weight of roots                                    g/m²
         WSOI     Initial Weight of storage organs                           g/m²
-        
+        ======== =============================================== =======  ==========
+
         
         **State variables:**
         =========== ================================================= ==== ===============
@@ -189,8 +192,20 @@ class Lintul3(SimulationObject):
         WST         Weight of stem                                              g/m²
         TAGBM       Total aboveground biomass                                   g/m²
         TGROWTH     Total biomass growth (above and below ground)               g/m²
+        =========== ================================================= ==== ===============
+
+        **Rate variables:**
+        =========== ================================================= ==== ===============
+         Name        Description                                      Pbl      Unit
+        =========== ================================================= ==== ===============
+         PEVAP       Potential soil evaporation rate                   Y     |mmday-1|
+         PTRAN       Potential crop transpiration rate                 Y     |mmday-1|
+         TRAN        Actual crop transpiration rate                    N     |mmday-1|
+         RROOTD      Rate of root growth                               Y     |mday-1|
+        =========== ================================================= ==== ===============
         """
-        
+
+
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
     # placeholder for effective N application rate from the _on_APPLY_N event handler.
@@ -264,7 +279,7 @@ class Lintul3(SimulationObject):
         LAI = Float(-99.) # leaf area index
         ANLV = Float(-99.) # Actual N content in leaves
         ANST = Float(-99.) # Actual N content in stem
-        ANRT= Float(-99.) # Actual N content in root
+        ANRT = Float(-99.) # Actual N content in root
         ANSO = Float(-99.) # Actual N content in storage organs
         NUPTT = Float(-99.) # Total uptake of N over time (g N m-2)
         NLOSSL = Float(-99.) # total N loss by leaves

@@ -4,14 +4,15 @@ from ..base_classes import StatesWithImplicitRatesTemplate as StateVariables
 from ..decorators import prepare_rates, prepare_states
 from ..traitlets import Float, Bool
 from ..util import limit
-from numpy import sqrt
+from math import sqrt
 from ..exceptions import WaterBalanceError
 
 cm2mm = lambda cm: 10. * cm
+m2mm = lambda x: 1000 * x
 
 class Lintul3Soil(SimulationObject):
     """
-        * ORIGINAL COPYRGIGHT NOTICE:    
+        * ORIGINAL COPYRIGHT NOTICE:
         *-------------------------------------------------------------------------*
         * Copyright 2013. Wageningen University, Plant Production Systems group,  *
         * P.O. Box 430, 6700 AK Wageningen, The Netherlands.                      *
@@ -91,7 +92,8 @@ class Lintul3Soil(SimulationObject):
         =========== ================================================= ==== ===============
          Name        Description                                      Pbl      Unit
         =========== ================================================= ==== ===============
-        WA          Soil water content                                 *     mm
+        WA          Soil water amount                                  *     mm
+        WC          Volumetric soil water content                            mm
         TRUNOF      Run off accumulator                                      mm
         TTRAN       Crop transpiration accumulated over growth period        mm
         TEVAP       Soil evaporation accumulated over growth period          mm
@@ -114,7 +116,8 @@ class Lintul3Soil(SimulationObject):
         ROOTDI  = Float(-99)    # initial rooting depth [m] 
 
     class Lintul3SoilStates(StateVariables):
-        WA      = Float(-99.)   # soil water content
+        WA      = Float(-99.)   # Amount of soil water
+        WC      = Float(-99.)   # Volumetric soil water content
         TRUNOF  = Float(-99.)   # total run off
         TTRAN   = Float(-99.)   # Crop transpiration accumulated over growth period
         TEVAP   = Float(-99.)   # soil evaporation accumulated over growth period
@@ -135,21 +138,21 @@ class Lintul3Soil(SimulationObject):
         :param parvalues: `ParameterProvider` object providing parameters as
                 key/value pairs
         """
-        self.kiosk  = kiosk
+        self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
 
         init = self.Lintul3SoilStates.initialValues()
 
         # Initial amount of water present in the rooted depth at the start of
         # the calculations, based on the initial water content (in mm).
-        self.WAI = 1000. * self.params.ROOTDI * self.params.WCI
+        self.WAI = m2mm(self.params.ROOTDI) * self.params.WCI
         init["WA"] = self.WAI
         
         # Initialize state variables
         self.states = self.Lintul3SoilStates(kiosk, publish=["WA"], **init)
         self.states.initialize_rates()
 
-    def safeGetFromKiosk(self, varname, default = 0.0):
+    def _safe_get_from_kiosk(self, varname, default=0.0):
         """
         Get named value from the kiosk; return default if it isn't available
         :param varname:    variable name
@@ -167,34 +170,33 @@ class Lintul3Soil(SimulationObject):
         p = self.params
         s = self.states
 
-        DELT = 1 # ???
+        DELT = 1.  #
 
-        ROOTD   = self.safeGetFromKiosk("ROOTD", p.ROOTDI)
-        RROOTD  = self.safeGetFromKiosk("RROOTD")
-        PEVAP   = self.safeGetFromKiosk("PEVAP", cm2mm(drv.ES0))
-        TRAN    = self.safeGetFromKiosk("TRAN")
+        ROOTD = self._safe_get_from_kiosk("ROOTD", p.ROOTDI)
+        RROOTD = self._safe_get_from_kiosk("RROOTD")
+        PEVAP = self._safe_get_from_kiosk("PEVAP", cm2mm(drv.ES0))
+        TRAN = self._safe_get_from_kiosk("TRAN")
         
         # Variables supplied by the weather system
         RAIN = cm2mm(drv.RAIN)  # cm  --> mm CORRECTION FOR NON-STANDARD cm in WOFOST-WEATHER
 
         #  Water content in the rootzone
-        WC = 0.001* s.WA / ROOTD
-        EVAP = self.soilEvaporation(RAIN, PEVAP, ROOTD, DELT)
+        # WC = s.WA / m2mm(ROOTD)
+        EVAP = self._soil_evaporation(RAIN, PEVAP, ROOTD, DELT)
         
         # Calling the subroutine for rates of drainage, runoff and irrigation.
-        DRAIN, RUNOFF, IRRIG = self.drunir(RAIN, EVAP, TRAN, p.IRRIGF, p.DRATE, 
-                                           DELT, s.WA, ROOTD, p.WCFC, p.WCST, p.WMFAC)
+        DRAIN, RUNOFF, IRRIG = self._drainage_runoff_irrigation(RAIN, EVAP, TRAN, DELT, s.WA, ROOTD)
 
         #  Exploration of water in soil when roots grow downward.
-        EXPLOR = 1000. * RROOTD * p.WCSUBS
+        EXPLOR = m2mm(RROOTD) * p.WCSUBS
                 
         RWA = (RAIN + EXPLOR + IRRIG)-(RUNOFF + TRAN + EVAP + DRAIN)
 
         # Assign rate variables for associated states
-        s.rWA     = RWA   
+        s.rWA = RWA
         s.rTEXPLO = EXPLOR
-        s.rTEVAP  = EVAP  
-        s.rTTRAN  = TRAN  
+        s.rTEVAP = EVAP
+        s.rTTRAN = TRAN
         s.rTRUNOF = RUNOFF
         s.rTIRRIG = IRRIG 
         s.rTRAIN  = RAIN  
@@ -203,39 +205,42 @@ class Lintul3Soil(SimulationObject):
         WATBAL = (s.WA + (s.TRUNOF + s.TTRAN + s.TEVAP + s.TDRAIN)
                        - (self.WAI + s.TRAIN + s.TEXPLO + s.TIRRIG))
 
-        if (abs(WATBAL) > 0.0001):
+        if abs(WATBAL) > 0.0001:
             raise WaterBalanceError("water un-balance in root zone at day %s" % day)
 
     @prepare_states
     def integrate(self, day):
-        self.states.integrate(delta = 1.)
+        s = self.states
+        p = self.params
+        s.integrate(delta=1.)
 
-    def drunir(self, RAIN, EVAP, TRAN, IRRIGF,                         
-                DRATE, DELT, WA, ROOTD, WCFC, WCST, WMFAC):
+        # Volumetric Water content in the rootzone
+        ROOTD = self._safe_get_from_kiosk("ROOTD", p.ROOTDI)
+        s.WC = s.WA / m2mm(ROOTD)
+
+    def _drainage_runoff_irrigation(self, RAIN, EVAP, TRAN, DELT, WA, ROOTD):
+        """compute rates of drainage, runoff and irrigation
         """
-        compute rates of drainage, runoff and irrigation
-        """
-        
-        WAFC = 1000. * WCFC * ROOTD
-        WAST = 1000. * WCST * ROOTD
-        
-        DRAIN  = limit(0., DRATE, (WA-WAFC)/DELT + (RAIN - EVAP - TRAN))
+        p = self.params
+
+        WAFC = p.WCFC * m2mm(ROOTD)
+        WAST = p.WCST * m2mm(ROOTD)
+
+        DRAIN = limit(0., p.DRATE, (WA-WAFC)/DELT + (RAIN - EVAP - TRAN))
         RUNOFF = max(0., (WA-WAST)/DELT + (RAIN - EVAP - TRAN - DRAIN))
         
-        if WMFAC:
+        if p.WMFAC:
             # If a soil is irrigated by flooding, : soil water content is
             # kept at saturation via "irrigation events".
-            IRRIG  = max(0., (WAST-WA)/DELT - (RAIN - EVAP - TRAN - DRAIN - RUNOFF)) if IRRIGF else 0.0 
+            IRRIG = max(0., (WAST-WA)/DELT - (RAIN - EVAP - TRAN - DRAIN - RUNOFF)) if p.IRRIGF else 0.0
         else:
             # If soil is irrigated but not flooded, : soil water content
             # is kept at field capacity via "irrigation events".
-            IRRIG  = max(0., (WAFC-WA)/DELT - (RAIN - EVAP - TRAN - DRAIN - RUNOFF)) if IRRIGF else 0.0
+            IRRIG = max(0., (WAFC-WA)/DELT - (RAIN - EVAP - TRAN - DRAIN - RUNOFF)) if p.IRRIGF else 0.0
     
         return DRAIN, RUNOFF, IRRIG
-    
-    
-    
-    def soilEvaporation(self, RAIN, PEVAP, ROOTD, DELT):
+
+    def _soil_evaporation(self, RAIN, PEVAP, ROOTD, DELT):
         """Compute actual soil evaporation rate as function
         of Days-Since-Last-Rain (DSLR) limiting for the amount
         of water at air-dry [WAAD]
@@ -248,26 +253,20 @@ class Lintul3Soil(SimulationObject):
         p = self.params
         s = self.states
         
-        # see also classic_waterbalance.py    
-        WAAD = 1000. * p.WCAD * ROOTD
+        # see also classic_water balance.py
+        WAAD = p.WCAD * m2mm(ROOTD)
          
-        if (RAIN >=0.5):
-            EVS  = PEVAP
+        if RAIN >= 0.5:
+            EVS = PEVAP
             self.DSLR = 1.
         else:
-            self.DSLR = self.DSLR + 1.
-            EVSMXT    = PEVAP*(sqrt (self.DSLR) - sqrt(self.DSLR - 1.))
-            EVS       = min(PEVAP, EVSMXT + RAIN)
+            self.DSLR += 1.
+            EVSMXT = PEVAP*(sqrt(self.DSLR) - sqrt(self.DSLR - 1.))
+            EVS = min(PEVAP, EVSMXT + RAIN)
         
         # WA-WAAD is the physically available amount of water in the soil above
         # air-dry. Limit the amount of evapotranspiration for this amount  
         # in order to avoid emptying the soil water reservoir below air-dry
-        AVAILF = min( 1., (s.WA - WAAD)/(EVS * DELT)) if (EVS > 0) else 0.0
+        AVAILF = min(1., (s.WA - WAAD)/(EVS * DELT)) if (EVS > 0) else 0.0
         
         return EVS * AVAILF
-
-
-        
-        
-        
-        

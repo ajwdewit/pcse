@@ -8,7 +8,6 @@ import os, sys
 import unittest
 import csv
 import yaml
-import pdb
 
 from ..engine import Engine
 from ..base_classes import MultiCropParameterProvider
