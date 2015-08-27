@@ -26,7 +26,7 @@ class TestLINTUL3_SpringWheat(unittest.TestCase):
 
         parvalues = MultiCropParameterProvider(sitedata=site, soildata=soil, multi_cropdata=crop,
                                                init_root_depth_name="ROOTDI", max_root_depth_name="ROOTDM")
-        lintul3 = Engine(parvalues,  weather, agromanagement=amgt, config="lintul3.conf.py")
+        lintul3 = Engine(parvalues,  weather, agromanagement=amgt, config="Lintul3.conf")
         lintul3.run(days=300)
         self.output = lintul3.get_output()
 

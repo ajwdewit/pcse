@@ -11,3 +11,4 @@ from . import root_dynamics
 from . import stem_dynamics
 from . import storage_organ_dynamics
 from . import leaf_dynamics
+from . import lintul3
