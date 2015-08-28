@@ -22,7 +22,7 @@ class TestLINTUL3_SpringWheat(unittest.TestCase):
         soil = PCSEFileReader(os.path.join(test_data_dir, "lintul3_parameters.soil"))
         site = {}
         crop = {"spring-wheat": PCSEFileReader(os.path.join(test_data_dir, "lintul3_parameters.crop"))}
-        weather = CABOWeatherDataProvider("NL1", test_data_dir)
+        weather = CABOWeatherDataProvider("NL1", test_data_dir, ETmodel="P")
 
         parvalues = MultiCropParameterProvider(sitedata=site, soildata=soil, multi_cropdata=crop,
                                                init_root_depth_name="ROOTDI", max_root_depth_name="ROOTDM")
