@@ -9,6 +9,7 @@ from ..decorators import prepare_rates, prepare_states
 from ..base_classes import ParamTemplate, StatesTemplate, SimulationObject,\
      VariableKiosk
 from .. import exceptions as exc
+from warnings import warn
 
 
 # Template for namedtuple containing partitioning factors
@@ -129,7 +130,8 @@ class DVS_Partitioning(SimulationObject):
             msg += ("Checksum: %f, FR: %5.3f, FL: %5.3f, FS: %5.3f, FO: %5.3f\n" \
                     % (checksum, FR, FL, FS, FO))
             self.logger.error(msg)
-            raise exc.PartitioningError(msg)
+            warn(msg)
+#             raise exc.PartitioningError(msg)
 
     @prepare_states
     def integrate(self, day):

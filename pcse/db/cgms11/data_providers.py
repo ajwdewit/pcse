@@ -11,7 +11,7 @@ Data providers are compatible with a CGMS 11 database schema.
 import datetime
 
 from sqlalchemy import MetaData, select, Table, and_
-from tabulate import tabulate
+# from tabulate import tabulate
 import numpy as np
 
 from ...util import wind10to2, safe_float, check_date, reference_ET

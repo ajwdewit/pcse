@@ -550,6 +550,75 @@ class StatesTemplate(StatesRatesCommon):
     
 
 #-------------------------------------------------------------------------------
+class StatesWithImplicitRatesTemplate(StatesTemplate):
+    """Container class for state variables that have an associated rate.
+    The rates will be generated upon initialization having the same name as their states,
+    prefixed by a lowercase character 'r'.
+    After initialization no more attributes can be implicitly added.
+    Call integrate() to integrate all states with their current rates; the rates are reset to 0.0.
+    
+    States are all attributes descending from Float and not prefixed by an underscore.
+    """
+        
+    rates = {}
+    __initialized = False
+
+    def __setattr__(self, name, value):
+        if self.rates.has_key(name):
+            # known attribute: set value:             
+            self.rates[name] = value
+        elif not self.__initialized:
+            # new attribute: allow whe not yet initialized:
+            object.__setattr__(self, name, value)
+        else:
+            # new attribute: disallow according ancestorial ruls:
+            super(StatesWithImplicitRatesTemplate, self).__setattr__(name, value)
+            
+            
+    def __getattr__(self, name):
+        if self.rates.has_key(name):
+            return self.rates[name]
+        else:
+            object.__getattribute__(self, name)
+
+
+    def initialize_rates(self):
+        self.rates = {}
+        self.__initialized = True
+        
+        for s in self.__class__.listIntegratedStates():
+            self.rates['r' + s] = 0.0
+
+
+    def integrate(self, delta):
+        # integrate all:
+        for s in self.listIntegratedStates():
+            rate = getattr(self, 'r' + s)
+            state = getattr(self, s)
+            newvalue = state + delta * rate
+            setattr(self, s, newvalue)
+          
+        # reset all rates  
+        for r in self.rates:
+          self.rates[r] = 0.0
+          
+          
+            
+    @classmethod
+    def listIntegratedStates(cls):
+        return sorted([a for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_')])
+
+
+
+    @classmethod
+    def initialValues(cls):
+        return dict((a, 0.0) for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_'))
+
+
+
+
+
+#-------------------------------------------------------------------------------
 class RatesTemplate(StatesRatesCommon):
     """Takes care of registering variables in the kiosk and monitoring
     assignments to variables that are published.
@@ -993,6 +1062,23 @@ class WeatherDataContainer(SlotPickleMixin):
              "LAT": "Degrees", "LON": "Degrees", "ELEV": "m", "SNOWDEPTH": "cm",
              "TEMP": "Celsius", "TMINRA": "Celsius", "WIND": "m/sec"}
 
+    # ranges for meteorological variables
+    ranges = {"LAT": (-90., 90.),
+              "LON": (-180., 180.),
+              "ELEV": (-300, 6000),
+              "IRRAD": (0., 40e6),
+              "TMIN": (-50., 50.),
+              "TMAX": (-50., 50.),
+              "VAP": (0.06, 123.4),  # hPa, computed as sat. vapour pressure at -50, 50 Celsius
+              "RAIN": (0, 25),
+              "E0": (0., 2.),
+              "ES0": (0., 2.),
+              "ET0": (0., 2.),
+              "WIND": (0., 100.),
+              "SNOWDEPTH": (0., 250.),
+              "TEMP": (-50., 50.),
+              "TMINRA": (-50., 50.)}
+
     def __init__(self, *args, **kwargs):
 
         # only keyword parameters should be used for weather data container
@@ -1041,6 +1127,15 @@ class WeatherDataContainer(SlotPickleMixin):
             msg = "WeatherDataContainer: unknown keywords '%s' are ignored!"
             logging.warning(msg, kwargs.keys())
 
+    def __setattr__(self, key, value):
+        # Override to allow range checking on known meteo variables.
+        if key in self.ranges:
+            vmin, vmax = self.ranges[key]
+            if not vmin <= value <= vmax:
+                msg = "Value for meteo variable '%s' outside allowed range (%s, %s)." % (key, vmin, vmax)
+                raise exc.PCSEError(msg)
+        SlotPickleMixin.__setattr__(self, key, value)
+
     def __str__(self):
         msg = "Weather data for %s (DAY)\n" % self.DAY
         for v in self.required:
@@ -1068,7 +1163,7 @@ class WeatherDataContainer(SlotPickleMixin):
         :param varname: Name of variable to be set as attribute name (string)
         :param value: value of variable (attribute) to be added.
         :param unit: string representation of the unit of the variable. Is
-            only use for print the contents of the WeatherDataContainer.
+            only use for printing the contents of the WeatherDataContainer.
         """
         if varname not in self.units:
             self.units[varname] = unit
@@ -1102,6 +1197,8 @@ class WeatherDataProvider(object):
     _last_date = None
     angstA = None
     angstB = None
+    # model used for reference ET
+    ETmodel = "PM"
 
     def __init__(self):
         self.store = {}
@@ -1117,7 +1214,7 @@ class WeatherDataProvider(object):
         Dumps the values of self.store, longitude, latitude, elevation and description
         """
         with open(cache_fname, "wb") as fp:
-            dmp = (self.store, self.elevation, self.longitude, self.latitude, self.description)
+            dmp = (self.store, self.elevation, self.longitude, self.latitude, self.description, self.ETmodel)
             cPickle.dump(dmp, fp, cPickle.HIGHEST_PROTOCOL)
 
     def _load(self, cache_fname):
@@ -1128,7 +1225,14 @@ class WeatherDataProvider(object):
         """
 
         with open(cache_fname, "rb") as fp:
-            (store, self.elevation, self.longitude, self.latitude, self.description) = cPickle.load(fp)
+            (store, self.elevation, self.longitude, self.latitude, self.description, ETModel) = cPickle.load(fp)
+
+        # Check if the reference ET from the cache file is calculated with the same model as
+        # specified by self.ETmodel
+        if ETModel != self.ETmodel:
+            msg = "Mismatch in reference ET from cache file."
+            raise exc.PCSEError(msg)
+
         self.store.update(store)
 
     @property
