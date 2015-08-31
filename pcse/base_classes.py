@@ -22,43 +22,43 @@ from .settings import settings
 
 class VariableKiosk(dict):
     """VariableKiosk for registering and publishing state variables in PCSE.
-    
+
     No parameters are needed for instantiating the VariableKiosk.
     All variables that are
     defined within PCSE will be registered within the VariableKiosk, while
     usually only a small subset of those will be published with the kiosk.
-    The value of the published 
+    The value of the published
     variables can be retrieved with the bracket notation as the variableKiosk
-    is essentially a (somewhat fancy) dictionary. 
-    
+    is essentially a (somewhat fancy) dictionary.
+
     Registering/deregistering rate and state variables goes through the
     `self.register_variable()` and `self.deregister_variable()` methods while the
     `set_variable()` method is used to update a value of a published variable.
     In general, none of these methods need to be called by users directly as
     the logic within the `StatesTemplate` and `RatesTemplate` takes care of
     this.
-    
+
     Finally, the `variable_exists()` can be used to check if a variable is
     registered, while the `flush_states()` and `flush_rates()` are used to
     remove (flush) the values of any published state and rate variables.
-    
+
     example::
 
         >>> import pcse
         >>> from pcse.base_classes import VariableKiosk
-        >>> 
+        >>>
         >>> v = VariableKiosk()
         >>> id0 = 0
         >>> v.register_variable(id0, "VAR1", type="S", publish=True)
         >>> v.register_variable(id0, "VAR2", type="S", publish=False)
-        >>> 
+        >>>
         >>> id1 = 1
         >>> v.register_variable(id1, "VAR3", type="R", publish=True)
         >>> v.register_variable(id1, "VAR4", type="R", publish=False)
-        >>> 
+        >>>
         >>> v.set_variable(id0, "VAR1", 1.35)
         >>> v.set_variable(id1, "VAR3", 310.56)
-        >>> 
+        >>>
         >>> print v
         Contents of VariableKiosk:
          * Registered state variables: 2
@@ -76,7 +76,7 @@ class VariableKiosk(dict):
           File "pcse/base_classes.py", line 148, in set_variable
             raise exc.VariableKioskError(msg % varname)
         pcse.exceptions.VariableKioskError: Unregistered object tried to set the value of variable 'VAR3': access denied.
-        >>> 
+        >>>
         >>> v.flush_rates()
         >>> print v
         Contents of VariableKiosk:
@@ -86,7 +86,7 @@ class VariableKiosk(dict):
          * Registered rate variables: 2
          * Published rate variables: 1 with values:
           - variable VAR3, value: undefined
-        
+
         >>> v.flush_states()
         >>> print v
         Contents of VariableKiosk:
@@ -97,18 +97,18 @@ class VariableKiosk(dict):
          * Published rate variables: 1 with values:
           - variable VAR3, value: undefined
     """
-    
+
     def __init__(self):
         dict.__init__(self)
         self.registered_states = {}
         self.registered_rates  = {}
         self.published_states = {}
         self.published_rates  = {}
-    
+
     def __setitem__(self, item, value):
         msg = "See set_variable() for setting a variable."
         raise RuntimeError(msg)
-    
+
     def __contains__(self, item):
         """Checks if item is in self.registered_states or self.registered_rates.
         """
@@ -133,13 +133,13 @@ class VariableKiosk(dict):
                 value = "undefined"
             msg += "  - variable %s, value: %s\n" % (varname, value)
         return msg
-        
+
     def register_variable(self, oid, varname, type, publish=False):
         """Register a varname from object with id, with given type
-        
+
         :param oid: Object id (from python builtin id() function) of the
             state/rate object registering this variable.
-        :param varname: Name of the variable to be registered, e.g. "DVS" 
+        :param varname: Name of the variable to be registered, e.g. "DVS"
         :param type: Either "R" (rate) or "S" (state) variable, is handled
             automatically by the states/rates template class.
         :param publish: True if variable should be published in the kiosk,
@@ -147,7 +147,7 @@ class VariableKiosk(dict):
         """
 
         self._check_duplicate_variable(varname)
-        if type.upper() == "R":           
+        if type.upper() == "R":
             self.registered_rates[varname] = oid
             if publish is True:
                 self.published_rates[varname] = oid
@@ -161,10 +161,10 @@ class VariableKiosk(dict):
 
     def deregister_variable(self, oid, varname):
         """Object with id(object) asks to deregister varname from kiosk
-        
+
         :param oid: Object id (from python builtin id() function) of the
             state/rate object registering this variable.
-        :param varname: Name of the variable to be registered, e.g. "DVS" 
+        :param varname: Name of the variable to be registered, e.g. "DVS"
         """
         if varname in self.registered_states:
             #print "Deregistering '%s'" % varname
@@ -201,16 +201,16 @@ class VariableKiosk(dict):
            varname in self.registered_states:
             msg = "Duplicate state/rate variable '%s' encountered!"
             raise exc.VariableKioskError(msg % varname)
-        
+
     def set_variable(self, id, varname, value):
         """Let object with id, set the value of variable varname
 
         :param id: Object id (from python builtin id() function) of the
             state/rate object registering this variable.
         :param varname: Name of the variable to be updated
-        :param value: Value to be assigned to the variable.       
+        :param value: Value to be assigned to the variable.
         """
-        
+
         if varname in self.published_rates:
             if self.published_rates[varname] == id:
                 dict.__setitem__(self, varname, value)
@@ -228,19 +228,19 @@ class VariableKiosk(dict):
         else:
             msg = "Variable '%s' not published in VariableKiosk."
             raise exc.VariableKioskError(msg % varname)
-    
+
     def variable_exists(self, varname):
         """ Returns True if the state/rate variable is registered in the kiosk.
 
         :param varname: Name of the variable to be checked for registration.
         """
-        
+
         if varname in self.registered_rates or \
            varname in self.registered_states:
             return True
         else:
             return False
-        
+
     def flush_rates(self):
         """flush the values of all published rate variable from the kiosk.
         """
@@ -256,22 +256,22 @@ class VariableKiosk(dict):
 
 class ParamTemplate(HasTraits):
     """Template for storing parameter values.
-    
+
     This is meant to be subclassed by the actual class where the parameters
     are defined.
-    
+
     example::
 
         >>> import pcse
         >>> from pcse.base_classes import ParamTemplate
         >>> from pcse.traitlets import Float
-        >>> 
-        >>> 
+        >>>
+        >>>
         >>> class Parameters(ParamTemplate):
         ...     A = Float()
         ...     B = Float()
         ...     C = Float()
-        ... 
+        ...
         >>> parvalues = {"A" :1., "B" :-99, "C":2.45}
         >>> params = Parameters(parvalues)
         >>> params.A
@@ -290,9 +290,9 @@ class ParamTemplate(HasTraits):
     """
 
     def __init__(self, parvalues):
-        
+
         HasTraits.__init__(self)
-        
+
         for parname in self.trait_names():
             # If the attribute of the class starts with "trait" than
             # this is a special attribute and not a WOFOST parameter
@@ -316,10 +316,10 @@ class ParamTemplate(HasTraits):
             else:
                 # Single value parameter
                 setattr(self, parname, value)
-                
+
     def __setattr__(self, attr, value):
         if attr.startswith("_"):
-            HasTraits.__setattr__(self, attr, value)            
+            HasTraits.__setattr__(self, attr, value)
         elif hasattr(self, attr):
             HasTraits.__setattr__(self, attr, value)
         else:
@@ -335,14 +335,14 @@ def check_publish(publish):
     if publish is None:
         publish = []
     elif isinstance(publish, str):
-        publish = [publish]      
+        publish = [publish]
     elif isinstance(publish, (list, tuple)):
         pass
     else:
         msg = "The publish keyword should specify a string or a list of strings"
         raise RuntimeError(msg)
     return set(publish)
-    
+
 #-------------------------------------------------------------------------------
 class StatesRatesCommon(HasTraits):
     _kiosk = Instance(VariableKiosk)
@@ -353,7 +353,7 @@ class StatesRatesCommon(HasTraits):
         """Set up the common stuff for the states and rates template
         including variables that have to be published in the kiosk
         """
-        
+
         HasTraits.__init__(self)
 
         # Make sure that the variable kiosk is provided
@@ -362,25 +362,25 @@ class StatesRatesCommon(HasTraits):
                    "or state variables.")
             raise RuntimeError(msg)
         self._kiosk = kiosk
-        
+
         # Check publish variable for correct usage
         publish = check_publish(publish)
-        
+
         # Determine the rate/state attributes defined by the user
         self._valid_vars = self._find_valid_variables()
-        
+
         # Register all variables with the kiosk and optionally publish them.
         self._register_with_kiosk(publish)
 
     def _find_valid_variables(self):
         """Returns a set with the valid state/rate variables names. Valid rate
-        variables have names not starting with 'trait' or '_'. 
+        variables have names not starting with 'trait' or '_'.
         """
-        
+
         valid = lambda s : not (s.startswith("_") or s.startswith("trait"))
         r = [name for name in self.trait_names() if valid(name)]
         return set(r)
-    
+
     def _register_with_kiosk(self, publish):
         """Register the variable with the variable kiosk.
 
@@ -389,9 +389,9 @@ class StatesRatesCommon(HasTraits):
             registered twice an error will be raised, this ensures
             uniqueness of rate/state variables across the entire model.
          2 If the  variable name is included in the list set by publish
-           keyword then set a trigger on that variable to update its value 
+           keyword then set a trigger on that variable to update its value
            in the kiosk.
-        
+
          Note that self._vartype determines if the variables is registered
          as a state variable (_vartype=="S") or rate variable (_vartype=="R")
         """
@@ -406,8 +406,8 @@ class StatesRatesCommon(HasTraits):
             else:
                 self._kiosk.register_variable(id(self), attr,
                                               type=self._vartype,
-                                              publish=False)                    
-        
+                                              publish=False)
+
         # Check if the set of published variables is exhausted, otherwise
         # raise an error.
         if len(publish) > 0:
@@ -439,7 +439,7 @@ class StatesRatesCommon(HasTraits):
         #print "Updating published variable '%s' from %s to %s" % \
         #      (trait_name, oldvalue, newvalue)
         self._kiosk.set_variable(id(self), trait_name, newvalue)
-    
+
     def unlock(self):
         "Unlocks the attributes of this class."
         self._locked = False
@@ -451,7 +451,7 @@ class StatesRatesCommon(HasTraits):
     def _delete(self):
         """Deregister the variables from the kiosk before garbage
         collecting.
-        
+
         This method is coded as _delete() and must by explicitly called
         because of precarious handling of __del__() in python.
         """
@@ -464,12 +464,12 @@ class StatesTemplate(StatesRatesCommon):
     """Takes care of assigning initial values to state variables, registering
     variables in the kiosk and monitoring assignments to variables that are
     published.
-        
+
     :param kiosk: Instance of the VariableKiosk class. All state variables
         will be registered in the kiosk in order to enfore that variable names
         are unique across the model. Moreover, the value of variables that
-        are published will be available through the VariableKiosk. 
-    :param publish: Lists the variables whose values need to be published 
+        are published will be available through the VariableKiosk.
+    :param publish: Lists the variables whose values need to be published
         in the VariableKiosk. Can be omitted if no variables need to be
         published.
 
@@ -482,13 +482,13 @@ class StatesTemplate(StatesRatesCommon):
         >>> from pcse.base_classes import VariableKiosk, StatesTemplate
         >>> from pcse.traitlets import Float, Integer, Instance
         >>> from datetime import date
-        >>> 
+        >>>
         >>> k = VariableKiosk()
         >>> class StateVariables(StatesTemplate):
         ...     StateA = Float()
         ...     StateB = Integer()
         ...     StateC = Instance(date)
-        ... 
+        ...
         >>> s1 = StateVariables(k, StateA=0., StateB=78, StateC=date(2003,7,3),
         ...                     publish="StateC")
         >>> print s1.StateA, s1.StateB, s1.StateC
@@ -500,8 +500,8 @@ class StatesTemplate(StatesRatesCommon):
           - variable StateC, value: 2003-07-03
          * Registered rate variables: 0
          * Published rate variables: 0 with values:
-        
-        >>> 
+
+        >>>
         >>> s2 = StateVariables(k, StateA=200., StateB=1240)
         Traceback (most recent call last):
           File "<stdin>", line 1, in <module>
@@ -510,15 +510,15 @@ class StatesTemplate(StatesRatesCommon):
         pcse.exceptions.PCSEError: Initial value for state StateC missing.
 
     """
-    
+
     _kiosk = Instance(VariableKiosk)
     _locked = Bool(False)
     _vartype = "S"
 
     def __init__(self, kiosk=None, publish=None, **kwargs):
-        
+
         StatesRatesCommon.__init__(self, kiosk, publish)
-        
+
         # set initial state value
         for attr in self._valid_vars:
             if attr in kwargs:
@@ -527,27 +527,27 @@ class StatesTemplate(StatesRatesCommon):
             else:
                 msg = "Initial value for state %s missing." % attr
                 raise exc.PCSEError(msg)
-        
+
         # Check if kwargs is empty, otherwise issue a warning
         if len(kwargs) > 0:
             msg = ("Initial value given for unknown state variable(s): "+
                    "%s") % kwargs.keys()
             logging.warn(msg)
-            
+
         # Lock the object to prevent further changes at this stage.
         self._locked = True
-        
-        
+
+
     def touch(self):
         """Re-assigns the value of each state variable, thereby updating its
         value in the variablekiosk if the variable is published."""
-        
+
         self.unlock()
         for name in self._valid_vars:
             value = getattr(self, name)
             setattr(self, name, value)
         self.lock()
-    
+
 
 #-------------------------------------------------------------------------------
 class StatesWithImplicitRatesTemplate(StatesTemplate):
@@ -556,16 +556,16 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
     prefixed by a lowercase character 'r'.
     After initialization no more attributes can be implicitly added.
     Call integrate() to integrate all states with their current rates; the rates are reset to 0.0.
-    
+
     States are all attributes descending from Float and not prefixed by an underscore.
     """
-        
+
     rates = {}
     __initialized = False
 
     def __setattr__(self, name, value):
         if self.rates.has_key(name):
-            # known attribute: set value:             
+            # known attribute: set value:
             self.rates[name] = value
         elif not self.__initialized:
             # new attribute: allow whe not yet initialized:
@@ -573,8 +573,8 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
         else:
             # new attribute: disallow according ancestorial ruls:
             super(StatesWithImplicitRatesTemplate, self).__setattr__(name, value)
-            
-            
+
+
     def __getattr__(self, name):
         if self.rates.has_key(name):
             return self.rates[name]
@@ -585,7 +585,7 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
     def initialize_rates(self):
         self.rates = {}
         self.__initialized = True
-        
+
         for s in self.__class__.listIntegratedStates():
             self.rates['r' + s] = 0.0
 
@@ -597,13 +597,13 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
             state = getattr(self, s)
             newvalue = state + delta * rate
             setattr(self, s, newvalue)
-          
-        # reset all rates  
+
+        # reset all rates
         for r in self.rates:
           self.rates[r] = 0.0
-          
-          
-            
+
+
+
     @classmethod
     def listIntegratedStates(cls):
         return sorted([a for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_')])
@@ -622,40 +622,40 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
 class RatesTemplate(StatesRatesCommon):
     """Takes care of registering variables in the kiosk and monitoring
     assignments to variables that are published.
-        
+
     :param kiosk: Instance of the VariableKiosk class. All rate variables
         will be registered in the kiosk in order to enfore that variable names
         are unique across the model. Moreover, the value of variables that
-        are published will be available through the VariableKiosk. 
-    :param publish: Lists the variables whose values need to be published 
+        are published will be available through the VariableKiosk.
+    :param publish: Lists the variables whose values need to be published
         in the VariableKiosk. Can be omitted if no variables need to be
         published.
-        
+
     For an example see the `StatesTemplate`. The only difference is that the
     initial value of rate variables does not need to be specified because
     the value will be set to zero (Int, Float variables) or False (Boolean
     variables).
     """
-    
-    _rate_vars_zero = Instance(dict)    
+
+    _rate_vars_zero = Instance(dict)
     _vartype = "R"
 
     def __init__(self, kiosk=None, publish=None):
         """Set up the RatesTemplate and set monitoring on variables that
         have to be published.
         """
-        
+
         StatesRatesCommon.__init__(self, kiosk, publish)
-        
+
         # Determine the zero value for all rate variable if possible
         self._rate_vars_zero = self._find_rate_zero_values()
-        
+
         # Initialize all rate variables to zero or False
         self.zerofy()
-        
+
         # Lock the object to prevent further changes at this stage.
         self._locked = True
-        
+
     def _find_rate_zero_values(self):
         """Returns a dict with the names with the valid rate variables names as keys and
         the values are the zero values used by the zerofy() method. This means 0 for Int,
@@ -664,7 +664,7 @@ class RatesTemplate(StatesRatesCommon):
 
         # Define the zero value for Float, Int and Bool
         zero_value = {Bool:False, Int:0, Float:0.}
-    
+
         d = {}
         for name, value in self.traits().iteritems():
             if name not in self._valid_vars:
@@ -677,7 +677,7 @@ class RatesTemplate(StatesRatesCommon):
                        "not be treated by zerofy().") % name
                 logging.warn(msg)
         return d
-    
+
     def zerofy(self):
         """Sets the values of all rate values to zero (Int, Float)
         or False (Boolean).
@@ -687,42 +687,42 @@ class RatesTemplate(StatesRatesCommon):
 #-------------------------------------------------------------------------------
 class DispatcherObject(object):
     """Class only defines the _send_signal() and _connect_signal() methods.
-    
+
     This class is only to be inherited from, not to be used directly.
     """
 
     def _send_signal(self, signal, *args, **kwargs):
         """Send <signal> using the dispatcher module.
-        
+
         The VariableKiosk of this SimulationObject is used as the sender of
-        the signal. Additional arguments to the _send_signal() method are 
+        the signal. Additional arguments to the _send_signal() method are
         passed to dispatcher.send()
         """
-        
+
         self.logger.debug("Sent signal: %s" % signal)
         dispatcher.send(signal=signal, sender=self.kiosk, *args, **kwargs)
-    
+
     def _connect_signal(self, handler, signal):
         """Connect the handler to the signal using the dispatcher module.
-        
+
         The handler will only react on signals that have the SimulationObjects
         VariableKiosk as sender. This ensure that different PCSE model instances
         in the same runtime environment will not react to each others signals.
         """
-        
+
         dispatcher.connect(handler, signal, sender=self.kiosk)
         self.logger.debug("Connected handler '%s' to signal '%s'." % (handler, signal))
 
 #-------------------------------------------------------------------------------
 class SimulationObject(HasTraits, DispatcherObject):
     """Base class for PCSE simulation objects.
-    
+
     :param day: start date of the simulation
     :param kiosk: variable kiosk of this PCSE instance
-    
+
     The day and kiosk are mandatory variables and must be passed when
-    instantiating a SimulationObject. 
-    
+    instantiating a SimulationObject.
+
     """
 
     # Placeholders for logger, params, states, rates and variable kiosk
@@ -731,14 +731,14 @@ class SimulationObject(HasTraits, DispatcherObject):
     rates  = Instance(RatesTemplate)
     params = Instance(ParamTemplate)
     kiosk  = Instance(VariableKiosk)
-    
+
     # Placeholder for a list of sub-SimulationObjects. This is to avoid
     # having to loop through all attributes when doing a variable look-up
     subSimObjects = Instance(list)
 
     # Placeholder for variables that are to be set during finalizing.
     _for_finalize = Dict()
-    
+
     def __init__(self, day, kiosk, *args, **kwargs):
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
@@ -788,9 +788,9 @@ class SimulationObject(HasTraits, DispatcherObject):
         # Finally, if the value assigned to an attribute is a SimulationObject
         #   or if the existing attribute value is a SimulationObject than
         #   rebuild the list of sub-SimulationObjects.
-        
+
         if attr.startswith("_") or type(value) is types.FunctionType:
-            HasTraits.__setattr__(self, attr, value)            
+            HasTraits.__setattr__(self, attr, value)
         elif hasattr(self, attr):
             rebuild = False
             if isinstance(value, SimulationObject) or \
@@ -806,9 +806,9 @@ class SimulationObject(HasTraits, DispatcherObject):
     #---------------------------------------------------------------------------
     def get_variable(self, varname):
         """ Return the value of the specified state or rate variable.
-        
+
         :param varname: Name of the variable.
-        
+
         Note that the `get_variable()` will searches for `varname` exactly
         as specified (case sensitive).
         """
@@ -889,12 +889,12 @@ class SimulationObject(HasTraits, DispatcherObject):
             while len(self.subSimObjects) > 0:
                 obj = self.subSimObjects.pop()
                 obj._delete()
-            
+
     #---------------------------------------------------------------------------
     def _find_SubSimObjects(self):
         """ Find SimulationObjects embedded within self.
         """
-        
+
         subSimObjects = []
         defined_traits = self.__dict__["_trait_values"]
         for attr in defined_traits.itervalues():
@@ -919,11 +919,11 @@ class SimulationObject(HasTraits, DispatcherObject):
         if self.subSimObjects is not None:
             for simobj in self.subSimObjects:
                 simobj.finalize(day)
-                
+
     #---------------------------------------------------------------------------
     def touch(self):
         """'Touch' all state variables of this and any sub-SimulationObjects.
-        
+
         The name comes from the UNIX `touch` command which does nothing on the
         contents of a file but only updates the file metadata (time, etc).
         Similarly, the `touch` method re-assigns the state of each state
@@ -931,7 +931,7 @@ class SimulationObject(HasTraits, DispatcherObject):
         This will guarantee that these state values remain available in the
         VariableKiosk.
         """
-        
+
         if self.states is not None:
             self.states.touch()
         # Walk over possible sub-simulation objects.
@@ -955,19 +955,19 @@ class SimulationObject(HasTraits, DispatcherObject):
 #-------------------------------------------------------------------------------
 class AncillaryObject(HasTraits, DispatcherObject):
     """Base class for PCSE ancillary objects.
-    
+
     Ancillary objects do not carry out simulation, but often are useful for
     wrapper objects. Still to have some aspects in common with SimulationObjects
     such as the existence of self.logger and self.kiosk, the locked
     behaviour requiring you to define the class attributes and the possibility
     to send/receive signals.
     """
-    
+
     # Placeholders for logger, variable kiosk and parameters
     logger = Instance(logging.Logger)
     kiosk  = Instance(VariableKiosk)
     params = Instance(ParamTemplate)
-    
+
     #---------------------------------------------------------------------------
     def __init__(self, kiosk, *args, **kwargs):
         loggername = "%s.%s" % (self.__class__.__module__,
@@ -987,7 +987,7 @@ class AncillaryObject(HasTraits, DispatcherObject):
     #---------------------------------------------------------------------------
     def __setattr__(self, attr, value):
         if attr.startswith("_"):
-            HasTraits.__setattr__(self, attr, value)            
+            HasTraits.__setattr__(self, attr, value)
         elif hasattr(self, attr):
             HasTraits.__setattr__(self, attr, value)
         else:
@@ -1067,9 +1067,9 @@ class WeatherDataContainer(SlotPickleMixin):
               "LON": (-180., 180.),
               "ELEV": (-300, 6000),
               "IRRAD": (0., 40e6),
-              "TMIN": (-50., 50.),
-              "TMAX": (-50., 50.),
-              "VAP": (0.06, 123.4),  # hPa, computed as sat. vapour pressure at -50, 50 Celsius
+              "TMIN": (-50., 60.),
+              "TMAX": (-50., 60.),
+              "VAP": (0.06, 199.3),  # hPa, computed as sat. vapour pressure at -50, 50 Celsius
               "RAIN": (0, 25),
               "E0": (0., 2.),
               "ES0": (0., 2.),
@@ -1156,10 +1156,10 @@ class WeatherDataContainer(SlotPickleMixin):
         msg += ("Longitude (LON): %8.2f degr.\n" % self.LON)
         msg += ("Elevation (ELEV): %6.1f m.\n" % self.ELEV)
         return msg
-                
+
     def add_variable(self, varname, value, unit):
         """Adds an attribute <varname> with <value> and given <unit>
-        
+
         :param varname: Name of variable to be set as attribute name (string)
         :param value: value of variable (attribute) to be added.
         :param unit: string representation of the unit of the variable. Is
@@ -1172,15 +1172,15 @@ class WeatherDataContainer(SlotPickleMixin):
 #-------------------------------------------------------------------------------
 class WeatherDataProvider(object):
     """Base class for all weather data providers.
-    
+
     Support for weather ensembles in a WeatherDataProvider has to be indicated
     by setting the class variable `supports_ensembles = True`
-    
+
     Example::
-    
+
         class MyWeatherDataProviderWithEnsembles(WeatherDataProvider):
             supports_ensembles = True
-            
+
             def __init__(self):
                 WeatherDataProvider.__init__(self)
 
@@ -1258,14 +1258,14 @@ class WeatherDataProvider(object):
 
     def check_keydate(self, key):
         """Check representations of date for storage/retrieval of weather data.
-        
+
         The following formats are supported:
-        
+
         1. a date object
-        2. a datetime object 
+        2. a datetime object
         3. a string of the format YYYYMMDD
         4. a string of the format YYYYDDD
-        
+
         Formats 2-4 are all converted into a date object internally.
         """
 
@@ -1291,11 +1291,11 @@ class WeatherDataProvider(object):
         else:
             msg = "Key for WeatherDataProvider not recognized as date: %s"
             raise KeyError(msg % key)
-    
+
     def _store_WeatherDataContainer(self, wdc, keydate, member_id=0):
         """Stores the WDC under given keydate and member_id.
         """
-        
+
         if member_id != 0 and self.supports_ensembles is False:
             msg = "Storing ensemble weather is not supported."
             raise exc.WeatherDataProviderError(msg)
@@ -1306,15 +1306,15 @@ class WeatherDataProvider(object):
             raise exc.WeatherDataProviderError(msg)
 
         self.store[(kd, member_id)] = wdc
-    
+
     def __call__(self, day, member_id=0):
-        
+
         if self.supports_ensembles is False and member_id != 0:
             msg = "Retrieving ensemble weather is not supported by %s" % self.__class__.__name__
             raise exc.WeatherDataProviderError(msg)
 
         keydate = self.check_keydate(day)
-        
+
         if self.supports_ensembles is False:
             msg = "Retrieving weather data for day %s" % keydate
             self.logger.debug(msg)
