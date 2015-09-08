@@ -19,11 +19,14 @@ kJ_to_J = lambda x, s: x*1000.
 kPa_to_hPa = lambda x, s: x*10.
 mm_to_cm = lambda x, s: x/10.
 
+
 class NoDataError(PCSEError):
     pass
 
+
 class OutOfRange(PCSEError):
     pass
+
 
 def xlsdate_to_date(value, sheet):
     """Convert an excel date into a python date
@@ -35,15 +38,15 @@ def xlsdate_to_date(value, sheet):
     year, month, day, hr, min, sec = xlrd.xldate_as_tuple(value, sheet.book.datemode)
     return dt.date(year, month, day)
 
+
 class ExcelWeatherDataProvider(WeatherDataProvider):
     """Reading weather data from an excel file.
 
     :param xls_fname: name of the Excel file to be read
-    :param mising_snow_depth: the value that should use for missing SNOW_DEPTH
-    values
+    :param mising_snow_depth: the value that should use for missing SNOW_DEPTH values
 
-    For reading weather data from file, initially on the CABOWeatherDataProvider
-    was available that read its data from text in the CABOWeater format.
+    For reading weather data from file, initially only the CABOWeatherDataProvider
+    was available that reads its data from a text file in the CABO Weather format.
     Nevertheless, building CABO weather files is tedious as for each year a new
     file must constructed. Moreover it is rather error prone and formatting
     mistakes are easily leading to errors.

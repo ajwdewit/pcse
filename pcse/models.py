@@ -3,7 +3,7 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 import sqlalchemy as sa
 
-from .base_classes import ParameterProvider
+# from .base_classes import ParameterProvider
 from .engine import Engine
 from .traitlets import Int, Enum, Unicode
 from .util import merge_dict
@@ -168,3 +168,25 @@ class Wofost71_WLP_FD(_Wofost71Base):
     """
     simulation_mode = "wlp"
     config = "Wofost71_WLP_FD.conf"
+
+
+class LINTUL3(Engine):
+    """The LINTUL model (Light INTerception and UtiLisation) is a simple general crop model,
+    which simulates dry matter production as the result of light interception and utilization
+    with a constant light use efficiency.
+
+    LINTUL3 simulates crop growth under water-limited and nitrogen-limited conditions
+
+    :param parameterprovider: A `ParameterProvider` object providing model
+        parameters as key/value pairs. The parameterprovider encapsulates
+        the different parameter sets for crop, soil and site parameters.
+    :param weatherdataprovider: An instance of a WeatherDataProvider that can
+        return weather data in a WeatherDataContainer for a given date.
+    :param agromanagement: AgroManagement data. The data format is described
+        in the section on agronomic management.
+    """
+    config = "Lintul3.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)

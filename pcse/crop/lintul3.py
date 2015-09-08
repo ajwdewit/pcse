@@ -201,6 +201,7 @@ class Lintul3(SimulationObject):
          PEVAP       Potential soil evaporation rate                   Y     |mmday-1|
          PTRAN       Potential crop transpiration rate                 Y     |mmday-1|
          TRAN        Actual crop transpiration rate                    N     |mmday-1|
+         TRANRF      Transpiration reduction factor calculated         N     -
          RROOTD      Rate of root growth                               Y     |mday-1|
         =========== ================================================= ==== ===============
         """
@@ -303,7 +304,9 @@ class Lintul3(SimulationObject):
         PEVAP = Float()
         PTRAN = Float()
         TRAN = Float()
+        TRANRF = Float()
         RROOTD = Float()
+
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -380,11 +383,10 @@ class Lintul3(SimulationObject):
         r.PEVAP, r.PTRAN = self._calc_potential_evapotranspiration(drv)
 
         # Water content in the rootzone
-        WA = self.kiosk["WA"]
-        WC = WA / m2mm(s.ROOTD)
+        WC = self.kiosk["WC"]
 
-        # actual rates of evaporation and transpiration:
-        r.TRAN = self._calc_actual_transpiration(r.PTRAN, WA)
+        # actual rate of transpiration:
+        r.TRAN = self._calc_actual_transpiration(r.PTRAN, WC)
 
         """
         Crop phenology
@@ -517,19 +519,19 @@ class Lintul3(SimulationObject):
             SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
             
             # Growth reduction function for water stress(actual trans/potential)
-            TRANRF = r.TRAN / r.PTRAN
+            r.TRANRF = r.TRAN / r.PTRAN
             
             # relative modification for root and shoot allocation.
-            FRT, FLV, FST, FSO = self.dryMatterPartitioningFractions(p.NPART, TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT)
+            FRT, FLV, FST, FSO = self.dryMatterPartitioningFractions(p.NPART, r.TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT)
             
             # total totalGrowthRate rate.
-            RGROWTH = self.totalGrowthRate(DTR, TRANRF, NNI)
+            RGROWTH = self.totalGrowthRate(DTR, r.TRANRF, NNI)
     
             # Leaf totalGrowthRate and LAI.
             GLV    = FLV * RGROWTH
             
             # daily increase of leaf area index.
-            GLAI = self._growth_leaf_area(DTEFF, self.LAII, DELT, SLA, GLV, WC, DVS, TRANRF, NNI)
+            GLAI = self._growth_leaf_area(DTEFF, self.LAII, DELT, SLA, GLV, WC, DVS, r.TRANRF, NNI)
             
             # relative deathOfLeaves rate of leaves.
             DLV, DLAI = self.deathRateOfLeaves(TSUM, RDRTMP, NNI, SLA)
@@ -547,16 +549,14 @@ class Lintul3(SimulationObject):
             Roots elongate at a constant daily rate, until flowering, provided soil water 
             content is above permanent wilting point (PWP), whereas growth ceases when soil 
             is drier than PWP or when a certain preset maximum rooting depth is reached 
-            (Spitters and Schapendonk, 1990; Farr� et al., 2000). However, in rice in a 
-            flooded situation, soil will always be at saturation and, therefore, the maximum 
-            rooting depth corresponds to the physiological maximum, which is taken as 0.7m 
+            (Spitters and Schapendonk, 1990; Farr� et al., 2000).
             """
             r.RROOTD = min(p.RRDMAX,  p.ROOTDM - s.ROOTD) if (WC > p.WCWP) else 0.0
             
             # N loss due to deathOfLeaves of leaves and roots.
-            DRRT    = 0. if (DVS < p.DVSDR) else s.WRT * p.RDRRT        
-            RNLDLV  = p.RNFLV* DLV
-            RNLDRT  = p.RNFRT* DRRT
+            DRRT = 0. if (DVS < p.DVSDR) else s.WRT * p.RDRRT
+            RNLDLV = p.RNFLV * DLV
+            RNLDRT = p.RNFRT * DRRT
             
             # relative totalGrowthRate rate of roots, leaves, stem
             # and storage organs.
@@ -578,7 +578,7 @@ class Lintul3(SimulationObject):
             
             where Nmax,i is the maximum nitrogen concentration of organ i (gN/g biomass, 
             with i referring to leaves, stems and roots), Wi is the weight of organ i 
-            (g biomass/m2), andANi is the actual nitrogen content of organ i (gN/m2). 
+            (g biomass/m2), and ANi is the actual nitrogen content of organ i (gN/m2).
             """
     
             # N demand of leaves, roots and stem storage organs.
@@ -719,7 +719,7 @@ class Lintul3(SimulationObject):
         ptran = max(0., ptran)
         return pevap, ptran
 
-    def _calc_actual_transpiration(self, PTRAN, WA):
+    def _calc_actual_transpiration(self, PTRAN, WC):
         """
         compute actual rates of evaporation and transpiration.
         Obsolete subroutine name: EVAPTR                  
@@ -727,7 +727,6 @@ class Lintul3(SimulationObject):
         p = self.params
                 
         # critical water content    
-        WC   = 0.001 * WA / self.states.ROOTD
         WCCR = p.WCWP + max( 0.01, PTRAN/(PTRAN + p.TRANCO) * (p.WCFC - p.WCWP))
           
         #  If the soil is flooded for rice, : the soil is assumed to be

@@ -13,10 +13,12 @@ towards crop models developed in Wageningen (Netherlands). PCSE provides the
 environment to implement crop simulation models, it provides tools for reading ancillary
 data (weather, soil, agromanagement) and it provides components for simulating biophysical
 processes such as phenology, respiration and evapotranspiration. Moreover, PCSE
-includes an implementation of the
-`WOFOST <http://www.wageningenur.nl/wofost>`_ model which has been widely used around
-the World and has been implemented in operational systems for crop monitoring
-and yield prediction.
+includes implementations of the
+`WOFOST <http://www.wageningenur.nl/wofost>`_ and `LINTUL <http://models.pps.wur.nl/models?page=1>`_
+crop simulation models
+which have been widely used around the World. For example, WOFOST has been implemented in
+MARS crop yield forecasting system which is used operationally for crop monitoring and
+yield prediction in Europe and beyond.
 
 Originally, models developed in Wageningen were often written using FORTRAN or the
 FORTRAN Simulation Environment (FSE) which
@@ -30,14 +32,14 @@ which is quickly becoming an important language for scientific purposes.
 Traditionally, crop simulation models in Wageningen have been provided including the
 full source code. PCSE is no exception and its source code is open and licensed under the
 European Union Public License. PCSE runs on python 2.7+ and 3.2+ and has a decent
-test coverage of the implementation of the biophysical processes. Finally, the core system
-has no dependencies outside the standard library although SQLAlchemy and NumPy are
-required for some components.
+test coverage of the implementation of the biophysical processes.
 
 What's new
 ----------
 .. toctree::
    :maxdepth: 1
+
+   whatsnew.rst
 
 User guide
 ----------
@@ -47,6 +49,7 @@ User guide
    pcse_intro.rst
    installing.rst
    quickstart.rst
+   available_models.rst
 
 
 Design and Code docs

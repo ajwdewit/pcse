@@ -57,6 +57,14 @@ Engine and models
 Agromanagement
 ==============
 
+.. note::
+   Currently two modules are available, the new `AgroManager` and the old `AgroManagementSingleCrop`.
+   The old `AgroManagementSingleCrop` is still here for backward compatibility but will be removed
+   in future versions of PCSE.
+
+.. automodule:: pcse.agromanager
+    :members:
+
 .. automodule:: pcse.agromanagement
     :members:
 
@@ -227,6 +235,9 @@ files in PCSE format.
 .. _PCSEFileReader:
 .. autoclass:: pcse.fileinput.PCSEFileReader
     :members:
+
+.. _ExcelWeatherDataProvider:
+.. autoclass:: pcse.fileinput.ExcelWeatherDataProvider
 
 The database tools
 ------------------

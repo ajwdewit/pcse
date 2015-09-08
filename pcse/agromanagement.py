@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Classes that simulate AgroManagement actions in PCSE.
-
-Agromanagement actions are those actions that are originating from
-human actors rather than biophysical principles. Examples are sowing
-and harvesting, etc.
-"""
-
 import datetime
 
 from .base_classes import AncillaryObject, ParamTemplate
@@ -103,7 +96,9 @@ class AgroManagementSingleCrop(AncillaryObject):
                 raise exc.PCSEError(msg)
             self.duration = 0
             self.in_crop_cycle = True
-            self._send_signal(signal=signals.crop_start, day=day)
+            self._send_signal(signal=signals.crop_start, day=day,
+                              crop_start_type=self.params.CROP_START_TYPE,
+                              crop_end_type=self.params.CROP_END_TYPE)
 
         # Check if CROP_END_DATE is reached for CROP_END_TYPE harvest/earliest
         finish_type = None

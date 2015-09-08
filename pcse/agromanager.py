@@ -5,6 +5,7 @@
 """Implementation of AgroManager and related classes for agromanagement actions in PCSE.
 
 Available classes:
+
   * CropCalendar: A class for handling cropping calendars
   * TimedEventDispatcher: A class for handling timed events (e.g. events connected to a date)
   * StateEventDispatcher: A class for handling state events (e.g. events that happen when a state variable reaches
@@ -194,7 +195,7 @@ class TimedEventsDispatcher(HasTraits, DispatcherObject):
     and providing the relevant parameters with the signal. TimedEvents can be
     most easily understood when looking at the definition in the agromanagement
     file. The following section (in YAML) provides the definition of two instances
-    of TimedEventsDispatchers:
+    of TimedEventsDispatchers::
 
         TimedEvents:
         -   event_signal: irrigate
@@ -314,7 +315,7 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
     and providing the relevant parameters with the signal. StateEvents can be
     most easily understood when looking at the definition in the agromanagement
     file. The following section (in YAML) provides the definition of two instances
-    of StateEventsDispatchers:
+    of StateEventsDispatchers::
 
         StateEvents:
         -   event_signal: apply_npk
@@ -345,6 +346,7 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
     This means that a state event is triggered when (`model_state` - `event_state`) equals or
     crosses zero. The `zero_condition` defines how this crossing should take place. The value of `zero_condition`
     can be:
+
     * `rising`: the event is triggered when (`model_state` - `event_state`) goes from a negative value towards
        zero or a positive value.
     * `falling`: the event is triggered when (`model_state` - `event_state`) goes from a positive value towards
@@ -527,8 +529,9 @@ class AgroManager(AncillaryObject):
     The second campaign has no crop calendar, timed events or state events. This means that this is a period of
     bare soil with only the water balance running. The third campaign is for fodder maize sown at 2001-04-15
     with two series of timed events (one for irrigation and one for N/P/K application) and no state events.
-
     The end date of the simulation in this case will be 2001-11-01 (2001-04-15 + 200 days).
+
+    An example of an agromanagement definition file::
 
         AgroManagement:
         - 1999-08-01:

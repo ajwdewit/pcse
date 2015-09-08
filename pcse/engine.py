@@ -105,7 +105,7 @@ class Engine(BaseEngine):
         """
         :param parameterprovider: A `ParameterProvider` object providing model
             parameters as key/value pairs. The parameterprovider encapsulates
-            the different parameter files crop, soil and site parameters.
+            the different parameter sets for crop, soil and site parameters.
         :param weatherdataprovider: An instance of a WeatherDataProvider that can
             return weather data in a WeatherDataContainer for a given date.
         :param agromanagement: AgroManagement data. The data format is described
@@ -226,7 +226,8 @@ class Engine(BaseEngine):
             self.calc_rates(self.day, self.drv)
         
         if self.flag_terminate is True:
-            self.soil.finalize(self.day)
+            if self.soil is not None:
+                self.soil.finalize(self.day)
 
     #---------------------------------------------------------------------------
     def run_till_terminate(self):
@@ -285,9 +286,8 @@ class Engine(BaseEngine):
                    "crop_delete=True")
             raise exc.PCSEError(msg)
 
-        if isinstance(self.parameterprovider, MultiCropParameterProvider):
-            self.parameterprovider.set_crop_type(crop_id, crop_start_type,
-                                                 crop_end_type)
+        self.parameterprovider.set_crop_type(crop_id, crop_start_type,
+                                             crop_end_type)
         self.crop = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
     #---------------------------------------------------------------------------
     def _on_TERMINATE(self):

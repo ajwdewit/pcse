@@ -5,22 +5,22 @@ Installing PCSE
 Requirements and dependencies
 =============================
 
-PCSE is being developed on Ubuntu Linux 12.04 using python 2.7 and is known to work with
+PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using python 2.7.9 and is known to work with
 the 3.x series (using the 2to3 tool). As python is a platform independent language, PCSE
-works equally well on Windows or Mac OSX.  The most straightforward approach for installing
+works equally well on Linux, Windows or Mac OSX.
+Before installing PCSE, python itself must be installed on your system. Most Linux systems provide
+python through the native package manager. For Windows/OSX users the most straightforward approach for installing
 python is through one of the prepackaged python distributions such as `Enthought Canopy`_,
-`Anaconda`_ or `PythonXY`_. The following screen dump shows the version of python, numpy and
-SQLAlchemy that were used to develop PCSE::
+`Anaconda`_ or `PythonXY`_. The advantage of the prepackaged distributions is that they provide a working
+version of Numpy out-of-the-box which can be difficult to install on Windows/OSX.
+The dependencies of PCSE are the following:
 
-    Python 2.7.6 (default, Dec 16 2013, 12:39:22)
-    [GCC 4.4.3] on linux2
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>> import numpy as np
-    >>> np.__version__
-    '1.8.0'
-    >>> import sqlalchemy as sa
-    >>> sa.__version__
-    '0.8.4'
+* Numpy >= 1.6
+* SQLalchemy >= 0.8
+* PyYAML >= 3.11
+* tabulate >= 0.7.5
+* xlrd >= 0.9.3
+* xlwt >= 1.0.0
 
 .. _Enthought Canopy: https://www.enthought.com/products/canopy/
 .. _Anaconda: https://store.continuum.io/cshop/anaconda/
@@ -31,21 +31,21 @@ How to install
 
 PCSE can be installed in different ways and the best way to install it depends on your
 requirements. The most convenient option to install PCSE is through the Python Package
-Index (PYPI). Installing from PYPI is mostly useful if you are interested in using the functionality
+Index (PyPI). Installing from PyPI is mostly useful if you are interested in using the functionality
 provided by PCSE in your own scripts, but are not interested in modifying or contributing to
 PCSE itself. Installing from PyPI is done using the package installer `pip`, but this
 will only work when you have write access on the python site-packages
 folder. If you do not have this permission you should install PCSE into a
 `virtual environment`_.::
 
-    allard$ pip install PCSE
+    $ pip install PCSE
     Downloading/unpacking PCSE
       Running setup.py install for PCSE
       ...
       ...
     Successfully installed PCSE
     Cleaning up...
-    allard$
+    $
 
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 
@@ -88,11 +88,10 @@ For importing PCSE we first need to add the location of PCSE ('D:\\USERDATA\\pyl
 to the search path of python::
 
     C:\>python
-    Enthought Python Distribution -- www.enthought.com
-    Version: 7.0-2 (32-bit)
-
-    Python 2.7.1 |EPD 7.0-2 (32-bit)| (r271:86832, Dec  2 2010, 10:35:02) [MSC v.1500 32 bit (Intel)] on win32
+    Python 2.7.9 |Continuum Analytics, Inc.| (default, Dec 18 2014, 17:00:07) [MSC v.1500 32 bit (Intel)] on win32
     Type "help", "copyright", "credits" or "license" for more information.
+    Anaconda is brought to you by Continuum Analytics.
+    Please check out: http://continuum.io/thanks and https://binstar.org    Enthought Python Distribution -- www.enthought.com
     >>> import sys
     >>> sys.path.append(r"D:\USERDATA\pylib")
 
@@ -113,21 +112,31 @@ the `test()` function at the top of the package::
     runTest (pcse.tests.test_penmanmonteith.Test_PenmanMonteith2) ... ok
     runTest (pcse.tests.test_penmanmonteith.Test_PenmanMonteith3) ... ok
     runTest (pcse.tests.test_penmanmonteith.Test_PenmanMonteith4) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialSpringBarley) ... ok
+    runTest (pcse.tests.test_agromanager.TestAgroManager1) ... ok
+    runTest (pcse.tests.test_agromanager.TestAgroManager2) ... ok
+    runTest (pcse.tests.test_agromanager.TestAgroManager3) ... ok
+    runTest (pcse.tests.test_agromanager.TestAgroManager4) ... ok
+    runTest (pcse.tests.test_agromanager.TestAgroManager5) ... ok
+    runTest (pcse.tests.test_agromanager.TestAgroManager6) ... ok
+    runTest (pcse.tests.test_agromanager.TestAgroManager7) ... ok
+    runTest (pcse.tests.test_agromanager.TestAgroManager8) ... ok
     runTest (pcse.tests.test_wofost.TestPotentialSunflower) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterWheat) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedPotato) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
     runTest (pcse.tests.test_wofost.TestWaterlimitedWinterWheat) ... ok
     runTest (pcse.tests.test_wofost.TestWaterlimitedSunflower) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialWinterWheat) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedSpringBarley) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterRapeseed) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialWinterRapeseed) ... ok
+    runTest (pcse.tests.test_wofost.TestWaterlimitedPotato) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialSpringBarley) ... ok
+    runTest (pcse.tests.test_wofost.TestPotentialGrainMaize) ... ok
+    runTest (pcse.tests.test_lintul3.TestLINTUL3_SpringWheat) ... ok
+    runTest (pcse.tests.test_wofost_npk.TestWOFOSTNPK_WinterWheat) ... ok
 
     ----------------------------------------------------------------------
-    Ran 23 tests in 31.812s
+    Ran 33 tests in 57.472s
 
     OK
 

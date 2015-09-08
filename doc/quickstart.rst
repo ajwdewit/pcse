@@ -63,6 +63,14 @@ Which should look like this :download:`myresults.txt`
 2: Running PCSE/WOFOST with custom input data
 =============================================
 
+.. note::
+    The inputs for PCSE models have been restructured and consist of three
+    parts: 1) model parameters (soil, crop and site parameters), 2) driving variables
+    and 3) agromanagement actions (what used  be called 'timerdata').
+    The description here for running PCSE/WOFOST uses the old method for backward
+    compatibility. However, this will change in future versions of PCSE.
+    See also the section on running :ref:`PCSE/LINTUL3 <RunningLINTUL3>`.
+
 For setting up PCSE/WOFOST with your
 own data sources you should understand that WOFOST uses 5 different types of
 inputs: `cropdata`, `soildata`, `timerdata`, `sitedata` and `driving variables`
@@ -194,7 +202,7 @@ define these parameters directly on the python commandline::
 Driving variables (weather data)
 --------------------------------
 
-Daily weather variables are needed for running the simulation. Currently, three
+Daily weather variables are needed for running the simulation. Currently, four
 options are available in PCSE for retrieving weather data:
 
     1. The database structure as provided by the Crop Growth Monitoring
@@ -202,7 +210,9 @@ options are available in PCSE for retrieving weather data:
        is implemented using :ref:`GridWeatherDataProvider <GridWeatherDataProvider>`.
     2. The file structure as defined by the `CABO Weather System`_ which is
        implemented using :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`.
-    3. The global weather data provided by the agroclimatology from the
+    3. The file structure used by the `CABO Weather System`_ but implemented as an
+       Excel sheet by :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>`
+    4. The global weather data provided by the agroclimatology from the
        `NASA Power database`_ at a resolution of 1x1 degree. PCSE
        provides the :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
        the NASA Power data from the internet for a given latitude and
@@ -297,6 +307,143 @@ index (LAI) and root-zone soil moisture (SM) using the `MatPlotLib`_ plotting pa
 This should provide generate a figure of the simulation results as shown below. The complete python
 script for this examples can be downloaded here :download:`quickstart_demo2.py`
 
-
 .. image:: sugarbeet.png
 
+
+.. _RunningLINTUL3:
+
+3. Running a simulation with PCSE/LINTUL3
+=========================================
+
+The LINTUL model (Light INTerception and UtiLisation) is a simple generic crop model, which simulates dry
+matter production as the result of light interception and utilization with a constant light use efficiency.
+In PCSE the LINTUL family of models has been implemented including the LINTUL3 model which is used for
+simulation of crop production under water-limited and nitrogen-limited conditions.
+
+For the third example, we will use LINTUL3 for simulating spring-wheat in the Netherlands under water-limited
+and nitrogen-limited conditions. We will again assume that data files are in the directory
+`D:\\userdata\\pcse_examples` and all the parameter files needed can be
+found by unpacking this zip file :download:`quickstart_part3.zip`.
+
+First we will import the necessary modules and define the data directory. We also assume that you have the
+`matplotlib`_, `pandas`_ and `PyYAML`_ packages installed on your system.::
+
+    >>> import os
+    >>> import pcse
+    >>> import matplotlib.pyplot as plt
+    >>> import pandas as pd
+    >>> import yaml
+    >>> data_dir = r'D:\userdata\pcse_examples'
+
+.. _pandas: http://pandas.pydata.org
+.. _PyYAML: http://pyyaml.org/wiki/PyYAML
+
+For running the PCSE/LINTUL3 (and PCSE models in general), you need three types of inputs:
+
+1. Model parameters that parameterize the different model components. These parameters usually
+   consist of a set of crop parameters (or multiple sets in case of crop rotations), a set of soil parameters
+   and a set of site parameters. The latter provide ancillary parameters that are specific for a location.
+2. Driving variables represented by weather data which can be derived from various sources.
+3. Agromanagement actions which specify the farm activities that will take place on the field that is simulated
+   by PCSE. For defining the agromanagement we will use the new `AgroManager` which replaces the `timerdata`
+   definition that was used previously.
+
+Reading model parameters
+------------------------
+Model parameters can be easily read from the input files using the `PCSEFileReader` as we have seen
+in the previous example::
+
+    >>> from pcse.fileinput import PCSEFileReader
+    >>> crop = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.crop"))
+    >>> soil = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.soil"))
+    >>> site = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.site"))
+
+However, PCSE models expect a single set of parameters and therefore they need to be combined using the
+`ParameterProvider`::
+
+    >>> from pcse.base_classes import ParameterProvider
+    >>> parameters = ParameterProvider(soildata=soil, cropdata=crop, sitedata=site)
+
+Reading weather data
+--------------------
+For reading weather data we will use the ExcelWeatherDataProvider. This WeatherDataProvider uses nearly the same
+file format as is used for the CABO weather files but stores its data in an MicroSoft Excel file which makes the
+weather files easier to create and update::
+
+    >>> from pcse.fileinput import ExcelWeatherDataProvider
+    >>> weather = ExcelWeatherDataProvider(os.path.join(data_dir, "nl1.xlsx"))
+
+Defining agromanagement
+-----------------------
+Defining agromanagement needs a bit more explanation because agromanagement is a relatively
+complex piece of PCSE. The agromanagement definition for PCSE is written in a format called `YAML`_ and
+for the current example looks like this:
+
+.. code:: yaml
+
+    Version: 1.0
+    AgroManagement:
+    - 2006-01-01:
+        CropCalendar:
+            crop_id: spring-wheat
+            crop_start_date: 2006-03-31
+            crop_start_type: emergence
+            crop_end_date: 2006-08-20
+            crop_end_type: earliest
+            max_duration: 300
+        TimedEvents:
+        -   event_signal: apply_n
+            name:  Nitrogen application table
+            comment: All nitrogen amounts in g N m-2
+            events_table:
+            - 2006-04-10: {amount: 10, recovery: 0.7}
+            - 2006-05-05: {amount:  5, recovery: 0.7}
+        StateEvents: null
+
+.. _YAML: http://yaml.org/
+
+The agromanagement definition starts with `Version:` indicating the version number of the agromanagement file
+while the actual definition starts after the label `AgroManagement:`. Next a date must be provide which sets the
+start date of the campaign (and the start date of the simulation). Each campaign is defined by zero or one
+CropCalendars and zero or more TimedEvents and/or StateEvents. The CropCalendar defines the crop type, date of sowing,
+date of harvesting, etc. while the Timed/StateEvents define actions that are either connected to a date or
+to a model state.
+
+In the current example, the campaign starts on 2006-01-01, there is a crop calendar for spring-wheat starting on
+2006-03-31 with a harvest date of 2006-08-20 or earlier if the crop reaches maturity before this date.
+Next there are timed events defined for applying N fertilizer at 2006-04-10 and 2006-05-05. The current example
+has no state events. For a thorough description of all possibilities see the section on AgroManagement in the
+Reference Guide.
+
+Loading the agromanagement definition must by done with the YAMLAgroManagementReader::
+
+    >>> from pcse.fileinput import YAMLAgroManagementReader
+    >>> agromanagement = YAMLAgroManagementReader(os.path.join(data_dir, "lintul3_springwheat.amgt"))
+    >>> print(agromanagement)
+    !!python/object/new:pcse.fileinput.yaml_agmt_loader.YAMLAgroManagementReader
+    listitems:
+    - 2006-01-01:
+        CropCalendar:
+          crop_end_date: 2006-10-20
+          crop_end_type: earliest
+          crop_id: spring-wheat
+          crop_start_date: 2006-03-31
+          crop_start_type: emergence
+          max_duration: 300
+        StateEvents: null
+        TimedEvents:
+        - comment: All nitrogen amounts in g N m-2
+          event_signal: apply_n
+          events_table:
+          - 2006-04-10:
+              amount: 10
+              recovery: 0.7
+          - 2006-05-05:
+              amount: 5
+              recovery: 0.7
+          name: Nitrogen application table
+
+
+Starting and running the LINTUL3 model
+--------------------------------------
+We have now all parameters, weather data and agromanagement information available to start the LINTUL3 model.

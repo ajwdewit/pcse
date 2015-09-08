@@ -1067,17 +1067,17 @@ class WeatherDataContainer(SlotPickleMixin):
               "LON": (-180., 180.),
               "ELEV": (-300, 6000),
               "IRRAD": (0., 40e6),
-              "TMIN": (-50., 50.),
-              "TMAX": (-50., 50.),
-              "VAP": (0.06, 123.4),  # hPa, computed as sat. vapour pressure at -50, 50 Celsius
+              "TMIN": (-50., 60.),
+              "TMAX": (-50., 60.),
+              "VAP": (0.06, 199.3),  # hPa, computed as sat. vapour pressure at -50, 60 Celsius
               "RAIN": (0, 25),
               "E0": (0., 2.),
               "ES0": (0., 2.),
               "ET0": (0., 2.),
               "WIND": (0., 100.),
               "SNOWDEPTH": (0., 250.),
-              "TEMP": (-50., 50.),
-              "TMINRA": (-50., 50.)}
+              "TEMP": (-50., 60.),
+              "TMINRA": (-50., 60.)}
 
     def __init__(self, *args, **kwargs):
 
@@ -1132,7 +1132,7 @@ class WeatherDataContainer(SlotPickleMixin):
         if key in self.ranges:
             vmin, vmax = self.ranges[key]
             if not vmin <= value <= vmax:
-                msg = "Value for meteo variable '%s' outside allowed range (%s, %s)." % (key, vmin, vmax)
+                msg = "Value (%s) for meteo variable '%s' outside allowed range (%s, %s)." % (value, key, vmin, vmax)
                 raise exc.PCSEError(msg)
         SlotPickleMixin.__setattr__(self, key, value)
 
@@ -1475,12 +1475,26 @@ class ParameterProvider(HasTraits):
     _cropdata = dict()
     _timerdata = dict()
 
-    def __init__(self, sitedata, timerdata, soildata, cropdata):
+    def __init__(self, sitedata={}, timerdata={}, soildata={}, cropdata={}):
         self._sitedata = sitedata
         self._timerdata = timerdata
         self._soildata = soildata
         self._cropdata = cropdata
         self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+        self._test_uniqueness()
+
+    def set_crop_type(self, crop_id=None, crop_start_type=None, crop_end_type=None):
+        """Set the start_type and end type of the crop which is relevant for
+        the phenology module.
+
+        :param crop_id: string identifying the crop type, is ignored as only
+               one crop is assumed to be here.
+        :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
+        :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
+        """
+
+        self._timerdata["CROP_START_TYPE"] = crop_start_type
+        self._timerdata["CROP_END_TYPE"] = crop_end_type
         self._test_uniqueness()
 
     def _test_uniqueness(self):
@@ -1578,7 +1592,7 @@ class MultiCropParameterProvider(ParameterProvider):
         :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
         """
 
-        if not crop_id in self._multi_cropdata:
+        if crop_id not in self._multi_cropdata:
             msg = "Crop parameters for crop (%s) cannot be found in the multi_cropdata." % crop_id
             raise exc.PCSEError(msg)
 

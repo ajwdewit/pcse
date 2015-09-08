@@ -149,7 +149,7 @@ class Lintul3Soil(SimulationObject):
         init["WA"] = self.WAI
         
         # Initialize state variables
-        self.states = self.Lintul3SoilStates(kiosk, publish=["WA"], **init)
+        self.states = self.Lintul3SoilStates(kiosk, publish=["WA", "WC"], **init)
         self.states.initialize_rates()
 
     def _safe_get_from_kiosk(self, varname, default=0.0):
@@ -180,8 +180,7 @@ class Lintul3Soil(SimulationObject):
         # Variables supplied by the weather system
         RAIN = cm2mm(drv.RAIN)  # cm  --> mm CORRECTION FOR NON-STANDARD cm in WOFOST-WEATHER
 
-        #  Water content in the rootzone
-        # WC = s.WA / m2mm(ROOTD)
+        # Soil evaporation rate
         EVAP = self._soil_evaporation(RAIN, PEVAP, ROOTD, DELT)
         
         # Calling the subroutine for rates of drainage, runoff and irrigation.
