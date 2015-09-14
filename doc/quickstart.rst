@@ -362,7 +362,7 @@ However, PCSE models expect a single set of parameters and therefore they need t
 `ParameterProvider`::
 
     >>> from pcse.base_classes import ParameterProvider
-    >>> parameters = ParameterProvider(soildata=soil, cropdata=crop, sitedata=site)
+    >>> parameterprovider = ParameterProvider(soildata=soil, cropdata=crop, sitedata=site)
 
 Reading weather data
 --------------------
@@ -371,7 +371,22 @@ file format as is used for the CABO weather files but stores its data in an Micr
 weather files easier to create and update::
 
     >>> from pcse.fileinput import ExcelWeatherDataProvider
-    >>> weather = ExcelWeatherDataProvider(os.path.join(data_dir, "nl1.xlsx"))
+    >>> weatherdataprovider = ExcelWeatherDataProvider(os.path.join(data_dir, "nl1.xlsx"))
+    >>> print(weatherdataprovider)
+    Weather data provided by: ExcelWeatherDataProvider
+    --------Description---------
+    Weather data for:
+    Country: Netherlands
+    Station: Wageningen, Location Haarweg
+    Description: Observed data from Station Haarweg in Wageningen
+    Source: Meteorology and Air Quality Group, Wageningen University
+    Contact: Peter Uithol
+    ----Site characteristics----
+    Elevation:    7.0
+    Latitude:  51.970
+    Longitude:  5.670
+    Data available for 2004-01-02 - 2008-12-31
+    Number of missing days: 32
 
 Defining agromanagement
 -----------------------
@@ -446,4 +461,48 @@ Loading the agromanagement definition must by done with the YAMLAgroManagementRe
 
 Starting and running the LINTUL3 model
 --------------------------------------
-We have now all parameters, weather data and agromanagement information available to start the LINTUL3 model.
+We have now all parameters, weather data and agromanagement information available to start the LINTUL3 model::
+
+    >>> from pcse.models import LINTUL3
+    >>> lintul3 = LINTUL3(parameterprovider, weatherdataprovider, agromanagement)
+    >>> lintul3.run_till_terminate()
+
+Next, we can easily get the output from the model using the get_output() method and turn it into a pandas DataFrame::
+
+    >>> output = lintul3.get_output()
+    >>> df = pd.DataFrame(output).set_index("day")
+    >>> df.tail()
+                     DVS       LAI     NUPTT       TAGBM     TGROWTH  TIRRIG  \
+    day
+    2006-07-28  1.931748  0.384372  4.705356  560.213626  626.053663       0
+    2006-07-29  1.953592  0.368403  4.705356  560.213626  626.053663       0
+    2006-07-30  1.974029  0.353715  4.705356  560.213626  626.053663       0
+    2006-07-31  1.995291  0.339133  4.705356  560.213626  626.053663       0
+    2006-08-01  2.014272  0.326169  4.705356  560.213626  626.053663       0
+
+                   TNSOIL  TRAIN  TRAN  TRANRF  TRUNOF      TTRAN        WC  \
+    day
+    2006-07-28  11.794644  375.4     0       0       0  71.142104  0.198576
+    2006-07-29  11.794644  376.3     0       0       0  71.142104  0.197346
+    2006-07-30  11.794644  376.3     0       0       0  71.142104  0.196293
+    2006-07-31  11.794644  381.6     0       0       0  71.142104  0.198484
+    2006-08-01  11.794644  381.7     0       0       0  71.142104  0.197384
+
+                     WLVD       WLVG        WRT         WSO         WST
+    day
+    2006-07-28  88.548865  17.687197  16.649830  184.991591  268.985974
+    2006-07-29  89.284828  16.951234  16.150335  184.991591  268.985974
+    2006-07-30  89.962276  16.273785  15.665825  184.991591  268.985974
+    2006-07-31  90.635216  15.600845  15.195850  184.991591  268.985974
+    2006-08-01  91.233828  15.002234  14.739974  184.991591  268.985974
+
+Finally, we can visualize the results from the pandas DataFrame with a few commands if your
+environment supports plotting::
+
+    >>> fig, axes = plt.subplots(nrows=9, ncols=2, figsize=(16,40))
+    >>> for key, axis in zip(df.columns, axes.flatten()):
+    >>>     df[key].plot(ax=axis, title=key)
+    >>> fig.autofmt_xdate()
+    >>> fig.savefig(os.path.join(data_dir, "lintul3_springwheat.png"))
+
+.. image:: lintul3_springwheat.png
