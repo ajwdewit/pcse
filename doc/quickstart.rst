@@ -323,7 +323,8 @@ simulation of crop production under water-limited and nitrogen-limited condition
 For the third example, we will use LINTUL3 for simulating spring-wheat in the Netherlands under water-limited
 and nitrogen-limited conditions. We will again assume that data files are in the directory
 `D:\\userdata\\pcse_examples` and all the parameter files needed can be
-found by unpacking this zip file :download:`quickstart_part3.zip`.
+found by unpacking this zip file :download:`quickstart_part3.zip`. Note that this guide is also available
+as an ipython notebook: :download:`running_LINTUL3.ipynb`.
 
 First we will import the necessary modules and define the data directory. We also assume that you have the
 `matplotlib`_, `pandas`_ and `PyYAML`_ packages installed on your system.::
