@@ -27,3 +27,7 @@ env/
 /lintul3-springwheat-test.py
 
 pcse/tests/test_data/*.cache
+PCSE.egg-info/*
+dist/*
+build/*
+
