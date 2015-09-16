@@ -198,6 +198,8 @@ class WaterbalanceFD(SimulationObject):
     # Flag indicating that a crop was removed and therefore the thickness 
     # of the rootzone shift back to its initial value (params.RDI)
     rooted_layer_needs_reset = Bool(False)
+    # placeholder for irrigation
+    _RIRR = Float(0.)
 
     class Parameters(ParamTemplate):
         # Soil parameters
@@ -323,7 +325,9 @@ class WaterbalanceFD(SimulationObject):
         # search for crop transpiration values
         self._connect_signal(self._on_CROP_START, signals.crop_start)
         self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
-        
+        # signal for irrigation
+        self._connect_signal(self._on_IRRIGATE, signals.irrigate)
+
     @prepare_rates
     def calc_rates(self, day, drv):
         s = self.states
@@ -331,7 +335,8 @@ class WaterbalanceFD(SimulationObject):
         r = self.rates
 
         # Rate of irrigation (RIRR) set to zero
-        r.RIRR = 0.
+        r.RIRR = self._RIRR
+        self._RIRR = 0.
         
         # Rainfall rate
         r.RAIN = drv.RAIN
@@ -356,7 +361,7 @@ class WaterbalanceFD(SimulationObject):
         if s.SS > 1.:
             # If surface storage > 1cm then evaporate from water layer on
             # soil surface
-            r.EVS = EVSMX
+            r.EVW = EVWMX
         else:
             # else assume evaporation from soil surface
             if self.RINold >= 1:
@@ -560,6 +565,9 @@ class WaterbalanceFD(SimulationObject):
         
     def _on_CROP_FINISH(self):
         self.in_crop_cycle = False
+
+    def _on_IRRIGATE(self, amount, efficiency):
+        self._RIRR = amount * efficiency
 
 
 class WaterbalanceFDSnow(SimulationObject):
