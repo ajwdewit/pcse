@@ -177,12 +177,15 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
     def _load_cache_file(self, xls_fname):
 
-        cache_filename = self._find_cache_file(xls_fname)
-        if cache_filename is None:
-            return False
-        else:
-            self._load(cache_filename)
-            return True
+         cache_filename = self._find_cache_file(xls_fname)
+         if cache_filename is None:
+             return False
+         else:
+             try:
+                 self._load(cache_filename)
+                 return True
+             except:
+                 return False
 
     def _find_cache_file(self, xls_fname):
         """Try to find a cache file for file name
