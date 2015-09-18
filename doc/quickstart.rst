@@ -2,9 +2,9 @@
 Getting started
 ***************
 
-This quickstart guide will help you to install PCSE and provides
-some examples to get you started with modelling. All examples are currently focused on applying
-the WOFOST crop simulation model, although other crop simulations may become available within
+This guide will help you install PCSE as well as provide
+some examples to get you started with modelling. The examples are currently focused on applying
+the WOFOST and LINTUL3 crop simulation models, although other crop simulations may become available within
 PCSE in the future.
 
 1: An interactive PCSE/WOFOST session
@@ -25,7 +25,7 @@ conditions for a freely draining soil (mode='wlp')::
     >>> type(wofost_object)
     <class 'pcse.models.Wofost71_WLP_FD'>
 
-You have just successfully initialized a PCSE/WOFOST object in the python
+You have just successfully initialized a PCSE/WOFOST object in the Python
 interpreter, which is in its initial state and waiting to do some simulation. We
 can now advance the model state for example with 1 day::
 
@@ -162,8 +162,8 @@ need to be specified in the `timerdata` dictionary::
         MAX_DURATION: maximum number of days of the crop simulation
 
 The CABO format does provide support date/time values, but the CABOFilereader
-cannot yet parse them. Moreover, python supports date/time value natively and
-they can be defined using the python-based PCSE file format. The crop calendar
+cannot yet parse them. Moreover, Python supports date/time value natively and
+they can be defined using the Python-based PCSE file format. The crop calendar
 file for sugar beet in Wageningen `sugarbeet_calendar.pcse` can be read with
 the :ref:`PCSEFileReader <PCSEFileReader>`::
 
@@ -190,7 +190,7 @@ The sitedata dictionary provides ancillary parameters that are not related to
 the crop, the soil or the agromanagement. Examples are the initial conditions of
 the water balance such as the initial soil moisture content (WAV) and
 the initial and maximum surface storage (SSI, SSMAX). For the moment, we will
-define these parameters directly on the python commandline::
+define these parameters directly on the Python commandline::
 
     >>> sitedata = {'SSMAX'  : 0.,
                     'IFUNRN' : 0,
@@ -304,7 +304,7 @@ index (LAI) and root-zone soil moisture (SM) using the `MatPlotLib`_ plotting pa
 
 .. _MatPlotLib: http://matplotlib.org/
 
-This should provide generate a figure of the simulation results as shown below. The complete python
+This should provide generate a figure of the simulation results as shown below. The complete Python
 script for this examples can be downloaded here :download:`quickstart_demo2.py`
 
 .. image:: sugarbeet.png
@@ -324,7 +324,7 @@ For the third example, we will use LINTUL3 for simulating spring-wheat in the Ne
 and nitrogen-limited conditions. We will again assume that data files are in the directory
 `D:\\userdata\\pcse_examples` and all the parameter files needed can be
 found by unpacking this zip file :download:`quickstart_part3.zip`. Note that this guide is also available
-as an ipython notebook: :download:`running_LINTUL3.ipynb`.
+as an IPython notebook: :download:`running_LINTUL3.ipynb`.
 
 First we will import the necessary modules and define the data directory. We also assume that you have the
 `matplotlib`_, `pandas`_ and `PyYAML`_ packages installed on your system.::

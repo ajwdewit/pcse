@@ -5,14 +5,16 @@ Installing PCSE
 Requirements and dependencies
 =============================
 
-PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using python 2.7.9 and is known to work with
-the 3.x series (using the 2to3 tool). As python is a platform independent language, PCSE
+PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using Python 2.7.9 and is known to work with
+the 3.x series (using the 2to3 tool). As Python is a platform independent language, PCSE
 works equally well on Linux, Windows or Mac OSX.
-Before installing PCSE, python itself must be installed on your system. Most Linux systems provide
-python through the native package manager. For Windows/OSX users the most straightforward approach for installing
-python is through one of the prepackaged python distributions such as `Enthought Canopy`_,
+Before installing PCSE, Python itself must be installed on your system. Most Linux systems provide
+Python through the native package manager. For Windows users the most straightforward approach for installing
+Python is through one of the prepackaged Python distributions such as `Enthought Canopy`_,
 `Anaconda`_ or `PythonXY`_. The advantage of the prepackaged distributions is that they provide a working
-version of Numpy out-of-the-box which can be difficult to install on Windows/OSX.
+version of Numpy out-of-the-box which can be difficult to install on Windows. Mac OSX users can most easily
+install Python and numpy using `HomeBrew`_, i.e brew install python numpy
+
 The dependencies of PCSE are the following:
 
 * Numpy >= 1.6
@@ -24,17 +26,18 @@ The dependencies of PCSE are the following:
 
 .. _Enthought Canopy: https://www.enthought.com/products/canopy/
 .. _Anaconda: https://store.continuum.io/cshop/anaconda/
-.. _PythonXY: https://code.google.com/p/pythonxy/wiki/Welcome
+.. _PythonXY: https://python-xy.github.io/
+.. _HomeBrew: http://brew.sh
 
 How to install
 ==============
 
-PCSE can be installed in different ways and the best way to install it depends on your
+PCSE can be installed in many different ways and the best depends on your
 requirements. The most convenient option to install PCSE is through the Python Package
 Index (PyPI). Installing from PyPI is mostly useful if you are interested in using the functionality
 provided by PCSE in your own scripts, but are not interested in modifying or contributing to
 PCSE itself. Installing from PyPI is done using the package installer `pip`, but this
-will only work when you have write access on the python site-packages
+will only work when you have write access on the Python site-packages
 folder. If you do not have this permission you should install PCSE into a
 `virtual environment`_.::
 
@@ -51,19 +54,19 @@ folder. If you do not have this permission you should install PCSE into a
 
 The second option is useful if you want to develop or contribute to PCSE.
 In that case you should fork my `PCSE
-repository`_ on github and get a local copy of PCSE using `git clone`. See the help on github_
-and for windows user the `github for windows`_
+repository`_ on GitHub and get a local copy of PCSE using `git clone`. See the help on github_
+and for Windows/Mac users the `GitHub Desktop`_ application.
 
-.. _github for windows: https://windows.github.com/
-.. _github: https://help.github.com/
+.. _GitHub Desktop: https://desktop.github.com/
+.. _GitHub: https://help.github.com/
 .. _PCSE repository: https://github.com/ajwdewit/pcse
 
-Finally, the last option is to download the PCSE package as a zip file from GitHub.com
+Finally, the last option is to download the PCSE package as a zip file from GitHub
 using the link `here`_. Just unzip the package at a suitable location.
 Note that the top directory in the zip file is `pcse-<branchname>`.
 The actual PCSE is package is inside this folder and needs to be put on your file system.
 For running the test included with PCSE, we assume that PCSE was downloaded as a zip file
-from github and is installed under 'D:\\USERDATA\\pylib\\', your folder should now
+from GitHub and is installed under 'D:\\USERDATA\\pylib\\', your folder should now
 resemble the screenshot below.
 
 .. image:: pylib.png
@@ -85,7 +88,7 @@ PCSE for the first time. When you delete the database file manually it will be
 recreated next time you import PCSE.
 
 For importing PCSE we first need to add the location of PCSE ('D:\\USERDATA\\pylib\\')
-to the search path of python::
+to the search path of Python::
 
     C:\>python
     Python 2.7.9 |Continuum Analytics, Inc.| (default, Dec 18 2014, 17:00:07) [MSC v.1500 32 bit (Intel)] on win32

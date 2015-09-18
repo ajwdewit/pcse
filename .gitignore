@@ -25,3 +25,5 @@ env/
 /.pydevproject
 /.project
 /lintul3-springwheat-test.py
+
+pcse/tests/test_data/*.cache

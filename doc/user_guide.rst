@@ -20,18 +20,18 @@ role in the implementation of (crop) simulation models:
 
  1. The dynamic part of the simulation is taken care of by a
     dedicated simulation engine which handles the initialization,
-    the correct order of rate/state updates as well as keeping
+    the ordering of rate/state updates as well as keeping
     track of time, retrieving weather data and calling the
     agromanagement module.
  2. Solving the differential equations for crop growth and updating
-    of the crop state is deferred to SimulationObjects that
+    the crop state is deferred to SimulationObjects that
     implement dedicated growth or development processes such as
     phenology or |CO2| assimilation.
  3. An AgroManagement module is included which takes care of
     signalling agricultural management actions such as sowing, harvesting,
     irrigation, etc.
  4. Several tools are available for providing weather data and
-    for reading parameter values from files or databases.
+    reading parameter values from files or databases.
 
 Next, an overview of the different components in PCSE will be provided.
 
