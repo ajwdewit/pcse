@@ -3,12 +3,12 @@
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl)
 # and Zacharias Steinmetz (stei4785@uni-landau.de), Aug 2015
-"""
-A weather data provider reading its data from CSV files.
+"""A weather data provider reading its data from CSV files.
 """
 import os
 import datetime as dt
 import csv
+import math
 
 from ..base_classes import WeatherDataContainer, WeatherDataProvider
 from ..util import reference_ET, angstrom, check_angstromAB
@@ -30,6 +30,32 @@ class CSVWeatherDataProvider(WeatherDataProvider):
     :param dateformat: date format to be read. Default is '%Y%m%d'
     :keyword ETmodel: "PM"|"P" for selecting Penman-Monteith or Penman
         method for reference evapotranspiration. Default is 'PM'.
+
+    The CSV file should have the following structure:
+
+    ## Site Characteristics
+    Country     = 'Netherlands'
+    Station     = 'Wageningen, Haarweg'
+    Description = 'Observed data from Station Haarweg in Wageningen'
+    Source      = 'Meteorology and Air Quality Group, Wageningen University'
+    Contact     = 'Peter Uithol'
+    Longitude = 5.67; Latitude = 51.97; Elevation = 7; AngstromA = 0.18; AngstromB = 0.55; HasSunshine = False
+    ## Daily weather observations
+    DAY,IRRAD,TMIN,TMAX,VAP,WIND,RAIN,SNOWDEPTH
+    20040101,NaN,-0.7,1.1,5.5,3.6,0.5,NaN
+    20040102,3888,-7.5,0.9,4.4,3.1,0,NaN
+    20040103,2074,-6.8,-0.5,4.5,1.8,0,NaN
+    20040104,1814,-3.6,5.9,6.6,3.2,2.5,NaN
+    20040105,1469,3,5.7,7.8,2.3,1.3,NaN
+    [...]
+
+    with
+    IRRAD in kJ/m2/day or hours
+    TMIN and TMAX in Celsius
+    VAP in hPa
+    WIND in m/sec
+    RAIN in mm
+    SNOWDEPTH in cm
 
     For reading weather data from a file, initially the CABOWeatherDataProvider
     was available which read its data from text in the CABO weather format.
@@ -76,19 +102,20 @@ class CSVWeatherDataProvider(WeatherDataProvider):
     }
 
     def __init__(self, csv_fname, delimiter=',', dateformat='%Y%m%d',
-                 ETmodel='PM'):
+                 ETmodel='PM', missing_snow_depth=None):
         WeatherDataProvider.__init__(self)
 
+        self.fp_csv_fname = os.path.abspath(csv_fname)
         self.dateformat = dateformat
         self.ETmodel = ETmodel
-        self.fp_csv_fname = os.path.abspath(csv_fname)
+        self.missing_snow_depth = missing_snow_depth
         if not os.path.exists(self.fp_csv_fname):
             msg = "Cannot find weather file at: %s" % self.fp_csv_fname
             raise PCSEError(msg)
 
         if not self._load_cache_file(self.fp_csv_fname):    # Cache file cannot
                                                             # be loaded
-            with open(csv_fname, newline='') as csv_file:
+            with open(csv_fname, 'r') as csv_file:
                 self._read_meta(csv_file)
                 self._read_observations(csv_file, delimiter, dateformat)
                 self._write_cache_file(self.fp_csv_fname)
@@ -96,11 +123,11 @@ class CSVWeatherDataProvider(WeatherDataProvider):
     def _read_meta(self, csv_file):
         timeout = dt.datetime.now() + dt.timedelta(seconds=30)
         line = str()
-        while not line.startswith('## Daily weather data'):
+        while not line.startswith('## Daily weather observations'):
             if dt.datetime.now() > timeout:
                 raise RuntimeError
             else:
-                exec(line) in dict()
+                exec(line)
                 line = csv_file.readline()
 
         locs = locals()
@@ -146,8 +173,11 @@ class CSVWeatherDataProvider(WeatherDataProvider):
                         else:
                             d[label] = func(d[label])
 
-                        if d[label] == float('NaN') and label != "SNOWDEPTH":
-                            raise NoDataError
+                            if math.isnan(d[label]):
+                                if label == "SNOWDEPTH":
+                                    d[label] = self.missing_snow_depth
+                                else:
+                                    raise NoDataError
 
                     if self.has_sunshine is True and 0 < d['IRRAD'] < 24:
                         d['IRRAD'] = angstrom(d["DAY"], self.latitude,
@@ -174,7 +204,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
                 print(msg)
 
             except NoDataError as e: # Missing value encountered
-                msg = "Missing value encountered at row %S. Skipping ..." % row
+                msg = "Missing value encountered at row %s. Skipping ..." % row
                 self.logger.warn(msg)
 
     def _load_cache_file(self, csv_fname):
@@ -196,7 +226,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
         if os.path.exists(cache_filename):
             cache_date = os.stat(cache_filename).st_mtime
             csv_date = os.stat(csv_fname).st_mtime
-            if cache_date > csv_date:  # cache is more recent then XLS file
+            if cache_date > csv_date:  # cache is more recent then CSV file
                 return cache_filename
 
         return None
