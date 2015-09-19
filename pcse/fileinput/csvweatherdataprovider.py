@@ -11,7 +11,7 @@ import datetime as dt
 import csv
 
 from ..base_classes import WeatherDataContainer, WeatherDataProvider
-from ..util import reference_ET, check_angstromAB
+from ..util import reference_ET, angstrom, check_angstromAB
 from ..exceptions import PCSEError
 from ..settings import settings
 
@@ -48,21 +48,21 @@ class CSVWeatherDataProvider(WeatherDataProvider):
     """
     translator = {
         'DAY': ['w_date', 'DAY'],
-        'IRRAD': ['srad', 'RADIATION'],
-        'TMIN': ['tmin', 'TEMPERATURE_MIN'],
-        'TMAX': ['tmax', 'TEMPERATURE_MAX'],
-        'VAP': ['vprs_tx', 'VAPOURPRESSURE'],
-        'WIND': ['wind', 'WINDSPEED'],
-        'RAIN': ['rain', 'PRECIPITATION'],
+        'IRRAD': ['srad', 'RADIATION', 'IRRAD'],
+        'TMIN': ['tmin', 'TEMPERATURE_MIN', 'TMIN'],
+        'TMAX': ['tmax', 'TEMPERATURE_MAX', 'TMAX'],
+        'VAP': ['vprs_tx', 'VAPOURPRESSURE', 'VAP'],
+        'WIND': ['wind', 'WINDSPEED', 'WIND'],
+        'RAIN': ['rain', 'PRECIPITATION', 'RAIN'],
         'SNOWDEPTH': ['snowdepth', 'SNOWDEPTH']
     }
 
     # Conversion functions
     NoConversion = lambda x: float(x)
     kJ_to_J = lambda x: float(x)*1000.
-    # kPa_to_hPa = lambda x: float(x)*10.
     mm_to_cm = lambda x: float(x)/10.
-    csvdate_to_date = lambda x: dt.datetime.strptime(x, dateformat).date()
+    csvdate_to_date = lambda x, dateformat: \
+        dt.datetime.strptime(x, dateformat).date()
 
     obs_conversions = {
         "TMAX": NoConversion,
@@ -79,6 +79,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
                  ETmodel='PM'):
         WeatherDataProvider.__init__(self)
 
+        self.dateformat = dateformat
         self.ETmodel = ETmodel
         self.fp_csv_fname = os.path.abspath(csv_fname)
         if not os.path.exists(self.fp_csv_fname):
@@ -89,14 +90,18 @@ class CSVWeatherDataProvider(WeatherDataProvider):
                                                             # be loaded
             with open(csv_fname, newline='') as csv_file:
                 self._read_meta(csv_file)
-                self._read_observations(csv_file, delimiter)
+                self._read_observations(csv_file, delimiter, dateformat)
                 self._write_cache_file(self.fp_csv_fname)
 
     def _read_meta(self, csv_file):
+        timeout = dt.datetime.now() + dt.timedelta(seconds=30)
         line = str()
-        while not line.startswith('## Weather data'):
-            exec(line) in dict()
-            line = csv_file.readline()
+        while not line.startswith('## Daily weather data'):
+            if dt.datetime.now() > timeout:
+                raise RuntimeError
+            else:
+                exec(line) in dict()
+                line = csv_file.readline()
 
         locs = locals()
         self.nodata_value = -99
@@ -115,42 +120,62 @@ class CSVWeatherDataProvider(WeatherDataProvider):
         self.angstA, self.angstB = check_angstromAB(angstA, angstB)
         self.has_sunshine = bool(locs['HasSunshine'])
 
-    def _read_observations(self, csv_file, delimiter):
+    def _read_observations(self, csv_file, delimiter, dateformat):
         obs = csv.reader(csv_file, delimiter=delimiter, quotechar='"')
         # Start reading all rows with data
         _headerrow = True
         for row in obs:
-            # Save header row.
-            if _headerrow:
-                header = row
-                for (i, item) in enumerate(header):
-                    header[i] = ''.join(key for key, value in
-                        self.translator.items() if item in value)
-                _headerrow = False
-            else:
-                d = dict(zip(header, row))
-                print(d)
-                if '' in d:
-                    del d['']
+            try:
+                # Save header row.
+                if _headerrow:
+                    header = row
+                    for (i, item) in enumerate(header):
+                        header[i] = ''.join(key for key, value in
+                            self.translator.items() if item in value)
+                    _headerrow = False
+                else:
+                    d = dict(zip(header, row))
+                    # Delete rows not able to convert
+                    if '' in d:
+                        del d['']
 
-                for h in d.keys():
-                    func = self.obs_conversions[h]
-                    d[h] = func(d[h])
+                    for label in d.keys():
+                        func = self.obs_conversions[label]
+                        if label == 'DAY':
+                            d[label] = func(d[label], dateformat)
+                        else:
+                            d[label] = func(d[label])
 
-                # Reference ET in mm/day
-                e0, es0, et0 = reference_ET(LAT=self.latitude,
-                                            ELEV=self.elevation,
-                                            ANGSTA=self.angstA,
-                                            ANGSTB=self.angstB, **d)
-                # convert to cm/day
-                d["E0"] = e0/10.
-                d["ES0"] = es0/10.
-                d["ET0"] = et0/10.
+                        if d[label] == float('NaN') and label != "SNOWDEPTH":
+                            raise NoDataError
 
-                wdc = WeatherDataContainer(LAT=self.latitude,
-                                           LON=self.longitude,
-                                           ELEV=self.elevation, **d)
-                self._store_WeatherDataContainer(wdc, d["DAY"])
+                    if self.has_sunshine is True and 0 < d['IRRAD'] < 24:
+                        d['IRRAD'] = angstrom(d["DAY"], self.latitude,
+                            d['IRRAD'], self.angstA, self.angstB)
+
+                    # Reference ET in mm/day
+                    e0, es0, et0 = reference_ET(LAT=self.latitude,
+                                                ELEV=self.elevation,
+                                                ANGSTA=self.angstA,
+                                                ANGSTB=self.angstB, **d)
+                    # convert to cm/day
+                    d["E0"] = e0/10.
+                    d["ES0"] = es0/10.
+                    d["ET0"] = et0/10.
+
+                    wdc = WeatherDataContainer(LAT=self.latitude,
+                                               LON=self.longitude,
+                                               ELEV=self.elevation, **d)
+                    self._store_WeatherDataContainer(wdc, d["DAY"])
+
+            except ValueError as e:  # strange value in cell
+                msg = "Failed reading row: %s. Skipping ..." % row
+                self.logger.warn(msg)
+                print(msg)
+
+            except NoDataError as e: # Missing value encountered
+                msg = "Missing value encountered at row %S. Skipping ..." % row
+                self.logger.warn(msg)
 
     def _load_cache_file(self, csv_fname):
 
