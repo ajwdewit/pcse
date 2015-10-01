@@ -187,7 +187,8 @@ class CSVWeatherDataProvider(WeatherDataProvider):
                     e0, es0, et0 = reference_ET(LAT=self.latitude,
                                                 ELEV=self.elevation,
                                                 ANGSTA=self.angstA,
-                                                ANGSTB=self.angstB, **d)
+                                                ANGSTB=self.angstB,
+                                                ETMODEL=self.ETmodel, **d)
                     # convert to cm/day
                     d["E0"] = e0/10.
                     d["ES0"] = es0/10.
