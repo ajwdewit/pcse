@@ -31,7 +31,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
     :keyword ETmodel: "PM"|"P" for selecting Penman-Monteith or Penman
         method for reference evapotranspiration. Default is 'PM'.
 
-    The CSV file should have the following structure:
+    The CSV file should have the following structure (sample):
 
     ## Site Characteristics
     Country     = 'Netherlands'
@@ -40,19 +40,19 @@ class CSVWeatherDataProvider(WeatherDataProvider):
     Source      = 'Meteorology and Air Quality Group, Wageningen University'
     Contact     = 'Peter Uithol'
     Longitude = 5.67; Latitude = 51.97; Elevation = 7; AngstromA = 0.18; AngstromB = 0.55; HasSunshine = False
-    ## Daily weather observations
+    ## Daily weather observations (missing values are NaN)
     DAY,IRRAD,TMIN,TMAX,VAP,WIND,RAIN,SNOWDEPTH
-    20040101,NaN,-0.7,1.1,5.5,3.6,0.5,NaN
-    20040102,3888,-7.5,0.9,4.4,3.1,0,NaN
-    20040103,2074,-6.8,-0.5,4.5,1.8,0,NaN
-    20040104,1814,-3.6,5.9,6.6,3.2,2.5,NaN
-    20040105,1469,3,5.7,7.8,2.3,1.3,NaN
+    20040101,NaN,-0.7,1.1,0.55,3.6,0.5,NaN
+    20040102,3888,-7.5,0.9,0.44,3.1,0,NaN
+    20040103,2074,-6.8,-0.5,0.45,1.8,0,NaN
+    20040104,1814,-3.6,5.9,0.66,3.2,2.5,NaN
+    20040105,1469,3,5.7,0.78,2.3,1.3,NaN
     [...]
 
     with
     IRRAD in kJ/m2/day or hours
-    TMIN and TMAX in Celsius
-    VAP in hPa
+    TMIN and TMAX in Celsius (°C)
+    VAP in kPa
     WIND in m/sec
     RAIN in mm
     SNOWDEPTH in cm
@@ -72,21 +72,12 @@ class CSVWeatherDataProvider(WeatherDataProvider):
     accomplished in a text editor. Only SNOWDEPTH is allowed to be missing
     as this parameter is usually not provided outside the winter season.
     """
-    translator = {
-        'DAY': ['w_date', 'DAY'],
-        'IRRAD': ['srad', 'RADIATION', 'IRRAD'],
-        'TMIN': ['tmin', 'TEMPERATURE_MIN', 'TMIN'],
-        'TMAX': ['tmax', 'TEMPERATURE_MAX', 'TMAX'],
-        'VAP': ['vprs_tx', 'VAPOURPRESSURE', 'VAP'],
-        'WIND': ['wind', 'WINDSPEED', 'WIND'],
-        'RAIN': ['rain', 'PRECIPITATION', 'RAIN'],
-        'SNOWDEPTH': ['snowdepth', 'SNOWDEPTH']
-    }
 
     # Conversion functions
     NoConversion = lambda x: float(x)
     kJ_to_J = lambda x: float(x)*1000.
     mm_to_cm = lambda x: float(x)/10.
+    kPa_to_hPa = lambda x: float(x)*10.
     csvdate_to_date = lambda x, dateformat: \
         dt.datetime.strptime(x, dateformat).date()
 
@@ -95,7 +86,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
         "TMIN": NoConversion,
         "IRRAD": kJ_to_J,
         "DAY": csvdate_to_date,
-        "VAP": NoConversion,
+        "VAP": kPa_to_hPa,
         "WIND": NoConversion,
         "RAIN": mm_to_cm,
         "SNOWDEPTH": NoConversion
@@ -121,91 +112,75 @@ class CSVWeatherDataProvider(WeatherDataProvider):
                 self._write_cache_file(self.fp_csv_fname)
 
     def _read_meta(self, csv_file):
-        timeout = dt.datetime.now() + dt.timedelta(seconds=30)
-        line = str()
-        while not line.startswith('## Daily weather observations'):
-            if dt.datetime.now() > timeout:
-                raise RuntimeError
-            else:
-                exec(line)
-                line = csv_file.readline()
+        header = {}
+        for line in csv_file:
+            if line.startswith('## Daily weather observations'):
+                break
+            exec(line, {}, header)
 
-        locs = locals()
         self.nodata_value = -99
         self.description = [u"Weather data for:",
-                            u"Country: %s" % locs['Country'],
-                            u"Station: %s" % locs['Station'],
-                            u"Description: %s" % locs['Description'],
-                            u"Source: %s" % locs['Source'],
-                            u"Contact: %s" % locs['Contact']]
+                            u"Country: %s" % header['Country'],
+                            u"Station: %s" % header['Station'],
+                            u"Description: %s" % header['Description'],
+                            u"Source: %s" % header['Source'],
+                            u"Contact: %s" % header['Contact']]
 
-        self.longitude = float(locs['Longitude'])
-        self.latitude = float(locs['Latitude'])
-        self.elevation = float(locs['Elevation'])
-        angstA = float(locs['AngstromA'])
-        angstB = float(locs['AngstromB'])
+        self.longitude = float(header['Longitude'])
+        self.latitude = float(header['Latitude'])
+        self.elevation = float(header['Elevation'])
+        angstA = float(header['AngstromA'])
+        angstB = float(header['AngstromB'])
         self.angstA, self.angstB = check_angstromAB(angstA, angstB)
-        self.has_sunshine = bool(locs['HasSunshine'])
+        self.has_sunshine = bool(header['HasSunshine'])
 
     def _read_observations(self, csv_file, delimiter, dateformat):
-        obs = csv.reader(csv_file, delimiter=delimiter, quotechar='"')
+        obs = csv.DictReader(csv_file, delimiter=delimiter, quotechar='"')
         # Start reading all rows with data
-        _headerrow = True
-        for row in obs:
+        for d in obs:
             try:
-                # Save header row.
-                if _headerrow:
-                    header = row
-                    for (i, item) in enumerate(header):
-                        header[i] = ''.join(key for key, value in
-                            self.translator.items() if item in value)
-                    _headerrow = False
-                else:
-                    d = dict(zip(header, row))
-                    # Delete rows not able to convert
-                    if '' in d:
-                        del d['']
+                if '' in d.keys(): del d['']
 
-                    for label in d.keys():
-                        func = self.obs_conversions[label]
-                        if label == 'DAY':
-                            d[label] = func(d[label], dateformat)
-                        else:
-                            d[label] = func(d[label])
+                for label in d.keys():
+                    func = self.obs_conversions[label]
+                    if label == 'DAY':
+                        d[label] = func(d[label], dateformat)
+                    else:
+                        d[label] = func(d[label])
 
-                            if math.isnan(d[label]):
-                                if label == "SNOWDEPTH":
-                                    d[label] = self.missing_snow_depth
-                                else:
-                                    raise NoDataError
+                        if math.isnan(d[label]):
+                            if label == "SNOWDEPTH":
+                                d[label] = self.missing_snow_depth
+                            else:
+                                raise NoDataError
 
-                    if self.has_sunshine is True and 0 < d['IRRAD'] < 24:
-                        d['IRRAD'] = angstrom(d["DAY"], self.latitude,
-                            d['IRRAD'], self.angstA, self.angstB)
+                if self.has_sunshine is True and 0 < d['IRRAD'] < 24:
+                    d['IRRAD'] = angstrom(d["DAY"], self.latitude,
+                        d['IRRAD'], self.angstA, self.angstB)
 
-                    # Reference ET in mm/day
-                    e0, es0, et0 = reference_ET(LAT=self.latitude,
-                                                ELEV=self.elevation,
-                                                ANGSTA=self.angstA,
-                                                ANGSTB=self.angstB,
-                                                ETMODEL=self.ETmodel, **d)
-                    # convert to cm/day
-                    d["E0"] = e0/10.
-                    d["ES0"] = es0/10.
-                    d["ET0"] = et0/10.
+                # Reference ET in mm/day
+                e0, es0, et0 = reference_ET(LAT=self.latitude,
+                                            ELEV=self.elevation,
+                                            ANGSTA=self.angstA,
+                                            ANGSTB=self.angstB,
+                                            ETMODEL=self.ETmodel, **d)
+                # convert to cm/day
+                d["E0"] = e0/10.
+                d["ES0"] = es0/10.
+                d["ET0"] = et0/10.
 
-                    wdc = WeatherDataContainer(LAT=self.latitude,
-                                               LON=self.longitude,
-                                               ELEV=self.elevation, **d)
-                    self._store_WeatherDataContainer(wdc, d["DAY"])
+                wdc = WeatherDataContainer(LAT=self.latitude,
+                                           LON=self.longitude,
+                                           ELEV=self.elevation, **d)
+                self._store_WeatherDataContainer(wdc, d["DAY"])
 
             except ValueError as e:  # strange value in cell
-                msg = "Failed reading row: %s. Skipping ..." % row
+                msg = "Failed reading row: %s. Skipping ..." % d
                 self.logger.warn(msg)
                 print(msg)
 
             except NoDataError as e: # Missing value encountered
-                msg = "Missing value encountered at row %s. Skipping ..." % row
+                msg = "Missing value encountered at row %s. Skipping ..." % d
                 self.logger.warn(msg)
 
     def _load_cache_file(self, csv_fname):
