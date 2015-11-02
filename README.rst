@@ -42,6 +42,10 @@ tools and numerical/statistical packages. PCSE has several interesting features:
 * Tools are available for reading parameter and weather files from existing models to
   have as much backward compatibility as possible.
 
+* An `AgroManager` module which allows to define the agromanagement actions that
+  happen on a farmers field. Such actions can be specified as events based on
+  time or model state.
+
 * Built-in testing of program modules ensuring integrity of the system.
 
 To contribute to PCSE, you can fork your own copy at https://github.com/ajwdewit/pcse
