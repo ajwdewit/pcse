@@ -29,7 +29,7 @@ setup(
                       'PyYAML>=3.11',
                       'tabulate>=0.7.0',
                       'xlrd>=0.9.3',
-                      'xlwr>=1.0.0'],
+                      'xlwt>=1.0.0'],
     author_email='allard.dewit@wur.nl',
     description='Framework for developing crop simulation models, includes an implementation of '
                 'the WOFOST and LINTUL crop simulation models.',

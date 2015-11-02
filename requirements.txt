@@ -3,4 +3,4 @@ numpy>=1.6.0
 PyYAML>=3.11
 tabulate>=0.7.0
 xlrd>=0.9.3
-xlwr>=1.0.0
+xlwt>=1.0.0
