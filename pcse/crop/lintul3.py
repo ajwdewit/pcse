@@ -405,287 +405,285 @@ class Lintul3(SimulationObject):
         # if before emergence there is no need to continue
         # because only the phenology is running.
         if crop_stage == "emerging":
-            
             return  # no aboveground crop to calculate yet
 
-        else:                    
-            # code below is executed only POST-emergence
-                
-            # translocatable N in leaves, stem, roots and
-            # storage organs.
-            ATNLV, ATNST, ATNRT, ATN = self.translocatable_N()
-            
-            # Relative deathOfLeaves rate of leaves due to senescence/ageing.
-            RDRTMP = p.RDRT(DAVTMP)
-            
-            # Total living vegetative biomass.
-            TBGMR = s.WLVG + s.WST
-            
-            # Average residual N concentration.
-            NRMR = (s.WLVG * p.RNFLV + s.WST * p.RNFST) / TBGMR
-            
-            # Maximum N concentration in the leaves, from which the values of the
-            # stem and roots are derived, as a function of development stage.
-            NMAXLV  = p.NMXLV(DVS)        
-            NMAXST  = p.LSNR * NMAXLV
-            NMAXRT  = p.LRNR * NMAXLV
-            
-            # maximum nitrogen concentration of leaves and stem.
-            NOPTLV  = p.FRNX * NMAXLV
-            NOPTST  = p.FRNX * NMAXST
-                    
-            # Maximum N content in the plant.
-            NOPTS   = NOPTST * s.WST
-            NOPTL   = NOPTLV * s.WLVG
-            NOPTMR  = (NOPTL + NOPTS)/TBGMR
-            
-            # Total N in green matter of the plant.
-            NUPGMR  = s.ANLV + s.ANST
-            
-            # Nitrogen Nutrition Index.
-            """
-            Nitrogen stress 
-    
-            A crop is assumed to experience N stress at N concentrations below a critical 
-            value for unrestricted growth. To quantify crop response to nitrogen shortage, a 
-            Nitrogen Nutrition Index (NNI) is defined, ranging from 0 (maximum N shortage) 
-            to 1 (no N shortage): 
-            
-            NNI = (actual crop [N] - residual [N]) / (critical [N] - residual [N]) 
-            
-            Critical crop nitrogen concentration, the lower limit of canopy nitrogen 
-            concentration in leaves and stems required for unrestricted growth, has been 
-            taken as half the maximum nitrogen concentration. An experimental basis for such 
-            an assumption can be derived from the study of Zhen and Leigh (1990), who 
-            reported that nitrate accumulation in plant occurs in significant quantity when 
-            the N needs to reach the maximum growth were fulfilled and the mean value of 
-            nitrate accumulated beyond the criticalNconcentration was about 50% for 
-            different stages. 
-            """
-            NFGMR = NUPGMR / TBGMR
-            NNI = limit(0.001, 1.0, ((NFGMR-NRMR)/(NOPTMR-NRMR)))
-    
-            # -------- Growth rates and dry matter production of plant organs-------*
-            #  Biomass partitioning functions under (water and nitrogen)non-stressed
-            #  situations
-            """
-            Biomass partitioning
-            
-            Biomass formed at any time during crop growth is partitioned amongst organs
-            (Fig. 1), i.e. roots, stems, leaves and storage organs, with partitioning 
-            factors defined as a function of development stage (Fig. 2) (Drenth et al., 
-            1994), which thus provides the rates of growth of these organs: 
-            
-            dW/dt[i] = Pc[i] * dW / dt 
-            
-            where (dW/dt) is the rate of biomass growth (gm-2 d-1); (dW/dt)[i] and Pc[i] are 
-            the rate of growth (gm-2 d-1) of and the biomass partitioning factor to organ i 
-            (g organ-i g-1 biomass), respectively. Leaf, stem and root weights of the 
-            seedlings at the time of transplanting are input parameters for the model. The 
-            time course of weights of these organs follows from integration of their net 
-            growth rates, i.e. growth rates minus death rates, the latter being defined as a 
-            function of physiological age, shading and stress. 
-            """
-            FRTWET = p.FRTTB(DVS)
-            FLVT = p.FLVTB(DVS)
-            FSTT = p.FSTTB(DVS)
-            FSOT = p.FSOTB(DVS)
-            
-            
-            """
-            Leaf area development
-            
-            The time course of LAI is divided into two stages: an exponential stage during 
-            the juvenile phase, where leaf area development is a function of temperature, 
-            and a linear stage where it depends on the increase in leaf biomass (Spitters, 
-            1990; Spitters and Schapendonk, 1990). The death of leaves due to senescence 
-            that may be enhanced by shading and/or stress leads to a corresponding loss in 
-            leaf area. The specific leaf area is used for the conversion of dead leaf 
-            biomass to corresponding loss in leaf area. The death of leaves due to 
-            senescence occurs only after flowering and the rate depends on crop age 
-            (function adopted from ORYZA2000, Bouman et al., 2001). The excessive growth of 
-            leaves also result in death of leaves due to mutual shading. The death of leaves 
-            due to shading is determined by a maximum death rate and the relative proportion 
-            of leaf area above the critical LAI (4.0) (Spitters, 1990; Spitters and 
-            Schapendonk, 1990). The net rate of change in leaf area (dLAI/dt) is the 
-            difference between its growth rate and its death rate: 
-            
-            dLAI/dt = dGLAI / dt - dDLAI / dt
-    
-            where (dGLAI/dt) is the leaf area growth rate and (dDLAI/dt) is the
-            leaf area death rate.
-            """
-            # Specific Leaf area(m2/g).
-            SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
-            
-            # Growth reduction function for water stress(actual trans/potential)
-            r.TRANRF = r.TRAN / r.PTRAN
-            
-            # relative modification for root and shoot allocation.
-            FRT, FLV, FST, FSO = self.dryMatterPartitioningFractions(p.NPART, r.TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT)
-            
-            # total totalGrowthRate rate.
-            RGROWTH = self.totalGrowthRate(DTR, r.TRANRF, NNI)
-    
-            # Leaf totalGrowthRate and LAI.
-            GLV    = FLV * RGROWTH
-            
-            # daily increase of leaf area index.
-            GLAI = self._growth_leaf_area(DTEFF, self.LAII, DELT, SLA, GLV, WC, DVS, r.TRANRF, NNI)
-            
-            # relative deathOfLeaves rate of leaves.
-            DLV, DLAI = self.deathRateOfLeaves(TSUM, RDRTMP, NNI, SLA)
-            
-            # Net rate of change of Leaf area.
-            RLAI   = GLAI - DLAI
-            
-            # Root totalGrowthRate
-            """
-            Root growth
-            
-            The root system is characterized by its vertical extension in the soil profile. 
-            At emergence or at transplanting for transplanted rice. Effect of N stress (NNI) 
-            on crop growth through its effect on LA and LUE. rooting depth is initialized. 
-            Roots elongate at a constant daily rate, until flowering, provided soil water 
-            content is above permanent wilting point (PWP), whereas growth ceases when soil 
-            is drier than PWP or when a certain preset maximum rooting depth is reached 
-            (Spitters and Schapendonk, 1990; Farr� et al., 2000).
-            """
-            r.RROOTD = min(p.RRDMAX,  p.ROOTDM - s.ROOTD) if (WC > p.WCWP) else 0.0
-            
-            # N loss due to deathOfLeaves of leaves and roots.
-            DRRT = 0. if (DVS < p.DVSDR) else s.WRT * p.RDRRT
-            RNLDLV = p.RNFLV * DLV
-            RNLDRT = p.RNFRT * DRRT
-            
-            # relative totalGrowthRate rate of roots, leaves, stem
-            # and storage organs.
-            RWLVG, RWRT, RWST, RWSO = self.relativeGrowthRates(RGROWTH, FLV, FRT, FST, FSO, DLV, DRRT)
-            
-            
-            """
-            Nitrogen demand 
-    
-            Total crop nitrogen demand equals the sum of the nitrogen demands of its 
-            individual organs (excluding storage organs, for which nitrogen demand is met by 
-            translocation from the other organs, i.e. roots, stems and leaves) (Fig. 3). 
-            Nitrogen demand of the individual organs is calculated as the difference 
-            betweenmaximum and actual organ nitrogen contents. The maximum nitrogen content 
-            is defined as a function of canopy development stage (Drenth et al., 1994). 
-            Total N demand (TNdem: gm-2 d-1) of the crop is: 
-            
-            TNdem = sum(Nmax,i - ANi / dt) 
-            
-            where Nmax,i is the maximum nitrogen concentration of organ i (gN/g biomass, 
-            with i referring to leaves, stems and roots), Wi is the weight of organ i 
-            (g biomass/m2), and ANi is the actual nitrogen content of organ i (gN/m2).
-            """
-    
-            # N demand of leaves, roots and stem storage organs.
-            NDEMLV   =  max(NMAXLV   * s.WLVG - s.ANLV, 0.)
-            NDEMST   =  max(NMAXST   * s.WST  - s.ANST, 0.)
-            NDEMRT   =  max(NMAXRT   * s.WRT  - s.ANRT, 0.)
-            NDEMSO  =  max(p.NMAXSO * s.WSO  - s.ANSO, 0.) / p.TCNT
-            
-            # N supply to the storage organs.
-            NSUPSO  = ATN / p.TCNT if (DVS > p.DVSNT) else 0.0
-    
-            # Rate of N uptake in grains.
-            RNSO    =  min(NDEMSO, NSUPSO)
-            
-            # Total Nitrogen demand.
-            NDEMTO  = max(0.0, (NDEMLV + NDEMST + NDEMRT))
-            
-            """
-            About 75-90% of the total N uptake at harvest takes place before
-            anthesis and, in conditions of high soil fertility, post-anthesis N uptake
-            may contribute up to 25% but would exclusively end up in the grain
-            as protein. Therefore, this nitrogen would not play any role in the
-            calculation of nitrogen stress that influences the biomass formation.
-            Therefore, nitrogen uptake is assumed to cease at anthesis,
-            as nitrogen content in the vegetative parts hardly increases after
-            anthesis
-            """
-            
-            #  Nitrogen uptake limiting factor at low moisture conditions in the
-            #  rooted soil layer before anthesis. After anthesis there is no
-            #  uptake from the soil anymore.
-            NLIMIT  = 1.0 if (DVS < p.DVSNLT) and (WC >= p.WCWP) else 0.0
-                
-            NUPTR   = (max(0., min(NDEMTO, s.TNSOIL))* NLIMIT ) / DELT 
-            
-            # N translocated from leaves, stem, and roots.
-            RNTLV   = RNSO* ATNLV/ ATN
-            RNTST   = RNSO* ATNST/ ATN
-            RNTRT   = RNSO* ATNRT/ ATN
-            
-            # compute the partitioning of the total N uptake rate (NUPTR) over the leaves, stem and roots.
-            RNULV, RNUST, RNURT = self.N_uptakeRates(NDEMLV, NDEMST, NDEMRT, NUPTR, NDEMTO)
-                    
-            RNST    = RNUST-RNTST
-            RNRT    = RNURT-RNTRT-RNLDRT
-            
-            # Rate of change of N in organs
-            RNLV    = RNULV-RNTLV-RNLDLV
-    
-            # ****************SOIL NITROGEN SUPPLY***********************************
-            """
-            Soil–crop nitrogen balance 
-    
-            The mineral nitrogen balance of the soil is the difference between nitrogen 
-            added through mineralization and/or fertilizer, and nitrogen removed by crop 
-            uptake and losses. The net rate of change of N in soil (dN/dt in gm-2 d-1) is: 
-            
-            dN/dt[soil]= Nmin + (FERTN * NRF) - dNU/dt 
-            
-            where Nmin is the nitrogen supply through mineralization and biological N 
-            fixation, FERTN is the fertilizer nitrogen application rate, NRF is the 
-            fertilizer nitrogen recovery fraction and dNU/dt is the rate of nitrogen uptake 
-            by the crop, which is calculated as the minimum of the N supply from the soil 
-            and the N demand from the crop. 
-            """
-            
-            #  Soil N supply (g N m-2 d-1) through mineralization.
-            RTMIN = 0.10 * NLIMIT
-    
-            #  Change in inorganic N in soil as function of fertilizer
-            #  input, soil N mineralization and crop uptake.
-            RNSOIL = self.FERTNS/DELT -NUPTR + RTMIN
-            self.FERTNS = 0.0
-            
-            # # Total leaf weight.
-            WLV     = s.WLVG + s.WLVD
+        # code below is executed only POST-emergence
 
-            # Carbon, Nitrogen balance
-            CBALAN = (s.TGROWTH + (p.WRTLI + p.WLVGI + p.WSTI + p.WSOI)
-                             - (WLV + s.WST + s.WSO + s.WRT + s.WDRT))
-    
-            NBALAN = (s.NUPTT + (self.ANLVI + self.ANSTI + self.ANRTI + self.ANSOI)
-                      - (s.ANLV + s.ANST + s.ANRT + s.ANSO + s.NLOSSL + s.NLOSSR))
+        # translocatable N in leaves, stem, roots and
+        # storage organs.
+        ATNLV, ATNST, ATNRT, ATN = self.translocatable_N()
 
-            s.rLAI    = RLAI
-            s.rANLV   = RNLV  
-            s.rANST   = RNST  
-            s.rANRT   = RNRT  
-            s.rANSO   = RNSO  
-            s.rNUPTT  = NUPTR 
-            s.rNLOSSL = RNLDLV
-            s.rNLOSSR = RNLDRT
-            s.rWLVG   = RWLVG 
-            s.rWLVD   = DLV   
-            s.rWST    = RWST  
-            s.rWSO    = RWSO  
-            s.rWRT    = RWRT  
-            s.rROOTD  = r.RROOTD
-            s.rTGROWTH = RGROWTH
-            s.rWDRT   = DRRT  
-            s.rCUMPAR = PAR   
-            s.rTNSOIL = RNSOIL
+        # Relative deathOfLeaves rate of leaves due to senescence/ageing.
+        RDRTMP = p.RDRT(DAVTMP)
 
-        if (abs(NBALAN) > 0.0001):
+        # Total living vegetative biomass.
+        TBGMR = s.WLVG + s.WST
+
+        # Average residual N concentration.
+        NRMR = (s.WLVG * p.RNFLV + s.WST * p.RNFST) / TBGMR
+
+        # Maximum N concentration in the leaves, from which the values of the
+        # stem and roots are derived, as a function of development stage.
+        NMAXLV  = p.NMXLV(DVS)
+        NMAXST  = p.LSNR * NMAXLV
+        NMAXRT  = p.LRNR * NMAXLV
+
+        # maximum nitrogen concentration of leaves and stem.
+        NOPTLV  = p.FRNX * NMAXLV
+        NOPTST  = p.FRNX * NMAXST
+
+        # Maximum N content in the plant.
+        NOPTS   = NOPTST * s.WST
+        NOPTL   = NOPTLV * s.WLVG
+        NOPTMR  = (NOPTL + NOPTS)/TBGMR
+
+        # Total N in green matter of the plant.
+        NUPGMR  = s.ANLV + s.ANST
+
+        # Nitrogen Nutrition Index.
+        """
+        Nitrogen stress
+
+        A crop is assumed to experience N stress at N concentrations below a critical
+        value for unrestricted growth. To quantify crop response to nitrogen shortage, a
+        Nitrogen Nutrition Index (NNI) is defined, ranging from 0 (maximum N shortage)
+        to 1 (no N shortage):
+
+        NNI = (actual crop [N] - residual [N]) / (critical [N] - residual [N])
+
+        Critical crop nitrogen concentration, the lower limit of canopy nitrogen
+        concentration in leaves and stems required for unrestricted growth, has been
+        taken as half the maximum nitrogen concentration. An experimental basis for such
+        an assumption can be derived from the study of Zhen and Leigh (1990), who
+        reported that nitrate accumulation in plant occurs in significant quantity when
+        the N needs to reach the maximum growth were fulfilled and the mean value of
+        nitrate accumulated beyond the criticalNconcentration was about 50% for
+        different stages.
+        """
+        NFGMR = NUPGMR / TBGMR
+        NNI = limit(0.001, 1.0, ((NFGMR-NRMR)/(NOPTMR-NRMR)))
+
+        # -------- Growth rates and dry matter production of plant organs-------*
+        #  Biomass partitioning functions under (water and nitrogen)non-stressed
+        #  situations
+        """
+        Biomass partitioning
+
+        Biomass formed at any time during crop growth is partitioned amongst organs
+        (Fig. 1), i.e. roots, stems, leaves and storage organs, with partitioning
+        factors defined as a function of development stage (Fig. 2) (Drenth et al.,
+        1994), which thus provides the rates of growth of these organs:
+
+        dW/dt[i] = Pc[i] * dW / dt
+
+        where (dW/dt) is the rate of biomass growth (gm-2 d-1); (dW/dt)[i] and Pc[i] are
+        the rate of growth (gm-2 d-1) of and the biomass partitioning factor to organ i
+        (g organ-i g-1 biomass), respectively. Leaf, stem and root weights of the
+        seedlings at the time of transplanting are input parameters for the model. The
+        time course of weights of these organs follows from integration of their net
+        growth rates, i.e. growth rates minus death rates, the latter being defined as a
+        function of physiological age, shading and stress.
+        """
+        FRTWET = p.FRTTB(DVS)
+        FLVT = p.FLVTB(DVS)
+        FSTT = p.FSTTB(DVS)
+        FSOT = p.FSOTB(DVS)
+
+
+        """
+        Leaf area development
+
+        The time course of LAI is divided into two stages: an exponential stage during
+        the juvenile phase, where leaf area development is a function of temperature,
+        and a linear stage where it depends on the increase in leaf biomass (Spitters,
+        1990; Spitters and Schapendonk, 1990). The death of leaves due to senescence
+        that may be enhanced by shading and/or stress leads to a corresponding loss in
+        leaf area. The specific leaf area is used for the conversion of dead leaf
+        biomass to corresponding loss in leaf area. The death of leaves due to
+        senescence occurs only after flowering and the rate depends on crop age
+        (function adopted from ORYZA2000, Bouman et al., 2001). The excessive growth of
+        leaves also result in death of leaves due to mutual shading. The death of leaves
+        due to shading is determined by a maximum death rate and the relative proportion
+        of leaf area above the critical LAI (4.0) (Spitters, 1990; Spitters and
+        Schapendonk, 1990). The net rate of change in leaf area (dLAI/dt) is the
+        difference between its growth rate and its death rate:
+
+        dLAI/dt = dGLAI / dt - dDLAI / dt
+
+        where (dGLAI/dt) is the leaf area growth rate and (dDLAI/dt) is the
+        leaf area death rate.
+        """
+        # Specific Leaf area(m2/g).
+        SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
+
+        # Growth reduction function for water stress(actual trans/potential)
+        r.TRANRF = r.TRAN / r.PTRAN
+
+        # relative modification for root and shoot allocation.
+        FRT, FLV, FST, FSO = self.dryMatterPartitioningFractions(p.NPART, r.TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT)
+
+        # total totalGrowthRate rate.
+        RGROWTH = self.totalGrowthRate(DTR, r.TRANRF, NNI)
+
+        # Leaf totalGrowthRate and LAI.
+        GLV    = FLV * RGROWTH
+
+        # daily increase of leaf area index.
+        GLAI = self._growth_leaf_area(DTEFF, self.LAII, DELT, SLA, GLV, WC, DVS, r.TRANRF, NNI)
+
+        # relative deathOfLeaves rate of leaves.
+        DLV, DLAI = self.deathRateOfLeaves(TSUM, RDRTMP, NNI, SLA)
+
+        # Net rate of change of Leaf area.
+        RLAI   = GLAI - DLAI
+
+        # Root totalGrowthRate
+        """
+        Root growth
+
+        The root system is characterized by its vertical extension in the soil profile.
+        At emergence or at transplanting for transplanted rice. Effect of N stress (NNI)
+        on crop growth through its effect on LA and LUE. rooting depth is initialized.
+        Roots elongate at a constant daily rate, until flowering, provided soil water
+        content is above permanent wilting point (PWP), whereas growth ceases when soil
+        is drier than PWP or when a certain preset maximum rooting depth is reached
+        (Spitters and Schapendonk, 1990; Farr� et al., 2000).
+        """
+        r.RROOTD = min(p.RRDMAX,  p.ROOTDM - s.ROOTD) if (WC > p.WCWP) else 0.0
+
+        # N loss due to deathOfLeaves of leaves and roots.
+        DRRT = 0. if (DVS < p.DVSDR) else s.WRT * p.RDRRT
+        RNLDLV = p.RNFLV * DLV
+        RNLDRT = p.RNFRT * DRRT
+
+        # relative totalGrowthRate rate of roots, leaves, stem
+        # and storage organs.
+        RWLVG, RWRT, RWST, RWSO = self.relativeGrowthRates(RGROWTH, FLV, FRT, FST, FSO, DLV, DRRT)
+
+
+        """
+        Nitrogen demand
+
+        Total crop nitrogen demand equals the sum of the nitrogen demands of its
+        individual organs (excluding storage organs, for which nitrogen demand is met by
+        translocation from the other organs, i.e. roots, stems and leaves) (Fig. 3).
+        Nitrogen demand of the individual organs is calculated as the difference
+        betweenmaximum and actual organ nitrogen contents. The maximum nitrogen content
+        is defined as a function of canopy development stage (Drenth et al., 1994).
+        Total N demand (TNdem: gm-2 d-1) of the crop is:
+
+        TNdem = sum(Nmax,i - ANi / dt)
+
+        where Nmax,i is the maximum nitrogen concentration of organ i (gN/g biomass,
+        with i referring to leaves, stems and roots), Wi is the weight of organ i
+        (g biomass/m2), and ANi is the actual nitrogen content of organ i (gN/m2).
+        """
+
+        # N demand of leaves, roots and stem storage organs.
+        NDEMLV   =  max(NMAXLV   * s.WLVG - s.ANLV, 0.)
+        NDEMST   =  max(NMAXST   * s.WST  - s.ANST, 0.)
+        NDEMRT   =  max(NMAXRT   * s.WRT  - s.ANRT, 0.)
+        NDEMSO  =  max(p.NMAXSO * s.WSO  - s.ANSO, 0.) / p.TCNT
+
+        # N supply to the storage organs.
+        NSUPSO  = ATN / p.TCNT if (DVS > p.DVSNT) else 0.0
+
+        # Rate of N uptake in grains.
+        RNSO    =  min(NDEMSO, NSUPSO)
+
+        # Total Nitrogen demand.
+        NDEMTO  = max(0.0, (NDEMLV + NDEMST + NDEMRT))
+
+        """
+        About 75-90% of the total N uptake at harvest takes place before
+        anthesis and, in conditions of high soil fertility, post-anthesis N uptake
+        may contribute up to 25% but would exclusively end up in the grain
+        as protein. Therefore, this nitrogen would not play any role in the
+        calculation of nitrogen stress that influences the biomass formation.
+        Therefore, nitrogen uptake is assumed to cease at anthesis,
+        as nitrogen content in the vegetative parts hardly increases after
+        anthesis
+        """
+
+        #  Nitrogen uptake limiting factor at low moisture conditions in the
+        #  rooted soil layer before anthesis. After anthesis there is no
+        #  uptake from the soil anymore.
+        NLIMIT  = 1.0 if (DVS < p.DVSNLT) and (WC >= p.WCWP) else 0.0
+
+        NUPTR   = (max(0., min(NDEMTO, s.TNSOIL))* NLIMIT ) / DELT
+
+        # N translocated from leaves, stem, and roots.
+        RNTLV   = RNSO* ATNLV/ ATN
+        RNTST   = RNSO* ATNST/ ATN
+        RNTRT   = RNSO* ATNRT/ ATN
+
+        # compute the partitioning of the total N uptake rate (NUPTR) over the leaves, stem and roots.
+        RNULV, RNUST, RNURT = self.N_uptakeRates(NDEMLV, NDEMST, NDEMRT, NUPTR, NDEMTO)
+
+        RNST    = RNUST-RNTST
+        RNRT    = RNURT-RNTRT-RNLDRT
+
+        # Rate of change of N in organs
+        RNLV    = RNULV-RNTLV-RNLDLV
+
+        # ****************SOIL NITROGEN SUPPLY***********************************
+        """
+        Soil–crop nitrogen balance
+
+        The mineral nitrogen balance of the soil is the difference between nitrogen
+        added through mineralization and/or fertilizer, and nitrogen removed by crop
+        uptake and losses. The net rate of change of N in soil (dN/dt in gm-2 d-1) is:
+
+        dN/dt[soil]= Nmin + (FERTN * NRF) - dNU/dt
+
+        where Nmin is the nitrogen supply through mineralization and biological N
+        fixation, FERTN is the fertilizer nitrogen application rate, NRF is the
+        fertilizer nitrogen recovery fraction and dNU/dt is the rate of nitrogen uptake
+        by the crop, which is calculated as the minimum of the N supply from the soil
+        and the N demand from the crop.
+        """
+
+        #  Soil N supply (g N m-2 d-1) through mineralization.
+        RTMIN = 0.10 * NLIMIT
+
+        #  Change in inorganic N in soil as function of fertilizer
+        #  input, soil N mineralization and crop uptake.
+        RNSOIL = self.FERTNS/DELT -NUPTR + RTMIN
+        self.FERTNS = 0.0
+
+        # # Total leaf weight.
+        WLV     = s.WLVG + s.WLVD
+
+        # Carbon, Nitrogen balance
+        CBALAN = (s.TGROWTH + (p.WRTLI + p.WLVGI + p.WSTI + p.WSOI)
+                         - (WLV + s.WST + s.WSO + s.WRT + s.WDRT))
+
+        NBALAN = (s.NUPTT + (self.ANLVI + self.ANSTI + self.ANRTI + self.ANSOI)
+                  - (s.ANLV + s.ANST + s.ANRT + s.ANSO + s.NLOSSL + s.NLOSSR))
+
+        s.rLAI    = RLAI
+        s.rANLV   = RNLV
+        s.rANST   = RNST
+        s.rANRT   = RNRT
+        s.rANSO   = RNSO
+        s.rNUPTT  = NUPTR
+        s.rNLOSSL = RNLDLV
+        s.rNLOSSR = RNLDRT
+        s.rWLVG   = RWLVG
+        s.rWLVD   = DLV
+        s.rWST    = RWST
+        s.rWSO    = RWSO
+        s.rWRT    = RWRT
+        s.rROOTD  = r.RROOTD
+        s.rTGROWTH = RGROWTH
+        s.rWDRT   = DRRT
+        s.rCUMPAR = PAR
+        s.rTNSOIL = RNSOIL
+
+        if abs(NBALAN) > 0.0001:
             raise NitrogenBalanceError("Nitrogen un-balance in crop model at day %s" % day)
         
-        if (abs(CBALAN) > 0.0001):
+        if abs(CBALAN) > 0.0001:
             raise CarbonBalanceError("Carbon un-balance in crop model at day %s" % day)
 
     @prepare_states
@@ -702,7 +700,7 @@ class Lintul3(SimulationObject):
 
         # run automatic integration on states object.
         s = self.states
-        s.integrate(delta = 1.)
+        s.integrate(delta=1.)
 
         # Compute some derived states
         s.TAGBM = s.WLVG + s.WLVD + s.WST + s.WSO

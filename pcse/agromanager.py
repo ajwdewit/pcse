@@ -157,11 +157,11 @@ class CropCalendar(HasTraits, DispatcherObject):
         finish_type = None
         # Check if crop_end_date is reached for CROP_END_TYPE harvest/earliest
         if self.crop_end_type in ["harvest", "earliest"]:
-            if day >= self.crop_end_date:
+            if day == self.crop_end_date:
                 finish_type = "harvest"
 
         # Check for forced stop because maximum duration is reached
-        if self.duration >= self.max_duration:
+        if self.duration == self.max_duration:
             finish_type = "max_duration"
 
         # If finish condition is reached send a signal to finish the crop

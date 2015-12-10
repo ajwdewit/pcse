@@ -93,7 +93,7 @@ class Lintul3Soil(SimulationObject):
          Name        Description                                      Pbl      Unit
         =========== ================================================= ==== ===============
         WA          Soil water amount                                  *     mm
-        WC          Volumetric soil water content                            mm
+        WC          Volumetric soil water content                            -
         TRUNOF      Run off accumulator                                      mm
         TTRAN       Crop transpiration accumulated over growth period        mm
         TEVAP       Soil evaporation accumulated over growth period          mm
