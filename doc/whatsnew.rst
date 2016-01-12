@@ -11,6 +11,8 @@ PCSE version 5.2 brings the following new features:
   The new agromanager
   can elegantly combine cropping calendars, timed events and state events also within rotations over several cropping
   campaigns. The AgroManager uses a new format based on YAML to store agromanagement definitions.
+- The water-limited production simulation with WOFOST now supports irrigation using the new AgroManager.
+  An example notebook has been added to explain the different irrigation options.
 
 What's new in PCSE 5.1
 ======================

@@ -12,6 +12,7 @@ pip-delete-this-directory.txt
 # Sphinx documentation
 docs/_build/
 doc/_build/
+doc/build.log
 
 # Sqlite DB
 *.db
@@ -27,3 +28,8 @@ env/
 /lintul3-springwheat-test.py
 
 pcse/tests/test_data/*.cache
+
+# build environment
+PCSE.egg-info/*
+dist/*
+build/*

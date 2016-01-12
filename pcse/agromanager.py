@@ -56,7 +56,8 @@ class CropCalendar(HasTraits, DispatcherObject):
     A `CropCalendar` object is responsible for storing, checking, starting and ending
     the crop cycle. The crop calendar is initialized by providing the parameters needed
     for defining the crop cycle. At each time step the instance of `CropCalendar` is called
-    and at dates defined by its parameters it initiates the appropriate actions::
+    and at dates defined by its parameters it initiates the appropriate actions:
+
     - sowing/emergence: A `crop_start` signal is dispatched including the parameters needed to
       start the new crop simulation object
     - maturity/harvest: the crop cycle is ended by dispatching a `crop_finish` signal with the

@@ -51,14 +51,19 @@ User guide
    quickstart.rst
    available_models.rst
 
+Reference guide
+---------------
+.. toctree::
+   :maxdepth: 2
 
-Design and Code docs
---------------------
+   reference_guide.rst
+
+Code documentation
+------------------
 
 .. toctree::
    :maxdepth: 2
 
-   user_guide.rst
    code.rst
 
 This document was generated on |date|/|time|.

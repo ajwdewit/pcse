@@ -334,7 +334,7 @@ class WaterbalanceFD(SimulationObject):
         p = self.params
         r = self.rates
 
-        # Rate of irrigation (RIRR) set to zero
+        # Rate of irrigation (RIRR)
         r.RIRR = self._RIRR
         self._RIRR = 0.
         
