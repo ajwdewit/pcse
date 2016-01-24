@@ -82,8 +82,9 @@ class Lintul3(SimulationObject):
         DVSI     Initial development stage                                  -
         DVSDR    Development stage above which deathOfLeaves of
                  leaves and roots start                                     -
-        DVSNLT   development stage N-limit                                  -
-        DVSNT    development stage N-threshold                              -
+        DVSNLT   Development stage after which no nutrients are absorbed    -
+        DVSNT    development stage above which N translocation to
+                 storage organs does occur                                  -
         FNTRT    Nitrogen translocation from roots to storage 
                  organs as a fraction of total amount of 
                  nitrogen translocated from leaves and stem to 
@@ -97,7 +98,7 @@ class Lintul3(SimulationObject):
                  that of leaves                                             g/g
         LSNR     Maximum N concentration of stem as fraction of 
                  that of leaves                                             g/g
-        LUE      Light use efficiency                                       gM/J
+        LUE      Light use efficiency                                       g/MJ
         NLAI     Coefficient for the effect of N stress on LAI 
                  reduction(during juvenile phase)                           -
         NLUE     Coefficient of reduction of LUE under nitrogen

@@ -1,9 +1,5 @@
 .. include:: abbreviations.txt
 
-******************
-Understanding PCSE
-******************
-
 An overview of PCSE
 ===================
 
@@ -26,7 +22,8 @@ simulation models:
     calling the agromanager module.
  2. Solving the differential equations for soil/plant system and updating
     the model state is deferred to SimulationObjects that
-    implement (bio)physical processes such as phenology or |CO2| assimilation.
+    implement (bio)physical processes such as phenological development
+    or |CO2| assimilation.
  3. An AgroManager module is included which takes care of
     signalling agricultural management actions such as sowing, harvesting,
     irrigation, etc.
@@ -97,7 +94,107 @@ states and so forth.
 
 The simulation loop will terminate when some finish condition has been reached.
 Usually, the `AgroManager` module will encounter the end of the agricultural
-campaign and will issue a terminate signal that terminates the entire simulation.
+campaign and will broadcast a terminate signal that terminates the entire simulation.
+
+Input needed by the Engine
+--------------------------
+
+To start the Engine four inputs are needed:
+
+1. A weather data provider that provides the Engine with the daily values
+   of weather variables. See the section on `Weather data providers`_ for an
+   overview of the different options for providing weather data.
+2. A set of parameters that is needed to parameterize the SimulationObjects
+   that simulate the soil and crop processes. Model parameters can be retrieved
+   from different sources like files or databases. The different sets of model
+   parameters (crop, soil and site) are encapsulated using a `ParameterProvider`
+   that provides a uniform interface to access the different parameter sets.
+   See the section on `Data providers for parameter values`_ for an overview.
+3. Agromanagement information that is needed to schedule agromanagement
+   actions that are taking place during the simulation. See the sections
+   on `The AgroManager`_ and `Data providers for agromanagement`_ for a
+   detailed overview.
+4. A configuration file that tells the Engine the details of the simulation
+   such as the components to use for the simulation of the crop, the soil and
+   the agromanagement. Moreover, the results that should be stored as final and
+   intermediate outputs and some other details.
+
+
+Engine configuration files
+--------------------------
+
+The engine needs a configuration file that specifies which components should
+be used for simulation and additional information. This is most easily
+explained by an example such as the configuration file for the WOFOST model
+for potential crop production::
+
+    # -*- coding: utf-8 -*-
+    # Copyright (c) 2004-2014 Alterra, Wageningen-UR
+    # Allard de Wit (allard.dewit@wur.nl), April 2014
+    """PCSE configuration file for WOFOST Potential Production simulation
+    in PCSE identical to the FORTRAN WOFOST 7.1
+
+    This configuration file defines the soil and crop components that
+    should be used for potential production simulation.
+    """
+
+    from pcse.soil.classic_waterbalance import WaterbalancePP
+    from pcse.crop.wofost import Wofost
+    from pcse.agromanagement import AgroManagementSingleCrop
+
+    # Module to be used for water balance
+    SOIL = WaterbalancePP
+
+    # Module to be used for the crop simulation itself
+    CROP = Wofost
+
+    # Module to use for AgroManagement actions
+    AGROMANAGEMENT = AgroManagementSingleCrop
+
+    # variables to save at OUTPUT signals
+    # Set to an empty list if you do not want any OUTPUT
+    OUTPUT_VARS = ["DVS","LAI","TAGP", "TWSO", "TWLV", "TWST",
+                   "TWRT", "TRA", "RD", "SM", "WWLOW"]
+    # interval for OUTPUT signals, either "daily"|"dekadal"|"monthly"|"weekly"
+    # For daily output you change the number of days between successive
+    # outputs using OUTPUT_INTERVAL_DAYS. For dekadal and monthly
+    # output this is ignored.
+    OUTPUT_INTERVAL = "daily"
+    OUTPUT_INTERVAL_DAYS = 1
+    # Weekday: Monday is 0 and Sunday is 6
+    OUTPUT_WEEKDAY = 0
+
+    # variables to save at SUMMARY_OUTPUT signals
+    # Set to an empty list if you do not want any SUMMARY_OUTPUT
+    SUMMARY_OUTPUT_VARS = ["DVS","LAIMAX","TAGP", "TWSO", "TWLV", "TWST",
+                           "TWRT", "CTRAT", "RD", "DOS", "DOE", "DOA",
+                           "DOM", "DOH", "DOV"]
+
+As you can see, the configuration file is written in plain python code.
+First of all, it defines the placeholders *SOIL*, *CROP* and
+*AGROMANAGEMENT* that define the components that should be used for
+the simulation of these processes. These placeholders simply point to
+the modules that were imported at the start of the configuration file.
+
+.. note: Modules must be imported using fully qualified names and relative
+         imports cannot be used.
+
+The second part is for defining the
+variables (*OUTPUT_VARS*) that should be stored during the model run
+(during OUTPUT signals) and the details of the regular output interval.
+Finally, summary output can be defined that will be generated at the end
+of the simulation as a set of final outputs.
+
+The relationship between models and the engine
+----------------------------------------------
+
+Models are treated together with the Engine, because models are simply
+pre-configured Engines. Any model can be started by starting the Engine
+with the appropriate configuration file. The only difference is that
+models can have methods that deal with specific characteristics of a model.
+This kind of functionality cannot be implemented in the Engine because
+the model details are not known beforehand.
+
 
 SimulationObjects
 =================
@@ -139,7 +236,9 @@ Moreover, a SimulationObject may contain other SimulationObjects that
 together form a logical structure. Finally, the SimulationObject must implement
 separate code sections for initialization, rate calculation and integration
 of the rates of change. A finalization step which is called at the end of the simulation
-can be added optionally. The skeleton of a SimulationObject looks like this:
+can be added optionally.
+
+The skeleton of a SimulationObject looks like this:
 
 .. code-block:: python
 
@@ -161,7 +260,7 @@ can be added optionally. The skeleton of a SimulationObject looks like this:
             """Initializes the SimulationObject with given parametervalues."""
             self.params = self.Parameters(parametervalues)
             self.rates = self.RateVariables(kiosk)
-            self.states = self.StateVariables(kiosk, STATE1=0.)
+            self.states = self.StateVariables(kiosk, STATE1=0., publish=["STATE1"])
 
         @prepare_rates
         def calc_rates(day, drv):
@@ -200,9 +299,6 @@ Compared to the FSE system and the
 the `initialize()`, `calc_rates()`, `integrate()` and `finalize()` sections
 match with the *ITASK* numbers 1, 2, 3, 4.
 
-Communication between SimulationObjects
----------------------------------------
-
 A complicating factor that arises when using modular code is how to arrange
 the communication between SimulationObjects. For example, the `evapotranspiration`
 SimulationObject will need information about the leaf area index from the
@@ -216,8 +312,58 @@ their rate and/or state variables (or a subset) into the kiosk, other
 SimulationObjects can subsequently request the variable value from the kiosk
 without any knowledge about the SimulationObject that published it.
 Therefore, the VariableKiosk is shared by all SimulationObjects and must
-be provided when SimulationObjects initialize. See the section on communication
-between PCSE components for a detailed description of the variable kiosk.
+be provided when SimulationObjects initialize.
+
+See the section on `Exchanging data between model components`_
+for a detailed description of the variable kiosk and other ways to communicate
+between model components.
+
+Simulation Parameters
+---------------------
+
+Usually SimulationObjects have one or more parameters which should be defined as a subclass
+of the `ParamTemplate` class.  Although parameters can be specified as part
+of the SimulationObject definition directly, subclassing them from `ParamTemplate` has a few
+advantages. First of all parameters must be initialized and a missing parameter will lead to
+an exception being raised with a clear message. Second parameters are initialized as read-only
+attributes which cannot be changed during the simulation. So occasionally overwriting a
+parameter value is impossible this way.
+
+The model parameters are initialized by the calling the Parameters class definition
+and providing a dictionary with key/value pairs to define the parameters.
+
+State/Rate variables
+--------------------
+
+The definitions for state and rate variables share many properties. Definitions of rate and
+state variables should be defined as attributes of a class that inherit from
+`RatesTemplate` and `StatesTemplate` respectively. Names of rate and state variables that
+are defined this way **must** be unique across all model components and a duplicate variable
+name somewhere across the model composition will lead to an exception.
+
+Both class instances need the VariableKiosk as its first input parameter which is needed
+to register the variables defined. Moreover, variables can be published with the `publish`
+keyword as is done in the example above for *STATE1*. Publishing a variable means that it
+will be available in the VariableKiosk and can be retrieved by other components based on the
+name of the variables. The main difference between a rates and
+a states class is that the states class requires you to provide the initial value of the
+state as a keyword parameter in the call. Failing to provide the initial value will lead
+to an exception being raise.
+
+Instances of objects containing rate and state variables are read-only by default. In order
+to change the value of a rate or state, the instance must be unlocked. For this purpose
+the decorators `@prepare_rates` and `@prepare_states` are being placed in front of the calls
+to `calc_rates()` and `integrate()` which take care of unlocking and locking the states
+and rates instances. Using this approach rate variables can only be changed during
+the call where the rates are calculated, states variables are read-only at that stage.
+Similarly, state variables can only be changed during the state update while the rates
+of change are locked. This mechanism ensures that rate/state updates are carried out
+in the correct order.
+
+Finally, instances of rate variables have one additional method, called `zerofy()`.
+Calling `zerofy()` is normally done by the Engine and explicitly sets all rates of change
+to zero.
+
 
 The AgroManager
 ===============
@@ -365,8 +511,12 @@ on daily time steps it is easy to schedule actions on dates. Time events are cha
 an event signal, a name and comment that can be used to describe the event and finally an
 events table that lists the dates for the events and the parameters that should be passed onward.
 
+Note that when multiple events are connected to the same date, the order in which they trigger is
+undetermined.
+
 For a detailed description of a timed events see the code documentation on the TimedEventsDispatcher
 in the section on :ref:`Agromanagement`.
+
 
 State events
 ------------
@@ -379,7 +529,7 @@ can be connected to any variable that is defined within PCSE.
 Each state event is defined by an `event_signal`, an `event_state` (e.g. the model
 state that triggers the event) and a `zero condition`. Moreover, an optional name and an
 optional comment can be provided. Finally the events_table specifies at which model state values
-the event occurs. The events_table is a list which provides for each state the parameters that
+the event occurs. The `events_table` is a list which provides for each state the parameters that
 should be dispatched with the given event_signal.
 
 Managing state events is more complicated than timed events because PCSE cannot determine beforehand at
@@ -390,10 +540,154 @@ crosses zero. The `zero_condition` defines how this crossing should take place. 
 `zero_condition` can be:
 
 * `rising`: the event is triggered when (`model_state` - `event_state`) goes from a negative value towards
-   zero or a positive value.
+  zero or a positive value.
 * `falling`: the event is triggered when (`model_state` - `event_state`) goes from a positive value towards
-   zero or a negative value.
+  zero or a negative value.
 * `either`: the event is triggered when (`model_state` - `event_state`) crosses or reaches zero from any
-   direction.
+  direction.
+
+Note that when multiple events are connected to the same state value, the order in which they trigger is
+undetermined.
+
+For a detailed description of a state events see the code documentation on the StateEventsDispatcher
+in the section on :ref:`Agromanagement`.
 
 
+Finding the start and end date
+------------------------------
+
+Exchanging data between model components
+========================================
+
+A complicating factor when dealing with modular code is how to exchange model states or other
+data between the different components. PCSE implements two basic methods for exchanging variables:
+
+1. The VariableKiosk which is primarily used to exchange state/rate variables between model components and
+   where updates of the state/rate variables are needed at each cycle in the simulation process.
+2. The use of signals that can be broadcasted and received by any PCSE object and which is primarily used to
+   broadcast information as a response to events that are happening during the model simulation.
+
+The VariableKiosk
+-----------------
+
+The VariableKiosk is an essential component in PCSE and it is created when the Engine starts.
+Nearly all objects in PCSE receive a reference to the VariableKiosk and it has many functions
+which may not be clear or appreciated at first glance.
+
+First of all,
+the VariableKiosk registers *all* state and rate variables which are defined as attributes of
+a StateVariables or RateVariables class. By doing so, it also ensures that names are
+unique; there cannot be two state/rate variables with the same name within the component hierarchy
+of a single Engine. This uniqueness is enforced to avoid name conflicts between components that
+would affect the publishing of variables or the retrieval of variables. For example,
+`engine.get_variable("LAI")` will retrieve the leaf area index of the crop. However, if there
+would be two variables named "LAI" it would be unclear which one is retrieved. It would not
+even be guaranteed that it is the same variables between function calls or model runs.
+
+Second, the VariableKiosk takes care of exchanging state and rate variables between model
+components. Variables that are published by the RateVariables and StateVariables object will become
+available in the VariableKiosk the moment when the variable gets a value assigned.
+Within the PCSE internals, published variables have a trigger connected to them that copies their
+value into the VariableKiosk. The VariableKiosk should therefore not be regarded as a shared
+state object but rather as a cache that contains copies of variable name/value pairs.
+Moreover, the updating of variables in the kiosk is protected. Only the
+SimulationObject that registers and publishes a variable can change its value in the Kiosk.
+All other SimulationObjects can query its value, but cannot alter it. Therefore it is
+impossible for two processes to manipulate the same variable through the VariableKiosk.
+
+A potential danger with having copies of variables in the kiosk is that copies do not
+reflect the actual value anymore, for example due to a missing state update. In such case
+the value of the state is "lagging" in the kiosk which is a potential simulation error.
+To avoid such problems, the kiosk regularly 'flushes' its content. After a flush, the
+variables remain registered in the kiosk, but their values become undefined. The flushing
+of variables is taken care of by the engine and is done separately for rate and state
+variables. After the update of all states, all rate variables are flushed; when the rate
+calculation step is finished, all state variables in the kiosk are flushed. On the one hand,
+this procedure helps to enforce that calculations are done in the right order. On the
+other hand it also implies that in order to keep a state variable available in the kiosk
+its value *must* be updated with the corresponding rate, even if that rate is zero!
+
+The last important function embodied by the VariableKiosk is as the sender ID of signals
+that are broadcasted by objects in PCSE. Each signal that is broadcasted has a sender
+ID and zero or more receivers. Each instance of a PCSE simulation object is configured
+to listen only to signals that have their own VariableKiosk as sender ID.  Since the
+VariableKiosk is unique to each instance of an Engine, this ensures that two engines
+that are active in the same PCSE session, will not 'listen' to each others signals but
+only to their own signals. This principle becomes critical when running ensembles of
+models (e.g Engines) where the broadcasting of signals of the various ensemble members
+should not interfere between members.
+
+In practice, a user of PCSE hardly needs to deal with the VariableKiosk; variables can
+be published by indicating them with the `publish=[<var1>,<var2>,...]` keyword when
+initializing rate/state variables, while retrieving values from the VariableKiosk works
+through the normal dictionary look up. For more details on the VariableKiosk see the
+description in the :ref:`BaseClasses` section.
+
+Broadcasting signals
+--------------------
+
+The second mechanism in PCSE for passing around information is by broadcasting signals
+as a result of events. This is very similar to the way a user interface toolkit
+works and where event handlers are connected to certain events like mouse clicks
+or buttons being pressed. Instead, events in PCSE are related to management actions
+from the AgroManager, output signals from the timer module, the termination of the
+simulation, etc.
+
+Signals in PCSE are defined in the `signals` module which can be easily imported by
+any module that needs access to signals. Signals are simply defined as strings but
+any hashable object type would do. Most of the work for dealing with signals is in
+setting up a receiver. A receiver is usually a method on a SimulationObject that is
+will be called when the signal is broadcasted. This method will then be connected
+to the signal during the initialization of the object. This is easy to describe
+with an example::
+
+    mysignal = "My first signal"
+
+    class MySimObj(SimulationObject):
+
+        def initialize(self, day, kiosk):
+            self._connect_signal(self.handle_mysignal, mysignal)
+
+        def handle_mysignal(self, arg1, arg2):
+            print "Value of arg1, arg2: %s, %s" % (arg1, arg2)
+
+        def send_mysignal(self):
+            self._send_signal(signal=mysignal, arg2="A", arg1=2.5)
+
+In the example above, the `initialize()` section connects the `handle_mysignal()` method to
+signals of type `mysignal` having two arguments `arg1` and `arg2`. When the object is
+initialized and the `send_mysignal()` is called the handler will print out the values
+of its two arguments::
+
+    >>> from pcse.base_classes import VariableKiosk
+
+    >>> from datetime import date
+
+    >>> d = date(2000,1,1)
+
+    >>> v = VariableKiosk()
+
+    >>> obj = MySimObj(d, v)
+
+    >>> obj.send_mysignal()
+    Value of arg1, arg2: 2.5, A
+
+    >>>
+
+Note that the methods for receiving signals `_connect_signal()` and sending signals `_send_signal()` are
+available because of subclassing `SimulationObject`. Both methods are highly flexible regarding the arguments and
+keyword arguments that can be passed on with the signal. For more details have a look at the documentation
+in the :ref:`Signals` module and the documentation of the `PyDispatcher <http://pydispatcher.sourceforge.net/>`_
+package which is used to provide this functionality.
+
+Data Providers in PCSE
+======================
+
+Weather data providers
+----------------------
+
+Data providers for parameter values
+-----------------------------------
+
+Data providers for agromanagement
+---------------------------------

@@ -33,10 +33,23 @@ from .agromanager import AgroManager
 
 class Engine(BaseEngine):
     """Simulation engine for simulating the combined soil/crop system.
-    
+
+    :param parameterprovider: A `ParameterProvider` object providing model
+        parameters as key/value pairs. The parameterprovider encapsulates
+        the different parameter sets for crop, soil and site parameters.
+    :param weatherdataprovider: An instance of a WeatherDataProvider that can
+        return weather data in a WeatherDataContainer for a given date.
+    :param agromanagement: AgroManagement data. The data format is described
+        in the section on agronomic management.
+    :param config: A string describing the model configuration file to use.
+        By only giving a filename PCSE assumes it to be located in the 'conf/'
+        folder in the main PCSE folder.
+        If you want to provide you own configuration file, specify
+        it as an absolute or a relative path (e.g. with a leading '.')
+
     `Engine` handles the actual simulation of the combined soil-
     crop system. The central part of the  `Engine` is the soil
-    waterbalance which is continuously simulating during the entire run. In
+    water balance which is continuously simulating during the entire run. In
     contrast, `CropSimulation` objects are only initialized after receiving a
     "CROP_START" signal from the AgroManagement unit. From that point onward,
     the combined soil-crop is simulated including the interactions between
@@ -45,11 +58,11 @@ class Engine(BaseEngine):
     Similarly, the crop simulation is finalized when receiving a "CROP_FINISH"
     signal. At that moment the `finalize()` section on the cropsimulation is
     executed. Moreover, the "CROP_FINISH" signal can specify that the
-    cropsimulation object should be deleted from the hierarchy. The latter is
+    crop simulation object should be deleted from the hierarchy. The latter is
     useful for further extensions of PCSE for running crop rotations.
     
     Finally, the entire simulation is terminated when a "TERMINATE" signal is
-    received. At that point, the `finalize()` section on the waterbalance is 
+    received. At that point, the `finalize()` section on the water balance is
     executed and the simulation stops.
 
     **Signals handled by Engine:**
@@ -102,20 +115,7 @@ class Engine(BaseEngine):
     TMNSAV = Instance(deque)
     
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement=None, config=None):
-        """
-        :param parameterprovider: A `ParameterProvider` object providing model
-            parameters as key/value pairs. The parameterprovider encapsulates
-            the different parameter sets for crop, soil and site parameters.
-        :param weatherdataprovider: An instance of a WeatherDataProvider that can
-            return weather data in a WeatherDataContainer for a given date.
-        :param agromanagement: AgroManagement data. The data format is described
-            in the section on agronomic management.
-        :param config: A string describing the model configuration file to use.
-            By only giving a filename PCSE assumes it to be located under
-            pcse/conf. If you want to provide you own configuration file, specify
-            it as an absolute or a relative path (e.g. with a leading '.')
 
-        """
         BaseEngine.__init__(self)
 
         # Load the model configuration
@@ -425,7 +425,16 @@ class Engine(BaseEngine):
         return increments
 
     def get_output(self):
+        """Returns the variables have have been stored during the simulation.
+
+        If no output is stored an empty list is returned. Otherwise, the output is
+        returned as a list of dictionaries in chronological order. Each dictionary is
+        a set of stored model variables for a certain date. """
+
         return self._saved_output
 
     def get_summary_output(self):
+        """Returns the summary variables have have been stored during the simulation.
+        """
+
         return self._saved_summary_output

@@ -62,8 +62,18 @@ Agromanagement
    The old `AgroManagementSingleCrop` is still here for backward compatibility but will be removed
    in future versions of PCSE.
 
-.. automodule:: pcse.agromanager
+.. autoclass:: pcse.agromanager.AgroManager
     :members:
+
+.. autoclass:: pcse.agromanager.CropCalendar
+    :members:
+
+.. autoclass:: pcse.agromanager.TimedEventsDispatcher
+    :members:
+
+.. autoclass:: pcse.agromanager.StateEventsDispatcher
+    :members:
+
 
 .. automodule:: pcse.agromanagement
     :members:
@@ -167,12 +177,15 @@ Abiotic damage
 .. .. autoclass:: pcse.crop.abioticdamage.CERES_WinterKill
 ..    :members:
 
+.. _BaseClasses:
+
 Base classes
 ============
 
 The base classes define much of the functionality which is used "under the
 hood" in PCSE. Except for the `VariableKiosk` and the `WeatherDataContainer`
 all classes are not to be called directly but should be subclassed instead.
+
 
 
 VariableKiosk
@@ -201,6 +214,8 @@ Base and utility classes for weather data
 
 .. autoclass:: pcse.base_classes.WeatherDataContainer
     :members:
+
+.. _Signals:
 
 Signals defined
 ===============
@@ -278,7 +293,27 @@ by CGMS executable version 9 and 10.
 The CGMS11 database
 ...................
 
-Tools for reading a CGMS11 database are under construction.
+.. automodule:: pcse.db.cgms11
+    :members:
+
+.. autoclass:: WeatherObsGridDataProvider
+    :members:
+
+.. autoclass:: TimerDataProvider
+    :members:
+
+.. autoclass:: SoilDataIterator
+    :members:
+
+.. autoclass:: CropDataProvider
+    :members:
+
+.. autoclass:: STU_Suitability
+    :members:
+
+.. autoclass:: SiteDataProvider
+    :members:
+
 
 The NASA POWER database
 .......................

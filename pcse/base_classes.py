@@ -552,6 +552,7 @@ class StatesTemplate(StatesRatesCommon):
 #-------------------------------------------------------------------------------
 class StatesWithImplicitRatesTemplate(StatesTemplate):
     """Container class for state variables that have an associated rate.
+
     The rates will be generated upon initialization having the same name as their states,
     prefixed by a lowercase character 'r'.
     After initialization no more attributes can be implicitly added.

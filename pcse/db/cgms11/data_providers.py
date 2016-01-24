@@ -74,6 +74,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
         (datetime.date object)
     :param end_date: Retrieve meteo data up to and including end_date
         (datetime.date object)
+    :param recalc_ET: Set to True to force calculation of reference
+        ET values. Mostly useful when values have not been calculated
+         in the CGMS database.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
