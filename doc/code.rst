@@ -1,8 +1,7 @@
 .. include:: abbreviations.txt
 
-******************************
-Model code documentation (API)
-******************************
+How to read
+===========
 
 The API documentation provides a description of the interface and internals of 
 all SimulationObjects, AncillaryObjects and utility routines available in the
