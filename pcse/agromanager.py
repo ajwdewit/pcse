@@ -162,7 +162,7 @@ class CropCalendar(HasTraits, DispatcherObject):
                 finish_type = "harvest"
 
         # Check for forced stop because maximum duration is reached
-        if self.duration == self.max_duration:
+        if self.in_crop_cycle and self.duration == self.max_duration:
             finish_type = "max_duration"
 
         # If finish condition is reached send a signal to finish the crop

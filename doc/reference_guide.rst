@@ -293,7 +293,6 @@ after which all rates of change should be calculated. If this rule is not
 applied rigorously, some rates may pertain to states at
 the current time whereas others will pertain to states from the previous time
 step .
-
 Compared to the FSE system and the
 `FORTRAN implementation of WOFOST <https://github.com/ajwdewit/wofost>`_,
 the `initialize()`, `calc_rates()`, `integrate()` and `finalize()` sections
@@ -303,9 +302,7 @@ A complicating factor that arises when using modular code is how to arrange
 the communication between SimulationObjects. For example, the `evapotranspiration`
 SimulationObject will need information about the leaf area index from the
 `leaf_dynamics` SimulationObject to calculate the crop transpiration
-values.
-
-In PCSE the communication between
+values. In PCSE the communication between
 SimulationObjects is taken care of by the so-called `VariableKiosk`. The
 metaphore kiosk is used because the SimulationObjects publish
 their rate and/or state variables (or a subset) into the kiosk, other
@@ -553,8 +550,80 @@ For a detailed description of a state events see the code documentation on the S
 in the section on :ref:`Agromanagement`.
 
 
-Finding the start and end date
-------------------------------
+Finding the start and end date of a simulation
+----------------------------------------------
+
+The agromanager has the task to find the start and end date of the simulation based on the
+agromanagement definition that has been provided to the Engine.
+Getting the start date from the agromanagement definition is straightforward as this is
+represented by the start date of the first campaign. However,
+getting the end date is more complicated because there are several possibilities.
+The first option is to explicitly define the end date of the simulation by adding a
+'trailing empty campaign' to the agromanagement definition.
+An example of an agromanagement definition with a 'trailing empty campaigns' (YAML format) is
+given below. This example will run the simulation until 2001-01-01::
+
+    Version: 1.0
+    AgroManagement:
+    - 1999-08-01:
+        CropCalendar:
+            crop_id: winter-wheat
+            crop_start_date: 1999-09-15
+            crop_start_type: sowing
+            crop_end_date:
+            crop_end_type: maturity
+            max_duration: 300
+        TimedEvents:
+        StateEvents:
+    - 2001-01-01:
+
+
+The second option is that there is no trailing empty campaign and in that case the end date of the simulation
+is retrieved from the crop calendar and/or the timed events that are scheduled. In the example below, the
+end date will be 2000-08-05 as this is the harvest date and there are no timed events scheduled after this
+date::
+
+    Version: 1.0
+    AgroManagement:
+    - 1999-09-01:
+        CropCalendar:
+            crop_id: winter-wheat
+            crop_start_date: 1999-10-01
+            crop_start_type: sowing
+            crop_end_date: 2000-08-05
+            crop_end_type: harvest
+            max_duration: 330
+        TimedEvents:
+        -   event_signal: irrigate
+            name:  Timed irrigation events
+            comment: All irrigation amounts in cm
+            events_table:
+            - 2000-05-01: {irrigation_amount: 2, efficiency: 0.7}
+            - 2000-06-21: {irrigation_amount: 5, efficiency: 0.7}
+            - 2000-07-18: {irrigation_amount: 3, efficiency: 0.7}
+        StateEvents:
+
+In the case that there is no harvest date provided and the crop runs till maturity, the end date from
+the crop calendar will be estimated as the crop_start_date plus the max_duration.
+
+Note that in an agromanagement definition where the last campaign contains a definition for state events,
+a trailing empty campaign *must* be provided because otherwise the end date cannot be determined. The
+following campaign definition is valid (though silly) but there is no way to determine the end date
+of the simulation. Therefore, this definition will lead to an error::
+
+    Version: 1.0
+    AgroManagement:
+    - 2001-01-01:
+        CropCalendar:
+        TimedEvents:
+        StateEvents:
+        -   event_signal: irrigate
+            event_state: SM
+            zero_condition: falling
+            name: irrigation scheduling on volumetric soil moisture content
+            comment: all irrigation amounts in cm
+            events_table:
+            - 0.25: {irrigation_amount: 2, efficiency: 0.7}
 
 Exchanging data between model components
 ========================================
@@ -660,18 +729,12 @@ initialized and the `send_mysignal()` is called the handler will print out the v
 of its two arguments::
 
     >>> from pcse.base_classes import VariableKiosk
-
     >>> from datetime import date
-
     >>> d = date(2000,1,1)
-
     >>> v = VariableKiosk()
-
     >>> obj = MySimObj(d, v)
-
     >>> obj.send_mysignal()
     Value of arg1, arg2: 2.5, A
-
     >>>
 
 Note that the methods for receiving signals `_connect_signal()` and sending signals `_send_signal()` are
