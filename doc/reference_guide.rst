@@ -651,7 +651,7 @@ of a single Engine. This uniqueness is enforced to avoid name conflicts between 
 would affect the publishing of variables or the retrieval of variables. For example,
 `engine.get_variable("LAI")` will retrieve the leaf area index of the crop. However, if there
 would be two variables named "LAI" it would be unclear which one is retrieved. It would not
-even be guaranteed that it is the same variables between function calls or model runs.
+even be guaranteed that it is the same variable between function calls or model runs.
 
 Second, the VariableKiosk takes care of exchanging state and rate variables between model
 components. Variables that are published by the RateVariables and StateVariables object will become
