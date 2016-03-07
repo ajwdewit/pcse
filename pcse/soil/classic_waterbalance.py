@@ -584,14 +584,40 @@ class WaterbalanceFDSnow(SimulationObject):
     waterbalance = Instance(SimulationObject)
     snowcover = Instance(SimulationObject)
 
+    # use observed snow depth
+    use_observed_snow_depth = Bool(False)
+    # Helper variable for observed snow depth
+    _SNOWDEPTH = Float()
+
+    class StateVariables(StatesTemplate):
+        SNOWDEPTH = Float()
+
     def initialize(self, day, kiosk, parvalues):
         self.waterbalance = WaterbalanceFD(day, kiosk, parvalues)
-        self.snowcover = SnowMAUS(day, kiosk, parvalues)
+
+        # Determine of observed or simulated snow depth should be used
+        if "ISNOWSRC" not in parvalues:
+            msg = "Parameter for selecting observed(0)/simulated(1) snow depth ('ISNOWSRC') missing!"
+            raise exc.ParameterError(msg)
+        else:
+            self.use_observed_snow_depth = True if parvalues["ISNOWSRC"] == 0 else False
+
+        if self.use_observed_snow_depth:
+            self.states = self.StateVariables(kiosk, SNOWDEPTH=0.)
+        else:
+            self.snowcover = SnowMAUS(day, kiosk, parvalues)
 
     def calc_rates(self, day, drv):
         self.waterbalance.calc_rates(day, drv)
-        self.snowcover.calc_rates(day, drv)
+        if self.use_observed_snow_depth:
+            self._SNOWDEPTH = drv.SNOWDEPTH
+        else:
+            self.snowcover.calc_rates(day, drv)
 
+    @prepare_states
     def integrate(self, day):
         self.waterbalance.integrate(day)
-        self.snowcover.integrate(day)
+        if self.use_observed_snow_depth:
+            self.states.SNOWDEPTH = self._SNOWDEPTH
+        else:
+            self.snowcover.integrate(day)
