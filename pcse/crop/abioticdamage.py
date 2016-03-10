@@ -349,11 +349,14 @@ class FROSTOL(SimulationObject):
         # stretches from -inf to inf, some limits must be applied. In this
         # case we assume that killfactor < 0.05 means no kill and
         # killfactor > 0.95 means complete kill.
-        killfactor = 1/(1 + exp((TMIN_CROWN-(s.LT50T))/p.FROSTOL_KILLCF))
-        if killfactor < 0.05:
+        if TMIN_CROWN < 0.:
+            killfactor = 1/(1 + exp((TMIN_CROWN - s.LT50T)/p.FROSTOL_KILLCF))
+            if killfactor < 0.05:
+                killfactor = 0.
+            elif killfactor > 0.95:
+                killfactor = 1.
+        else:
             killfactor = 0.
-        elif killfactor > 0.95:
-            killfactor = 1.
 
         # Frost stress occurring yes/no
         r.IDFS = 1 if (killfactor > 0.) else 0
