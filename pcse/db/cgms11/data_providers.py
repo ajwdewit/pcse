@@ -9,6 +9,7 @@ Data providers are compatible with a CGMS 11 database schema.
 """
 
 import datetime
+import logging
 
 from sqlalchemy import MetaData, select, Table, and_
 # from tabulate import tabulate
@@ -249,6 +250,10 @@ class TimerDataProvider(dict):
     def __init__(self, engine, grid_no, crop_no, campaign_year):
         dict.__init__(self)
 
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        self.logger = logging.getLogger(loggername)
+
         self.grid_no = int(grid_no)
         self.crop_no = int(crop_no)
         self.campaign_year = int(campaign_year)
@@ -299,9 +304,25 @@ class TimerDataProvider(dict):
             raise exc.PCSEError(msg)
 
         # Maximum duration of crop cycle
-        self["MAX_DURATION"] = int(row.max_duration)
+        max_dur = int(row.max_duration)
+        if crop_end_type == "maturity":
+            if max_dur < 150:
+                msg = "Found low value for MAX_DURATION (%i days). Forcing to 300 days!"
+                self.logger.warn(msg, max_dur)
+                max_dur = 300
+        elif crop_end_type in ["harvest", "earliest"]:
+            # days to end of crop cycle
+            days_to_harvest = (self["CROP_END_DATE"] - self["CROP_START_DATE"]).days
+            if max_dur < days_to_harvest:
+                # recalculate max duration and add some days
+                omax_dur = max_dur
+                max_dur = days_to_harvest + 10
+                msg = "MAX_DURATION (%i) lower then the days-to-harvest (%i). forcing MAX_DURATION to %i days"
+                self.logger.warn(msg, omax_dur, days_to_harvest, max_dur)
+
+        self["MAX_DURATION"] = max_dur
         # simulation end date equals CROP_START_DATE + MAX_DURATION
-        self["END_DATE"] = self["CROP_START_DATE"] + datetime.timedelta(days=row.max_duration)
+        self["END_DATE"] = self["CROP_START_DATE"] + datetime.timedelta(days=max_dur)
 
     def set_START_DATE(self, start_date):
         """Updates the value for START_DATE in TimerDataProvider
