@@ -2,7 +2,7 @@
 Models available in PCSE
 ************************
 
-The following table lists the models that are available in PCSE and can be import from `pcse.models` package.
+The following table lists the models that are available in PCSE and can be imported from `pcse.models` package.
 
 ================ =======================================================================================================
 Model name       Description

@@ -54,7 +54,7 @@ in PCSE.
 
 To implement continuous simulation, the engine uses the same approach as
 FSE: Euler integration with a fixed time step of one day.  The following
-figures shows the principle of continuous simulation
+figure shows the principle of continuous simulation
 and the execution order of various steps.
 
 .. figure:: continuous_simulation.png
@@ -321,8 +321,8 @@ Simulation Parameters
 Usually SimulationObjects have one or more parameters which should be defined as a subclass
 of the `ParamTemplate` class.  Although parameters can be specified as part
 of the SimulationObject definition directly, subclassing them from `ParamTemplate` has a few
-advantages. First of all parameters must be initialized and a missing parameter will lead to
-an exception being raised with a clear message. Second parameters are initialized as read-only
+advantages. First of all, parameters must be initialized and a missing parameter will lead to
+an exception being raised with a clear message. Secondly, parameters are initialized as read-only
 attributes which cannot be changed during the simulation. So occasionally overwriting a
 parameter value is impossible this way.
 
@@ -345,7 +345,7 @@ will be available in the VariableKiosk and can be retrieved by other components 
 name of the variables. The main difference between a rates and
 a states class is that the states class requires you to provide the initial value of the
 state as a keyword parameter in the call. Failing to provide the initial value will lead
-to an exception being raise.
+to an exception being raised.
 
 Instances of objects containing rate and state variables are read-only by default. In order
 to change the value of a rate or state, the instance must be unlocked. For this purpose
@@ -367,7 +367,7 @@ The AgroManager
 
 Agromanagement is an intricate part of PCSE which is needed for
 simulating the processes that are happening
-on agriculture fields. In order for crops to growth, farmers must first plow the
+on agriculture fields. In order for crops to grow, farmers must first plow the
 fields and sow the crop. Next, they have to do proper management including
 irrigation, weeding, nutrient application, pest control and finally harvesting.
 All these actions have to be scheduled at specific dates, connected to certain
@@ -375,11 +375,11 @@ crop stages or in dependence of soil and weather conditions. Moreover specific
 parameters such as the amount of irrigation or nutrients must be provided as well.
 
 In previous versions of WOFOST, the options for agromanagement were limited to
-sowing and harvesting. On the one had this was because agromangement was often assumed
+sowing and harvesting. On the one had this was because agromanagement was often assumed
 to be optimal and thus there was little need for detailed agromanagement.
 On the other hand, implementing agromanagement is relatively complex because
-agromanagement consists of events that are happening rather then
-continuous processes. As such, it does not fit well in the traditional simulation
+agromanagement consists of events that are happening once rather than
+continuously. As such, it does not fit well in the traditional simulation
 cycle, see :ref:`ContinuousSimulation`.
 
 Also from a technical point of view implementing such events through the traditional
@@ -487,7 +487,7 @@ An example of an agromanagement definition file::
 Crop calendars
 --------------
 
-The crop calendar definition will be passed on to a `CropCalendar` object which is is
+The crop calendar definition will be passed on to a `CropCalendar` object which is 
 responsible for storing, checking, starting and ending the crop cycle during a PCSE simulation.
 At each time step the instance of `CropCalendar` is called
 and at the dates defined by its parameters it initiates the appropriate actions:
@@ -504,7 +504,7 @@ Timed events
 ------------
 
 Timed events are management actions that are occurring on specific dates. As simulations in PCSE run
-on daily time steps it is easy to schedule actions on dates. Time events are characterized by
+on daily time steps it is easy to schedule actions on dates. Timed events are characterized by
 an event signal, a name and comment that can be used to describe the event and finally an
 events table that lists the dates for the events and the parameters that should be passed onward.
 
@@ -705,7 +705,7 @@ simulation, etc.
 Signals in PCSE are defined in the `signals` module which can be easily imported by
 any module that needs access to signals. Signals are simply defined as strings but
 any hashable object type would do. Most of the work for dealing with signals is in
-setting up a receiver. A receiver is usually a method on a SimulationObject that is
+setting up a receiver. A receiver is usually a method on a SimulationObject that 
 will be called when the signal is broadcasted. This method will then be connected
 to the signal during the initialization of the object. This is easy to describe
 with an example::

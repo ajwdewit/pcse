@@ -39,7 +39,7 @@ The tables specifying state/rate variables have the following columns:
     3. Whether the variable is published in the kiosk or not: Y|N
     4. The physical unit of the variable.
     
-Finally, all public methods of all object are described as well.
+Finally, all public methods of all objects are described as well.
 
 Engine and models
 =================
@@ -87,7 +87,7 @@ The waterbalance
 ================
 
 The PCSE distribution provides several waterbalance modules:
-    1. WaterbalancePP which is used for simulation under non-waterlimited
+    1. WaterbalancePP which is used for simulation under non-water-limited
        production
     2. WaterbalanceFD which is used for simulation of water-limited production
        under conditions of freely draining soils

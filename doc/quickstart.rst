@@ -7,8 +7,8 @@ some examples to get you started with modelling. The examples are currently focu
 the WOFOST and LINTUL3 crop simulation models, although other crop simulations may become available within
 PCSE in the future.
 
-1: An interactive PCSE/WOFOST session
-=====================================
+An interactive PCSE/WOFOST session
+==================================
 
 The easiest way to demonstrate PCSE is to import WOFOST from PCSE and run it from
 an interactive Python session. We will be using the `start_wofost()` script that
@@ -60,13 +60,13 @@ model terminates and store the results to a file 'myresults.csv'::
 
 Which should look like this :download:`myresults.txt`
 
-2: Running PCSE/WOFOST with custom input data
-=============================================
+Running PCSE/WOFOST with custom input data
+==========================================
 
 .. note::
     The inputs for PCSE models have been restructured and consist of three
     parts: 1) model parameters (soil, crop and site parameters), 2) driving variables
-    and 3) agromanagement actions (what used  be called 'timerdata').
+    and 3) agromanagement actions (what used to be called 'timerdata').
     The description here for running PCSE/WOFOST uses the old method for backward
     compatibility. However, this will change in future versions of PCSE.
     See also the section on running :ref:`PCSE/LINTUL3 <RunningLINTUL3>`.
@@ -101,7 +101,7 @@ system.::
 Cropdata
 --------
 
-Cropdata consist of parameter names (dictionary keys) and the
+The Cropdata dictionary consists of parameter names (dictionary keys) and the
 corresponding parameter values that are needed to parameterize the
 components of the crop simulation model. These are
 crop-specific values regarding phenology, assimilation, respiration,
@@ -121,13 +121,13 @@ tries to be backward compatible as much as possible and provides the
     >>> cropdata = CABOFileReader(cropfile)
     >>> print cropdata
 
-printing the cropdata dictionary gives you an listing of the header and
+Printing the cropdata dictionary gives you a listing of the header and
 all parameters and their values.
 
 Soildata
 --------
 
-The soildata dictionary must provide the parameter name/value pairs related
+The soildata dictionary provides the parameter name/value pairs related
 to the soil type and soil physical properties. The number of parameters is
 variable depending on the soil water balance type that is used for the
 simulation. For this example, we will use the water balance for freely
@@ -146,7 +146,7 @@ simulation and the maximum duration of the crop simulation. The latter is
 included to avoid unrealistically long simulations for example as a results of
 a too high temperature sum requirement. These values are used by the AgroManagement
 unit of PCSE. Currently, there is only an AgroManagement unit for single cropping
-seasons but will change in the future allowing for crop rotations. Therefore,
+seasons but this will change in the future allowing for crop rotations. Therefore,
 the approach for providing AgroManagement data (timerdata) will change.
 
 The following list gives an overview of the parameter names, values and types that
@@ -161,7 +161,7 @@ need to be specified in the `timerdata` dictionary::
        CROP_END_DATE: date of the end of the crop simulation in case of CROP_END_TYPE == 'harvest' | 'earliest'
         MAX_DURATION: maximum number of days of the crop simulation
 
-The CABO format does provide support date/time values, but the CABOFilereader
+The CABO format does support date/time values, but the CABOFilereader
 cannot yet parse them. Moreover, Python supports date/time value natively and
 they can be defined using the Python-based PCSE file format. The crop calendar
 file for sugar beet in Wageningen `sugarbeet_calendar.pcse` can be read with
@@ -206,10 +206,10 @@ Daily weather variables are needed for running the simulation. Currently, four
 options are available in PCSE for retrieving weather data:
 
     1. The database structure as provided by the Crop Growth Monitoring
-       System. Weather data will be read from the GRID_WEATHER table which
+       System for the delivery of interpolated daily weather data on 25 x 25 km gridcells. Weather data will be read from the GRID_WEATHER table which
        is implemented using :ref:`GridWeatherDataProvider <GridWeatherDataProvider>`.
     2. The file structure as defined by the `CABO Weather System`_ which is
-       implemented using :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`.
+       implemented using :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`for the delivery of observed weather station data.
     3. The file structure used by the `CABO Weather System`_ but implemented as an
        Excel sheet by :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>`
     4. The global weather data provided by the agroclimatology from the
@@ -304,7 +304,7 @@ index (LAI) and root-zone soil moisture (SM) using the `MatPlotLib`_ plotting pa
 
 .. _MatPlotLib: http://matplotlib.org/
 
-This should provide generate a figure of the simulation results as shown below. The complete Python
+This should generate a figure of the simulation results as shown below. The complete Python
 script for this examples can be downloaded here :download:`quickstart_demo2.py`
 
 .. image:: sugarbeet.png
@@ -312,8 +312,8 @@ script for this examples can be downloaded here :download:`quickstart_demo2.py`
 
 .. _RunningLINTUL3:
 
-3. Running a simulation with PCSE/LINTUL3
-=========================================
+Running a simulation with PCSE/LINTUL3
+======================================
 
 The LINTUL model (Light INTerception and UtiLisation) is a simple generic crop model, which simulates dry
 matter production as the result of light interception and utilization with a constant light use efficiency.
@@ -419,7 +419,7 @@ for the current example looks like this:
 .. _YAML: http://yaml.org/
 
 The agromanagement definition starts with `Version:` indicating the version number of the agromanagement file
-while the actual definition starts after the label `AgroManagement:`. Next a date must be provide which sets the
+while the actual definition starts after the label `AgroManagement:`. Next a date must be provided which sets the
 start date of the campaign (and the start date of the simulation). Each campaign is defined by zero or one
 CropCalendars and zero or more TimedEvents and/or StateEvents. The CropCalendar defines the crop type, date of sowing,
 date of harvesting, etc. while the Timed/StateEvents define actions that are either connected to a date or
@@ -429,7 +429,7 @@ In the current example, the campaign starts on 2006-01-01, there is a crop calen
 2006-03-31 with a harvest date of 2006-08-20 or earlier if the crop reaches maturity before this date.
 Next there are timed events defined for applying N fertilizer at 2006-04-10 and 2006-05-05. The current example
 has no state events. For a thorough description of all possibilities see the section on AgroManagement in the
-Reference Guide.
+Reference Guide (Chapter 3).
 
 Loading the agromanagement definition must by done with the YAMLAgroManagementReader::
 
