@@ -2,9 +2,10 @@ import os.path;
 import const;
 import sys;
 import types;
+from raster import Raster
 from .gridenvelope2d import GridEnvelope2D;
 
-class FloatingPointRaster(GridEnvelope2D):
+class FloatingPointRaster(GridEnvelope2D, Raster):
     "A raster represented by 2 files, with extensions 'flt' and 'hdr'"
     
     # Constants
@@ -29,10 +30,14 @@ class FloatingPointRaster(GridEnvelope2D):
     
     # Private attributes
     __datatype = const.FLOAT;
-    __datafile = None;
-    __currow = 0;
+    datafile = None;
+    currow = 0;
+    __envelope = None;
     
     def __init__(self, filepath, *datatype):
+        # Initialise
+        DATAFILEXT = const.DATAFILEXT
+        HEADEREXT = const.HEADEREXT
         # Retrieve the name from the filepath and assign - incl. extension
         self.name = os.path.basename(filepath);
         # Also derive the folder
@@ -40,20 +45,23 @@ class FloatingPointRaster(GridEnvelope2D):
         # Finally set the datatype
         if len(datatype) > 0:
             if (datatype[0] == const.INTEGER): 
-                self.__datatype = const.INTEGER;
+                self.datatype = const.INTEGER;
             else: 
-                self.__datatype = const.FLOAT;        
+                self.datatype = const.FLOAT;        
         
     def open(self, mode, ncols=1, nrows=1, xll=0, yll=0, cellsize=100, nodatavalue=-9999.0, byteorder=const.LSBFIRST):
+        # Initialise
+        super(FloatingPointRaster, self).open(mode); 
+        
         # If file does not exist and mode[0] = 'w', create it!
         if (mode[0] == 'w') and (not os.path.exists(self.folder + os.path.sep + self.name)):
-            self.__datafile = file(self.folder + os.path.sep + self.name, 'w');
-            GridEnvelope2D.__init__(self, ncols, nrows, xll, yll, cellsize, cellsize);
+            self.datafile = file(self.folder + os.path.sep + self.name, 'w');
+            self.__envelope = GridEnvelope2D.__init__(self, ncols, nrows, xll, yll, cellsize, cellsize);
             return True;
         else:    
             # Open the file
             if os.path.exists(self.folder + os.path.sep + self.name):            
-                self.__datafile = open(self.folder + os.path.sep + self.name, mode[0] + 'b'); 
+                self.datafile = open(self.folder + os.path.sep + self.name, mode[0] + 'b'); 
                 if (mode[0] == 'w'):
                     # Assign the data attributes 
                     self.ncols = ncols;
@@ -67,7 +75,7 @@ class FloatingPointRaster(GridEnvelope2D):
                 else: 
                     # Retrieve the data attributes from the header file
                     self.readheader();
-                GridEnvelope2D.__init__(self, self.ncols, self.nrows, self.xll, self.yll, self.cellsize, self.cellsize);
+                self.__envelope = GridEnvelope2D.__init__(self, self.ncols, self.nrows, self.xll, self.yll, self.cellsize, self.cellsize);
                 return True;
             else: return False; 
           
@@ -100,36 +108,15 @@ class FloatingPointRaster(GridEnvelope2D):
         else: 
             msg = "Header file " + hdrFilename + " not found in folder " + self.folder;
             raise IOError(msg);
-    
-    def __iter__(self):
-        return self;
         
     def next(self):
         # Read the next row if possible, otherwise generate StopIteration
         try:
-            self.__currow += 1;
-            if (self.__currow > self.nrows): raise StopIteration;
-            return self.__datafile.read(self.ncols * const.BYTESPERCELL);        
+            self.currow += 1;
+            if (self.currow > self.nrows): raise StopIteration;
+            return self.datafile.read(self.ncols * const.BYTESPERCELL);        
         except:
             raise StopIteration;       
-    
-    """
-    def hasSameExtent(self, obj):
-        if not isinstance(obj, FloatingPointRaster):
-            return False;
-        if self.ncols != obj.ncols:
-            return False;
-        if self.nrows != obj.nrows:
-            return False;
-        if abs(self.cellsize - obj.cellsize) > const.epsilon:
-            return False;
-        if abs(self.xll - obj.xll) > const.epsilon:
-            return False;
-        if abs(self.yll - obj.yll) > const.epsilon:
-            return False;
-        else:
-            return True;
-    """
         
     @staticmethod
     def getDataFileExt():
@@ -164,25 +151,19 @@ class FloatingPointRaster(GridEnvelope2D):
             hf.write("NODATA_value  " + str(self.nodatavalue) + "\n");
             hf.write("byteorder     " + self.byteorder + "\n");
         except Exception, e:
-            print e;
             msg = "Header file " + hdrFilename + " could not be written in folder " + self.folder;
-            raise IOError(msg);
+            raise IOError(msg + "(" + str(e) + ")");
         
-    def writenext(self, array_with_data):
+    def writenext(self, sequence_with_data):
         # Write the next data if possible, otherwise generate StopIteration
         # We cannot know whether exactly 1 row is included or not.
         try:          
-            return self.__datafile.write(array_with_data);
+            return self.datafile.write(sequence_with_data);
         except Exception, e:
-            print e;            
-            raise StopIteration
-        
-    def close(self):
-        if self.__datafile:
-            if not self.__datafile.closed:
-                self.__datafile.close();        
+            raise IOError(str(e));            
+            raise StopIteration;       
                 
     def reset(self):
-        self.__datafile.seek(0);
-        self.__currow = 0;   
+        self.datafile.seek(0);
+        super(FloatingPointRaster, self).reset()   
         
