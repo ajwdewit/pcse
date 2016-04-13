@@ -39,15 +39,6 @@ class Netcdf4Envelope2D(GridEnvelope2D):
         maxxy = max(varxy);
         return [minxy, maxxy];
     
-    """
-    def _readDimensions(self, ncdimensions):
-        LON = self.LON;
-        LAT = self.LAT;
-        nrows = len(ncdimensions[LAT]);
-        ncols = len(ncdimensions[LON]);
-        return nrows, ncols;
-    """
-    
     def getDimension(self, ds): 
         result = 2;
         if ds != None:

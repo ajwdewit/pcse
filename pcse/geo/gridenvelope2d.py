@@ -2,14 +2,14 @@ import math;
 import const;
 
 # Superclass for AsciiGrid and other classes
-class GridEnvelope2D:
+class GridEnvelope2D(object):
     # Constants
     #epsilon = 0.0000001;
     const.FLOAT = 'f';
     const.INTEGER = 'i'; 
     const.XLLCORNER = "XLLCORNER";    
     const.YLLCORNER = "YLLCORNER";
-    const.epsilon = 0.00000001;
+    const.epsilon = 0.000001;
     
     # Data attributes
     nrows = 1;
@@ -20,6 +20,7 @@ class GridEnvelope2D:
     dy = 2.0;
     xcoords_sort = 'ASC';  # ascending
     ycoords_sort = 'DESC'; # descending
+    envelope = None
 
     # We define a grid by means of a number of rows, columns, 
     # a lower left corner as well as by steps in x and y direction
@@ -129,5 +130,23 @@ class GridEnvelope2D:
         D = (y <= self.getMaxY());
         return (A and B and C and D);
 
-
+    def get_envelope2d(self):
+        return self;
     
+    def get_area(self, i):
+        # Assume that we're dealing with a lat lon reference system
+        # TODO implement for xcoords_sort == 'DESC'
+        R = 6371
+        result = 0
+        if self.ycoords_sort == 'DESC':
+            # Use an approximation to estimate the area of the cell in sq. kilometers
+            lat = self.getMaxY() - i*self.dy - 0.5*self.dy;
+            height = self.dy * 2 * math.pi * R / 360.0
+            width = height * math.cos(2 * math.pi * lat / 360.0)
+            result = height * width
+        else:
+            raise Warning("Unexpected sorting of Y-coordinates")
+        return result
+    
+    def getEnvelope(self):
+        return GridEnvelope2D(self.ncols, self.nrows, self.xll, self.yll, self.cellsize, self.cellsize)

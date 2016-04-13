@@ -1,14 +1,15 @@
 import const;
 import os.path;
 import array;
+from raster import Raster
 from .gridenvelope2d import GridEnvelope2D;
 
-class AsciiGrid(GridEnvelope2D):
+class AsciiGrid(GridEnvelope2D, Raster):
     "A raster represented by an ASCII file, with extension 'asc'"
     
     # Constants
     const.FILEXT = "asc";     
-    const.MAXDIGITSPERCELL = 7;
+    const.MAXDIGITSPERCELL = 11;
     
     # Data attributes - assign some dummy values for the mean time
     name = "dummy." + const.FILEXT;
@@ -21,15 +22,19 @@ class AsciiGrid(GridEnvelope2D):
     """
     cellsize = 100.0;
     nodatavalue = -9999.0;
-    datatype = const.FLOAT;    
+    datatype = const.FLOAT;
+    dataformat='f'
     
     # Private attributes
-    __datafile = None;
-    __currow = 0;
+    datafile = None;
+    currow = 0;
     __mode = 'r';
     __digitspercell = 7;
     
     def __init__(self, filepath, *datatype):
+        # Initialise
+        DATAFILEXT = const.FILEXT
+        HEADEREXT = ""
         # Retrieve the name from the filepath and assign - incl. extension
         self.name = os.path.basename(filepath);
         # Also derive the folder
@@ -38,20 +43,27 @@ class AsciiGrid(GridEnvelope2D):
         if len(datatype) > 0:
             if (datatype[0] == const.INTEGER): 
                 self.datatype = const.INTEGER;
+                self.dataformat = 'i'
             else: 
                 self.datatype = const.FLOAT;
                 
-    def open(self, mode, ncols=1, nrows=1, xll=0.0, yll=0.0, cellsize=100.0, nodatavalue=-9999.0):       
+    def open(self, mode, ncols=1, nrows=1, xll=0.0, yll=0.0, cellsize=100.0, nodatavalue=-9999.0):
+        # Initialise
+        super(AsciiGrid, self).open(mode); 
+               
         # If file does not exist and mode[0] = 'w', create it!
         if (mode[0] == 'w') and (not os.path.exists(self.folder + os.path.sep + self.name)):
-            self.__datafile = file(self.folder + os.path.sep + self.name, 'w');
+            self.datafile = file(self.folder + os.path.sep + self.name, 'w');
             self.__mode = mode;
             GridEnvelope2D.__init__(self, ncols, nrows, xll, yll, cellsize, cellsize);
+            self.cellsize = cellsize;
+            self.nodatavalue = nodatavalue;
+            self.writeheader();
             return True;
         else:    
             # Open the file
             if os.path.exists(self.folder + os.path.sep + self.name):            
-                self.__datafile = open(self.folder + os.path.sep + self.name, mode[0]); 
+                self.datafile = open(self.folder + os.path.sep + self.name, mode[0]); 
                 if (mode[0] == 'w'):
                     # Assign the data attributes 
                     self.ncols = ncols;
@@ -66,29 +78,29 @@ class AsciiGrid(GridEnvelope2D):
                     self.readheader();
                     
                     # Also find out how many digits per cell were used - assume it's constant
-                    pos = self.__datafile.tell();
-                    line = self.__datafile.readline();
+                    pos = self.datafile.tell();
+                    line = self.datafile.readline();
                     self.__digitspercell = ((1 + len(line)) / self.ncols) - 1;
-                    self.__datafile.seek(pos);  # return to first line with data
-                GridEnvelope2D.__init__(self, self.ncols, self.nrows, self.xll, self.yll, self.cellsize, self.cellsize);
+                    self.datafile.seek(pos);  # return to first line with data
+                    GridEnvelope2D.__init__(self, self.ncols, self.nrows, self.xll, self.yll, self.cellsize, self.cellsize);
                 return True;
             else: return False;
             
     def readheader(self):
         # Assume that the file is open; read header of the file and assign all attributes 
-        if (self.__datafile != None):
-            if (not self.__datafile.closed):            
-                hl = self.__datafile.readline();
+        if (self.datafile != None):
+            if (not self.datafile.closed):            
+                hl = self.datafile.readline();
                 self.ncols = int(hl.replace('ncols', ''));
-                hl = self.__datafile.readline();
+                hl = self.datafile.readline();
                 self.nrows = int(hl.replace('nrows', ''));
-                hl = self.__datafile.readline();
+                hl = self.datafile.readline();
                 self.xll = float(hl.replace('xllcorner', ''));        
-                hl = self.__datafile.readline();
+                hl = self.datafile.readline();
                 self.yll = float(hl.replace('yllcorner', ''));        
-                hl = self.__datafile.readline();
+                hl = self.datafile.readline();
                 self.cellsize = float(hl.replace('cellsize', ''));        
-                hl = self.__datafile.readline();
+                hl = self.datafile.readline();
                 if (self.datatype == const.INTEGER): 
                     self.nodatavalue = int(hl.replace('NODATA_value', ''));
                 else: 
@@ -97,18 +109,15 @@ class AsciiGrid(GridEnvelope2D):
                 msg = "File " + self.name + " not found in folder " + self.folder;
                 raise IOError(msg);                
     
-    def __iter__(self):
-        return self;
-    
     def next(self, parseLine=True):
         # Read the next row if possible, otherwise generate StopIteration
         # Assume that the header lines have been read and are correct wrt. ncols and nrows
         result = None;
         try:
-            if (self.__datafile != None):
-                if (not self.__datafile.closed):
-                    self.__currow += 1;
-                    if (self.__currow > self.nrows): 
+            if (self.datafile != None):
+                if (not self.datafile.closed):
+                    self.currow += 1;
+                    if (self.currow > self.nrows): 
                         raise StopIteration("Attempt to move beyond last row.");
                     
                     # Allocate a new array with ncols of the right type
@@ -118,7 +127,7 @@ class AsciiGrid(GridEnvelope2D):
                         result = array.array('f', self.ncols * [self.nodatavalue]);
 
                     # Now fill the array - first translate whitespace into space
-                    rawline = self.__datafile.readline();
+                    rawline = self.datafile.readline();
                     if parseLine:
                         i = 0;                    
                         for x in rawline.split(): 
@@ -159,43 +168,45 @@ class AsciiGrid(GridEnvelope2D):
         
     def writeheader(self):
         # Assume that the file is open; write header of the file with all attributes 
-        if (self.__datafile != None):
-            if (not self.__datafile.closed):
+        if (self.datafile != None):
+            if (not self.datafile.closed):
                 try:
-                    self.__datafile.write("ncols         " + str(self.ncols).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
-                    self.__datafile.write("nrows         " + str(self.nrows).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
-                    self.__datafile.write("xllcorner     " + str(self.xll).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
-                    self.__datafile.write("yllcorner     " + str(self.yll).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
-                    self.__datafile.write("cellsize      " + str(self.cellsize).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
-                    self.__datafile.write("NODATA_value  " + str(self.nodatavalue).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
+                    self.datafile.write("ncols         " + str(self.ncols).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
+                    self.datafile.write("nrows         " + str(self.nrows).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
+                    self.datafile.write("xllcorner     " + str(self.xll).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
+                    self.datafile.write("yllcorner     " + str(self.yll).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
+                    self.datafile.write("cellsize      " + str(self.cellsize).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
+                    self.datafile.write("NODATA_value  " + str(self.nodatavalue).rjust(const.MAXDIGITSPERCELL + 1) + "\n");
                 except Exception, e:
                     print e;
                     msg = "Header lines could not be written to file " + self.name + " in folder " + self.folder;
                     raise IOError(msg);
         
-    def writenext(self, array_with_data):
+    def writenext(self, sequence_with_data):
         # Write the next line if possible, otherwise generate StopIteration
         # We assume that exactly 1 row is included.
         try:          
-            for i in range(0, self.ncols):
-                s = str(array_with_data[i]).rjust(const.MAXDIGITSPERCELL + 1);
-                self.__datafile.write(s);                
-            return self.__datafile.write("\n");
+            if (self.datatype == const.INTEGER):
+                for k in range(0, self.ncols):
+                    s = str(sequence_with_data[k]).rjust(const.MAXDIGITSPERCELL + 1);
+                    self.datafile.write(s);  
+            else:
+                totalwidth = const.MAXDIGITSPERCELL - 1
+                fmtstr = "{:" + str(totalwidth) + ".2f}"
+                for k in range(0, self.ncols):
+                    s = fmtstr.format(sequence_with_data[k]).rjust(const.MAXDIGITSPERCELL + 1);
+                    self.datafile.write(s);                 
+            return self.datafile.write("\n");
         except Exception, e:
             print e;            
             raise StopIteration
     
     def flush(self):
-        self.__datafile.flush();
-    
-    def close(self):
-        if self.__datafile:
-            if not self.__datafile.closed:
-                self.__datafile.close();  
+        self.datafile.flush();
                 
     def reset(self):
-        self.__datafile.seek(0);
+        self.datafile.seek(0);
         if (self.__mode[0] == 'r'):
             self.readheader();
-        self.__currow = 0;   
+        super(AsciiGrid, self).reset() 
         
