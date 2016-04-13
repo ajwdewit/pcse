@@ -101,10 +101,10 @@ class _Wofost71Base(Engine):
                    ("Day of harvest","DOH","%8s"),("Maximum LAI","LAIMAX","%5.2f"),
                    ("Total biomass","TAGP","%7.1f"), ("Yield","TWSO","%7.1f"),
                    ("Harvest Index","HI","%7.3f"), ("Total transpiration","CTRAT","%7.3f")]
-        for desc, varname, fmt in summary:
+        for desc, varname, format in summary:
             value = self.get_variable(varname)
             if value is not None:
-                templ = "%20s: " + fmt + "\n"
+                templ = "%20s: " + format + "\n"
                 tmsg += (templ % (desc, value))
             else:
                 templ = "%20s: N/A\n"
