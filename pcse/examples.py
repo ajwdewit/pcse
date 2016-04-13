@@ -16,7 +16,7 @@ import logging
 import logging.config
 
 from sqlalchemy import create_engine, MetaData, Table
-import numpy
+from numpy import random
 
 from .run_wofost import run_wofost
 
@@ -132,7 +132,7 @@ def run_example_ensemble(dsn=None):
             mode = task["sim_mode"]
 
             # Define random variable, take seed from database
-            rv = numpy.random.RandomState(seed=int(task["randomseed"]))
+            rv = random.RandomState(seed=int(task["randomseed"]))
             
             # Get Timer settings, Site, soil and Crop parameters
             timerdata = dbi.fetch_timerdata(metadata, grid_no, year,
@@ -257,7 +257,7 @@ def run_example_enkf(dsn=None):
             mode = task["sim_mode"]
 
             # Define random variable, take seed from database
-            rv = numpy.random.RandomState(seed=int(task["randomseed"]))
+            rv = random.RandomState(seed=int(task["randomseed"]))
         
             # Get Timer settings, Site, soil and Crop parameters
             timerdata = dbi.fetch_timerdata(metadata, grid_no, year, crop_no)
