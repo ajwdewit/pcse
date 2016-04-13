@@ -909,6 +909,12 @@ def is_a_month(day):
 
     return False
 
+def is_a_week(day, weekday=0):
+    """Default weekday is Monday. Monday is 0 and Sunday is 6"""
+    if day.weekday() == weekday:
+        return True
+    else:
+        return False
 
 def is_a_dekad(day):
     """Returns True if the date is on a dekad boundary, i.e. the 10th,

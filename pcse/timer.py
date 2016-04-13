@@ -7,7 +7,7 @@ from .pydispatch import dispatcher
 from .base_classes import AncillaryObject, VariableKiosk
 from .traitlets import HasTraits, Instance, Bool, Int, Enum
 from . import signals
-from .util import is_a_dekad, is_a_month
+from .util import is_a_dekad, is_a_month, is_a_week
 
 
 class Timer(AncillaryObject):
@@ -35,7 +35,8 @@ class Timer(AncillaryObject):
     final_date = Instance(datetime.date)
     current_date = Instance(datetime.date)
     time_step = Instance(datetime.timedelta)
-    interval_type = Enum(["daily", "dekadal", "monthly"])
+    interval_type = Enum(["daily", "weekly", "dekadal", "monthly"])
+    output_weekday = Int
     interval_days = Int
     generate_output = Bool()
     day_counter = Int
@@ -64,6 +65,7 @@ class Timer(AncillaryObject):
         # in that case no OUTPUT signals will be generated.
         self.generate_output = bool(mconf.OUTPUT_VARS)
         self.interval_type = mconf.OUTPUT_INTERVAL.lower()
+        self.output_weekday = mconf.OUTPUT_WEEKDAY
         self.interval_days = mconf.OUTPUT_INTERVAL_DAYS
         self.time_step = datetime.timedelta(days=1)
         self.first_call = True
@@ -85,6 +87,9 @@ class Timer(AncillaryObject):
             if self.interval_type == "daily":
                 if (self.day_counter % self.interval_days) == 0:
                     output = True
+            elif self.interval_type == "weekly":
+                if is_a_week(self.current_date, self.output_weekday):
+                    output = True 
             elif self.interval_type == "dekadal":
                 if is_a_dekad(self.current_date):
                     output = True
