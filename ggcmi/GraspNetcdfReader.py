@@ -1,6 +1,6 @@
-from pcse.pcse.netcdf4 import NetcdfWeatherDataProvider;
+from pcse.pcse.fileinput import Hdf5WeatherDataProvider;
 
-class GraspWeatherDataProvider(NetcdfWeatherDataProvider):
+class GraspWeatherDataProvider(Hdf5WeatherDataProvider):
     # Dummy lambda function
     dummy = lambda x: x;
     
@@ -9,5 +9,5 @@ class GraspWeatherDataProvider(NetcdfWeatherDataProvider):
         self.netcdf_variables.append("hur");
         self.pcse_variables.append(("VAP", "hur", self.dummy, "hPa"));
         
-        NetcdfWeatherDataProvider.__init__(self, "GRASP", longitude, latitude, fpath, force_update);
+        Hdf5WeatherDataProvider.__init__(self, "GRASP", longitude, latitude, fpath, force_update);
         
