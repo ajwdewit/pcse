@@ -3,8 +3,9 @@ from ..geo import Netcdf4Envelope2D, Netcdf4Raster, Hdf5Raster, FloatingPointRas
 from ..util import reference_ET;
 from ..exceptions import PCSEError
 import os, glob, array;
+import logging;
+from ..traitlets import Instance;
 from math import pow, exp;
-from netCDF4 import Dataset;
 from datetime import date, datetime, time, timedelta;
 from tables import Time32Col, Float32Col, IsDescription;
 
@@ -35,6 +36,10 @@ def vap_from_sh(sh, alt):
     vap = p * mr / (0.622 + mr); # constant is based on ratio of mole weights for dry air and water
     return vap;
 
+# Use empty object as container
+class Container(object):
+    pass
+
 class NetcdfWeatherDataConverter():
     # File names
     landmask_grid = r"../geodata/glob_landmask_resampled.flt";
@@ -61,23 +66,28 @@ class NetcdfWeatherDataConverter():
     available_years = [];
     __dataset_name = "dummy";
     __dataslices = None;
+    logger = Instance(logging.Logger);
     
     def __init__(self, fname, fpath=None):
         try:
+            # Initialise
+            loggername = "%s.%s" % (self.__class__.__module__, self.__class__.__name__);
+            self.logger = logging.getLogger(loggername);
+            
             # Construct search path
             search_path = self._construct_search_path(fname, fpath);
             
             # Of the required files, find out which are available 
-            self.Netcdf4rasters, self.available_years = self._get_Netcdf4_files(fname, search_path);
+            self.Netcdf4rasters, self.available_years = self.__get_hdf5_filefname, search_path);
             
             # Process them
             self.__dataslices = {};
             self.__dataset_name = fname;
             self._get_and_process_Netcdf4(fname);
             
-            print "Conversion successful!"
+            self.logger.info("Conversion successful!");
         except Exception as e:
-            print str(e);
+            self.logger.error(str(e));
         
     def _construct_search_path(self, fname, fpath):
         """Construct the path where to look for files"""
@@ -92,7 +102,7 @@ class NetcdfWeatherDataConverter():
             p = os.path.join(os.getcwd(), fpath, fname);
         return os.path.normpath(p);
         
-    def _get_Netcdf4_files(self, fname, search_path):
+    def __get_hdf5_fileself, fname, search_path):
         """Find Netcdf4 files on given path with given name
         Also sorts the list, checks for missing years and sets self.lastyear
         Assume this pattern for the ncfile names:
@@ -104,7 +114,7 @@ class NetcdfWeatherDataConverter():
             msg = "No Netcdf4 files found when searching at %s"
             raise PCSEError(msg % search_path);
         
-        mainresult = {};
+        key_fp_dict = {};
         for ncfile in tmpnc4_files:
             # Check that we need this ncfile in the first place
             fn = os.path.basename(ncfile);
@@ -115,36 +125,32 @@ class NetcdfWeatherDataConverter():
                 nc4r = Netcdf4Raster(ncfile);
                 if not nc4r.open('r'):
                     raise PCSEError("An error occurred while opening file " + nc4r.getFilePath());
-                mainresult[varname] = nc4r;
+                key_fp_dict[varname] = nc4r;
             
         # Retrieve the years from the ncfile names, taking into account that there
         # may be an alternative end_year
         start_year = 1900;
-        for varname in mainresult:
-            nc4r = mainresult[varname];
-            fn = os.path.basename(nc4r.getFilePath());
+        for key in key_fp_dict:
+            fn = os.path.basename(key_fp_dict[key].getFilePath());
             pos1 = str(fn).rfind('_');
             pos2 = str(fn).rfind('-');
-            tmpyr = int(fn[pos1+1:pos2]);
-            start_year = max(start_year, tmpyr);
+            start_year = max(start_year, int(fn[pos1+1:pos2]));
         
         end_year = 2100;
-        for varname in mainresult:
-            nc4r = mainresult[varname];
-            fn = os.path.basename(nc4r.getFilePath());
+        for key in key_fp_dict:
+            fn = os.path.basename(key_fp_dict[key].getFilePath());
             pos1 = str(fn).rfind('-');
             pos2 = str(fn).rfind('.');
-            tmpyr = int(fn[pos1+1:pos2]);
-            end_year = min(end_year, tmpyr);
+            end_year = min(end_year, int(fn[pos1+1:pos2]));
         
         available_years = range(start_year, end_year + 1);
         self.firstyear = start_year;
         self.lastyear = end_year;
         
-        return mainresult, available_years;
+        return key_fp_dict, available_years;
 
     
-    def _get_and_process_Netcdf4(self, fname):      
+    def __get_and_process_hdf5self, fname):      
         # First check that the files do cover the same period and extent
         dateref = date(1860, 1, 1);
         timeref = datetime.combine(dateref, time(0,0,0));
@@ -185,12 +191,14 @@ class NetcdfWeatherDataConverter():
             # i.e. row by row! i is the row index
             for i in range(0, nvlp1.nrows):
                 # Retrieve a data slice for the current row; get input for the next row
-                rawline = fpr_elev.next();
-                landmask = array.array('f', rawline); 
                 rawline = fpr_lm.next();
+                landmask = array.array('f', rawline); 
+                rawline = fpr_elev.next();
                 elevations = array.array('f', rawline); 
                 
-                # Initialise a structure for the output data with for each pixel in this row a place     
+                # Initialise a structure for the output data with for each pixel in this row a place
+                latitude = nc4r1.getVariables(Netcdf4Envelope2D.LAT)[i];
+                self.logger.info("About to convert data for the next row, pertaining to latitude %s" % latitude);   
                 data = [None] * nvlp1.ncols;                
 
                 # Check whether there is land in this row in the first place
@@ -200,43 +208,48 @@ class NetcdfWeatherDataConverter():
                         nc4r = self.Netcdf4rasters[key];
                         nc4r.next(False); 
                         self.__dataslices[key] = None;
-                else:
-                    # Leave the netCDF4 specific stuff hidden by using class netcdf4raster 
-                    for key in self.Netcdf4rasters:
-                        try:
-                            # Get hold of the variable name and the corresponding raster, then get a slice of the data
-                            nc4r = self.Netcdf4rasters[key];
-                            self.__dataslices[key] = nc4r.next(); 
-                        except Exception as e:
-                            fn = os.path.basename(nc4r.getFilePath());
-                            raise PCSEError("An error occurred while reading file " + fn + " (" + str(e) + ")");
-                            
-                    # If we reach here, then get slices of the data - assume data are available for each day!
-                    print "Shape of the data: " + str(nc4r1.getVariables(key1).shape);
-                    times = nc4r1.getVariables(Netcdf4Envelope2D.TIME);
-                    numdays = ((timeref + timedelta(times[-1])) - (timeref + timedelta(times[0]))).days;
+                    continue;
+
+                # Leave the netCDF4 specific stuff hidden by using class netcdf4raster 
+                for key in self.Netcdf4rasters:
+                    try:
+                        # Get hold of the variable name and the corresponding raster, then get a slice of the data
+                        nc4r = self.Netcdf4rasters[key];
+                        self.__dataslices[key] = nc4r.next(); 
+                    except Exception as e:
+                        fn = os.path.basename(nc4r.getFilePath());
+                        raise PCSEError("An error occurred while reading file " + fn + " (" + str(e) + ")");
+                        
+                # If we reach here, then get slices of the data - assume data are available for each day!
+                self.logger.info("Shape of the data: " + str(nc4r1.getVariables(key1).shape));
+                times = nc4r1.getVariables(Netcdf4Envelope2D.TIME);
+                numdays = ((timeref + timedelta(times[-1])) - (timeref + timedelta(times[0]))).days;
+            
+                # Within the loop over the rows, we need a loop over the columns (longitudes)
+                # Use a land mask and leave places in the data None for those pixels; k is the column index
+                for k in range(0, nvlp1.ncols):
+                    # Check that this pixel represents a land surface
+                    if landmask[k] != 1: continue;
+                    self.check_location(nc4r1, k, i);
+                    recs = self._process_pixel(k, i, numdays, elevations[k]);
+
+                    # Report how many days are missing
+                    if len(recs) < numdays: 
+                        longitude = nc4r1.getVariables(Netcdf4Envelope2D.LON)[k];
+                        self.logger.warn("Less than expected number of records obtained for longitude %s" % longitude);
+            
+                    # First try to write 1 pixel
+                    h5r.write(k, recs, ncdf_weather);
+                    h5r.flush();
                 
-                    # Within the loop over the rows, we need a loop over the columns (longitudes)
-                    # Use a land mask and leave places in the data None for those pixels; k is the column index
-                    for k in range(0, nvlp1.ncols):
-                        # Check that this pixel represents a land surface
-                        if landmask[k] != 1: continue;
-                        self.check_location(nc4r1, k, i);
-                        recs = self._process_pixel(k, i, numdays, elevations[k]);
-                        
-                        # TODO: write output data for the current pixel; if all are missing then don't write!
-                        if len(recs) < numdays: self.logger.warning("")
-                        
-                        # Report how many days are missing; 
-                        
-                        # Add the records to the array data
-                        data[k] = recs;
+                    # Add the records to the array data, but if all are missing then don't
+                    if len(recs) > 0: data[k] = recs;
                 
                 # Output for current row is complete
-                h5r.writenext(data, ncdf_weather);
-            h5r.flush();
+                # h5r.writenext(data, ncdf_weather);
+                # h5r.flush();
         except Exception, e:
-            print str(e);
+            self.logger.error(str(e));
         finally:
             if h5r != None: h5r.close();
     
@@ -249,7 +262,7 @@ class NetcdfWeatherDataConverter():
         # Initialise
         k = colIndex;
         i = rowIndex;
-        result = None;
+        ts = None;
         
         try:
             # Estimate Angstrom coefficients
@@ -262,7 +275,7 @@ class NetcdfWeatherDataConverter():
             hdf5vars = getOrderedKeys(ncdf_weather.columns); 
     
             # Prepare to loop over all the days in the dataset; use class ncdf_weather for storing the data 
-            result = [];
+            ts = Container()
             start_day = datetime(self.available_years[0], 1, 1).date();
             for day in range(0, numdays):
                 # Initialise record for this day
@@ -273,23 +286,23 @@ class NetcdfWeatherDataConverter():
                 empty_slice_found = False;
                 for pcse_name, netcdf_name, conv, units in self.pcse_variables:
                     if self.__dataslices[netcdf_name] != None:
-                        dataslice = self.__dataslices[netcdf_name][:, k]; 
-                        if str(dataslice[day]) != '--':                    
+                        timeseries = self.__dataslices[netcdf_name][:, k]; 
+                        if str(timeseries[day]) != '--':                    
                             if pcse_name != "VAP":
-                                value = conv(dataslice[day]);  
+                                value = conv(timeseries[day]);  
                             else:
                                 if (netcdf_name =="hur"):
                                     pos = hdf5vars.index("tmin");
-                                    value = dataslice[day] * ea_from_tdew(rec[pos]) / 10.; # rh_to_hpa
+                                    value = timeseries[day] * ea_from_tdew(rec[pos]) / 10.; # rh_to_hpa
                                 else:
                                     # convert specific humidity "hus" to vapour pressure
-                                    value = vap_from_sh(dataslice[day], elevation); # sh_to_hpa
+                                    value = vap_from_sh(timeseries[day], elevation); # sh_to_hpa
                             pos = hdf5vars.index(pcse_name.lower());
                             rec[pos] = value;
                     else: 
                         empty_slice_found = True;
                 
-                if not empty_slice_found and self._record_is_ok(rec):
+                if not empty_slice_found and self._record_is_ok(rec, 3):
                     try:
                         # Reference evapotranspiration in mm/day
                         (E0,ES0,ET0) = reference_ET(curdate, latitude, elevation,
@@ -306,15 +319,17 @@ class NetcdfWeatherDataConverter():
                         rec[hdf5vars.index("e0")]  = E0/10.0;
                         rec[hdf5vars.index("es0")] = ES0/10.0;
                         rec[hdf5vars.index("et0")] = ET0/10.0;
-                        result.append(tuple(rec)); # TODO if incommplete, don't append!
-
+                        
+                        # If the record is incomplete, don't append!
+                        if self._record_is_ok(rec):
+                            ts.append(tuple(rec));
         except Exception as e:
-            print str(e);
+            self.logger.error(str(e));
         finally:
-            return result;   
+            return ts;   
         
-    def _record_is_ok(self, rec):
-        for j in range(1, len(rec) - 3):
+    def _record_is_ok(self, rec, roffset=0):
+        for j in range(1, len(rec) - roffset):
             if rec[j] == None:
                 return False;
         return True;
@@ -354,7 +369,7 @@ class NetcdfWeatherDataConverter():
                     raise PCSEError("Netcdf4 files do not have their coordinates sorted in the same way");
             return True;
         except Exception as e:
-            print str(e);
+            self.logger.error(str(e));
             return False;
         
     def check_location(self, netcdf4raster, colIndex, rowIndex):
@@ -370,7 +385,7 @@ class NetcdfWeatherDataConverter():
             assert abs_diff < 0.01, "Longitudes not equal!: " + str(longitudes[rowIndex]) + " " + str(longitude);
             return True;
         except Exception as e:
-            print str(e);
+            self.logger.error(str(e));
             return False;
         
     def _getAngstromCoeff(self, deglat):
