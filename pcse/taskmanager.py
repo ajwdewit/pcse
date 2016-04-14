@@ -23,6 +23,26 @@ class TaskManager:
     get_task() - picks a 'Pending' task from the list
     set_task_finished(task) - set the task status to 'Finished'
     set_task_error(task) - set the task status to 'Error occurred'
+
+    A task table could be created with the following SQL command
+    (example taken from MySQL)::
+
+
+        CREATE TABLE `tasklist` (
+           `task_id` int(11) NOT NULL AUTO_INCREMENT,
+           `status` char(16) DEFAULT NULL,
+           `hostname` char(50) DEFAULT NULL,
+           `process_id` int(11) DEFAULT NULL,
+           `comment` varchar(200) DEFAULT NULL,
+           `parameter1` int(11) DEFAULT NULL,
+           `parameter2` decimal(10,2) DEFAULT NULL,
+
+           ... Additional columns can be put here.
+
+           PRIMARY KEY (`task_id`),
+           KEY `status_ix` (`status`)
+         );
+
     """
     validstatus = ['Pending', 'In progress', 'Finished',
                    'Error occurred']
@@ -119,18 +139,18 @@ class TaskManager:
             pass # No locking needed for SQLite: assuming one client only.
         
 #-------------------------------------------------------------------------------
-    def set_task_finished(self, task):
+    def set_task_finished(self, task, comment="OK"):
         "Sets a task to status 'Finished'"
         
         conn = self.engine.connect()
         self._lock_table(conn)
         u = self.table_tasklist.update(self.table_tasklist.c.task_id==task["task_id"])
-        conn.execute(u, status='Finished')
+        conn.execute(u, status='Finished', comment=comment)
         self._unlock_table(conn)
         
 #-------------------------------------------------------------------------------
     def set_task_error(self, task, comment=None):
-        "Sets a task to status 'Error occurred'"
+        "Sets a task to status 'Error occurred' with given comment"
         
         conn = self.engine.connect()
         self._lock_table(conn)

@@ -27,17 +27,17 @@ class WaterbalancePP(SimulationObject):
     class StateVariables(StatesTemplate):
         SM = Float(-99.)
 
-    def initialize(self, day, kiosk, cropdata, soildata, sitedata):
+    def initialize(self, day, kiosk, parvalues):
         """    
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param soildata: dictionary with WOFOST soildata key/value pairs
     
         This waterbalance keeps the soil moisture always at field capacity. Therefore   
         `WaterbalancePP` has only one parameter (`SMFCF`: the field capacity of the
         soil) and one state variable (`SM`: the volumetric soil moisture).
         """
-        self.params = self.Parameters(soildata)
+        self.params = self.Parameters(parvalues)
         self.states = self.StateVariables(kiosk, SM=self.params.SMFCF,
                                           publish="SM")
     
@@ -198,6 +198,8 @@ class WaterbalanceFD(SimulationObject):
     # Flag indicating that a crop was removed and therefore the thickness 
     # of the rootzone shift back to its initial value (params.RDI)
     rooted_layer_needs_reset = Bool(False)
+    # placeholder for irrigation
+    _RIRR = Float(0.)
 
     class Parameters(ParamTemplate):
         # Soil parameters
@@ -215,7 +217,6 @@ class WaterbalanceFD(SimulationObject):
         SSI    = Float(-99.)
         WAV    = Float(-99.)
         NOTINF = Float(-99.)
-        SMLIM  = Float(-99.)
         # crop parameters
         IAIRDU = Float(-99.)
         RDMCR  = Float(-99.)
@@ -256,29 +257,27 @@ class WaterbalanceFD(SimulationObject):
         DW    = Float(-99.)
         DWLOW = Float(-99.)
 
-    def initialize(self, day, kiosk, cropdata, soildata, sitedata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         :param soildata: dictionary with WOFOST soildata key/value pairs
         :param sitedata: dictionary with WOFOST sitedata key/value pairs
         """
-        # Check validity of maximum soil moisture amount in topsoil (SMLIM)
-        SMLIMt = sitedata["SMLIM"]
-        if cropdata["IAIRDU"] == 1: # applicable only for flooded rice crops
-            SMLIM = soildata["SM0"]
-        else:
-            SMLIM = limit(soildata["SMW"], soildata["SM0"], SMLIMt)
-        sitedata["SMLIM"] = SMLIM
 
-        if SMLIMt != SMLIM:
+        # Check validity of maximum soil moisture amount in topsoil (SMLIM)
+        SMLIM = parvalues["SMLIM"]
+        if parvalues["IAIRDU"] == 1: # applicable only for flooded rice crops
+            SMLIM = parvalues["SM0"]
+        else:
+            SMLIM = limit(parvalues["SMW"], parvalues["SM0"], SMLIM)
+
+        if SMLIM != parvalues["SMLIM"]:
             msg = "SMLIM not in valid range, changed from %f to %f."
-            self.logger.warn(msg % (SMLIMt, SMLIM))
+            self.logger.warn(msg % (parvalues["SMLIM"], SMLIM))
 
         # Assign parameter values            
-        parvalues = merge_dict(cropdata, soildata, overwrite=True)
-        parvalues = merge_dict(parvalues, sitedata)
         self.params = self.Parameters(parvalues)
         p = self.params
         
@@ -293,7 +292,7 @@ class WaterbalanceFD(SimulationObject):
         
         # Initial soil moisture content and amount of water in rooted zone,
         # limited by SMLIM. Save initial value (WI)
-        SM = limit(p.SMW, p.SMLIM, (p.SMW + p.WAV/RD))
+        SM = limit(p.SMW, SMLIM, (p.SMW + p.WAV/RD))
         W = SM * RD
         WI = W
         
@@ -326,20 +325,23 @@ class WaterbalanceFD(SimulationObject):
         # search for crop transpiration values
         self._connect_signal(self._on_CROP_START, signals.crop_start)
         self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
-        
+        # signal for irrigation
+        self._connect_signal(self._on_IRRIGATE, signals.irrigate)
+
     @prepare_rates
     def calc_rates(self, day, drv):
         s = self.states
         p = self.params
         r = self.rates
 
-        # Rate of irrigation (RIRR) set to zero
-        r.RIRR = 0.
+        # Rate of irrigation (RIRR)
+        r.RIRR = self._RIRR
+        self._RIRR = 0.
         
         # Rainfall rate
         r.RAIN = drv.RAIN
 
-        # Transpiration and maximum soil and surfacewater evaporation rates
+        # Transpiration and maximum soil and surface water evaporation rates
         # are calculated by the crop Evapotranspiration module. 
         # However, if the crop is not yet emerged then set TRA=0 and use
         # the potential soil/water evaporation rates directly because there is
@@ -359,7 +361,7 @@ class WaterbalanceFD(SimulationObject):
         if s.SS > 1.:
             # If surface storage > 1cm then evaporate from water layer on
             # soil surface
-            r.EVS = EVSMX
+            r.EVW = EVWMX
         else:
             # else assume evaporation from soil surface
             if self.RINold >= 1:
@@ -564,6 +566,9 @@ class WaterbalanceFD(SimulationObject):
     def _on_CROP_FINISH(self):
         self.in_crop_cycle = False
 
+    def _on_IRRIGATE(self, amount, efficiency):
+        self._RIRR = amount * efficiency
+
 
 class WaterbalanceFDSnow(SimulationObject):
     """SimulationObject combining the SnowMAUS and WaterbalanceFD objects.
@@ -579,14 +584,40 @@ class WaterbalanceFDSnow(SimulationObject):
     waterbalance = Instance(SimulationObject)
     snowcover = Instance(SimulationObject)
 
-    def initialize(self, day, kiosk, cropdata, soildata, sitedata):
-        self.waterbalance = WaterbalanceFD(day, kiosk, cropdata, soildata, sitedata)
-        self.snowcover = SnowMAUS(day, kiosk, sitedata)
+    # use observed snow depth
+    use_observed_snow_depth = Bool(False)
+    # Helper variable for observed snow depth
+    _SNOWDEPTH = Float()
+
+    class StateVariables(StatesTemplate):
+        SNOWDEPTH = Float()
+
+    def initialize(self, day, kiosk, parvalues):
+        self.waterbalance = WaterbalanceFD(day, kiosk, parvalues)
+
+        # Determine of observed or simulated snow depth should be used
+        if "ISNOWSRC" not in parvalues:
+            msg = "Parameter for selecting observed(0)/simulated(1) snow depth ('ISNOWSRC') missing!"
+            raise exc.ParameterError(msg)
+        else:
+            self.use_observed_snow_depth = True if parvalues["ISNOWSRC"] == 0 else False
+
+        if self.use_observed_snow_depth:
+            self.states = self.StateVariables(kiosk, SNOWDEPTH=0.)
+        else:
+            self.snowcover = SnowMAUS(day, kiosk, parvalues)
 
     def calc_rates(self, day, drv):
         self.waterbalance.calc_rates(day, drv)
-        self.snowcover.calc_rates(day, drv)
+        if self.use_observed_snow_depth:
+            self._SNOWDEPTH = drv.SNOWDEPTH
+        else:
+            self.snowcover.calc_rates(day, drv)
 
+    @prepare_states
     def integrate(self, day):
         self.waterbalance.integrate(day)
-        self.snowcover.integrate(day)
+        if self.use_observed_snow_depth:
+            self.states.SNOWDEPTH = self._SNOWDEPTH
+        else:
+            self.snowcover.integrate(day)

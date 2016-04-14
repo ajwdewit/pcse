@@ -85,7 +85,7 @@ class Wofost(SimulationObject):
     PMRES    Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
     ASRC     Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
     DMI      Total dry matter increase, calculated as ASRC
-             times a weighted conversion efficieny.             Y  |kg ha-1 d-1|
+             times a weighted conversion efficiency.            Y  |kg ha-1 d-1|
     ADMI     Aboveground dry matter increase                    Y  |kg ha-1 d-1|
     =======  ================================================ ==== =============
 
@@ -128,46 +128,41 @@ class Wofost(SimulationObject):
         DMI   = Float(-99.)
         ADMI  = Float(-99.)
 
-    def initialize(self, day, kiosk, cropdata, soildata, sitedata,
-                    start_type, stop_type):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PCSE instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param soildata: dictionary with WOFOST soildata key/value pairs
-        :param sitedata: dictionary with WOFOST sitedata key/value pairs
-        :param start_type: Start type of the simulation: "sowing"|"emergence"
-        :param stop_type: Stop type of the simulation:
-            "harvest"|"maturity"|"earliest"
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
         
-        self.params = self.Parameters(cropdata)
+        self.params = self.Parameters(parvalues)
         self.rates  = self.RateVariables(kiosk, publish=["DMI","ADMI"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
-        self.pheno = Phenology(day, kiosk,  cropdata, start_type, stop_type)
-        self.part  = Partitioning(day, kiosk, cropdata)
-        self.assim = Assimilation(day, kiosk, cropdata)
-        self.mres  = MaintenanceRespiration(day, kiosk, cropdata)
-        self.evtra = Evapotranspiration(day, kiosk, cropdata, soildata)
-        self.ro_dynamics = Root_Dynamics(day, kiosk, cropdata, soildata)
-        self.st_dynamics = Stem_Dynamics(day, kiosk, cropdata)
-        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, cropdata)
-        self.lv_dynamics = Leaf_Dynamics(day, kiosk, cropdata)
+        self.pheno = Phenology(day, kiosk, parvalues)
+        self.part  = Partitioning(day, kiosk, parvalues)
+        self.assim = Assimilation(day, kiosk, parvalues)
+        self.mres  = MaintenanceRespiration(day, kiosk, parvalues)
+        self.evtra = Evapotranspiration(day, kiosk, parvalues)
+        self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
+        self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
+        self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
+        self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
 
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk["TWLV"] + \
                self.kiosk["TWST"] + \
                self.kiosk["TWSO"]
         self.states = self.StateVariables(kiosk,
-                                          publish=["TAGP","GASST","MREST","HI"],
+                                          publish=["TAGP", "GASST", "MREST", "HI"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0,
                                           CTRAT=0.0, HI=0.0,
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
-        checksum = cropdata["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
+        checksum = parvalues["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
         if abs(checksum) > 0.0001:
             msg = "Error in partitioning of initial biomass (TDWI)!"
             raise exc.PartitioningError(msg)

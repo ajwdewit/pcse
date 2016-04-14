@@ -1,118 +1,14 @@
-*************************
-Getting started with PCSE
-*************************
+***************
+Getting started
+***************
 
-This quickstart guide will help you to install PCSE and provides
-some examples to get you started with modelling. All examples are currently focused on applying
-the WOFOST crop simulation model, although other crop simulations may become available within
+This guide will help you install PCSE as well as provide
+some examples to get you started with modelling. The examples are currently focused on applying
+the WOFOST and LINTUL3 crop simulation models, although other crop simulations may become available within
 PCSE in the future.
 
-Installing PCSE
-===============
-
-Requirements and dependencies
------------------------------
-
-PCSE is being developed on Ubuntu Linux 10.04 using python 2.7.6 and is known to work with
-the 3.x series (using the 2to3 tool). As python is a platform independent language, PCSE
-works equally well on Windows or Mac OSX.  The most straightforward approach for installing
-python is through one of the prepackaged python distributions such as `Enthought Canopy`_,
-`Anaconda`_ or `PythonXY`_. The following screen dump shows the version of python, numpy and
-SQLAlchemy that were used to develop PCSE::
-
-    Python 2.7.6 (default, Dec 16 2013, 12:39:22)
-    [GCC 4.4.3] on linux2
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>> import numpy as np
-    >>> np.__version__
-    '1.8.0'
-    >>> import sqlalchemy as sa
-    >>> sa.__version__
-    '0.8.4'
-
-.. _Enthought Canopy: https://www.enthought.com/products/canopy/
-.. _Anaconda: https://store.continuum.io/cshop/anaconda/
-.. _PythonXY: https://code.google.com/p/pythonxy/wiki/Welcome
-
-All examples in this quickstart guide were developed under Windows 7 with the Enthought Python distribution
-(version 7.0) which is by now superseeded by Enthought Canopy.
-
-Downloading PCSE
-----------------
-
-The PCSE package can be downloaded as a zip file from GitHub.com using the link `here`_. Just unzip
-the package at a suitable location, for this tutorial we assume that PCSE is installed
-under 'D:\\USERDATA\\pylib\\'. Note that the top directory in the zip file is `pcse-<branchname>`.
-The actual PCSE is package is inside this folder and needs to be put on your file system. After
-unzipping the 'D:\\USERDATA\\pylib\\' folder should resemble the screenshot below.
-
-.. image:: pylib.png
-
-.. _here: https://github.com/ajwdewit/pcse/archive/develop.zip
-
-
-Testing the PCSE package
-------------------------
-To guarantee its integrity, the PCSE package includes a number of self
-tests that test individual components as well as the entire simulation. These tests
-verify that the output produced by the different components matches with the
-expected outputs. Test data for the individual components can be found
-in the `pcse.tests.test_data` package, while the test data for the entire chain
-is stored in an SQLite database (pcse.db). This database can be found under
-`.pcse` in your home folder and will be automatically generated when importing
-PCSE for the first time. When you delete the database file manually it will be
-regenerated..
-
-We assume here that PCSE is installed under 'D:\\USERDATA\\pylib\\' and
-this location needs to be added to the search path of python::
-
-    C:\>python
-    Enthought Python Distribution -- www.enthought.com
-    Version: 7.0-2 (32-bit)
-
-    Python 2.7.1 |EPD 7.0-2 (32-bit)| (r271:86832, Dec  2 2010, 10:35:02) [MSC v.1500 32 bit (Intel)] on win32
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>> import sys
-    >>> sys.path.append(r"D:\USERDATA\pylib")
-
-Next, PCSE can be imported and the tests can be executed by calling
-the `test()` function at the top of the package::
-
-    >>> import pcse
-    Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db
-    >>> pcse.test()
-    runTest (pcse.tests.test_abioticdamage.Test_FROSTOL) ... ok
-    runTest (pcse.tests.test_assimilation.Test_WOFOST_Assimilation) ... ok
-    runTest (pcse.tests.test_partitioning.Test_DVS_Partitioning) ... ok
-    runTest (pcse.tests.test_evapotranspiration.Test_PotentialEvapotranspiration) ... ok
-    runTest (pcse.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration1) ... ok
-    runTest (pcse.tests.test_evapotranspiration.Test_WaterLimitedEvapotranspiration2) ... ok
-    runTest (pcse.tests.test_respiration.Test_WOFOSTMaintenanceRespiration) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedPotato) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterWheat) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialSunflower) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSunflower) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterWheat) ... ok
-
-    ----------------------------------------------------------------------
-    Ran 19 tests in 29.748s
-
-    OK
-    >>>
-
-If the model output matches the expected output the test will report 'OK',
-otherwise an error will be produced with a detailed traceback on where the
-problem occurred.
-
-Part 1: An interactive PCSE/WOFOST session
-==========================================
+An interactive PCSE/WOFOST session
+==================================
 
 The easiest way to demonstrate PCSE is to import WOFOST from PCSE and run it from
 an interactive Python session. We will be using the `start_wofost()` script that
@@ -129,7 +25,7 @@ conditions for a freely draining soil (mode='wlp')::
     >>> type(wofost_object)
     <class 'pcse.models.Wofost71_WLP_FD'>
 
-You have just successfully initialized a PCSE/WOFOST object in the python
+You have just successfully initialized a PCSE/WOFOST object in the Python
 interpreter, which is in its initial state and waiting to do some simulation. We
 can now advance the model state for example with 1 day::
 
@@ -156,16 +52,24 @@ model state you can do::
 Showing that after 11 days the LAI value is 0.287. When we increase time
 with another 25 days, the LAI increases to 1.528. The `get_variable` method
 can retrieve any state or rate variable that is defined somewhere in the
-model. Finally, we can finish the crop season by simply specifying sufficient days
-and store the results to a file 'myresults.csv'::
+model. Finally, we can finish the crop season by letting it run until the
+model terminates and store the results to a file 'myresults.csv'::
 
-    >>> wofost_object.run(days=300)
+    >>> wofost_object.run_till_terminate()
     >>> wofost_object.store_to_file("myresults.txt")
 
 Which should look like this :download:`myresults.txt`
 
-Part 2: Running PCSE/WOFOST with custom input data
-==================================================
+Running PCSE/WOFOST with custom input data
+==========================================
+
+.. note::
+    The inputs for PCSE models have been restructured and consist of three
+    parts: 1) model parameters (soil, crop and site parameters), 2) driving variables
+    and 3) agromanagement actions (what used to be called 'timerdata').
+    The description here for running PCSE/WOFOST uses the old method for backward
+    compatibility. However, this will change in future versions of PCSE.
+    See also the section on running :ref:`PCSE/LINTUL3 <RunningLINTUL3>`.
 
 For setting up PCSE/WOFOST with your
 own data sources you should understand that WOFOST uses 5 different types of
@@ -175,8 +79,8 @@ misnomer as they contain a mixture of parameter values, boundary conditions
 and events rather than data, except for the driving variables which
 can be considered as (observed) data. This terminology was inherited from the 
 previous WOFOST versions and it was kept because changing it would
-cause more confusion. PCSE provides several tools for reading parameters and weather data from files
-or databases.
+cause more confusion. PCSE provides several tools for reading parameters and
+weather data from files or databases.
 
 For the second example we will run a simulation for sugar beet in
 Wageningen (Netherlands) and we will read the input data step by step from
@@ -185,8 +89,9 @@ script. For the example we will assume that data files are in the directory
 `D:\\userdata\\pcse_examples` and all the parameter files needed can be
 found by unpacking this zip file :download:`quickstart_part2.zip`.
 
-First we will import the necessary modules and
-import set the data directory::
+First we will import the necessary modules and define the data directory.
+We also assume that you have the matplotlib package installed on your
+system.::
 
     >>> import os
     >>> import pcse
@@ -196,7 +101,7 @@ import set the data directory::
 Cropdata
 --------
 
-Cropdata consist of parameter names (dictionary keys) and the
+The Cropdata dictionary consists of parameter names (dictionary keys) and the
 corresponding parameter values that are needed to parameterize the
 components of the crop simulation model. These are
 crop-specific values regarding phenology, assimilation, respiration,
@@ -208,21 +113,21 @@ is taken from the crop files in the `WOFOST Control Centre`_.
 The crop parameter values for many models in
 Wageningen are often provided in the CABO format that could be read
 with the `TTUTIL <http://edepot.wur.nl/17847>`_ FORTRAN library. PCSE
-tries to be backward compatible as much as possible and provides a
-tool for reading parameter files in CABO format::
+tries to be backward compatible as much as possible and provides the
+:ref:`CABOFileReader <CABOFileReader>` for reading parameter files in CABO format::
 
     >>> from pcse.fileinput import CABOFileReader
     >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
     >>> cropdata = CABOFileReader(cropfile)
     >>> print cropdata
 
-printing the cropdata dictionary gives you an listing of the header and
+Printing the cropdata dictionary gives you a listing of the header and
 all parameters and their values.
 
 Soildata
 --------
 
-The soildata dictionary must provide the parameter name/value pairs related
+The soildata dictionary provides the parameter name/value pairs related
 to the soil type and soil physical properties. The number of parameters is
 variable depending on the soil water balance type that is used for the
 simulation. For this example, we will use the water balance for freely
@@ -241,7 +146,7 @@ simulation and the maximum duration of the crop simulation. The latter is
 included to avoid unrealistically long simulations for example as a results of
 a too high temperature sum requirement. These values are used by the AgroManagement
 unit of PCSE. Currently, there is only an AgroManagement unit for single cropping
-seasons but will change in the future allowing for crop rotations. Therefore,
+seasons but this will change in the future allowing for crop rotations. Therefore,
 the approach for providing AgroManagement data (timerdata) will change.
 
 The following list gives an overview of the parameter names, values and types that
@@ -256,9 +161,11 @@ need to be specified in the `timerdata` dictionary::
        CROP_END_DATE: date of the end of the crop simulation in case of CROP_END_TYPE == 'harvest' | 'earliest'
         MAX_DURATION: maximum number of days of the crop simulation
 
-The CABO format has no support for dates, therefore the PCSE file format was
-developed that does allow to use dates. The crop calendar file for sugar beet
-in Wageningen `sugarbeet_calendar.pcse` can be read with the PCSEFileReader::
+The CABO format does support date/time values, but the CABOFilereader
+cannot yet parse them. Moreover, Python supports date/time value natively and
+they can be defined using the Python-based PCSE file format. The crop calendar
+file for sugar beet in Wageningen `sugarbeet_calendar.pcse` can be read with
+the :ref:`PCSEFileReader <PCSEFileReader>`::
 
     >>> from pcse.fileinput import PCSEFileReader
     >>> crop_calendar_file = os.path.join(data_dir, 'sugarbeet_calendar.pcse')
@@ -283,7 +190,7 @@ The sitedata dictionary provides ancillary parameters that are not related to
 the crop, the soil or the agromanagement. Examples are the initial conditions of
 the water balance such as the initial soil moisture content (WAV) and
 the initial and maximum surface storage (SSI, SSMAX). For the moment, we will
-define these parameters directly on the python commandline::
+define these parameters directly on the Python commandline::
 
     >>> sitedata = {'SSMAX'  : 0.,
                     'IFUNRN' : 0,
@@ -295,17 +202,19 @@ define these parameters directly on the python commandline::
 Driving variables (weather data)
 --------------------------------
 
-Daily weather variables are needed for running the simulation. Currently, three
+Daily weather variables are needed for running the simulation. Currently, four
 options are available in PCSE for retrieving weather data:
 
     1. The database structure as provided by the Crop Growth Monitoring
-       System. Weather data will be read from the GRID_WEATHER table which
-       is implemented using `pcse.db.pcse.GridWeatherDataProvider`.
+       System for the delivery of interpolated daily weather data on 25 x 25 km gridcells. Weather data will be read from the GRID_WEATHER table which
+       is implemented using :ref:`GridWeatherDataProvider <GridWeatherDataProvider>`.
     2. The file structure as defined by the `CABO Weather System`_ which is
-       implemented using `pcse.fileinput.CABOWeatherDataProvider`.
-    3. The global weather data provided by the agroclimatology from the
+       implemented using :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`for the delivery of observed weather station data.
+    3. The file structure used by the `CABO Weather System`_ but implemented as an
+       Excel sheet by :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>`
+    4. The global weather data provided by the agroclimatology from the
        `NASA Power database`_ at a resolution of 1x1 degree. PCSE
-       provides the `pcse.db.NASAPowerWeatherDataProvider` which retrieves
+       provides the :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
        the NASA Power data from the internet for a given latitude and
        longitude.
 
@@ -349,7 +258,8 @@ soildata, timerdata and weather data.
 However, as many users of PCSE only need a particular configuration (for
 example the WOFOST model for potential production), preconfigured Engines
 are provided in `pcse.models`. For the sugarbeet example we will import
-the WOFOST model for water-limited simulation under freely draining soils::
+the WOFOST model for water-limited simulation under freely draining soil
+conditions::
 
     >>> from pcse.models import Wofost71_WLP_FD
     >>> wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, wdp)
@@ -394,9 +304,206 @@ index (LAI) and root-zone soil moisture (SM) using the `MatPlotLib`_ plotting pa
 
 .. _MatPlotLib: http://matplotlib.org/
 
-This should provide generate a figure of the simulation results as shown below. The complete python
+This should generate a figure of the simulation results as shown below. The complete Python
 script for this examples can be downloaded here :download:`quickstart_demo2.py`
-
 
 .. image:: sugarbeet.png
 
+
+.. _RunningLINTUL3:
+
+Running a simulation with PCSE/LINTUL3
+======================================
+
+The LINTUL model (Light INTerception and UtiLisation) is a simple generic crop model, which simulates dry
+matter production as the result of light interception and utilization with a constant light use efficiency.
+In PCSE the LINTUL family of models has been implemented including the LINTUL3 model which is used for
+simulation of crop production under water-limited and nitrogen-limited conditions.
+
+For the third example, we will use LINTUL3 for simulating spring-wheat in the Netherlands under water-limited
+and nitrogen-limited conditions. We will again assume that data files are in the directory
+`D:\\userdata\\pcse_examples` and all the parameter files needed can be
+found by unpacking this zip file :download:`quickstart_part3.zip`. Note that this guide is also available
+as an IPython notebook: :download:`running_LINTUL3.ipynb`.
+
+First we will import the necessary modules and define the data directory. We also assume that you have the
+`matplotlib`_, `pandas`_ and `PyYAML`_ packages installed on your system.::
+
+    >>> import os
+    >>> import pcse
+    >>> import matplotlib.pyplot as plt
+    >>> import pandas as pd
+    >>> import yaml
+    >>> data_dir = r'D:\userdata\pcse_examples'
+
+.. _pandas: http://pandas.pydata.org
+.. _PyYAML: http://pyyaml.org/wiki/PyYAML
+
+For running the PCSE/LINTUL3 (and PCSE models in general), you need three types of inputs:
+
+1. Model parameters that parameterize the different model components. These parameters usually
+   consist of a set of crop parameters (or multiple sets in case of crop rotations), a set of soil parameters
+   and a set of site parameters. The latter provide ancillary parameters that are specific for a location.
+2. Driving variables represented by weather data which can be derived from various sources.
+3. Agromanagement actions which specify the farm activities that will take place on the field that is simulated
+   by PCSE. For defining the agromanagement we will use the new `AgroManager` which replaces the `timerdata`
+   definition that was used previously.
+
+Reading model parameters
+------------------------
+Model parameters can be easily read from the input files using the `PCSEFileReader` as we have seen
+in the previous example::
+
+    >>> from pcse.fileinput import PCSEFileReader
+    >>> crop = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.crop"))
+    >>> soil = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.soil"))
+    >>> site = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.site"))
+
+However, PCSE models expect a single set of parameters and therefore they need to be combined using the
+`ParameterProvider`::
+
+    >>> from pcse.base_classes import ParameterProvider
+    >>> parameterprovider = ParameterProvider(soildata=soil, cropdata=crop, sitedata=site)
+
+Reading weather data
+--------------------
+For reading weather data we will use the ExcelWeatherDataProvider. This WeatherDataProvider uses nearly the same
+file format as is used for the CABO weather files but stores its data in an MicroSoft Excel file which makes the
+weather files easier to create and update::
+
+    >>> from pcse.fileinput import ExcelWeatherDataProvider
+    >>> weatherdataprovider = ExcelWeatherDataProvider(os.path.join(data_dir, "nl1.xlsx"))
+    >>> print(weatherdataprovider)
+    Weather data provided by: ExcelWeatherDataProvider
+    --------Description---------
+    Weather data for:
+    Country: Netherlands
+    Station: Wageningen, Location Haarweg
+    Description: Observed data from Station Haarweg in Wageningen
+    Source: Meteorology and Air Quality Group, Wageningen University
+    Contact: Peter Uithol
+    ----Site characteristics----
+    Elevation:    7.0
+    Latitude:  51.970
+    Longitude:  5.670
+    Data available for 2004-01-02 - 2008-12-31
+    Number of missing days: 32
+
+Defining agromanagement
+-----------------------
+Defining agromanagement needs a bit more explanation because agromanagement is a relatively
+complex piece of PCSE. The agromanagement definition for PCSE is written in a format called `YAML`_ and
+for the current example looks like this:
+
+.. code:: yaml
+
+    Version: 1.0
+    AgroManagement:
+    - 2006-01-01:
+        CropCalendar:
+            crop_id: spring-wheat
+            crop_start_date: 2006-03-31
+            crop_start_type: emergence
+            crop_end_date: 2006-08-20
+            crop_end_type: earliest
+            max_duration: 300
+        TimedEvents:
+        -   event_signal: apply_n
+            name:  Nitrogen application table
+            comment: All nitrogen amounts in g N m-2
+            events_table:
+            - 2006-04-10: {amount: 10, recovery: 0.7}
+            - 2006-05-05: {amount:  5, recovery: 0.7}
+        StateEvents: null
+
+.. _YAML: http://yaml.org/
+
+The agromanagement definition starts with `Version:` indicating the version number of the agromanagement file
+while the actual definition starts after the label `AgroManagement:`. Next a date must be provided which sets the
+start date of the campaign (and the start date of the simulation). Each campaign is defined by zero or one
+CropCalendars and zero or more TimedEvents and/or StateEvents. The CropCalendar defines the crop type, date of sowing,
+date of harvesting, etc. while the Timed/StateEvents define actions that are either connected to a date or
+to a model state.
+
+In the current example, the campaign starts on 2006-01-01, there is a crop calendar for spring-wheat starting on
+2006-03-31 with a harvest date of 2006-08-20 or earlier if the crop reaches maturity before this date.
+Next there are timed events defined for applying N fertilizer at 2006-04-10 and 2006-05-05. The current example
+has no state events. For a thorough description of all possibilities see the section on AgroManagement in the
+Reference Guide (Chapter 3).
+
+Loading the agromanagement definition must by done with the YAMLAgroManagementReader::
+
+    >>> from pcse.fileinput import YAMLAgroManagementReader
+    >>> agromanagement = YAMLAgroManagementReader(os.path.join(data_dir, "lintul3_springwheat.amgt"))
+    >>> print(agromanagement)
+    !!python/object/new:pcse.fileinput.yaml_agmt_loader.YAMLAgroManagementReader
+    listitems:
+    - 2006-01-01:
+        CropCalendar:
+          crop_end_date: 2006-10-20
+          crop_end_type: earliest
+          crop_id: spring-wheat
+          crop_start_date: 2006-03-31
+          crop_start_type: emergence
+          max_duration: 300
+        StateEvents: null
+        TimedEvents:
+        - comment: All nitrogen amounts in g N m-2
+          event_signal: apply_n
+          events_table:
+          - 2006-04-10:
+              amount: 10
+              recovery: 0.7
+          - 2006-05-05:
+              amount: 5
+              recovery: 0.7
+          name: Nitrogen application table
+
+
+Starting and running the LINTUL3 model
+--------------------------------------
+We have now all parameters, weather data and agromanagement information available to start the LINTUL3 model::
+
+    >>> from pcse.models import LINTUL3
+    >>> lintul3 = LINTUL3(parameterprovider, weatherdataprovider, agromanagement)
+    >>> lintul3.run_till_terminate()
+
+Next, we can easily get the output from the model using the get_output() method and turn it into a pandas DataFrame::
+
+    >>> output = lintul3.get_output()
+    >>> df = pd.DataFrame(output).set_index("day")
+    >>> df.tail()
+                     DVS       LAI     NUPTT       TAGBM     TGROWTH  TIRRIG  \
+    day
+    2006-07-28  1.931748  0.384372  4.705356  560.213626  626.053663       0
+    2006-07-29  1.953592  0.368403  4.705356  560.213626  626.053663       0
+    2006-07-30  1.974029  0.353715  4.705356  560.213626  626.053663       0
+    2006-07-31  1.995291  0.339133  4.705356  560.213626  626.053663       0
+    2006-08-01  2.014272  0.326169  4.705356  560.213626  626.053663       0
+
+                   TNSOIL  TRAIN  TRAN  TRANRF  TRUNOF      TTRAN        WC  \
+    day
+    2006-07-28  11.794644  375.4     0       0       0  71.142104  0.198576
+    2006-07-29  11.794644  376.3     0       0       0  71.142104  0.197346
+    2006-07-30  11.794644  376.3     0       0       0  71.142104  0.196293
+    2006-07-31  11.794644  381.6     0       0       0  71.142104  0.198484
+    2006-08-01  11.794644  381.7     0       0       0  71.142104  0.197384
+
+                     WLVD       WLVG        WRT         WSO         WST
+    day
+    2006-07-28  88.548865  17.687197  16.649830  184.991591  268.985974
+    2006-07-29  89.284828  16.951234  16.150335  184.991591  268.985974
+    2006-07-30  89.962276  16.273785  15.665825  184.991591  268.985974
+    2006-07-31  90.635216  15.600845  15.195850  184.991591  268.985974
+    2006-08-01  91.233828  15.002234  14.739974  184.991591  268.985974
+
+Finally, we can visualize the results from the pandas DataFrame with a few commands if your
+environment supports plotting::
+
+    >>> fig, axes = plt.subplots(nrows=9, ncols=2, figsize=(16,40))
+    >>> for key, axis in zip(df.columns, axes.flatten()):
+    >>>     df[key].plot(ax=axis, title=key)
+    >>> fig.autofmt_xdate()
+    >>> fig.savefig(os.path.join(data_dir, "lintul3_springwheat.png"))
+
+.. image:: lintul3_springwheat.png

@@ -106,20 +106,16 @@ class WOFOST_Root_Dynamics(SimulationObject):
         DWRT = Float(-99.)
         TWRT = Float(-99.)
         
-    def initialize(self, day, kiosk, cropdata, soildata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param soildata: dictionary with WOFOST soildata key/value pairs
+        :param kiosk: variable kiosk of this PCSE  instance
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
-        
-        # Merge cropdata and soildata dictionaries in order to pass them to
-        # the Parameters class.
-        parvalues = merge_dict(cropdata, soildata)
-        
+
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk)
+        self.rates = self.RateVariables(kiosk, publish="DRRT")
         self.kiosk = kiosk
         
         # INITIAL STATES
@@ -236,7 +232,7 @@ class Simple_Root_Dynamics(SimulationObject):
     def initialize(self, day, kiosk, cropdata, soildata):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE  instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         :param soildata: dictionary with WOFOST soildata key/value pairs
         """

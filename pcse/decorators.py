@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+from __future__ import print_function
 from functools import wraps
 
 class descript(object):
@@ -71,9 +72,9 @@ def main():
     class testclass(object):
         class strates(object):
             def lock(self):
-                print "Locking!"
+                print("Locking!")
             def unlock(self):
-                print "Unlocking!"
+                print("Unlocking!")
     
         def __init__(self):
             self.myattr = 10
@@ -81,17 +82,17 @@ def main():
             self.states = self.strates()
         
         @prepare_states
-        def integrate(self, a,b,c):
-            print "executing _integrate with parameters %s,%s,%s!" % (a,b,c)
+        def integrate(self, a, b, c):
+            print("executing _integrate with parameters %s,%s,%s!" % (a, b, c))
         @prepare_rates
-        def calc_rates(self, a,b,c):
-            print "executing _calc_rates with parameters %s,%s,%s!" % (a,b,c)
+        def calc_rates(self, a, b, c):
+            print("executing _calc_rates with parameters %s,%s,%s!" % (a, b, c))
             
             
     tc = testclass()
     
-    tc.integrate(1,2,3)
-    tc.calc_rates(4,5,6)
+    tc.integrate(1, 2, 3)
+    tc.calc_rates(4, 5, 6)
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Miscelaneous utilities for PyWOFOST
+"""Miscellaneous utilities for PCSE
 """
 import os, sys
 import datetime
@@ -16,6 +16,7 @@ except ImportError:
     from UserDict import DictMixin as MutableMapping
 import textwrap
 import sqlite3
+import pdb
 
 
 import numpy as np
@@ -27,8 +28,8 @@ hPa2kPa = lambda x: x/10.
 # Saturated Vapour pressure [kPa] at temperature temp [C]
 SatVapourPressure = lambda temp: 0.6108 * exp((17.27 * temp) / (237.3 + temp))
 
-def reference_ET(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2,
-                 ANGSTA, ANGSTB, ETMODEL="PM"):
+def reference_ET(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
+                 ANGSTA, ANGSTB, ETMODEL="PM", **kwargs):
     """Calculates reference evapotranspiration values E0, ES0 and ET0.
 
     The open water (E0) and bare soil evapotranspiration (ES0) are calculated with
@@ -38,14 +39,14 @@ def reference_ET(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2,
 
     Input variables::
 
-        day     -  Python datetime.date object                      -
+        DAY     -  Python datetime.date object                      -
         LAT     -  Latitude of the site                          degrees
         ELEV    -  Elevation above sea level                        m
         TMIN    -  Minimum temperature                              C
         TMAX    -  Maximum temperature                              C
-        AVRAD   -  Daily shortwave radiation                     J m-2 d-1
+        IRRAD   -  Daily shortwave radiation                     J m-2 d-1
         VAP     -  24 hour average vapour pressure                 hPa
-        WIND2   -  24 hour average windspeed at 2 meter            m/s
+        WIND    -  24 hour average windspeed at 2 meter            m/s
         ANGSTA  -  Empirical constant in Angstrom formula           -
         ANGSTB  -  Empirical constant in Angstrom formula           -
         ETMODEL -  Indicates if the canopy reference ET should     PM|P
@@ -103,15 +104,15 @@ def reference_ET(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2,
         msg = "Variable ETMODEL can have values 'PM'|'P' only."
         raise RuntimeError(msg)
 
-    E0, ES0, ET0 = penman(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2,
+    E0, ES0, ET0 = penman(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
                           ANGSTA, ANGSTB)
     if ETMODEL == "PM":
-        ET0 = penman_monteith(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2)
+        ET0 = penman_monteith(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND)
 
     return E0, ES0, ET0
 
 
-def penman(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
+def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     """Calculates E0, ES0, ET0 based on the Penman model.
     
      This routine calculates the potential evapo(transpi)ration rates from
@@ -122,7 +123,7 @@ def penman(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
 
     Input variables::
     
-        day     -  Python datetime.date object                                    -      
+        DAY     -  Python datetime.date object                                    -
         LAT     -  Latitude of the site                        degrees   
         ELEV    -  Elevation above sea level                      m      
         TMIN    -  Minimum temperature                            C
@@ -144,7 +145,7 @@ def penman(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     # latent heat of evaporation of water (J/kg=J/mm)
     # Stefan Boltzmann constant (in J/m2/d/K4, e.g multiplied by 24*60*60)
     PSYCON = 0.67; REFCFW = 0.05; REFCFS = 0.15; REFCFC = 0.25
-    LHVAP = 2.45E6; STBC = 4.9E-3
+    LHVAP = 2.45E6; STBC =  5.670373E-8 * 24*60*60 # (=4.9E-3)
 
     # preparatory calculations
     # mean daily temperature and temperature difference (Celsius)
@@ -173,7 +174,7 @@ def penman(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     # where RI/RA is the atmospheric transmission obtained by a CALL
     # to ASTRO:
 
-    r = astro(day, LAT, AVRAD)
+    r = astro(DAY, LAT, AVRAD)
     RELSSD = limit(0., 1., (r.ATMTR-abs(ANGSTA))/abs(ANGSTB))
 
     # Terms in Penman formula, for water, soil and canopy
@@ -187,23 +188,23 @@ def penman(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     RNC = (AVRAD*(1.-REFCFC)-RB)/LHVAP
 
     # evaporative demand of the atmosphere (mm/d)
-    EA = 0.26 * max(0.,(SVAP-VAP)) * (0.5+BU*WIND2)
+    EA  = 0.26 * max(0.,(SVAP-VAP)) * (0.5+BU*WIND2)
     EAC = 0.26 * max(0.,(SVAP-VAP)) * (1.0+BU*WIND2)
 
     # Penman formula (1948)
-    E0 = (DELTA*RNW+GAMMA*EA)/(DELTA+GAMMA)
-    ES0 = (DELTA*RNS+GAMMA*EA)/(DELTA+GAMMA)
+    E0  = (DELTA*RNW+GAMMA*EA)/(DELTA+GAMMA)
+    ES0 = (DELTA*RNS+GAMMA*EA)/(DELTA+GAMMA) 
     ET0 = (DELTA*RNC+GAMMA*EAC)/(DELTA+GAMMA)
 
     # Ensure reference evaporation >= 0.
-    E0 = max(0., E0)
+    E0  = max(0., E0)
     ES0 = max(0., ES0)
     ET0 = max(0., ET0)
     
     return E0, ES0, ET0
 
 
-def penman_monteith(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
+def penman_monteith(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
     """Calculates reference ET0 based on the Penman-Monteith model.
 
      This routine calculates the potential evapotranspiration rate from
@@ -214,7 +215,7 @@ def penman_monteith(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
 
     Input variables::
 
-        day   -  Python datetime.date object                   -
+        DAY   -  Python datetime.date object                   -
         LAT   -  Latitude of the site                        degrees
         ELEV  - Elevation above sea level                      m
         TMIN  - Minimum temperature                            C
@@ -272,9 +273,9 @@ def penman_monteith(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
     STB_TMIN = STBC * pow(Celsius2Kelvin(TMIN), 4)
     RNL_TMP = ((STB_TMAX + STB_TMIN) / 2.) * (0.34 - 0.14 * sqrt(VAP))
 
-    # Clear Sky radiation [J/m2/day] from Angot TOA radiation
+    # Clear Sky radiation [J/m2/DAY] from Angot TOA radiation
     # the latter is found through a call to astro()
-    r = astro(day, LAT, AVRAD)
+    r = astro(DAY, LAT, AVRAD)
     CSKYRAD = (0.75 + (2e-05 * ELEV)) * r.ANGOT
 
     if CSKYRAD > 0:
@@ -282,7 +283,7 @@ def penman_monteith(day, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
         RNL = RNL_TMP * (1.35 * (AVRAD/CSKYRAD) - 0.35)
 
         # radiative evaporation equivalent for the reference surface
-        # [mm/day]
+        # [mm/DAY]
         RN = ((1-REFCFC) * AVRAD - RNL)/LHVAP
 
         # aerodynamic evaporation equivalent [mm/day]
@@ -356,7 +357,8 @@ def ea_from_tdew(tdew):
     # Raise exception:
     if (tdew < -95.0 or tdew > 65.0):
         # Are these reasonable bounds?
-        raise ValueError, 'tdew=%g is not in range -95 to +60 deg C' % tdew
+        msg = 'tdew=%g is not in range -95 to +60 deg C' % tdew
+        raise ValueError(msg)
 
     tmp = (17.27 * tdew) / (tdew + 237.3)
     ea = 0.6108 * exp(tmp)
@@ -402,7 +404,7 @@ def limit(min, max, v):
     """
 
     if min > max:
-        raise RuntimeError("Min value larger than max")
+        raise RuntimeError("Min value (%f) larger than max (%f)" % (min, max))
     
     if v < min:       # V below range: return min
         return min
@@ -641,7 +643,7 @@ class Afgen(object):
         n = len(x_list)
         
         # Check if x range is ascending continuously
-        rng = range(1, n)
+        rng = list(range(1, n))
         x_asc = [True if (x_list[i] > x_list[i-1]) else False for i in rng]
         
         # Check for breaks in the series where the ascending sequence stops.
@@ -670,9 +672,9 @@ class Afgen(object):
         self.unit = unit
 
         x_list, y_list = self._check_x_ascending(tbl_xy)
-        x_list = self.x_list = map(float, x_list)
-        y_list = self.y_list = map(float, y_list)
-        intervals = zip(x_list, x_list[1:], y_list, y_list[1:])
+        x_list = self.x_list = list(map(float, x_list))
+        y_list = self.y_list = list(map(float, y_list))
+        intervals = list(zip(x_list, x_list[1:], y_list, y_list[1:]))
         self.slopes = [(y2 - y1)/(x2 - x1) for x1, x2, y1, y2 in intervals]
 
     def __call__(self, x):
@@ -854,8 +856,9 @@ class ConfigurationLoader(object):
         # Load file using execfile
         try:
             loc = {}
-            execfile(model_config_file, {}, loc)
-        except Exception, e:
+            bytecode = compile(open(model_config_file).read(), model_config_file, 'exec')
+            exec(bytecode, {}, loc)
+        except Exception as e:
             msg = "Failed to load configuration from file '%s' due to: %s"
             msg = msg % (model_config_file, e)
             raise exc.PCSEError(msg)
@@ -869,7 +872,7 @@ class ConfigurationLoader(object):
                     self.description += "\n"
 
         # Loop through the attributes in the configuration file
-        for key, value in loc.items():
+        for key, value in list(loc.items()):
             if key.isupper():
                 self.defined_attr.append(key)
                 setattr(self, key, value)
@@ -944,9 +947,51 @@ def load_SQLite_dump_file(dump_file_name, SQLite_db_name):
 
     with open(dump_file_name) as fp:
         sql_dump = fp.readlines()
-    str_sql_dump = ""
-    for line in sql_dump:
-        str_sql_dump += line
+    str_sql_dump = "".join(sql_dump)
     con = sqlite3.connect(SQLite_db_name)
     con.executescript(str_sql_dump)
     con.close()
+
+def safe_float(x):
+    """Returns the value of x converted to float, if fails return None.
+    """
+    try:
+        return float(x)
+    except (ValueError, TypeError):
+        return None
+
+def check_date(indate):
+        """Check representations of date and try to force into a datetime.date
+
+        The following formats are supported:
+
+        1. a date object
+        2. a datetime object
+        3. a string of the format YYYYMMDD
+        4. a string of the format YYYYDDD
+
+        Formats 2-4 are all converted into a date object internally.
+        """
+
+        import datetime as dt
+        if isinstance(indate, dt.datetime):
+            return indate.date()
+        elif isinstance(indate, dt.date):
+            return indate
+        elif isinstance(indate, str):
+            skey = indate.strip()
+            l = len(skey)
+            if l==8:
+                # assume YYYYMMDD
+                dkey = dt.datetime.strptime(skey,"%Y%m%d")
+                return dkey.date()
+            elif l==7:
+                # assume YYYYDDD
+                dkey = dt.datetime.strptime(skey,"%Y%j")
+                return dkey.date()
+            else:
+                msg = "Input value not recognized as date: %s"
+                raise KeyError(msg % indate)
+        else:
+            msg = "Input value not recognized as date: %s"
+            raise KeyError(msg % indate)

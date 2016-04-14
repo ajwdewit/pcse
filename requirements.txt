@@ -1,0 +1,6 @@
+SQLAlchemy>=0.8.0
+numpy>=1.6.0
+PyYAML>=3.11
+tabulate>=0.7.0
+xlrd>=0.9.3
+xlwt>=1.0.0

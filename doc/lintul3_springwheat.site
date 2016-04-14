@@ -1,0 +1,11 @@
+# initial soil conditions
+WCI    = 0.20 			# Initial water content in cm3 of water/(cm3 of soil).
+WCSUBS = 0.15 			# water content subsoil
+
+# Water management
+# We will represent two water management situations in the model
+# as irrigated up to the field capacity:  WMFAC = False
+# as irrigated up to saturation, thus mimicking flooding; WMFAC = True
+# In both cases parameter IRRIGF must be taken 1.0. "Irrigation" thus
+WMFAC  = False
+IRRIGF = False			# Irrigation factor

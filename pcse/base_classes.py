@@ -10,6 +10,7 @@ import types
 import logging
 from datetime import date
 import cPickle
+from collections import Counter
 
 from .traitlets import (HasTraits, Any, Float, Int, Instance, Dict, Bool,
                         Enum, AfgenTrait)
@@ -358,7 +359,7 @@ class StatesRatesCommon(HasTraits):
         # Make sure that the variable kiosk is provided
         if not isinstance(kiosk, VariableKiosk):
             msg = ("Variable Kiosk must be provided when instantiating rate " +
-                   "variables.")
+                   "or state variables.")
             raise RuntimeError(msg)
         self._kiosk = kiosk
         
@@ -549,6 +550,76 @@ class StatesTemplate(StatesRatesCommon):
     
 
 #-------------------------------------------------------------------------------
+class StatesWithImplicitRatesTemplate(StatesTemplate):
+    """Container class for state variables that have an associated rate.
+
+    The rates will be generated upon initialization having the same name as their states,
+    prefixed by a lowercase character 'r'.
+    After initialization no more attributes can be implicitly added.
+    Call integrate() to integrate all states with their current rates; the rates are reset to 0.0.
+    
+    States are all attributes descending from Float and not prefixed by an underscore.
+    """
+        
+    rates = {}
+    __initialized = False
+
+    def __setattr__(self, name, value):
+        if self.rates.has_key(name):
+            # known attribute: set value:             
+            self.rates[name] = value
+        elif not self.__initialized:
+            # new attribute: allow whe not yet initialized:
+            object.__setattr__(self, name, value)
+        else:
+            # new attribute: disallow according ancestorial ruls:
+            super(StatesWithImplicitRatesTemplate, self).__setattr__(name, value)
+            
+            
+    def __getattr__(self, name):
+        if self.rates.has_key(name):
+            return self.rates[name]
+        else:
+            object.__getattribute__(self, name)
+
+
+    def initialize_rates(self):
+        self.rates = {}
+        self.__initialized = True
+        
+        for s in self.__class__.listIntegratedStates():
+            self.rates['r' + s] = 0.0
+
+
+    def integrate(self, delta):
+        # integrate all:
+        for s in self.listIntegratedStates():
+            rate = getattr(self, 'r' + s)
+            state = getattr(self, s)
+            newvalue = state + delta * rate
+            setattr(self, s, newvalue)
+          
+        # reset all rates  
+        for r in self.rates:
+          self.rates[r] = 0.0
+          
+          
+            
+    @classmethod
+    def listIntegratedStates(cls):
+        return sorted([a for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_')])
+
+
+
+    @classmethod
+    def initialValues(cls):
+        return dict((a, 0.0) for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_'))
+
+
+
+
+
+#-------------------------------------------------------------------------------
 class RatesTemplate(StatesRatesCommon):
     """Takes care of registering variables in the kiosk and monitoring
     assignments to variables that are published.
@@ -629,15 +700,15 @@ class DispatcherObject(object):
         passed to dispatcher.send()
         """
         
-        self.logger.info("Sent signal: %s" % signal)
+        self.logger.debug("Sent signal: %s" % signal)
         dispatcher.send(signal=signal, sender=self.kiosk, *args, **kwargs)
     
     def _connect_signal(self, handler, signal):
         """Connect the handler to the signal using the dispatcher module.
         
         The handler will only react on signals that have the SimulationObjects
-        VariableKiosk as sender. This ensure that different ensemble members in
-        a PyWOFOST ensemble will not react to eachother signals.
+        VariableKiosk as sender. This ensure that different PCSE model instances
+        in the same runtime environment will not react to each others signals.
         """
         
         dispatcher.connect(handler, signal, sender=self.kiosk)
@@ -689,7 +760,7 @@ class SimulationObject(HasTraits, DispatcherObject):
         self.logger = logging.getLogger(loggername)
         self.initialize(day, kiosk, *args, **kwargs)
         self.subSimObjects = self._find_SubSimObjects()
-        self.logger.info("Component successfully initialized on %s!" % day)
+        self.logger.debug("Component successfully initialized on %s!" % day)
 
     def initialize(self, *args, **kwargs):
         msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
@@ -899,26 +970,20 @@ class AncillaryObject(HasTraits, DispatcherObject):
     params = Instance(ParamTemplate)
     
     #---------------------------------------------------------------------------
-    def __init__(self, day, kiosk, *args, **kwargs):           
+    def __init__(self, kiosk, *args, **kwargs):
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
-
-        # Check that day variable is specified
-        if not isinstance(day, date):
-            msg = "%s should be instantiated with the simulation start "+\
-                  "day as first argument!"
-            raise RuntimeError(msg % loggername)
+        self.logger = logging.getLogger(loggername)
 
         # Check that kiosk variable is specified and assign to self
         if not isinstance(kiosk, VariableKiosk):
             msg = "%s should be instantiated with the VariableKiosk "+\
                   "as second argument!"
             raise RuntimeError(msg % loggername)
-        self.kiosk = kiosk
 
-        self.logger = logging.getLogger(loggername)
-        self.initialize(day, kiosk, *args, **kwargs)
-        self.logger.info("Component succesfully initialized on %s!" % day)
+        self.kiosk = kiosk
+        self.initialize(kiosk, *args, **kwargs)
+        self.logger.debug("Component successfully initialized!")
 
     #---------------------------------------------------------------------------
     def __setattr__(self, attr, value):
@@ -930,27 +995,7 @@ class AncillaryObject(HasTraits, DispatcherObject):
             msg = "Assignment to non-existing attribute '%s' prevented." % attr
             raise AttributeError(msg)
 
-#-------------------------------------------------------------------------------
-class TopPyWOFOSTObject(HasTraits, DispatcherObject):
-    """Class for the top-level PyWOFOST object.
-    """
 
-    def __init__(self, day, *args, **kwargs):           
-        loggername = "%s.%s" % (self.__class__.__module__,
-                                self.__class__.__name__)
-
-        # Check that day variable is specified
-        if not isinstance(day, date):
-            msg = "%s should be instantiated with the simulation start "+\
-                  "day as first argument!"
-            raise RuntimeError(msg % loggername)
-
-        self.logger = logging.getLogger(loggername)
-        self.initialize(day, *args, **kwargs)
-        self.logger.info("Component successfully initialized on %s!" % day)
-
-
-#-------------------------------------------------------------------------------
 class SlotPickleMixin(object):
     """This mixin makes it possible to pickle/unpickle objects with __slots__ defined.
 
@@ -985,6 +1030,7 @@ class WeatherDataContainer(SlotPickleMixin):
     TMAX with value 15.
 
     The following keywords are compulsory:
+
     :keyword LAT: Latitude of location (decimal degree)
     :keyword LON: Longitude of location (decimal degree)
     :keyword ELEV: Elevation of location (meters)
@@ -994,12 +1040,13 @@ class WeatherDataContainer(SlotPickleMixin):
     :keyword TMAX: Daily maximum temperature (Celsius)
     :keyword VAP: Daily mean vapour pressure (hPa)
     :keyword RAIN: Daily total rainfall (cm/day)
-    :keyword WIND: Daily mean wind speed (m/sec)
+    :keyword WIND: Daily mean wind speed at 2m height (m/sec)
     :keyword E0: Daily evaporation rate from open water (cm/day)
     :keyword ES0: Daily evaporation rate from bare soil (cm/day)
     :keyword ET0: Daily evapotranspiration rate from reference crop (cm/day)
 
     There are two optional keywords arguments:
+
     :keyword TEMP: Daily mean temperature (Celsius), will otherwise be
                    derived from (TMAX+TMIN)/2.
     :keyword SNOWDEPTH: Depth of snow cover (cm)
@@ -1015,6 +1062,23 @@ class WeatherDataContainer(SlotPickleMixin):
              "RAIN": "cm/day", "E0": "cm/day", "ES0": "cm/day", "ET0": "cm/day",
              "LAT": "Degrees", "LON": "Degrees", "ELEV": "m", "SNOWDEPTH": "cm",
              "TEMP": "Celsius", "TMINRA": "Celsius", "WIND": "m/sec"}
+
+    # ranges for meteorological variables
+    ranges = {"LAT": (-90., 90.),
+              "LON": (-180., 180.),
+              "ELEV": (-300, 6000),
+              "IRRAD": (0., 40e6),
+              "TMIN": (-50., 60.),
+              "TMAX": (-50., 60.),
+              "VAP": (0.06, 199.3),  # hPa, computed as sat. vapour pressure at -50, 60 Celsius
+              "RAIN": (0, 25),
+              "E0": (0., 2.),
+              "ES0": (0., 2.),
+              "ET0": (0., 2.),
+              "WIND": (0., 100.),
+              "SNOWDEPTH": (0., 250.),
+              "TEMP": (-50., 60.),
+              "TMINRA": (-50., 60.)}
 
     def __init__(self, *args, **kwargs):
 
@@ -1043,9 +1107,9 @@ class WeatherDataContainer(SlotPickleMixin):
             value = kwargs.pop(varname, None)
             try:
                 setattr(self, varname, float(value))
-            except (KeyError, ValueError) as e:
+            except (KeyError, ValueError, TypeError) as e:
                 msg = "%s: Weather attribute '%s' missing or invalid numerical value: %s"
-                logging.warning(msg, self.DAY, varname, e)
+                logging.warning(msg, self.DAY, varname, value)
 
         # Loop over optional arguments
         for varname in self.optional:
@@ -1055,14 +1119,23 @@ class WeatherDataContainer(SlotPickleMixin):
             else:
                 try:
                     setattr(self, varname, float(value))
-                except ValueError as e:
-                    msg = "%s: Weather attribute '%s' has invalid numerical value: %s"
-                    logging.warning(msg, self.DAY, varname, e)
+                except (KeyError, ValueError, TypeError) as e:
+                    msg = "%s: Weather attribute '%s' missing or invalid numerical value: %s"
+                    logging.warning(msg, self.DAY, varname, value)
 
         # Check for remaining unknown arguments
         if len(kwargs) > 0:
             msg = "WeatherDataContainer: unknown keywords '%s' are ignored!"
             logging.warning(msg, kwargs.keys())
+
+    def __setattr__(self, key, value):
+        # Override to allow range checking on known meteo variables.
+        if key in self.ranges:
+            vmin, vmax = self.ranges[key]
+            if not vmin <= value <= vmax:
+                msg = "Value (%s) for meteo variable '%s' outside allowed range (%s, %s)." % (value, key, vmin, vmax)
+                raise exc.PCSEError(msg)
+        SlotPickleMixin.__setattr__(self, key, value)
 
     def __str__(self):
         msg = "Weather data for %s (DAY)\n" % self.DAY
@@ -1091,7 +1164,7 @@ class WeatherDataContainer(SlotPickleMixin):
         :param varname: Name of variable to be set as attribute name (string)
         :param value: value of variable (attribute) to be added.
         :param unit: string representation of the unit of the variable. Is
-            only use for print the contents of the WeatherDataContainer.
+            only use for printing the contents of the WeatherDataContainer.
         """
         if varname not in self.units:
             self.units[varname] = unit
@@ -1125,6 +1198,8 @@ class WeatherDataProvider(object):
     _last_date = None
     angstA = None
     angstB = None
+    # model used for reference ET
+    ETmodel = "PM"
 
     def __init__(self):
         self.store = {}
@@ -1140,7 +1215,7 @@ class WeatherDataProvider(object):
         Dumps the values of self.store, longitude, latitude, elevation and description
         """
         with open(cache_fname, "wb") as fp:
-            dmp = (self.store, self.elevation, self.longitude, self.latitude, self.description)
+            dmp = (self.store, self.elevation, self.longitude, self.latitude, self.description, self.ETmodel)
             cPickle.dump(dmp, fp, cPickle.HIGHEST_PROTOCOL)
 
     def _load(self, cache_fname):
@@ -1151,7 +1226,14 @@ class WeatherDataProvider(object):
         """
 
         with open(cache_fname, "rb") as fp:
-            (store, self.elevation, self.longitude, self.latitude, self.description) = cPickle.load(fp)
+            (store, self.elevation, self.longitude, self.latitude, self.description, ETModel) = cPickle.load(fp)
+
+        # Check if the reference ET from the cache file is calculated with the same model as
+        # specified by self.ETmodel
+        if ETModel != self.ETmodel:
+            msg = "Mismatch in reference ET from cache file."
+            raise exc.PCSEError(msg)
+
         self.store.update(store)
 
     @property
@@ -1256,8 +1338,11 @@ class WeatherDataProvider(object):
 
         msg = "Weather data provided by: %s\n" % self.__class__.__name__
         msg += "--------Description---------\n"
-        for l in self.description:
-            msg += ("%s\n" % str(l))
+        if isinstance(self.description, str):
+            msg += ("%s\n" % self.description)
+        else:
+            for l in self.description:
+                msg += ("%s\n" % str(l))
         msg += "----Site characteristics----\n"
         msg += "Elevation: %6.1f\n" % self.elevation
         msg += "Latitude:  %6.3f\n" % self.latitude
@@ -1368,3 +1453,154 @@ class BaseEngine(HasTraits, DispatcherObject):
         if self.subSimObjects is not None:
             for simobj in self.subSimObjects:
                 simobj.zerofy()
+
+
+class ParameterProvider(HasTraits):
+    """Simple class providing a dictionary-like single interface for parameter values.
+
+    The idea behind this class is twofold. First of all by encapsulating the four
+    different parameter types (e.g. sitedata, timerdata, etc) into a single object,
+    the signature of the `initialize()` method of each `SimulationObject` can be
+    harmonized across all SimulationObjects. Second, the ParameterProvider itself
+    can be easily adapted when different sets of parameter values are needed. For
+    example when running PCSE with crop rotations, different sets of timerdata and
+    cropdata are needed, this can now be handled easily by enhancing
+    ParameterProvider to rotate new sets of timerdata and cropdata on a CROP_FINISH
+    signal.
+
+    See also the `MultiCropParameterProvider`
+    """
+    _maps = list()
+    _sitedata = dict()
+    _soildata = dict()
+    _cropdata = dict()
+    _timerdata = dict()
+
+    def __init__(self, sitedata={}, timerdata={}, soildata={}, cropdata={}):
+        self._sitedata = sitedata
+        self._timerdata = timerdata
+        self._soildata = soildata
+        self._cropdata = cropdata
+        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+        self._test_uniqueness()
+
+    def set_crop_type(self, crop_id=None, crop_start_type=None, crop_end_type=None):
+        """Set the start_type and end type of the crop which is relevant for
+        the phenology module.
+
+        :param crop_id: string identifying the crop type, is ignored as only
+               one crop is assumed to be here.
+        :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
+        :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
+        """
+
+        self._timerdata["CROP_START_TYPE"] = crop_start_type
+        self._timerdata["CROP_END_TYPE"] = crop_end_type
+        self._test_uniqueness()
+
+    def _test_uniqueness(self):
+        # Check if parameter names are unique
+        parnames = []
+        for mapping in self._maps:
+            parnames.extend(mapping.keys())
+        unique = Counter(parnames)
+        for parname, count in unique.items():
+            if count > 1:
+                msg = "Duplicate parameter found: %s" % parname
+                raise RuntimeError(msg)
+
+    def __getitem__(self, key):
+        for mapping in self._maps:
+            try:
+                return mapping[key]
+            except KeyError:
+                pass
+        raise KeyError(key)
+
+    def __contains__(self, key):
+        for mapping in self._maps:
+            if key in mapping:
+                return True
+        return False
+
+class MultiCropParameterProvider(ParameterProvider):
+    """Parameter provider that allows multiple crop
+    parameter sets to be specified. This ParameterProvider is
+    designed to be combined with the AgroManager in order to
+    facilitate crop rotations.
+
+    Note that timerdata does not have to be provided anymore
+    because this role has been taken over by the AgroManager.
+
+    :param sitedata: A dictionary with site parameters
+    :param soildata: A dictionary with soil parameters
+    :param multi_cropdata: A dict of dicts with the crop parameters
+        keyed on the `crop_id` used in the crop calendar. For
+        example:  multi_cropdata = {'winter-wheat': {<parameters for winter-wheat>},
+                                    'maize': {<parameters for maize>},
+                                    etc...
+    :keyword max_root_depth_name: The name of the crop parameter specifying the
+        maximum crop rooting depth. Defaults to "RDMCR"
+    :keyword init_root_depth_name: The name of the crop parameter specifying the
+        initial crop rooting depth. Defaults to "RDI".
+
+    warning:: The WOFOST ClassicWaterBalance needs to know the maximum rooting depth
+    of all crops (RDMCR) in order to define its soil layers. Therefore all
+    sets of crop parameters are searched for the maximum value of RDMCR. Moreover, the
+    initial rooting depth (RDI) needs to be the same across all crop types. The names
+    of these parameter can be provided through the keywords specified above but default
+    to 'RDMCR' and 'RDI'.
+    """
+    _multi_cropdata = dict()
+    _RDMCR_max = 0.  # maximum rooting depth across all crop types for the water balance
+    _RDI = 0.   # Initial rooting depth
+
+    def __init__(self, sitedata, soildata, multi_cropdata, max_root_depth_name="RDMCR",
+                 init_root_depth_name="RDI"):
+
+        self._sitedata = sitedata
+        self._soildata = soildata
+        self._cropdata = {}
+        self._timerdata = {}
+        self._multi_cropdata = multi_cropdata
+
+        # Get maximum rooting depth and initial rooting depth over all crops
+        RDI = []
+        for crop_id, cropdata in self._multi_cropdata.items():
+            if cropdata[max_root_depth_name] > self._RDMCR_max:
+                self._RDMCR_max = cropdata[max_root_depth_name]
+            RDI.append(cropdata[init_root_depth_name])
+
+        # Test if all crops have the same initial rooting depth
+        if len(set(RDI)) > 1:
+            msg = "Initial rooting depth (%s) not the same across all crop types." % init_root_depth_name
+            raise exc.PCSEError(msg)
+        self._RDI = RDI[0]
+
+        # update the cropdata to provide default values for RDI and RDMCR which
+        # are need by the waterbalance at the initialization.
+        self._cropdata[max_root_depth_name] = self._RDMCR_max
+        self._cropdata[init_root_depth_name] = self._RDI
+
+        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+        self._test_uniqueness()
+
+    def set_crop_type(self, crop_id=None, crop_start_type=None, crop_end_type=None):
+        """Switch the crop parameters in the MultiCropParameterProvider to crop type given by crop_id.
+
+        :param crop_id: string identifying the crop type
+        :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
+        :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
+        """
+
+        if crop_id not in self._multi_cropdata:
+            msg = "Crop parameters for crop (%s) cannot be found in the multi_cropdata." % crop_id
+            raise exc.PCSEError(msg)
+
+        self._cropdata.clear()
+        self._cropdata.update(self._multi_cropdata[crop_id])
+        self._timerdata["CROP_START_TYPE"] = crop_start_type
+        self._timerdata["CROP_END_TYPE"] = crop_end_type
+
+        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+        self._test_uniqueness()

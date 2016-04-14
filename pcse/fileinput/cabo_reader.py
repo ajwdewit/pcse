@@ -20,9 +20,13 @@ class CABOFileReader(dict):
     The parameter definitions of Wageningen crop models are generally
     written in the CABO format. This class reads the contents, parses
     the parameter names/values and returns them as a dictionary.
-    
+
     :param fname: parameter file to read and parse
     :returns: dictionary like object with parameter key/value pairs.
+
+    Note that this class does not yet fully support reading all features
+    of CABO files. For example, the parsing of booleans, date/times and
+    tabular parameters is not supported and will lead to errors.
 
     The header of the CABO file (marked with ** at the first line) is
     read and can be retrieved by the get_header() method or just by
@@ -155,8 +159,10 @@ class CABOFileReader(dict):
         rest = re.sub(regexp, "", parsections)
         rest = rest.replace(";", "")
         if rest.strip() != "":
-            msg = "Failed to parse: %s" % rest
-            raise ToolsError(msg)
+            msg = "Failed to parse the CABO file!\n" +\
+                  ("Found the following parameter definitions:\n %s" % par_definitions) + \
+                  ("Failed to parse:\n %s" % rest)
+            raise PCSEError(msg)
         return par_definitions
         
     def __init__(self, fname):
@@ -167,7 +173,7 @@ class CABOFileReader(dict):
 
         if len(filecontents) == 0:
             msg = "Empty CABO file!"
-            raise ToolsError(msg)
+            raise PCSEError(msg)
 
         # Split between file header and parameters
         self.header, filecontents = self._find_header(filecontents)
@@ -190,9 +196,9 @@ class CABOFileReader(dict):
                 else:
                     value = int(valuestr)
                 self[parname] = value
-            except (ValueError), exc:
+            except (ValueError) as exc:
                 msg = "Failed to parse parameter, value: %s, %s" 
-                raise ToolsError(msg % (parstr, valuestr))
+                raise PCSEError(msg % (parstr, valuestr))
 
         for parstr in string_defs:
             try:
@@ -200,9 +206,9 @@ class CABOFileReader(dict):
                 parname = parname.strip()
                 value = (valuestr.replace("'","")).replace('"','')
                 self[parname] = value
-            except (ValueError), exc:
+            except (ValueError) as exc:
                 msg = "Failed to parse parameter, value: %s, %s" 
-                raise ToolsError(msg % (parstr, valuestr))
+                raise PCSEError(msg % (parstr, valuestr))
 
         for parstr in table_defs:
             parname, valuestr = parstr.split("=")
@@ -212,12 +218,12 @@ class CABOFileReader(dict):
                 self[parname] = value
             except (ValueError) as exc:
                 msg = "Failed to parse table parameter %s: %s" % (parname, valuestr)
-                raise ToolsError(msg)
+                raise PCSEError(msg)
             except (LengthError) as exc:
                 msg = "Failed to parse table parameter %s: %s. \n" % (parname, valuestr)
                 msg += "Table parameter should contain at least 4 values "
-                msg += "instead got %s" 
-                raise LengthError(msg % valuestr)
+                msg += "instead got %i" 
+                raise PCSEError(msg % exc.value[0])
             except (XYPairsError) as exc:
                 msg = "Failed to parse table parameter %s: %s\n" % (parname, valuestr)
                 msg += "Parameter should be have even number of positions."
@@ -228,6 +234,6 @@ class CABOFileReader(dict):
         for line in self.header:
             msg += line+"\n"
         msg += "------------------------------------\n"
-        for key, value in self.iteritems():
+        for key, value in self.items():
             msg += ("%s: %s %s\n" % (key, value, type(value)))
         return msg

@@ -110,9 +110,9 @@ def fetch_cropdata(metadata, grid, year, crop):
         variety = rows[0].variety_no
     else:
         logger.error(("None or multiple crop definitions found for grid: %7i and crop " + \
-                            "no: %3i and year: %5i") % (cgmsgrid, crop, year))
+                            "no: %3i and year: %5i") % (grid, crop, year))
         raise CropdataError(("No crop definition found for grid: %7i and crop " + \
-                            "no: %3i and year: %5i") % (cgmsgrid, crop, year))
+                            "no: %3i and year: %5i") % (grid, crop, year))
     
     # Define crop parameter values
     parameter_codes_sngl = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC", 
@@ -320,7 +320,7 @@ def fetch_soilparams(metadata, grid, soilgroup):
                    "soilgroup %s, parameter: %s" % (soilgroup, soil_par))
             raise SoildataError(grid, msg)
 
-        value =  array.array('d', [0.]*(c*2))
+        value =  array.array('d', [0.]*(nrows*2))
         for i, row in enumerate(rows):
             value[i*2] = float(row.parameter_xvalue)
             value[(i*2)+1]= float(row.parameter_yvalue)
@@ -333,7 +333,7 @@ def fetch_soilparams(metadata, grid, soilgroup):
             # soilparams["SM0"] = soilparams["SMTAB"](-1.0);
             # SMsat, soil porosity, SM at Pf = -1.0 (0.0 ?)
             # formation of PFTAB (PFfromSM), the inverse of SMTAB (SMfromPF)
-            value =  array.array('d', [0.]*(c*2))
+            value =  array.array('d', [0.]*(nrows*2))
             for i, row in enumerate(reversed(rows)):
                 value[i*2]    = float(row.parameter_yvalue)
                 value[(i*2)+1]= float(row.parameter_xvalue)
@@ -640,12 +640,12 @@ def fetch_sitedata(metadata, grid, year):
             sitedata['SMLIM']  = float(row.smlim)
         else:
             raise RuntimeError("No rows found")
-    except Exception, e:
+    except Exception as e:
         errstr = "Failed to get site data for year %i and grid %i: " + str(e)
         logger.error(errstr % (year, grid))
         raise SitedataError(errstr % (year, grid))
 
-    logger.info("Succesfully retrieved site variables from database")
+    logger.info("Successfully retrieved site variables from database")
     return sitedata
 
 #----------------------------------------------------------------------------
@@ -696,7 +696,7 @@ class GridWeatherDataProvider(WeatherDataProvider):
             r.close()
             if row is None:
                 raise Exception
-        except Exception, exc:
+        except Exception as exc:
             msg = "Failed deriving location info for grid %s" % self.grid_no
             raise MeteodataError(msg)
 
@@ -819,7 +819,7 @@ class EnsembleGridWeatherDataProvider(WeatherDataProvider):
             r.close()
             if row is None:
                 raise Exception
-        except Exception, exc:
+        except Exception as exc:
             msg = "Failed deriving location info for grid %s" % self.grid_no
             raise MeteodataError(msg)
 

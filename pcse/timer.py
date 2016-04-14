@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+from __future__ import print_function
 import datetime
 
 from .pydispatch import dispatcher
@@ -32,7 +33,7 @@ class Timer(AncillaryObject):
   """
 
     start_date = Instance(datetime.date)
-    final_date = Instance(datetime.date)
+    end_date = Instance(datetime.date)
     current_date = Instance(datetime.date)
     time_step = Instance(datetime.timedelta)
     interval_type = Enum(["daily", "weekly", "dekadal", "monthly"])
@@ -40,13 +41,14 @@ class Timer(AncillaryObject):
     interval_days = Int
     generate_output = Bool()
     day_counter = Int
-    first_call = Bool
+    first_call = Bool()
+    _in_crop_cycle = Bool()
 
-    def initialize(self, start_date, kiosk, final_date, mconf):
+    def initialize(self, kiosk, start_date, end_date, mconf):
         """
         :param day: Start date of the simulation
         :param kiosk: Variable kiosk of the PCSE instance
-        :param final_date: Final date of the simulation. For example, this date
+        :param end_date: Final date of the simulation. For example, this date
             represents (START_DATE + MAX_DURATION) for a single cropping season.
             This date is *not* the harvest date because signalling harvest is taken
             care of by the `AgroManagement` module.
@@ -58,7 +60,7 @@ class Timer(AncillaryObject):
         
         self.kiosk = kiosk
         self.start_date = start_date
-        self.final_date = final_date
+        self.end_date = end_date
         self.current_date = start_date
         self.day_counter = 0
         # Settings for generating output. Note that if no OUTPUT_VARS are listed
@@ -75,7 +77,7 @@ class Timer(AncillaryObject):
         # On first call only return the current date, do not increase time
         if self.first_call is True:
             self.first_call = False
-            self.logger.info("Model time at first call: %s" % self.current_date)
+            self.logger.debug("Model time at first call: %s" % self.current_date)
         else:
             self.current_date += self.time_step
             self.day_counter += 1
@@ -101,11 +103,14 @@ class Timer(AncillaryObject):
         if output:
             self._send_signal(signal=signals.output)
             
-        # If final date is reached send the terminate signal
-        if self.current_date >= self.final_date:
+        # If end date is reached send the terminate signal
+        if self.current_date >= self.end_date:
+            msg = "Reached end of simulation period as specified by END_DATE."
+            self.logger.info(msg)
             self._send_signal(signal=signals.terminate)
             
         return self.current_date
+
 
 def simple_test():
     "Only used for testing timer routine"
@@ -114,10 +119,10 @@ def simple_test():
         pass
 
     def on_OUTPUT():
-        print "Output generated."
+        print("Output generated.")
     
-    Start = datetime.date(2000,1,1)
-    End = datetime.date(2000,2,1)
+    Start = datetime.date(2000, 1, 1)
+    End = datetime.date(2000, 2, 1)
     kiosk = VariableKiosk()
     dispatcher.connect(on_OUTPUT, signal=signals.output,
                        sender=dispatcher.Any)
@@ -127,24 +132,24 @@ def simple_test():
     mconf.OUTPUT_INTERVAL_DAYS = 4
     mconf.OUTPUT_VARS = ["dummy"]
 
-    print "-----------------------------------------"
-    print "Dekadal output"
-    print "-----------------------------------------"
+    print("-----------------------------------------")
+    print("Dekadal output")
+    print("-----------------------------------------")
     timer = Timer(Start, kiosk, End, mconf)
     for i in range(100):
         today = timer()
 
-    print "-----------------------------------------"
-    print "Monthly output"
-    print "-----------------------------------------"
+    print("-----------------------------------------")
+    print("Monthly output")
+    print("-----------------------------------------")
     mconf.OUTPUT_INTERVAL = "monthly"
     timer = Timer(Start, kiosk, End, mconf)
     for i in range(150):
         today = timer()
 
-    print "-----------------------------------------"
-    print "daily output with 4 day intervals"
-    print "-----------------------------------------"
+    print("-----------------------------------------")
+    print("daily output with 4 day intervals")
+    print("-----------------------------------------")
     mconf.OUTPUT_INTERVAL = "daily"
     timer = Timer(Start, kiosk, End, mconf)
     for i in range(150):

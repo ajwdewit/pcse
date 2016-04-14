@@ -126,7 +126,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                 msg = "Cache file older then 90 days, reloading data from NASA Power."
                 self.logger.debug(msg)
                 self._get_and_process_NASAPower(self.latitude, self.longitude)
-            except Exception, e:
+            except Exception as e:
                 msg = ("Reloading data from NASA failed, reverting to (outdated) " +
                        "cache file")
                 self.logger.debug(msg)
@@ -178,7 +178,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         if len(power_records) < 200:
             msg = ("Less then 200 days of data available. Reverting to " +
                    "default Angstrom A/B coefficients (%f, %f)")
-            self.logger.warn(msg % (self.AngstA, self.AngstB))
+            self.logger.warn(msg % (self.angstA, self.angstB))
             return self.angstA, self.angstB
 
         # calculate relative radiation (swv_dwn/toa_dwn) and percentiles
@@ -189,7 +189,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
         try:
             check_angstromAB(angstrom_a, angstrom_b)
-        except PCSEError, e:
+        except PCSEError as e:
             msg = ("Angstrom A/B values (%f, %f) outside valid range: %s. " +
                    "Reverting to default values.")
             msg = msg % (angstrom_a, angstrom_b, e)
@@ -263,7 +263,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         cache_filename = self._get_cache_filename(self.latitude, self.longitude)
         try:
             self._dump(cache_filename)
-        except (IOError, EnvironmentError), e:
+        except (IOError, EnvironmentError) as e:
             msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
 
@@ -276,7 +276,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             msg = "Cache file successfully loaded."
             self.logger.debug(msg)
             return True
-        except (IOError, EnvironmentError, EOFError), e:
+        except (IOError, EnvironmentError, EOFError) as e:
             msg = "Failed to load cache from file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
             return False
@@ -315,8 +315,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     def _parse_elevation(self, powerdata):
         """Parse elevation out of the powerdata header"""
         for line in powerdata:
-            if line.startswith("Elevation"):
-                elev = int(line.split("=")[-1])
+            if line.startswith(b"Elevation"):
+                elev = int(line.split(b"=")[-1])
                 return elev
 
     def _parse_header(self, powerdata):
@@ -334,7 +334,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         is_header = True
         while is_header:
             line = powerdata.pop(0)
-            if line.startswith("-END HEADER"):
+            if line.startswith(b"-END HEADER"):
                 is_header = False
 
         # Now start parsing meteo records

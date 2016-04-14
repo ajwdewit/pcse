@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""This module defines and describes the signals used by PyWOFOST
+"""This module defines and describes the signals used by PCSE
 
-Signals are used by PyWOFOST to notify components of events such as sowing,
+Signals are used by PCSE to notify components of events such as sowing,
 harvest and termination. Events can be send by any SimulationObject through
 its `SimulationObject._send_signal()` method. Similarly, any SimulationObject
 can receive signals by registering a handler through the
@@ -13,17 +13,16 @@ positional or keyword arguments. However, it is highly discouraged to use
 positional arguments when sending signals in order to avoid conflicts between
 positional and keyword arguments.
 
-An example can help to clarify
-how signals are used in PyWOFOST but check also the documentation of the
-PyDispatcher_ package for more information::
+An example can help to clarify how signals are used in PCSE but check also the
+documentation of the PyDispatcher_ package for more information::
 
     import sys, os
     import math
-    sys.path.append('/home/wit015/Sources/python/PYWOFOST')
+    sys.path.append('/home/wit015/Sources/python/pcse/')
     import datetime as dt
     
-    import pywofost
-    from pywofost.base_classes import SimulationObject, VariableKiosk
+    import pcse
+    from pcse.base_classes import SimulationObject, VariableKiosk
     
     mysignal = "My first signal"
     
@@ -72,7 +71,7 @@ following output::
     Value of arg1,2: None, 3.14159265359
     TypeError occurred: handle_mysignal() takes exactly 3 non-keyword arguments (1 given)
 
-Currently the following signals are used within PyWOFOST with the following
+Currently the following signals are used within PCSE with the following
 keywords.*
 
 **CROP_START**
@@ -80,12 +79,13 @@ keywords.*
  Indicates that a new crop cycle will start.
  
  self._send_signal(signal=signals.crop_start, day=<date>,
-                   cropsimulation=<CropSimulationObj>)
+                   crop_id=<string>, crop_start_type=<string>,
+                   crop_end_type=<string>)
 
  keyword arguments with signals.crop_start:
     
     * day: Current date
-    * cropsimulation: a CropSimulation object
+    * crop_id: a string identifying the crop
 
 **CROP_FINISH**
 
@@ -105,7 +105,8 @@ keyword arguments with signals.crop_finish:
 
 **TERMINATE**
  
- Indicates that the entire system should terminate (crop & soil water balance)
+ Indicates that the entire system should terminate (crop & soil water balance) and
+ that terminal output should be collected.
 
  self._send_signal(signal=signals.terminate)
 
@@ -119,6 +120,42 @@ keyword arguments with signals.crop_finish:
  
  No keyword arguments are defined for this signal
 
+**SUMMARY_OUTPUT**
+
+ Indicates that the model state should be saved for later use,
+ SUMMARY_OUTPUT is only generated when a CROP_FINISH signal is
+ received indicating that the crop simulation must finish.
+
+ self._send_signal(signal=signals.output)
+
+ No keyword arguments are defined for this signal
+
+**APPLY_NPK**
+
+Is used for application of Nitrate/Phosphate/Potassium (N/P/K) fertilizer
+
+self._send_signal(signal=signals.apply_npk, N_amount=<float>, P_amount=<float>, K_amount=<float>,
+                  N_recovery<float>, P_recovery=<float>, K_recovery=<float>)
+
+Keyword arguments with signals.apply_npk:
+
+    * N/P/K_amount: Amount of fertilizer in kg/ha applied on this day.
+    * N/P/K_recovery: Recovery fraction for the given type of fertilizer
+
+
+**IRRIGATE**
+
+Is used for sending irrigation events.
+
+self._send_signal(signal=signals.irrigate, amount=<float>, efficiency=<float>)
+
+Keyword arguments with signals.irrigate:
+
+    * amount: Amount of irrigation in cm water applied on this day.
+    * efficiency: efficiency of irrigation, meaning that the total amount of water that
+      is added to the soil reservoir equals amount * efficiency
+
+
 .. _PyDispatcher: http://pydispatcher.sourceforge.net/
 """
 
@@ -128,4 +165,6 @@ crop_finish = "CROP_FINISH"
 terminate = "TERMINATE"
 output = "OUTPUT"
 summary_output = "SUMMARY_OUTPUT"
-
+apply_npk = "APPLY_NPK"
+apply_n = "APPLY_N"
+irrigate = "IRRIGATE" 
