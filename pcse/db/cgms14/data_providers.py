@@ -20,14 +20,21 @@ from ... import exceptions as exc
 from ...base_classes import WeatherDataContainer, WeatherDataProvider
 
 def fetch_crop_name(engine, crop_no):
-    """Retrieves the name of the crop from the CROP table for
-    given crop_no.
+    """Retrieves the name of the crop from the CROP table for given crop_no.
 
     :param engine: SqlAlchemy engine object providing DB access
     :param crop_no: Integer crop ID, maps to the CROP_NO column in the table
     """
     result = ""
-    
+    metadata = MetaData(engine)
+    table_crop = Table("global_crops", metadata, autoload=True)
+    sc = select([table_crop], table_crop.c.idcrop == crop_no).execute()
+    row = sc.fetchone()
+    sc.close()
+    if row is None:
+        msg = "Failed deriving crop name from view GLOBAL_CROPS for crop_no %s" % crop_no
+        raise exc.PCSEError(msg)
+    result = row.descriptor
     return result
 
 class STU_Suitability(set):
