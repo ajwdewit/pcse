@@ -54,7 +54,7 @@ class STU_Suitability(set):
         sc = select([table_link], table_link.columns.idcrop == idcrop).execute()
         rows = sc.fetchall()
         sc.close()
-        if rows is None or len(rows] == 0:
+        if rows is None or len(rows) == 0:
             msg = "No suitable soil type unit found for idcrop=%s" % idcrop
             raise exc.PCSEError(msg)
         set.__init__(self, [int(row.idstu) for row in rows])
@@ -145,7 +145,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
             # Get hold of weather table, statement, sqlalchemy cursor and finally of the rows
             tw = Table(self.table_name, metadata, autoload=True)
             sm = select([tw], 
-                and_(tw.c.idgrid == self.idgrid, tw.c.day >= start_date, tw.c.day <= end_date)
+                and_(tw.c.idgrid == self.idgrid, tw.c.day >= start_date, tw.c.day <= end_date))
             sc = sm.execute()
             rows = sc.fetchall()
         
@@ -218,7 +218,7 @@ class TimerDataProvider(dict):
         self.idgrid = int(idgrid)
         self.idcrop = int(idcrop) 
         self.campaign_year = int(campaign_year)
-         metadata = MetaData(engine)
+        metadata = MetaData(engine)
     
     def set_START_DATE(self, start_date):
         """Updates the value for START_DATE in TimerDataProvider
@@ -231,7 +231,7 @@ class TimerDataProvider(dict):
         return result
 
 class SoilDataProviderSingleLayer(dict):
-        """Class for providing soil data from the ROOING_DEPTH AND
+    """Class for providing soil data from the ROOING_DEPTH AND
     SOIL_PHYSICAL_GROUP tableS in a CGMS14 database. This
     applies to the single layered soil only.
 
@@ -244,12 +244,12 @@ class SoilDataProviderSingleLayer(dict):
     to field capacity (SMFCF)
     """
     soil_parameters = [("CRAIRC", "CRITICAL_AIR_CONTENT"),
-                       ("K0", "HYDR_CONDUCT_SATUR"),
-                       ("SOPE", "MAX_PERCOL_ROOT_ZONE"),
-                       ("KSUB", "MAX_PERCOL_SUBSOIL"),
-                       ("SMFCF", "SOIL_MOISTURE_CONTENT_FC"),
-                       ("SM0", "SOIL_MOISTURE_CONTENT_SAT"),
-                       ("SMW", "SOIL_MOISTURE_CONTENT_WP")]
+        ("K0", "HYDR_CONDUCT_SATUR"),
+        ("SOPE", "MAX_PERCOL_ROOT_ZONE"),
+        ("KSUB", "MAX_PERCOL_SUBSOIL"),
+        ("SMFCF", "SOIL_MOISTURE_CONTENT_FC"),
+        ("SM0", "SOIL_MOISTURE_CONTENT_SAT"),
+        ("SMW", "SOIL_MOISTURE_CONTENT_WP")]
 
     def __init__(self, engine, idstu):
         dict.__init__(self)
@@ -337,7 +337,7 @@ class SoilDataIterator(list):
         return result
     
 class CropDataProvider(dict):
-      """Retrieves the crop parameters for the given idgrid, idcrop and year
+    """Retrieves the crop parameters for the given idgrid, idcrop and year
     from the tables CROP_CALENDAR, CROP_PARAMETER_VALUE and VARIETY_PARAMETER_VALUE.
 
     :param engine: SqlAlchemy engine object providing DB access
@@ -349,18 +349,18 @@ class CropDataProvider(dict):
     """
     # Define single and tabular crop parameter values
     parameter_codes_single = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC",
-                              "DLO", "DVSEND", "EFF", "IAIRDU", "IDSL", "KDIF",
-                              "LAIEM", "PERDL", "Q10", "RDI", "RDMCR", "RGRLAI",
-                              "RML", "RMO", "RMR", "RMS", "RRI", "SPA", "SPAN", "SSA",
-                              "TBASE", "TBASEM", "TDWI", "TEFFMX", "TSUM1", "TSUM2",
-                              "TSUMEM")
+        "DLO", "DVSEND", "EFF", "IAIRDU", "IDSL", "KDIF",
+        "LAIEM", "PERDL", "Q10", "RDI", "RDMCR", "RGRLAI",
+        "RML", "RMO", "RMR", "RMS", "RRI", "SPA", "SPAN", "SSA",
+        "TBASE", "TBASEM", "TDWI", "TEFFMX", "TSUM1", "TSUM2",
+        "TSUMEM")
     parameter_codes_tabular = ("AMAXTB", "DTSMTB", "FLTB", "FOTB", "FRTB", "FSTB",
-                               "RDRRTB", "RDRSTB", "RFSETB", "SLATB", "TMNFTB",
-                               "TMPFTB")
+        "RDRRTB", "RDRSTB", "RFSETB", "SLATB", "TMNFTB",
+         "TMPFTB")
     # Some parameters have to be converted from a single to a tabular form
     single2tabular = {"SSA": ("SSATB", [0., None, 2.0, None]),
-                      "KDIF": ("KDIFTB", [0., None, 2.0, None]),
-                      "EFF": ("EFFTB", [0., None, 40., None])}
+        "KDIF": ("KDIFTB", [0., None, 2.0, None]),
+        "EFF": ("EFFTB", [0., None, 40., None])}
     # Default values for additional parameters not defined in CGMS
     parameters_additional = {"DVSI": 0.0, "IOX": 0}
 
@@ -423,7 +423,7 @@ class SiteDataProvider(dict):
         metadata = MetaData(engine)
         
         table_crop_agg = Table('crop_aggregations', metadata, autoload=True)
-        sc = select([table_crop_agg], table_crop_agg.c.idcrop == self.idcrop).execute())
+        sc = select([table_crop_agg], table_crop_agg.c.idcrop == self.idcrop).execute()
         row = sc.fetchone()
         sc.close()
         if row == None:
