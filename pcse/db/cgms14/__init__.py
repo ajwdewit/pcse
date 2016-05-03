@@ -6,7 +6,7 @@ from a CGMS14 compatible database.
 """
 
 from .data_providers import WeatherObsGridDataProvider
-from .data_providers import TimerDataProvider
+from .data_providers import AgroManagementDataProvider
 from .data_providers import SoilDataIterator
 from .data_providers import CropDataProvider
 from .data_providers import STU_Suitability
