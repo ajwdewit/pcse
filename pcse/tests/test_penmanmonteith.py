@@ -16,6 +16,10 @@ stations = {8011: (43.5667, -6.0442, 130., 0.243, 0.541),
             10870:(48.3667, 11.8, 453., 0.225, 0.505),
             8443: (36.75, -5.1667, 3., 0.3064, 0.4846)}
 
+# Allow an ET0 difference of 0.2 mm to account for limited precision
+# in CGMS database.
+delta = 0.2
+
 class DottedContainer(object):
     def __init__(self, d):
         for key, value in d.items():
@@ -59,7 +63,7 @@ class PenmanMonteith_TestingTemplate(unittest.TestCase):
             ET0 = penman_monteith(rec.DAY, LAT, ELEV, rec.TEMPERATURE_MIN,
                                   rec.TEMPERATURE_MAX, rec.RADIATION,
                                   rec.VAPOURPRESSURE, rec.WINDSPEED_2M)
-            self.assertLess(abs(ET0 - rec.ET0), 0.05)
+            self.assertLess(abs(ET0 - rec.ET0), delta)
 
 class Test_PenmanMonteith1(PenmanMonteith_TestingTemplate):
     test_input = '8011_asturias.csv'
