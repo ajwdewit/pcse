@@ -147,11 +147,10 @@ class HeatStress_Around_Flowering(SimulationObject):
 
     @prepare_rates
     def calc_rates(self, day, drv):
-        r     = self.rates
-        kiosk = self.kiosk
-
+        # set the daytime temperature as rate variable
+        r = self.rates
         r.DAYTEMP = drv.DTEMP
-        #self.rates = self.RateVariables(kiosk,DAYTEMP=DAYTEMP)
+
 
     #---------------------------------------------------------------------------
     @prepare_states
@@ -177,8 +176,8 @@ class HeatStress_Around_Flowering(SimulationObject):
                 self._next_stage(day)
                 s.RDGRHT = self._get_heatstress_factor(s.CMDTEMP)
                 
-        elif s.HSTAGE == "end heat sensitivty":
-            s.RDGHRT = s.RDGRHT
+        elif s.HSTAGE == "end heat sensitivity":
+            dummy = None
 
         else: # Problem no stage defined
             msg = "No HSTAGE defined in the heat stress around flowering module."
@@ -210,11 +209,16 @@ class HeatStress_Around_Flowering(SimulationObject):
 
     #---------------------------------------------------------------------------
     def _get_heatstress_factor(self, day):
+
         p = self.params
         s = self.states
 
-        CDAYS  = s.DSE - s.DSB
-        MDTEMP = s.CMDTEMP / max(1., CDAYS)
+        delta  = s.DSE - s.DSB
+        try:
+            MDTEMP = s.CMDTEMP / float(delta.days)
+        except:
+            msg = "Could not calculate heatstress. No days counted"
+            raise exc.PCSEError(msg)
 
         return p.RDGRTB(MDTEMP)
 
