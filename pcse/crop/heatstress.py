@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2016
+# Allard de Wit (allard.dewit@wur.nl )and Iwan Supit
+# (iwan.supit@wur.nl), June 2016
 # Approach based on LINTUL4-vsht made by Joost Wolf
 
 """Implementation of a models for heatstress around flowering in WOFOST
@@ -13,17 +14,13 @@ import datetime
 from ..traitlets import Float, Int, Instance, Enum, Bool, AfgenTrait
 from ..decorators import prepare_rates, prepare_states
 
-from ..util import limit, daylength
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
-from .. import signals
 from .. import exceptions as exc
 
 #-------------------------------------------------------------------------------
-class HeatStress_Around_Flowering(SimulationObject):
+class WOFOST_Sink_Dynamics(SimulationObject):
     """Implements the algorithms for heatstress around flowring in WOFOST.
-    
-
 
 
     **Simulation parameters**
@@ -31,26 +28,20 @@ class HeatStress_Around_Flowering(SimulationObject):
     =======  ============================================= =======  ============
      Name     Description                                   Type     Unit
     =======  ============================================= =======  ============
-    DTEMP    Average daytime temperature                    SCr        |C| day
-    TBASEM   Base temperature for emergence                 SCr        |C|
-    TEFFMX   Maximum effective temperature for emergence    SCr        |C|
-    TSUM1    Temperature sum from emergence to anthesis     SCr        |C| day
-    TSUM2    Temperature sum from anthesis to maturity      SCr        |C| day
-    IDSL     Switch for phenological development options    SCr        -
-             temperature only (IDSL=0), including           SCr
-             daylength (IDSL=1) and including
-             vernalization (IDSL>=2)
-    DLO      Optimal daylength for phenological             SCr        hr
-             development
-    DLC      Critical daylength for phenological            SCr        hr
-             development
-    DVSI     Initial development stage at emergence.        SCr        -
-             Usually this is zero, but it can be higher
-             for crops that are transplanted (e.g. paddy
-             rice)
-    DVSEND   Final development stage                        SCr        -
-    DTSMTB   Daily increase in temperature sum as a         TCr        |C|
-             function of daily mean temperature.
+    RDGRTB   Reduction factor of grain formation due        TCr         -
+             to heat stress in the period around anthesis   TCr         -
+    TMGTB    Reduction factor of grain formation  as
+             function. Values from SWHEAT model
+
+
+    DVSHEB   Beginning of the period with possible temp     SCr        |day|
+             sensitivity effects
+    DVSHEF   End of the period with possible heat temp    SCr        |day|
+             sensitivity effects
+    NUMGA    Variable A in relation between TAGP at         SCr        |ha-1|
+             anthesis and sink dimension
+    NUMGB    Variable B in relation between TAGP at         SCr        |ha-1|
+             anthesis and sink dimension
     =======  ============================================= =======  ============
 
     **State variables**
@@ -58,17 +49,16 @@ class HeatStress_Around_Flowering(SimulationObject):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    DVS      Development stage                                  Y    - 
-    TSUM     Temperature sum                                    N    |C| day
-    TSUME    Temperature sum for emergence                      N    |C| day
-    DOS      Day of sowing                                      N    - 
-    DOE      Day of emergence                                   N    - 
-    DOA      Day of Anthesis                                    N    - 
-    DOM      Day of maturity                                    N    - 
-    DOH      Day of harvest                                     N    -
-    STAGE    Current phenological stage, can take the           N    -
+    CMDTEMP  Temperature sum day-time temperature               N    |C| day
+             between DVSHEB and DVSHEF
+    DSB      Starting day of heat sensitivity                   N    -
+    DSE      End day of heat sensitivity                        N    -
+    HSTAGE   Current phenological stage, can take the           N    -
              folowing values:
-             `emerging|vegetative|reproductive|mature`
+             `not sensitive|temp sensitive|end temp sensitivty`
+    NUMGR    Number of grains                                   Y    -
+    TAGBSF   Total leave and stem weight (dead/alive)           N    |kg ha-1|
+             at anthesis
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -76,74 +66,61 @@ class HeatStress_Around_Flowering(SimulationObject):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    DTSUME   Increase in temperature sum for emergence          N    |C|
-    DTSUM    Increase in temperature sum for anthesis or        N    |C|
-             maturity
-    DVR      Development rate                                   Y    |day-1|
+    DAYTEMP  Daily increase of day-time temperature             N       |C|
     =======  ================================================= ==== ============
     
     **External dependencies:**
 
-    None    
 
-    **Signals sent or handled**
-    
-    `DVS_Phenology` sends the `crop_finish` signal when maturity is
-    reached and the `end_type` is 'maturity' or 'earliest'.
-    
+    =======  =================================== =================  ============
+     Name     Description                         Provided by         Unit
+    =======  =================================== =================  ============
+    DVS      Crop development stage              DVS_Phenology       -
+    TWLV     Total weight of leaves              leaf_dynamics       |kg ha-1|
+    TWST     Total weight of stems               stem_dynamics       |kg ha-1|
+    =======  =================================== =================  ============
+
     """
 
     class Parameters(ParamTemplate):
-        DVSHEB = Float(-99.)  # beginning of the period with possible heat stress effects
-        DVSHEF = Float(-99.)  # finalization of the period with possible heat stress effects
-        RDGRTB = AfgenTrait() # Temperature response function for grain formation as a function of day-time temp.
-
+        DVSHEB = Float(-99.)  # beginning of the period with possible heat stress effects.
+        DVSHEF = Float(-99.)  # finalization of the period with possible heat stress effects.
+        IHEAT  = Float(-99.)  # Switch for heat sensitivity of sink.
+        NUMGA  = Float(-99.)  # Variable A in relation between TAGP at anthesis anthesis and sink dimension.
+        NUMGB  = Float(-99.)  # Variable B in relation between TAGP at anthesis anthesis and sink dimension.
+        RDGRTB = AfgenTrait()  # High temperature response function for grain formation as a function of day-time temp.
+        TMGTB  = AfgenTrait()  # Low temperature response function for grain formation as a function of day-time temp.
     #-------------------------------------------------------------------------------
     class RateVariables(RatesTemplate):
-        DAYTEMP = Float(-99.)  # increase in day-time temperature sum
+        DAYTEMP = Float(-99.)  # Increase in day-time temperature sum.
 
 
     #-------------------------------------------------------------------------------
     class StateVariables(StatesTemplate):
-        CMDTEMP   = Float(-99.)  # Sum of the day-time temperature
-        RDGRHT    = Float(-99.)   # reduction factor of heat stress round flowering
+        CMDTEMP   = Float(-99.)  # Sum of the day-time temperature.
+        TAGBSF    = Float(-99.)  # Total weight of leaves and stems at anthesis.
+        NUMGR     = Float(-99.)  # number of grains(per ha).
 
         # States which register phenological events
-        DSB = Instance(datetime.date) # Day of sensitivity begin
-        DSE = Instance(datetime.date) # Day of sensitivity end
+        DSB = Instance(datetime.date) # Day where temp sensitivity begins.
+        DSE = Instance(datetime.date) # Day where temp sensitivity ends.
 
-        HSTAGE = Enum([None, "not sensitive", "heat sensitive", "end heat sensitivty"])
+        HSTAGE = Enum([None, "not sensitive", "temp sensitive", "end temp sensitivity"])
 
     #---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues):
-        """
-        :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PCSE  instance
-        :param parvalues: `ParameterProvider` object providing parameters as
-                key/value pairs
-        """
-
-        self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk)
-        self.kiosk  = kiosk
-
-        #self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
-
-        DSB, DSE, HSTAGE, RDGRHT = self._get_initial_stage(day)
-        self.states = self.StateVariables(kiosk, publish="RDGRHT",RDGRHT=RDGRHT,
-                                          CMDTEMP=0., DSB=DSB, DSE=DSE, HSTAGE=HSTAGE)
-
-    #---------------------------------------------------------------------------
-    def _get_initial_stage(self, day):
-        """"""
-        p = self.params
 
         HSTAGE = "not sensitive"
         DSB = None
         DSE = None
-        RDGRHT = 1.
-            
-        return (DSB, DSE, HSTAGE, RDGRHT)
+        TAGBSF = NUMGR = 0.
+
+        self.rates  = self.RateVariables(kiosk,publish="DAYTEMP")
+        self.params = self.Parameters(parvalues)
+        self.states = self.StateVariables(kiosk, publish="NUMGR",NUMGR=NUMGR,TAGBSF=TAGBSF,
+                                          CMDTEMP=0.,DSB=DSB, DSE=DSE,HSTAGE=HSTAGE)
+
+    #---------------------------------------------------------------------------
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -162,54 +139,72 @@ class HeatStress_Around_Flowering(SimulationObject):
         r = self.rates
         s = self.states
 
-        DVS = self.kiosk["DVS"]
+        DVS  = self.kiosk["DVS"]
+        TWST = self.kiosk["TWST"]
+        TWLV = self.kiosk["TWLV"]
 
+
+        # Calculate the number of sinks as a function of temperature sensitivity
         if s.HSTAGE == "not sensitive":
             s.CMDTEMP = 0.
+            s.NUMGR   = 0.
             if DVS >= p.DVSHEB:
                 self._next_stage(day)
-                RDGHRT = 1.
 
-        elif s.HSTAGE == "heat sensitive":
+            if DVS == 1.0:
+                # establish total leaf and stem dry weight at anthesis
+                s.TAGBSF = TWLV + TWST
+
+        elif s.HSTAGE == "temp sensitive":
             s.CMDTEMP += r.DAYTEMP
+            s.NUMGR = 0.
             if DVS >= p.DVSHEF:
                 self._next_stage(day)
-                s.RDGRHT = self._get_heatstress_factor(s.CMDTEMP)
-                
-        elif s.HSTAGE == "end heat sensitivity":
-            dummy = None
 
-        else: # Problem no stage defined
+                # sink reduction factor due to low temperature
+                TMG = p.TMGTB(r.DAYTEMP)
+
+                # number of sinks (per ha) as determined by total leaf and stem
+                # dry weight at anthesis
+                if p.IHEAT == 1:
+                    s.NUMGR = self._number_of_sinks_heatstress(TMG)
+                else:
+                    s.NUMGR = self._number_of_sinks_no_heatstress(TMG)
+        elif s.HSTAGE == "end temp sensitivity":
+            s.NUMGR=s.NUMGR
+
+
+
+        else: # Problem no heat stage defined
             msg = "No HSTAGE defined in the heat stress around flowering module."
             raise exc.PCSEError(msg)
-            
-        msg = "Finished state integration for %s"
-        self.logger.debug(msg % day)
+
 
     #---------------------------------------------------------------------------
     def _next_stage(self, day):
-        """Moves states.STAGE to the next heat sensitivity stage"""
+        """Moves states.STAGE to the next temp sensitivity stage"""
         s = self.states
 
         current_HSTAGE = s.HSTAGE
         if s.HSTAGE == "not sensitive":
-            s.HSTAGE = "heat sensitive"
+            s.HSTAGE = "temp sensitive"
             s.DSB = day
             
-        elif s.HSTAGE == "heat sensitive":
-            s.HSTAGE = "end heat sensitivty"
+        elif s.HSTAGE == "temp sensitive":
+            s.HSTAGE = "end temp sensitivity"
             s.DSE = day
 
-        else: # Problem no stage defined
-            msg = "No HSTAGE defined in the heat stress around flowering module."
+        else: # Problem no heat stage defined
+            msg = "No HSTAGE defined in temp sensitivity around flowering module."
             raise exc.PCSEError(msg)
         
-        msg = "Changed heat sensivity stage '%s' to '%s' on %s"
+        msg = "Changed temp sensivity hstage '%s' to '%s' on %s"
         self.logger.info(msg % (current_HSTAGE, s.HSTAGE, day))
 
     #---------------------------------------------------------------------------
-    def _get_heatstress_factor(self, day):
-
+    def _number_of_sinks_heatstress(self, TMG):
+        # determine number of grains as defined by heat stress around anthesis and
+        # total weight (death+alive) at anthesis
         p = self.params
         s = self.states
 
@@ -220,7 +215,14 @@ class HeatStress_Around_Flowering(SimulationObject):
             msg = "Could not calculate heatstress. No days counted"
             raise exc.PCSEError(msg)
 
-        return p.RDGRTB(MDTEMP)
+        return p.RDGRTB(MDTEMP) * TMG * (p.NUMGA + p.NUMGB * s.TAGBSF)
+
+    def _number_of_sinks_no_heatstress(self, TMG):
+        # determine number of sinks without heat stress around anthesis
+        p = self.params
+        s = self.states
+
+        return TMG * (p.NUMGA + p.NUMGB * s.TAGBSF)
 
 
 

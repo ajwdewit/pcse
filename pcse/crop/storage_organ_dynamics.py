@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+# Adapted for translocation, sink limitation and
+# heat stress by Iwan Supit (iwan.supit@wur.nl), June 2016
 
 from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
@@ -29,7 +31,9 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     =======  ============================================= =======  ============
     TDWI     Initial total crop dry weight                  SCr      |kg ha-1|
     SPA      Specific Pod Area                              SCr      |ha kg-1|
-    =======  ============================================= =======  ============    
+    GRMX     Maximal grain mass                             SCr      |kg|
+    PGRIG    Potential grain formation                      SCr      |kg|
+    =======  ============================================= =======  ============
 
     **State variables**
 
@@ -50,6 +54,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     GRSO     Growth rate storage organs                         N   |kg ha-1 d-1|
     DRSO     Death rate storage organs                          N   |kg ha-1 d-1|
     GWSO     Net change in storage organ biomass                N   |kg ha-1 d-1|
+    TRANSL   Weight that is translocated to storage organs
     =======  ================================================= ==== ============
     
     **Signals send or handled**
@@ -69,8 +74,11 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     """
 
     class Parameters(ParamTemplate):      
-        SPA  = Float(-99.)
-        TDWI = Float(-99.)
+        SPA   = Float(-99.)
+        TDWI  = Float(-99.)
+        ISINK = Float(-99.)
+        PGRIG = Float(-99.)
+        GRMX  = Float(-99.)
 
     class StateVariables(StatesTemplate):
         WSO  = Float(-99.) # Weight living storage organs
@@ -82,7 +90,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         GRSO = Float(-99.)
         DRSO = Float(-99.)
         GWSO = Float(-99.)
-        
+
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -118,11 +126,28 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         
         FO = self.kiosk["FO"]
         ADMI = self.kiosk["ADMI"]
+        TRANSL = self.kiosk["TRANSL"]
 
-        # Growth/death rate organs
+
         rates.GRSO = ADMI * FO
         rates.DRSO = 0.0
-        rates.GWSO = rates.GRSO - rates.DRSO
+        rates.GWSO = rates.GRSO - rates.DRSO + TRANSL
+
+        if params.ISINK ==1:
+            NUMGR  = self.kiosk["NUMGR"]
+            if NUMGR > 0.:
+                # grain  growth limited by both maximal grain mass(GWSIX) and by
+                # potential growth of the grains(GWSI1)
+                GWSI1 = NUMGR * params.PGRIG
+                GWSIX = max(0.0, NUMGR * params.GRMX - states.WSO)
+                GWSI2 = min(GWSIX, GWSI1)
+
+                # source or sink limitation
+                rates.GWSO = min(rates.GWSO, GWSI2)
+                if GWSI2 < rates.GWSO:
+                    # change translocation in case of sink limitation;
+                    rates.TRANSL = -(rates.GWSO - GWSI2) + TRANSL
+
 
     @prepare_states
     def integrate(self, day):
