@@ -278,9 +278,6 @@ class AgroManagementDataProvider(list):
             msg = "Unsupported START_TYPE in CROP_CALENDAR table: %s" % row.start_type
             raise exc.PCSEError(msg)
 
-        # Determine maximum duration of the crop
-        self.max_duration = int(row.max_duration)
-
         # Determine crop end date/type and the end of the campaign
         self.crop_end_type = str(row.end_type).strip().lower()
         if self.crop_end_type not in ["harvest", "earliest", "maturity"]:
@@ -288,12 +285,16 @@ class AgroManagementDataProvider(list):
                    "CROP_CALENDAR: %s" % row.end_type)
             raise exc.PCSEError(msg)
 
+        # Determine maximum duration of the crop
+
         if self.crop_end_type == "maturity":
             self.crop_end_date = "null"
+            self.max_duration = int(row.max_duration)
             self.campaign_end_date = self.crop_start_date + datetime.timedelta(days=self.max_duration)
         else:
             self.crop_end_date = check_date(row.end_date)
             self.campaign_end_date = self.crop_end_date
+            self.max_duration = (self.crop_end_date - self.crop_start_date).days + 1
 
         input = self._build_yaml_agromanagement()
         self._parse_yaml(input)
