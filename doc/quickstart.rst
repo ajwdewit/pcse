@@ -205,18 +205,20 @@ Driving variables (weather data)
 Daily weather variables are needed for running the simulation. Currently, four
 options are available in PCSE for retrieving weather data:
 
-    1. The database structure as provided by the Crop Growth Monitoring
-       System for the delivery of interpolated daily weather data on 25 x 25 km gridcells. Weather data will be read from the GRID_WEATHER table which
-       is implemented using :ref:`GridWeatherDataProvider <GridWeatherDataProvider>`.
-    2. The file structure as defined by the `CABO Weather System`_ which is
-       implemented using :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`for the delivery of observed weather station data.
-    3. The file structure used by the `CABO Weather System`_ but implemented as an
-       Excel sheet by :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>`
-    4. The global weather data provided by the agroclimatology from the
-       `NASA Power database`_ at a resolution of 1x1 degree. PCSE
-       provides the :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
-       the NASA Power data from the internet for a given latitude and
-       longitude.
+1. The database structure as provided by the Crop Growth Monitoring
+   System for the delivery of interpolated daily weather data on 25 x 25 km gridcells. Weather data will be read
+   from the GRID_WEATHER table which
+   is implemented using :ref:`GridWeatherDataProvider <GridWeatherDataProvider>`.
+2. The file structure as defined by the `CABO Weather System`_ which is
+   implemented using :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`for the delivery of
+   observed weather station data.
+3. The file structure used by the `CABO Weather System`_ but implemented as an
+   Excel sheet by :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>`
+4. The global weather data provided by the agroclimatology from the
+   `NASA Power database`_ at a resolution of 1x1 degree. PCSE
+   provides the :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
+   the NASA Power data from the internet for a given latitude and
+   longitude.
 
 .. _CABO Weather System: http://edepot.wur.nl/43010
 .. _NASA Power database: http://power.larc.nasa.gov

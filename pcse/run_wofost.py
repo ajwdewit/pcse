@@ -22,8 +22,8 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     :param grid: grid number
     :param year: year to start
     :param mode: production mode ('pp' or 'wlp')
-    :param clear_table: If set to True: delete everything from the tables
-        `sim_results_timeseries` and `sim_results_summary`(defaults to False)
+    :param clear_table: If set to True delete everything from the tables
+        'sim_results_timeseries' and  'sim_results_summary' (defaults to False)
     """
 
     # Open database connection and empty output table

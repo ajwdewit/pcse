@@ -79,6 +79,7 @@ from . import db
 from . import fileinput
 from . import tests
 from . import agromanagement
+from . import agromanager
 from . import soil
 from . import crop
 from .start_wofost import start_wofost

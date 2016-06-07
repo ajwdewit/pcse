@@ -49,8 +49,8 @@ in PCSE.
 
 .. _ContinuousSimulation:
 
-.. Continuous simulation in PCSE
-.. -----------------------------
+Continuous simulation in PCSE
+-----------------------------
 
 To implement continuous simulation, the engine uses the same approach as
 FSE: Euler integration with a fixed time step of one day.  The following
@@ -106,8 +106,12 @@ To start the Engine four inputs are needed:
    overview of the different options for providing weather data.
 2. A set of parameters that is needed to parameterize the SimulationObjects
    that simulate the soil and crop processes. Model parameters can be retrieved
-   from different sources like files or databases. The different sets of model
-   parameters (crop, soil and site) are encapsulated using a `ParameterProvider`
+   from different sources like files or databases. PCSE uses three sets of model
+   parameters: crop parameters, soil parameters and site parameters. The latter
+   present an ancillary set of parameters that are not related to the soil or
+   the crop. The atmospheric CO2 concentration is a typical example of a site
+   parameter. Despite having three sets of parameters, all parameters are
+   encapsulated using a `ParameterProvider`
    that provides a uniform interface to access the different parameter sets.
    See the section on `Data providers for parameter values`_ for an overview.
 3. Agromanagement information that is needed to schedule agromanagement
@@ -256,14 +260,14 @@ The skeleton of a SimulationObject looks like this:
             RATE1 = Float()
             # more rate variables defined here
 
-        def initialize(day, kiosk, parametervalues):
+        def initialize(self, day, kiosk, parametervalues):
             """Initializes the SimulationObject with given parametervalues."""
             self.params = self.Parameters(parametervalues)
             self.rates = self.RateVariables(kiosk)
             self.states = self.StateVariables(kiosk, STATE1=0., publish=["STATE1"])
 
         @prepare_rates
-        def calc_rates(day, drv):
+        def calc_rates(self, day, drv):
             """Calculate the rates of change given the current states and driving
             variables (drv)."""
 
@@ -271,14 +275,14 @@ The skeleton of a SimulationObject looks like this:
             self.rates.RATE1 = self.params.PAR1 * drv.RAIN
 
         @prepare_states
-        def integrate(day, delt):
+        def integrate(self, day, delt):
             """Integrate the rates of change on the current state variables
             multiplied by the time-step
             """
             self.states.STATE1 += self.rates.RATE1 * delt
 
         @prepare_states
-        def finalize(day):
+        def finalize(self, day):
             """do some final calculations when the simulation is finishing."""
 
 
@@ -292,8 +296,7 @@ states should be updated, subsequently all driving variables should be calculate
 after which all rates of change should be calculated. If this rule is not
 applied rigorously, some rates may pertain to states at
 the current time whereas others will pertain to states from the previous time
-step .
-Compared to the FSE system and the
+step. Compared to the FSE system and the
 `FORTRAN implementation of WOFOST <https://github.com/ajwdewit/wofost>`_,
 the `initialize()`, `calc_rates()`, `integrate()` and `finalize()` sections
 match with the *ITASK* numbers 1, 2, 3, 4.
@@ -740,17 +743,312 @@ of its two arguments::
 Note that the methods for receiving signals `_connect_signal()` and sending signals `_send_signal()` are
 available because of subclassing `SimulationObject`. Both methods are highly flexible regarding the arguments and
 keyword arguments that can be passed on with the signal. For more details have a look at the documentation
-in the :ref:`Signals` module and the documentation of the `PyDispatcher <http://pydispatcher.sourceforge.net/>`_
+in the :ref:`Signals <Signals>` module and the documentation of the `PyDispatcher <http://pydispatcher.sourceforge.net/>`_
 package which is used to provide this functionality.
 
-Data Providers in PCSE
+
+
+Data providers in PCSE
 ======================
 
-Weather data providers
-----------------------
+PCSE needs to receive inputs on weather, parameter values and agromanagement in order to carry out the
+simulation. To obtain the required inputs several data providers have been written that read
+these inputs from a variety of sources. Nevertheless, care has been taken to avoid dependencies on a particular
+database and file format. As a consequence there is no direct coupling between PCSE and a particular file format
+or database and a variety of data sources that can be used, ranging from simple files, relational databases and
+internet resources.
+
+.. _Weather data providers:
+
+Weather data in PCSE
+--------------------
+
+Required weather variables
+..........................
+
+To run the crop simulation, the engine needs meteorological variables that
+drive the processes that are being simulated. PCSE requires the following daily
+meteorological variables:
+
+========= ========================================================= ===============
+Name        Description                                               Unit
+========= ========================================================= ===============
+TMAX      Daily maximum temperature                                  |C|
+TMIN      Daily minimum temperature                                  |C|
+VAP       Mean daily vapour pressure                                 |hPa|
+WIND      Mean daily wind speed at 2 m above ground level            |msec-1|
+RAIN      Precipitation (rainfall or water equivalent in case of
+          snow or hail).                                             |cmday-1|
+IRRAD     Daily global radiation                                     |Jm-2day-1|
+SNOWDEPTH Depth of snow cover (optional)                             |cm|
+========= ========================================================= ===============
+
+The snow depth is an optional meteorological variable and is only used for
+estimating the impact of frost damage on the crop (if enabled). Snow depth can
+also be simulated by the `SnowMAUS` module if observations are not available
+on a daily basis. Furthermore there are some meteorological variables which
+are derived from the previous ones:
+
+====== ========================================================= ===============
+Name   Description                                                 Unit
+====== ========================================================= ===============
+E0     Penman potential evaporation for a free water surface      |cmday-1|
+ES0    Penman potential evaporation for a bare soil surface       |cmday-1|
+ET0    Penman or Penman-Monteith potential evaporation
+       for a reference crop canopy                                |cmday-1|
+TEMP   Mean daily temperature (TMIN + TMAX)/2                     |C|
+DTEMP  Mean daytime temperature (TEMP + TMAX)/2                   |C|
+TMINRA The 7-day running average of TMIN                          |C|
+====== ========================================================= ===============
+
+
+How weather data is used in PCSE
+................................
+
+To provide the simulation Engine with weather data PCSE uses the concept of a
+`WeatherDataProvider` which can retrieve its weather data from various
+sources but provides a single interface to the Engine for retrieving the data.
+This principle can be most easily explained with an example based on
+weather data files provided in the Getting Started section
+:download:`quickstart_part3.zip`. In this example we will read the weather
+data from an Excel file `nl1.xlsx` using the ExcelWeatherDataProvider::
+
+    >>> import pcse
+    >>> from pcse.fileinput import ExcelWeatherDataProvider
+    >>> wdp = ExcelWeatherDataProvider('nl1.xlsx')
+
+We can simply `print()` the weather data provider to get an overview of its contents::
+
+    >>> print(wdp)
+    Weather data provided by: ExcelWeatherDataProvider
+    --------Description---------
+    Weather data for:
+    Country: Netherlands
+    Station: Wageningen, Location Haarweg
+    Description: Observed data from Station Haarweg in Wageningen
+    Source: Meteorology and Air Quality Group, Wageningen University
+    Contact: Peter Uithol
+    ----Site characteristics----
+    Elevation:    7.0
+    Latitude:  51.970
+    Longitude:  5.670
+    Data available for 2004-01-02 - 2008-12-31
+    Number of missing days: 32
+
+Moreover, we can call the weather dataproviders with a date object to retrieve a
+`WeatherDataContainer` for that date::
+
+    >>> from datetime import date
+    >>> day = date(2006,7,3)
+    >>> wdc = wdp(day)
+
+Again, we can print the WeatherDataContainer to reveal its contents::
+
+    >>> print(wdc)
+    Weather data for 2006-07-03 (DAY)
+    IRRAD:  29290000.00  J/m2/day
+     TMIN:        17.20   Celsius
+     TMAX:        29.60   Celsius
+      VAP:        12.80       hPa
+     RAIN:         0.00    cm/day
+       E0:         0.77    cm/day
+      ES0:         0.69    cm/day
+      ET0:         0.72    cm/day
+     WIND:         2.90     m/sec
+    Latitude  (LAT):    51.97 degr.
+    Longitude (LON):     5.67 degr.
+    Elevation (ELEV):    7.0 m.
+
+While individual weather elements can be accessed through the standard dotted python notation::
+
+    >>> print(wdc.TMAX)
+    29.6
+
+Finally, for convenience the WeatherDataProvider can also be called with a string representing a date.
+This string can in the format YYYYMMDD or YYYYDDD::
+
+    >>> print wdp("20060703")
+    Weather data for 2006-07-03 (DAY)
+    IRRAD:  29290000.00  J/m2/day
+     TMIN:        17.20   Celsius
+     TMAX:        29.60   Celsius
+      VAP:        12.80       hPa
+     RAIN:         0.00    cm/day
+       E0:         0.77    cm/day
+      ES0:         0.69    cm/day
+      ET0:         0.72    cm/day
+     WIND:         2.90     m/sec
+    Latitude  (LAT):    51.97 degr.
+    Longitude (LON):     5.67 degr.
+    Elevation (ELEV):    7.0 m.
+
+or in the format YYYYDDD::
+
+    >>> print wdp("2006183")
+    Weather data for 2006-07-03 (DAY)
+    IRRAD:  29290000.00  J/m2/day
+     TMIN:        17.20   Celsius
+     TMAX:        29.60   Celsius
+      VAP:        12.80       hPa
+     RAIN:         0.00    cm/day
+       E0:         0.77    cm/day
+      ES0:         0.69    cm/day
+      ET0:         0.72    cm/day
+     WIND:         2.90     m/sec
+    Latitude  (LAT):    51.97 degr.
+    Longitude (LON):     5.67 degr.
+    Elevation (ELEV):    7.0 m.
+
+
+Weather data providers available in PCSE
+........................................
+
+PCSE provides several weather data providers out of the box. First of all, it includes file-based weather data providers
+that use an input file on disk to retrieve data. The :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>` and
+the :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>` use the structure as defined by the
+`CABO Weather System`_. The ExcelWeatherDataProvider has the advantage that data can be stored in an Excel file
+which is easier to handle than the ASCII files of the CABOWeatherDataProvider. Furthermore, a weather data provider
+is available that uses a simple CSV data format, :ref:`CSVWeatherDataProvider <CSVWeatherDataProvider>`.
+
+Second, there is a set of WeatherDataProviders that derive the weather data from the database tables
+implemented in the different versions of the `European Crop Growth Monitoring System`_ including a
+:ref:`CGMS9 <CGMS9tools>` database, a :ref:`CGMS11 <CGMS11tools>` database and
+a :ref:`CGMS14 <CGMS14tools>` database.
+
+Finally, there is the global weather data provided by the agroclimatology from the
+`NASA Power database`_ at a resolution of 1x1 degree. PCSE provides the
+:ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
+the NASA Power data from the internet for a given latitude and longitude.
+
+.. _CABO Weather System: http://edepot.wur.nl/43010
+.. _NASA Power database: http://power.larc.nasa.gov
+.. _European Crop Growth Monitoring System: http://marswiki.jrc.ec.europa.eu/agri4castwiki/index.php/Weather_Monitoring
+
+
+.. _Data providers for parameter values:
 
 Data providers for parameter values
 -----------------------------------
 
+PCSE provides several modules for retrieving parameter values for use in simulation models.
+The general concept that is used by all data providers for parameters is that they return a
+python dictionary object with the parameter names and values as key/value pairs. This concept
+is independent of the source where the parameters come from, either a file, a relational database or
+an internet source. It also means that parameters can be easily defined or changed on the command prompt,
+which is useful when iterating over loops and changing parameter files at each iteration.
+For example when showing the impact of a change in a crop parameter one could easily do::
+
+    >>> from pcse.fileinput import CABOFileReader
+    >>> import numpy as np
+    >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
+    >>> cropdata = CABOFileReader(cropfile)
+    >>> TSUM1_values = np.arange(800, 1200, 25)
+    >>> for tsum1 in TSUM1_values:
+            cropdata["TSUM1"] = tsum1
+            # code needed to run the simulation goes here
+
+
+PCSE provides two file-based data providers for reading parameters. The first one is the
+:ref:`CABOFileReader <CABOFileReader>` which reads parameter file in the CABO format that was
+used to write parameter files for models in FORTRAN or FST. A more versatile reader is the
+:ref:`PCSEFileReader <PCSEFileReader>` which uses the python language itself as its syntax.
+This also implies that all the python syntax features can be used in PCSE parameter files.
+
+Finally, several data providers exist for retrieving crop, soil and site parameter values from the database
+of the Crop Growth Monitoring System including data providers for a :ref:`CGMS9 <CGMS9tools>` database,
+a :ref:`CGMS11 <CGMS11tools>` database and a :ref:`CGMS14 <CGMS14tools>` database.
+
+As described earlier, PCSE needs parameters to define the soil, the crop and and additional
+ancillary class of parameters called 'site'. Nevertheless, the different modules in PCSE have
+different needs, some need access to crop parameters only, but some need to combine parameter
+values from different sets. For example, the root dynamics module computes
+the maximum root depth as the minimum of the crop maximum root depth (a crop parameter)
+and the soil maximum root depth (a soil parameter).
+
+The facilitate accessing different parameters from different parameter sets, all parameters
+are combined using a `ParameterProvider` object which provides unified access to all
+available parameters. Moreover, parameters from different sources can be easily combined
+in the ParameterProvider given that each parameter set uses the basic key/value pair principles
+for accessing names and values::
+
+    >>> import os
+    >>> import sqlalchemy as sa
+    >>> from pcse.fileinput import CABOFileReader, PCSEFileReader
+    >>> from pcse.base_classes import ParameterProvider
+    >>> from pcse.db.pcse import fetch_sitedata
+    >>> import pcse.settings
+
+    # Retrieve crop data from a CABO file
+    >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
+    >>> crop = CABOFileReader(cropfile)
+
+    # Retrieve soildata from a PCSE file
+    >>> soilfile = os.path.join(data_dir, 'lintul3_springwheat.soil')
+    >>> soil = PCSEFileReader(soilfile)
+
+    # Retrieve site data from the PCSE demo DB
+    >>> db_location = os.path.join(pcse.settings.PCSE_USER_HOME, "pcse.db")
+    >>> db_engine = sa.create_engine("sqlite:///" + db_location)
+    >>> db_metadata = sa.MetaData(db_engine)
+    >>> site = fetch_sitedata(db_metadata, grid=31031, year=2000)
+
+    # Combine everything into one ParameterProvider object and print some values
+    >>> parprov = ParameterProvider(sitedata=site, soildata=soil, cropdata=crop)
+    >>> print(parprov["AMAXTB"]) # maximum leaf assimilation rate
+    [0.0, 22.5, 1.0, 45.0, 1.13, 45.0, 1.8, 36.0, 2.0, 36.0]
+    >>> print(parprov["DRATE"])  # maximum soil drainage rate
+    30.0
+    >>> print(parprov["WAV"])  # site-specific initial soil water amount
+    10.0
+
+
+.. _Data providers for agromanagement:
+
 Data providers for agromanagement
 ---------------------------------
+
+Similar to weather and parameter values, there are several data providers for agromanagement.
+The structure of the inputs for agromanagement is more complex compared to parameter values or weather
+variables.
+
+The most comprehensive way to define agromanagement in PCSE is to use the YAML structure that was
+described in the section above on  :ref:`agromanagement <Defining agromanagement in PCSE>`. For reading
+this datastructure the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>` module is available
+which can be provided directly as input into the Engine.
+
+For reading Agromanagement input from a CGMS database see the sections on the database tools for
+a :ref:`CGMS9 <CGMS9tools>` database, a :ref:`CGMS11 <CGMS11tools>` database and
+a :ref:`CGMS14 <CGMS14tools>` database. Note that the support for defining agromanagement
+in CGMS databases is limited to crop calendars only. The CGMS database has no support for defining state and
+timed events yet.
+
+
+Global PCSE settings
+====================
+
+PCSE has a number of settings that define some global PCSE behaviour. An example of a global setting is
+the PCSE_USER_HOME variable which is used to define the home folder of the user.
+The settings are stored in two files: 1) `default_settings.py` which can be found in the PCSE installation
+folder under `settings/` and should not be changed. 2) `user_settings.py` which can be found in the `.pcse`
+folder in the user home directory. Under Windows this is typically `c:\\users\\<username>\\.pcse` while
+under Linux systems this is typically '/home/<username>/.pcse'.
+
+Changing the PCSE global settings can be done by editing the file `user_settings.py`, uncommenting the
+entries that should be changed and changing its value. Note that dependencies in the configuration file
+should be respected as the default settings and user settings are parsed separately.
+
+Adding PCSE global settings can be done by adding new entries to the `user_settings.py` file. Note that
+settings should be defined as ALL_CAPS. Variable names in the settings file that start with '_' will be
+ignored, while any other variable names will generate a warning and be neglected.
+
+If the user settings file is corrupted and PCSE fails to start, then the best option is to delete the
+`user_settings.py` file from the `.pcse` folder in the user home directory. The next time PCSE starts,
+the `user_settings.py` will be regenerated from the default settings with all settings commented out.
+
+Within PCSE all settings can be easily accessed by importing the settings module::
+
+    >>> import pcse.settings
+    >>> pcse.settings.PCSE_USER_HOME
+    'C:\\Users\\wit015\\.pcse'
+    >>> pcse.settings.METEO_CACHE_DIR
+    'C:\\Users\\wit015\\.pcse\\meteo_cache'

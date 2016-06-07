@@ -76,7 +76,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
         (datetime.date object)
     :param recalc_ET: Set to True to force calculation of reference
         ET values. Mostly useful when values have not been calculated
-         in the CGMS database.
+        in the CGMS database.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
@@ -319,8 +319,8 @@ class TimerDataProvider(dict):
 
 
 class SoilDataProviderSingleLayer(dict):
-    """Class for providing soil data from the ROOING_DEPTH AND
-    SOIL_PHYSICAL_GROUP tableS in a CGMS11 database. This
+    """Class for providing soil data from the ROOTING_DEPTH AND
+    SOIL_PHYSICAL_GROUP tableS in a CGMS9/11 database. This
     applies to the single layered soil only.
 
     :param engine: SqlAlchemy engine object providing DB access
@@ -424,21 +424,26 @@ class SoilDataIterator(list):
     Instances of this class behave like a list, allowing to iterate
     over the soils in a CGMS grid. An example::
 
-    >>> soil_iterator = SoilDataIterator(engine, grid_no=15060)
-    >>> print(soildata)
-    Soil data for grid_no=15060 derived from oracle+cx_oracle://cgms12eu:***@eurdas.world
-      smu_no=9050131, area=625000000, stu_no=9000282 covering 50% of smu.
-        Soil parameters {'SMLIM': 0.312, 'SMFCF': 0.312, 'SMW': 0.152, 'CRAIRC': 0.06,
-                         'KSUB': 10.0, 'RDMSOL': 10.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.439}
-      smu_no=9050131, area=625000000, stu_no=9000283 covering 50% of smu.
-        Soil parameters {'SMLIM': 0.28325, 'SMFCF': 0.28325, 'SMW': 0.12325, 'CRAIRC': 0.06,
-                         'KSUB': 10.0, 'RDMSOL': 40.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.42075}
-    >>> for smu_no, area, stu_no, percentage, soil_par in soildata:
-    ...     print(smu_no, area, stu_no, percentage)
-    ...
-    (9050131, 625000000, 9000282, 50)
-    (9050131, 625000000, 9000283, 50)
+        >>> soil_iterator = SoilDataIterator(engine, grid_no=15060)
+        >>> print(soildata)
+        Soil data for grid_no=15060 derived from oracle+cx_oracle://cgms12eu:***@eurdas.world
+          smu_no=9050131, area=625000000, stu_no=9000282 covering 50% of smu.
+            Soil parameters {'SMLIM': 0.312, 'SMFCF': 0.312, 'SMW': 0.152, 'CRAIRC': 0.06,
+                             'KSUB': 10.0, 'RDMSOL': 10.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.439}
+          smu_no=9050131, area=625000000, stu_no=9000283 covering 50% of smu.
+            Soil parameters {'SMLIM': 0.28325, 'SMFCF': 0.28325, 'SMW': 0.12325, 'CRAIRC': 0.06,
+                             'KSUB': 10.0, 'RDMSOL': 40.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.42075}
+        >>> for smu_no, area, stu_no, percentage, soil_par in soildata:
+        ...     print(smu_no, area, stu_no, percentage)
+        ...
+        (9050131, 625000000, 9000282, 50)
+        (9050131, 625000000, 9000283, 50)
+
+    Ignore this line
     """
+
+    # name of the table with Elementary Mapping Units
+    emu_table_name = "emu"
 
     def __init__(self, engine, grid_no):
 
@@ -458,13 +463,13 @@ class SoilDataIterator(list):
         """Retrieves the relevant SMU for given grid_no from
         table EMU.
         """
-        table_emu = Table("emu", metadata, autoload=True)
+        table_emu = Table(self.emu_table_name, metadata, autoload=True)
         r = select([table_emu.c.smu_no, table_emu.c.area],
                    table_emu.c.grid_no == grid_no).execute()
         rows = r.fetchall()
         if rows is None:
             msg = ("No soil mapping units (SMU) found for grid_no=%i "
-                   "in table EMU" % grid_no)
+                   "in table %s" % (grid_no, self.emu_table_name))
             raise exc.PCSEError(msg)
 
         return rows
