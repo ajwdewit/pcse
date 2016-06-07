@@ -320,7 +320,7 @@ by CGMS executable version 11.
 .. autoclass:: WeatherObsGridDataProvider
     :members:
 
-.. autoclass:: TimerDataProvider
+.. autoclass:: AgroManagementDataProvider
     :members:
 
 .. autoclass:: SoilDataIterator
