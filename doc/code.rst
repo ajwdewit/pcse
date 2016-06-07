@@ -260,27 +260,11 @@ files in PCSE format.
 The database tools
 ------------------
 
-The database tools contain functions and classes for retrieving parameters
-and weather database from several database structures. The database
-structure is mostly derived from the database used for the Crop Growth
-Monitoring System (CGMS_).
+The database tools contain functions and classes for retrieving agromanagement,
+parameter values and weather variables from database structures implemented for
+different versions of the European Crop Growth Monitoring System (CGMS_).
 
 .. _CGMS: https://ec.europa.eu/jrc/en/mars
-
-The PCSE database
-.................
-
-The PCSE database structure is very similar to a CGMS9 structure but has some
-modifications for dealing with dates in the CROP_CALENDAR table and uses
-different table names and structure for model output.
-
-.. autofunction:: pcse.db.pcse.fetch_cropdata
-.. autofunction:: pcse.db.pcse.fetch_soildata
-.. autofunction:: pcse.db.pcse.fetch_timerdata
-.. autofunction:: pcse.db.pcse.fetch_sitedata
-
-.. autoclass:: pcse.db.pcse.GridWeatherDataProvider
-    :members:
 
 .. _CGMS9tools:
 

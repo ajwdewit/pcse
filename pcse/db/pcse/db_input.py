@@ -665,15 +665,16 @@ class GridWeatherDataProvider(WeatherDataProvider):
     
     """
     
-    def __init__(self, metadata, grid_no, startdate, enddate):
+    def __init__(self, engine, grid_no, start_date, end_date):
 
         WeatherDataProvider.__init__(self)
-        
         self.grid_no = grid_no
-        self.startdate = startdate
-        self.enddate = enddate
-        self.timeinterval = (enddate - startdate).days + 1
-        
+        self.start_date = self.check_keydate(start_date)
+        self.end_date = self.check_keydate(end_date)
+        self.timeinterval = (end_date - start_date).days + 1
+
+        metadata = MetaData(engine)
+
         # Get location info (lat/lon/elevation)
         self._fetch_location_from_db(metadata)
 
@@ -716,8 +717,8 @@ class GridWeatherDataProvider(WeatherDataProvider):
         try:
             table_gw = Table('grid_weather', metadata, autoload=True)
             r = select([table_gw],and_(table_gw.c.grid_no==self.grid_no,
-                                       table_gw.c.day>=self.startdate,
-                                       table_gw.c.day<=self.enddate)
+                                       table_gw.c.day>=self.start_date,
+                                       table_gw.c.day<=self.end_date)
                        ).execute()
             rows = r.fetchall()
 
@@ -725,8 +726,8 @@ class GridWeatherDataProvider(WeatherDataProvider):
             if c < self.timeinterval:
                 msg =  "Only %i records selected from table 'grid_weather' "+\
                        "for grid %i, period %s -- %s."
-                self.logger.warn(msg % (c, self.grid_no, self.startdate,
-                                        self.enddate))
+                self.logger.warn(msg % (c, self.grid_no, self.start_date,
+                                        self.end_date))
 
             meteopackager = self._make_WeatherDataContainer
             for row in rows:
@@ -741,7 +742,7 @@ class GridWeatherDataProvider(WeatherDataProvider):
 
         msg = ("Successfully retrieved weather data from 'grid_weather' table "
                "for grid %s between %s and %s")
-        self.logger.info(msg % (self.grid_no, self.startdate, self.enddate))
+        self.logger.info(msg % (self.grid_no, self.start_date, self.end_date))
     
     #---------------------------------------------------------------------------
     def _make_WeatherDataContainer(self, row, t):

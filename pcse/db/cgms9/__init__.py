@@ -9,6 +9,7 @@ from ..pcse.db_input import GridWeatherDataProvider
 from ..cgms11.data_providers import SoilDataProviderSingleLayer as SoilDataProvider
 from ..cgms11.data_providers import SiteDataProvider, STU_Suitability, CropDataProvider
 from ..cgms11.data_providers import SoilDataIterator as SoilDataIterator_CGMS11
+from .data_providers import AgroManagementDataProvider
 
 
 class SoilDataIterator(SoilDataIterator_CGMS11):
