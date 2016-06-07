@@ -13,7 +13,7 @@ Python through the native package manager. For Windows users the most straightfo
 Python is through one of the prepackaged Python distributions such as `Enthought Canopy`_,
 `Anaconda`_ or `PythonXY`_. The advantage of the prepackaged distributions is that they provide a working
 version of Numpy out-of-the-box which can be difficult to install on Windows. Mac OSX users can most easily
-install Python and numpy using `HomeBrew`_, i.e brew install python numpy
+install Python and Numpy using `HomeBrew`_, i.e brew install Python Numpy
 
 The dependencies of PCSE are the following:
 
@@ -29,10 +29,10 @@ The dependencies of PCSE are the following:
 .. _PythonXY: https://python-xy.github.io/
 .. _HomeBrew: http://brew.sh
 
-How to install
-==============
+How to install Python and PCSE
+==============================
 
-PCSE can be installed in many different ways and the best depends on your
+In the present PCSE Documentation all examples of installing and using PCSE refer to Windows 7 platform. PCSE can be installed in many different ways and the best depends on your
 requirements. The most convenient option to install PCSE is through the Python Package
 Index (PyPI). Installing from PyPI is mostly useful if you are interested in using the functionality
 provided by PCSE in your own scripts, but are not interested in modifying or contributing to

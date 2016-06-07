@@ -325,6 +325,10 @@ class Engine(BaseEngine):
         if self.flag_summary_output:
             self._save_summary_output()
 
+        # Clear any override parameters in the ParameterProvider to avoid
+        # lagging parameters for the next crop
+        self.parameterprovider.clear_override()
+
         # Only remove the crop simulation object from the system when the crop
         # is finished, when explicitly asked to do so.
         if self.flag_crop_delete:

@@ -39,7 +39,7 @@ The tables specifying state/rate variables have the following columns:
     3. Whether the variable is published in the kiosk or not: Y|N
     4. The physical unit of the variable.
     
-Finally, all public methods of all object are described as well.
+Finally, all public methods of all objects are described as well.
 
 Engine and models
 =================
@@ -56,10 +56,9 @@ Engine and models
 Agromanagement
 ==============
 
-.. note::
-   Currently two modules are available, the new `AgroManager` and the old `AgroManagementSingleCrop`.
-   The old `AgroManagementSingleCrop` is still here for backward compatibility but will be removed
-   in future versions of PCSE.
+The routines below implement the agromanagement system in PCSE including crop calendars, rotations,
+state and timed events. For reading agromanagement data from a file or a database structure see the sections
+on the :ref:`reading file input <FileInput>` and the :ref:`database tools <DBtools>`.
 
 .. autoclass:: pcse.agromanager.AgroManager
     :members:
@@ -74,9 +73,6 @@ Agromanagement
     :members:
 
 
-.. automodule:: pcse.agromanagement
-    :members:
-
 The Timer
 =========
 
@@ -87,7 +83,7 @@ The waterbalance
 ================
 
 The PCSE distribution provides several waterbalance modules:
-    1. WaterbalancePP which is used for simulation under non-waterlimited
+    1. WaterbalancePP which is used for simulation under non-water-limited
        production
     2. WaterbalanceFD which is used for simulation of water-limited production
        under conditions of freely draining soils
@@ -253,32 +249,24 @@ files in PCSE format.
 .. _ExcelWeatherDataProvider:
 .. autoclass:: pcse.fileinput.ExcelWeatherDataProvider
 
+.. _CSVWeatherDataProvider:
+.. autoclass:: pcse.fileinput.CSVWeatherDataProvider
+
+.. _YAMLAgroManagementReader:
+.. autoclass:: pcse.fileinput.YAMLAgroManagementReader
+
+.. _DBtools:
+
 The database tools
 ------------------
 
-The database tools contain functions and classes for retrieving parameters
-and weather database from several database structures. The database
-structure is mostly derived from the database used for the Crop Growth
-Monitoring System (CGMS_).
+The database tools contain functions and classes for retrieving agromanagement,
+parameter values and weather variables from database structures implemented for
+different versions of the European Crop Growth Monitoring System (CGMS_).
 
-.. _CGMS: http://mars.jrc.ec.europa.eu/mars/About-us/AGRI4CAST/Models-Software-Tools/Crop-Growth-Monitoring-System-CGMS
+.. _CGMS: https://ec.europa.eu/jrc/en/mars
 
-The PCSE database
-.................
-
-The PCSE database structure is very similar to a CGMS9 structure but has some
-modifications for dealing with dates in the CROP_CALENDAR table and uses
-different table names and structure for model output.
-
-.. autofunction:: pcse.db.pcse.fetch_cropdata
-.. autofunction:: pcse.db.pcse.fetch_soildata
-.. autofunction:: pcse.db.pcse.fetch_timerdata
-.. autofunction:: pcse.db.pcse.fetch_sitedata
-
-.. _GridWeatherDataProvider:
-
-.. autoclass:: pcse.db.pcse.GridWeatherDataProvider
-    :members:
+.. _CGMS9tools:
 
 The CGMS9 database
 ..................
@@ -289,8 +277,26 @@ by CGMS executable version 9 and 10.
 .. autoclass:: pcse.db.cgms9.GridWeatherDataProvider
     :members:
 
+.. autoclass:: pcse.db.cgms9.SoilDataIterator
+    :members:
+
+.. autoclass:: pcse.db.cgms9.CropDataProvider
+    :members:
+
+.. autoclass:: pcse.db.cgms9.STU_Suitability
+    :members:
+
+.. autoclass:: pcse.db.cgms9.SiteDataProvider
+    :members:
+
+.. _CGMS11tools:
+
 The CGMS11 database
 ...................
+
+The CGMS11 tools are for reading data from a database structure that is used
+by CGMS executable version 11.
+
 
 .. automodule:: pcse.db.cgms11
     :members:
@@ -298,7 +304,7 @@ The CGMS11 database
 .. autoclass:: WeatherObsGridDataProvider
     :members:
 
-.. autoclass:: TimerDataProvider
+.. autoclass:: AgroManagementDataProvider
     :members:
 
 .. autoclass:: SoilDataIterator
@@ -312,6 +318,16 @@ The CGMS11 database
 
 .. autoclass:: SiteDataProvider
     :members:
+
+.. _CGMS14tools:
+
+The CGMS14 database
+...................
+
+The CGMS14 database is the database structure that is compatible with the 2015 BioMA implementation
+of WOFOST. Note that the CGMS14 database structure is considerably different from CGMS9 and CGMS11.
+
+.. _CGMS14_data_providers:
 
 
 The NASA POWER database

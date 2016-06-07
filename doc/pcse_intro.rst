@@ -45,7 +45,7 @@ Why Python
 PCSE was first and foremost developed from a scientific need, to be able to quickly adapt models and test ideas.
 In science, Python is quickly becoming a tool for implementing algorithms, visualization and explorative analysis
 due to its clear syntax and ease of use. An additional advantage is that the C implementation of Python
-can be easily interfaces with routines written in FORTRAN and therefore many FORTRAN routines can be reused by
+can be easily interfaced with routines written in FORTRAN and therefore many FORTRAN routines can be reused by
 simulation models written with PCSE.
 
 Many packages exist for numeric analysis (e.g. NumPy, SciPy),
