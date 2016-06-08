@@ -262,7 +262,15 @@ The database tools
 
 The database tools contain functions and classes for retrieving agromanagement,
 parameter values and weather variables from database structures implemented for
-different versions of the European Crop Growth Monitoring System (CGMS_).
+different versions of the European `Crop Growth Monitoring System <CGMS>`_.
+
+Note that the data providers only provide functionality for *reading* data,
+there are no tools here *writing* simulation results to a CGMS database. This was
+done on purpose as writing data can be a complex matter and it is our
+experience that this can be done more easily with dedicated database loader
+tools such as `SQLLoader`_ for ORACLE or the ``load data infile`` syntax of MySQL
+
+.. _SQLLoader: http://www.oracle.com/technetwork/database/enterprise-edition/sql-loader-overview-095816.html
 
 .. _CGMS: https://ec.europa.eu/jrc/en/mars
 

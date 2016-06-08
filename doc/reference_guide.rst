@@ -57,7 +57,7 @@ FSE: Euler integration with a fixed time step of one day.  The following
 figure shows the principle of continuous simulation
 and the execution order of various steps.
 
-.. figure:: continuous_simulation.png
+.. figure:: figures/continuous_simulation.png
    :align: center
    :width: 500 px
 
@@ -398,6 +398,8 @@ would still be present in the function call, thereby decreasing the computationa
 efficiency and the readability of the code. Therefore, PCSE uses a very different
 approach for agromanagement events which is based on signals (see XXX).
 
+.. _refguide_agromanagement:
+
 Defining agromanagement in PCSE
 -------------------------------
 
@@ -501,7 +503,7 @@ and at the dates defined by its parameters it initiates the appropriate actions:
   appropriate parameters.
 
 For a detailed description of a crop calendar see the code documentation on the CropCalendar in the
-section on :ref:`Agromanagement`.
+section on :ref:`Agromanagement <Agromanagement>`.
 
 Timed events
 ------------
@@ -515,7 +517,7 @@ Note that when multiple events are connected to the same date, the order in whic
 undetermined.
 
 For a detailed description of a timed events see the code documentation on the TimedEventsDispatcher
-in the section on :ref:`Agromanagement`.
+in the section on :ref:`Agromanagement <Agromanagement>`.
 
 
 State events
@@ -550,7 +552,7 @@ Note that when multiple events are connected to the same state value, the order 
 undetermined.
 
 For a detailed description of a state events see the code documentation on the StateEventsDispatcher
-in the section on :ref:`Agromanagement`.
+in the section on :ref:`Agromanagement <Agromanagement>`.
 
 
 Finding the start and end date of a simulation
@@ -755,8 +757,8 @@ PCSE needs to receive inputs on weather, parameter values and agromanagement in 
 simulation. To obtain the required inputs several data providers have been written that read
 these inputs from a variety of sources. Nevertheless, care has been taken to avoid dependencies on a particular
 database and file format. As a consequence there is no direct coupling between PCSE and a particular file format
-or database and a variety of data sources that can be used, ranging from simple files, relational databases and
-internet resources.
+or database. This ensures that a variety of data sources can be used, ranging from simple files, relational
+databases and internet resources.
 
 .. _Weather data providers:
 
@@ -810,7 +812,7 @@ To provide the simulation Engine with weather data PCSE uses the concept of a
 sources but provides a single interface to the Engine for retrieving the data.
 This principle can be most easily explained with an example based on
 weather data files provided in the Getting Started section
-:download:`quickstart_part3.zip`. In this example we will read the weather
+:download:`downloads/quickstart_part3.zip`. In this example we will read the weather
 data from an Excel file `nl1.xlsx` using the ExcelWeatherDataProvider::
 
     >>> import pcse
@@ -1012,7 +1014,7 @@ The structure of the inputs for agromanagement is more complex compared to param
 variables.
 
 The most comprehensive way to define agromanagement in PCSE is to use the YAML structure that was
-described in the section above on  :ref:`agromanagement <Defining agromanagement in PCSE>`. For reading
+described in the section above on  :ref:`defining agromanagement <refguide_agromanagement>`. For reading
 this datastructure the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>` module is available
 which can be provided directly as input into the Engine.
 

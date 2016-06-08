@@ -27,7 +27,7 @@ PCSE version 5.1 brings the following new features:
   read by the :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`. Althought the format is well documented,
   creating CABO weather files is a bit cumbersome as for each year a new file has to be created and mistakes are
   easily made. Therefore, the :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>` was created that
-  reads its input from a Microsoft Excel file. See here for an example of an Excel weather file: :download:`nl1.xlsx`.
+  reads its input from a Microsoft Excel file. See here for an example of an Excel weather file: :download:`downloads/nl1.xlsx`.
 
 
 .. _MARSwiki: http://marswiki.jrc.ec.europa.eu/agri4castwiki/index.php/Appendix_5:_CGMS_tables

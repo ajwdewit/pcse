@@ -58,7 +58,7 @@ model terminates and store the results to a file 'myresults.csv'::
     >>> wofost_object.run_till_terminate()
     >>> wofost_object.store_to_file("myresults.txt")
 
-Which should look like this :download:`myresults.txt`
+Which should look like this :download:`downloads/myresults.txt`
 
 Running PCSE/WOFOST with custom input data
 ==========================================
@@ -87,7 +87,7 @@ Wageningen (Netherlands) and we will read the input data step by step from
 several different sources instead of using the pre-configured `start_wofost()`
 script. For the example we will assume that data files are in the directory
 `D:\\userdata\\pcse_examples` and all the parameter files needed can be
-found by unpacking this zip file :download:`quickstart_part2.zip`.
+found by unpacking this zip file :download:`downloads/quickstart_part2.zip`.
 
 First we will import the necessary modules and define the data directory.
 We also assume that you have the matplotlib package installed on your
@@ -202,29 +202,14 @@ define these parameters directly on the Python commandline::
 Driving variables (weather data)
 --------------------------------
 
-Daily weather variables are needed for running the simulation. Currently, four
-options are available in PCSE for retrieving weather data:
-
-1. The database structure as provided by the Crop Growth Monitoring
-   System for the delivery of interpolated daily weather data on 25 x 25 km gridcells. Weather data will be read
-   from the GRID_WEATHER table which
-   is implemented using :ref:`GridWeatherDataProvider <GridWeatherDataProvider>`.
-2. The file structure as defined by the `CABO Weather System`_ which is
-   implemented using :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>`for the delivery of
-   observed weather station data.
-3. The file structure used by the `CABO Weather System`_ but implemented as an
-   Excel sheet by :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>`
-4. The global weather data provided by the agroclimatology from the
-   `NASA Power database`_ at a resolution of 1x1 degree. PCSE
-   provides the :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
-   the NASA Power data from the internet for a given latitude and
-   longitude.
-
-.. _CABO Weather System: http://edepot.wur.nl/43010
-.. _NASA Power database: http://power.larc.nasa.gov
+Daily weather variables are needed for running the simulation. There are several
+data providers in PCSE for reading weather data, see the section on
+:ref:`weather data providers <Weather data providers>` to get an overview.
 
 For this example we will use the weather data from the NASA Power database
-for the location of Wageningen. Note that it can take around 30 seconds
+which provides global weather data with a spatial resolution of 1 degree (~100 km).
+We will retrieve the data from the Power database for the location of Wageningen.
+Note that it can take around 30 seconds
 to retrieve the weather data from the NASA Power server the first time::
 
     >>> from pcse.db import NASAPowerWeatherDataProvider
@@ -307,9 +292,9 @@ index (LAI) and root-zone soil moisture (SM) using the `MatPlotLib`_ plotting pa
 .. _MatPlotLib: http://matplotlib.org/
 
 This should generate a figure of the simulation results as shown below. The complete Python
-script for this examples can be downloaded here :download:`quickstart_demo2.py`
+script for this examples can be downloaded here :download:`downloads/quickstart_demo2.py`
 
-.. image:: sugarbeet.png
+.. image:: figures/sugarbeet.png
 
 
 .. _RunningLINTUL3:
@@ -325,8 +310,8 @@ simulation of crop production under water-limited and nitrogen-limited condition
 For the third example, we will use LINTUL3 for simulating spring-wheat in the Netherlands under water-limited
 and nitrogen-limited conditions. We will again assume that data files are in the directory
 `D:\\userdata\\pcse_examples` and all the parameter files needed can be
-found by unpacking this zip file :download:`quickstart_part3.zip`. Note that this guide is also available
-as an IPython notebook: :download:`running_LINTUL3.ipynb`.
+found by unpacking this zip file :download:`downloads/quickstart_part3.zip`. Note that this guide is also available
+as an IPython notebook: :download:`downloads/running_LINTUL3.ipynb`.
 
 First we will import the necessary modules and define the data directory. We also assume that you have the
 `matplotlib`_, `pandas`_ and `PyYAML`_ packages installed on your system.::
@@ -508,4 +493,4 @@ environment supports plotting::
     >>> fig.autofmt_xdate()
     >>> fig.savefig(os.path.join(data_dir, "lintul3_springwheat.png"))
 
-.. image:: lintul3_springwheat.png
+.. image:: downloads/lintul3_springwheat.png

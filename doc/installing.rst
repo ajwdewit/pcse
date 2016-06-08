@@ -69,7 +69,7 @@ For running the test included with PCSE, we assume that PCSE was downloaded as a
 from GitHub and is installed under 'D:\\USERDATA\\pylib\\', your folder should now
 resemble the screenshot below.
 
-.. image:: pylib.png
+.. image:: figures/pylib.png
 
 .. _here: https://github.com/ajwdewit/pcse/archive/master.zip
 
