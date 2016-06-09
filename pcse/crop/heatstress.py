@@ -7,7 +7,7 @@
 """Implementation of a models for heatstress around flowering in WOFOST
 
 Classes defined here:
-- HeatStressFlowering:
+- WOFOST_Sink_Dynamics:
 """
 import datetime
 
@@ -20,7 +20,15 @@ from .. import exceptions as exc
 
 #-------------------------------------------------------------------------------
 class WOFOST_Sink_Dynamics(SimulationObject):
-    """Implements the algorithms for heatstress around flowring in WOFOST.
+    """Implements the algorithm for heatstress around flowering in WOFOST.
+     1/ The number of sinks is established as function of the total leaf and
+        stem weight at anthesis.
+     2/ This number of sinks is reduced by a factor for high temperatures. This
+        factor depends on the average day time temperature during the sensitive
+        period.
+     3/ The number of sinks is also reduced by low temperature at the end of the
+        sensitive period. This reduction factor depends on the day time temperature
+        at DVSHEF.
 
 
     **Simulation parameters**
@@ -57,7 +65,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
              folowing values:
              `not sensitive|temp sensitive|end temp sensitivty`
     NUMGR    Number of grains                                   Y    -
-    TAGBSF   Total leave and stem weight (dead/alive)           N    |kg ha-1|
+    TAGBSF   Total leaf and stem weight (dead/alive)           N    |kg ha-1|
              at anthesis
     =======  ================================================= ==== ============
 
@@ -99,7 +107,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
     class StateVariables(StatesTemplate):
         CMDTEMP   = Float(-99.)  # Sum of the day-time temperature.
         TAGBSF    = Float(-99.)  # Total weight of leaves and stems at anthesis.
-        NUMGR     = Float(-99.)  # number of grains(per ha).
+        NUMGR     = Float(-99.)  # number of sinks (per ha).
 
         # States which register phenological events
         DSB = Instance(datetime.date) # Day where temp sensitivity begins.
@@ -151,7 +159,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
             if DVS >= p.DVSHEB:
                 self._next_stage(day)
 
-            if DVS == 1.0:
+            if DVS >= 1.0 and s.TAGBSF is None:
                 # establish total leaf and stem dry weight at anthesis
                 s.TAGBSF = TWLV + TWST
 
@@ -203,7 +211,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
 
     #---------------------------------------------------------------------------
     def _number_of_sinks_heatstress(self, TMG):
-        # determine number of grains as defined by heat stress around anthesis and
+        # determine number of sinks as defined by heat stress around anthesis and
         # total weight (death+alive) at anthesis
         p = self.params
         s = self.states
@@ -211,7 +219,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         delta  = s.DSE - s.DSB
         try:
             MDTEMP = s.CMDTEMP / float(delta.days)
-        except:
+        except ZeroDivisionError:
             msg = "Could not calculate heatstress. No days counted"
             raise exc.PCSEError(msg)
 
@@ -222,6 +230,8 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         p = self.params
         s = self.states
 
+        # Note that suboptimal temperatures at the end of the heat sensitive period
+        # may also reduce number of sinks
         return TMG * (p.NUMGA + p.NUMGB * s.TAGBSF)
 
 
