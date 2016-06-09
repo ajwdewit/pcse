@@ -1072,9 +1072,9 @@ class WeatherDataContainer(SlotPickleMixin):
               "TMAX": (-50., 60.),
               "VAP": (0.06, 199.3),  # hPa, computed as sat. vapour pressure at -50, 60 Celsius
               "RAIN": (0, 25),
-              "E0": (0., 2.),
-              "ES0": (0., 2.),
-              "ET0": (0., 2.),
+              "E0": (0., 2.5),
+              "ES0": (0., 2.5),
+              "ET0": (0., 2.5),
               "WIND": (0., 100.),
               "SNOWDEPTH": (0., 250.),
               "TEMP": (-50., 60.),
@@ -1196,14 +1196,13 @@ class WeatherDataProvider(object):
     description = None
     _first_date = None
     _last_date = None
-    angstA = None
+    AngstA = None
     angstB = None
     # model used for reference ET
     ETmodel = "PM"
 
     def __init__(self):
         self.store = {}
-
         # Define a logger
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
@@ -1317,17 +1316,19 @@ class WeatherDataProvider(object):
         keydate = self.check_keydate(day)
         
         if self.supports_ensembles is False:
-            msg = "Retrieving weather data for day %s" % keydate
-            self.logger.debug(msg)
+            if self.logger is not None:
+                msg = "Retrieving weather data for day %s" % keydate
+                self.logger.debug(msg)
             try:
                 return self.store[(keydate, 0)]
             except KeyError, e:
                 msg = "No weather data for %s." % keydate
                 raise exc.WeatherDataProviderError(msg)
         else:
-            msg = "Retrieving ensemble weather data for day %s member %i" % \
-                  (keydate, member_id)
-            self.logger.debug(msg)
+            if self.logger is not None:
+                msg = "Retrieving ensemble weather data for day %s member %i" % \
+                      (keydate, member_id)
+                self.logger.debug(msg)
             try:
                 return self.store[(keydate, member_id)]
             except KeyError:
@@ -1475,13 +1476,27 @@ class ParameterProvider(HasTraits):
     _soildata = dict()
     _cropdata = dict()
     _timerdata = dict()
+    _override = dict()
 
-    def __init__(self, sitedata={}, timerdata={}, soildata={}, cropdata={}):
-        self._sitedata = sitedata
-        self._timerdata = timerdata
-        self._soildata = soildata
-        self._cropdata = cropdata
-        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
+    def __init__(self, sitedata=None, timerdata=None, soildata=None, cropdata=None):
+        if sitedata is not None:
+            self._sitedata = sitedata
+        else:
+            self._sitedata = {}
+        if cropdata is not None:
+            self._cropdata = cropdata
+        else:
+            self._cropdata = {}
+        if soildata is not None:
+            self._soildata = soildata
+        else:
+            self._soildata = {}
+        if timerdata is not None:
+            self._timerdata = timerdata
+        else:
+            self._timerdata = {}
+        self._override = {}
+        self._maps = [self._override, self._sitedata, self._timerdata, self._soildata, self._cropdata]
         self._test_uniqueness()
 
     def set_crop_type(self, crop_id=None, crop_start_type=None, crop_end_type=None):
@@ -1498,10 +1513,41 @@ class ParameterProvider(HasTraits):
         self._timerdata["CROP_END_TYPE"] = crop_end_type
         self._test_uniqueness()
 
+    def set_override(self, varname, value, check=True):
+        """"Override the value of variable varname in the parameterprovider.
+
+        Overriding the value of particular variable is often useful for example
+        when running for different sets of parameters or for calibration
+        purposes.
+
+        Note that if check=True (default) varname should already exist in one of site, timer,
+        soil or cropdata.
+        """
+
+        if check:
+            if varname in self:
+                self._override[varname] = value
+            else:
+                msg = "Cannot override '%s', parameter does not exist." % varname
+                raise exc.PCSEError(msg)
+        else:
+            self._override[varname] = value
+
+    def clear_override(self, varname=None):
+        """Removes variable varname from override, without arguments all variables are removed."""
+
+        if varname is None:
+            self._override.clear()
+        else:
+            if varname in self._override:
+                self._override.pop(varname)
+            else:
+                msg = "Cannot clear varname '%s' from override" % varname
+
     def _test_uniqueness(self):
         # Check if parameter names are unique
         parnames = []
-        for mapping in self._maps:
+        for mapping in [self._sitedata, self._timerdata, self._soildata, self._cropdata]:
             parnames.extend(mapping.keys())
         unique = Counter(parnames)
         for parname, count in unique.items():
