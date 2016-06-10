@@ -24,6 +24,9 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     Area Index which is obtained by multiplying pod biomass with a fixed
     Specific Pod Area (SPA).
 
+    If the storage organs growth also depend on sink limitation ISINK==1,
+    low temperature reduces storage organs growth
+
     **Simulation parameters**
 
     =======  ============================================= =======  ============
@@ -141,7 +144,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
             NUMGR = self.kiosk["NUMGR"]
             if NUMGR > 0.:
                 # Low temperature reduction factor for the
-                # potential grain formation PGRIG
+                # potential grain growth PGRIG
                 FTLOW = params.TMGTB(drv.DTEMP)
                 # potential growth of the grains GWSO_PT
                 GWSO_PT = NUMGR * FTLOW * params.PGRIG
@@ -154,7 +157,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
                 rates.GWSO = min(GWSO_SR, GWSO_SK)
                 if GWSO_SK < GWSO_SR:
                     # change translocation rate in case of sink limitation;
-                    rates.TRANSL = -(rates.GWSO - GWSO_SK) + TRANSL
+                    rates.TRANSL = TRANSL -(GWSO_SR - GWSO_SK)
 
     @prepare_states
     def integrate(self, day):

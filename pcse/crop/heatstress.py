@@ -27,10 +27,6 @@ class WOFOST_Sink_Dynamics(SimulationObject):
      2/ The number of sinks is reduced by a factor for high temperatures. This
         factor depends on the average day time temperature during the sensitive
         period.
-     3/ The number of sinks is also reduced by low temperature at the end of the
-        sensitive period. This reduction factor depends on the day time temperature
-        at DVSHEF.
-
 
     **Simulation parameters**
 
@@ -216,4 +212,4 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         else:
             FHSTRESS = 1.0
 
-        return FHSTRESS * FHSTRESS * (p.NUMGA + p.NUMGB * s.TAGBSF)
+        return FHSTRESS * (p.NUMGA + p.NUMGB * s.TAGBSF)
