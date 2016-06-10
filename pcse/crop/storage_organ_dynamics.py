@@ -54,7 +54,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     GRSO     Growth rate storage organs                         N   |kg ha-1 d-1|
     DRSO     Death rate storage organs                          N   |kg ha-1 d-1|
     GWSO     Net change in storage organ biomass                N   |kg ha-1 d-1|
-    TRANSL   Weight that is translocated to storage organs
+    TRANSL   Weight that is translocated to storage organs      N   |kg ha-1 d-1|
     =======  ================================================= ==== ============
     
     **Signals send or handled**
@@ -136,17 +136,25 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         if params.ISINK ==1:
             NUMGR  = self.kiosk["NUMGR"]
             if NUMGR > 0.:
-                # grain  growth limited by both maximal grain mass(GWSIX) and by
-                # potential growth of the grains(GWSI1)
-                GWSI1 = NUMGR * params.PGRIG
-                GWSIX = max(0.0, NUMGR * params.GRMX - states.WSO)
-                GWSI2 = min(GWSIX, GWSI1)
+                # Low temperature reduction factor for the
+                # potential grain formation PGRIG
+                FTLOW = params.TMGTB(rates.DAYTEMP)
+
+                # potential growth of the grains(GWSO_PT)
+                GWSO_PT = NUMGR * FTLOW * params.PGRIG
+
+                # maximal grain mass growth (GWSO_MX)
+                GWSO_MX = max(0.0, NUMGR * params.GRMX - states.WSO)
+                # grain  growth limited by both maximal grain mass(GWSO_MX) and by
+                # potential growth of the grains(GWSO_PT)
+                GWSO_SK = min(GWSO_MX, GWSO_PT)
 
                 # source or sink limitation
-                rates.GWSO = min(rates.GWSO, GWSI2)
-                if GWSI2 < rates.GWSO:
-                    # change translocation in case of sink limitation;
-                    rates.TRANSL = -(rates.GWSO - GWSI2) + TRANSL
+                rates.GWSO = min(rates.GWSO, GWSO_SK)
+                if GWSO_SK < rates.GWSO:
+                    # change translocation rate in case of sink limitation;
+                    rates.TRANSL = -(rates.GWSO - GWSO_SK) + TRANSL
+
 
 
     @prepare_states
