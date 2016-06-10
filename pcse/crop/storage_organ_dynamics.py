@@ -151,7 +151,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
                 # potential growth of the grains GWSO_PT
                 GWSO_SK = min(GWSO_MX, GWSO_PT)
                 # source or sink limitation
-                rates.GWSO = min(rates.GWSO_SR, GWSO_SK)
+                rates.GWSO = min(GWSO_SR, GWSO_SK)
                 if GWSO_SK < GWSO_SR:
                     # change translocation rate in case of sink limitation;
                     rates.TRANSL = -(rates.GWSO - GWSO_SK) + TRANSL

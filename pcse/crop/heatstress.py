@@ -52,19 +52,19 @@ class WOFOST_Sink_Dynamics(SimulationObject):
 
     **State variables**
 
-    =======  ================================================= ==== ============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================= ==== ============
-    CMDTEMP  Temperature sum day-time temperature               N    |C| day
-             between DVSHEB and DVSHEF
-    DSB      Starting day of heat sensitivity                   N    -
-    DSE      End day of heat sensitivity                        N    -
-    HSTAGE   Current phenological stage, can take the           N    -
-             folowing values:
-             `not sensitive|temp sensitive|end temp sensitivty`
-    NUMGR    Number of grains                                   Y    -
-    TAGBSF   Total leaf and stem weight (dead/alive)           N    |kg ha-1|
-             at anthesis
+    =======    ================================================== ==== ============
+     Name      Description                                         Pbl      Unit
+    =======    =================================================  ==== ============
+    TSUM_DTEMP Temperature sum day-time temperature               N    |C| day
+               between DVSHEB and DVSHEF
+    DSB        Starting day of heat sensitivity                   N    -
+    DSE        End day of heat sensitivity                        N    -
+    HSTAGE     Current phenological stage, can take the           N    -
+               folowing values:
+               `not sensitive|temp sensitive|end temp sensitivty`
+    NUMGR      Number of grains                                   Y    -
+    TAGBSF     Total leaf and stem weight (dead/alive)            N    |kg ha-1|
+               at anthesis
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -102,7 +102,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
 
     # -------------------------------------------------------------------------------
     class StateVariables(StatesTemplate):
-        CMDTEMP = Float(-99.)  # Sum of the day-time temperature.
+        TSUM_DTEMP = Float(-99.)  # Sum of the day-time temperature.
         TAGBSF = Float(-99.)  # Total weight of leaves and stems at anthesis.
         NUMGR = Float(-99.)  # number of sinks (per ha).
 
@@ -122,7 +122,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         self.rates = self.RateVariables(kiosk, publish="DAYTEMP")
         self.params = self.Parameters(parvalues)
         self.states = self.StateVariables(kiosk, publish="NUMGR", NUMGR=0, TAGBSF=0,
-                                          CMDTEMP=0., DSB=DSB, DSE=DSE, HSTAGE=HSTAGE)
+                                          TSUM_DTEMP=0., DSB=DSB, DSE=DSE, HSTAGE=HSTAGE)
 
     # ---------------------------------------------------------------------------
 
@@ -159,12 +159,9 @@ class WOFOST_Sink_Dynamics(SimulationObject):
                 self._next_stage(day)
 
         elif s.HSTAGE == "temp sensitive":
-            s.CMDTEMP += r.DAYTEMP
+            s.TSUM_DTEMP += r.DAYTEMP
             if DVS >= p.DVSHEF:
                 self._next_stage(day)
-
-                # sink reduction factor due to low temperature
-                # FTEMP_LOW = p.TMGTB(r.DAYTEMP)
 
                 # number of sinks (per ha) as determined by total leaf and stem
                 # dry weight at anthesis
@@ -211,11 +208,11 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         if p.IHEAT == 1:
             delta = s.DSE - s.DSB
             try:
-                MDTEMP = s.CMDTEMP / float(delta.days)
+                MEAN_DTEMP = s.TSUM_DTEMP / float(delta.days)
             except ZeroDivisionError:
                 msg = "Could not calculate heatstress. No days counted"
                 raise exc.PCSEError(msg)
-            FHSTRESS = p.RDGRTB(MDTEMP)
+            FHSTRESS = p.RDGRTB(MEAN_DTEMP)
         else:
             FHSTRESS = 1.0
 
