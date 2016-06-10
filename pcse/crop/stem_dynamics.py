@@ -71,6 +71,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
      Name     Description                         Provided by         Unit
     =======  =================================== =================  ============
     DVS      Crop development stage              DVS_Phenology       -
+    DVR      Crop development rate               DVS_Phenology       -
     ADMI     Above-ground dry matter             CropSimulation     |kg ha-1 d-1|
              increase
     FR       Fraction biomass to roots           DVS_Partitioning    - 
@@ -108,7 +109,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         TRANSL = 0.
         
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk, publish=["DRST","TRANSL"])
+        self.rates  = self.RateVariables(kiosk, publish=["DRST","TRANSL","GWST", "GRST"])
         self.kiosk  = kiosk
 
         # INITIAL STATES
@@ -142,8 +143,6 @@ class WOFOST_Stem_Dynamics(SimulationObject):
             rates.TRANSL = (states.WST + states.DWST) * DVR * params.FRTRL
         else:
             rates.TRANSL = 0.
-
-
 
         # Growth/death rate stems
         rates.GRST = ADMI * FS

@@ -1196,7 +1196,7 @@ class WeatherDataProvider(object):
     description = None
     _first_date = None
     _last_date = None
-    AngstA = None
+    angstA = None
     angstB = None
     # model used for reference ET
     ETmodel = "PM"

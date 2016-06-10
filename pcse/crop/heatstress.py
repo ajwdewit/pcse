@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl )and Iwan Supit
-# (iwan.supit@wur.nl), June 2016
+# Allard de Wit (allard.dewit@wur.nl ) and
+# Iwan Supit (iwan.supit@wur.nl), June 2016
 # Approach based on LINTUL4-vsht made by Joost Wolf
 
 """Implementation of a models for heatstress around flowering in WOFOST
@@ -11,22 +11,23 @@ Classes defined here:
 """
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Bool, AfgenTrait
+from ..traitlets import Float, Instance, Enum, AfgenTrait
 from ..decorators import prepare_rates, prepare_states
 
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject, VariableKiosk
+    SimulationObject
 from .. import exceptions as exc
 
 
 # -------------------------------------------------------------------------------
 class WOFOST_Sink_Dynamics(SimulationObject):
-    """Implements the algorithm for heatstress around flowering in WOFOST.
-     1/ The number of sinks is established as function of the total leaf and
-        stem weight at anthesis.
-     2/ The number of sinks is reduced by a factor for high temperatures. This
-        factor depends on the average day time temperature during the sensitive
-        period.
+    """Implements the algorithm for heatstress around flowering in WOFOST. The
+       assumption is that extreme high temperatures will affect the flower
+       formation and consequently the number of sinks. In this class the
+       number of sinks is established as function of the total leaf and
+       stem weight at anthesis. The number of sinks is subsequently reduced
+       by a factor for high temperatures. This factor depends on the average
+       day-time temperature during the sensitive period.
 
     **Simulation parameters**
 
@@ -34,12 +35,11 @@ class WOFOST_Sink_Dynamics(SimulationObject):
      Name     Description                                   Type     Unit
     =======  ============================================= =======  ============
     RDGRTB   Reduction factor of grain formation due        TCr         -
-             to heat stress in the period around anthesis   TCr         -
-
-    DVSHEB   Beginning of the period with possible temp     SCr        |day|
-             sensitivity effects
-    DVSHEF   End of the period with possible heat temp    SCr        |day|
-             sensitivity effects
+             to heat stress in the period around anthesis
+    DVSHEB   DVS at the beginning of the high temperature   SCr        |day|
+             sensitive period
+    DVSHEF   DVS at the end of the high temperature         SCr        |day|
+             sensitive period
     NUMGA    Variable A in relation between TAGP at         SCr        |ha-1|
              anthesis and sink dimension
     NUMGB    Variable B in relation between TAGP at         SCr        |ha-1|
@@ -51,14 +51,14 @@ class WOFOST_Sink_Dynamics(SimulationObject):
     =======    ================================================== ==== ============
      Name      Description                                         Pbl      Unit
     =======    =================================================  ==== ============
-    TSUM_DTEMP Temperature sum day-time temperature               N    |C| day
-               between DVSHEB and DVSHEF
+    TSUM_DTEMP Day-time temperature sum between DVSHEB            N    |C| day
+               and DVSHEF
     DSB        Starting day of heat sensitivity                   N    -
     DSE        End day of heat sensitivity                        N    -
     HSTAGE     Current phenological stage, can take the           N    -
                folowing values:
                `not sensitive|temp sensitive|end temp sensitivty`
-    NUMGR      Number of grains                                   Y    -
+    NUMGR      Number of sinks (grains, etc.)                     Y    -
     TAGBSF     Total leaf and stem weight (dead/alive)            N    |kg ha-1|
                at anthesis
     =======  ================================================= ==== ============
@@ -86,8 +86,8 @@ class WOFOST_Sink_Dynamics(SimulationObject):
 
     class Parameters(ParamTemplate):
         DVSHEB = Float(-99.)  # beginning of the period with possible heat stress effects.
-        DVSHEF = Float(-99.)  # finalization of the period with possible heat stress effects.
-        IHEAT = Float(-99.)  # Switch for heat sensitivity of sink.
+        DVSHEF = Float(-99.)  # end of the period with possible heat stress effects.
+        IHEAT = Float(-99.)  # Switch for heat sensitivity.
         NUMGA = Float(-99.)  # Variable A in relation between TAGP at anthesis anthesis and sink dimension.
         NUMGB = Float(-99.)  # Variable B in relation between TAGP at anthesis anthesis and sink dimension.
         RDGRTB = AfgenTrait()  # High temperature response function for grain formation as a function of day-time temp.
@@ -106,6 +106,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         DSB = Instance(datetime.date)  # Day where temp sensitivity begins.
         DSE = Instance(datetime.date)  # Day where temp sensitivity ends.
 
+        # Temperature sensitive stages
         HSTAGE = Enum([None, "not sensitive", "temp sensitive", "end temp sensitivity"])
 
     # ---------------------------------------------------------------------------
@@ -124,14 +125,14 @@ class WOFOST_Sink_Dynamics(SimulationObject):
 
     @prepare_rates
     def calc_rates(self, day, drv):
-        # set the daytime temperature as rate variable
+        # set the day-time temperature as rate variable
         r = self.rates
         r.DAYTEMP = drv.DTEMP
 
     # ---------------------------------------------------------------------------
     @prepare_states
     def integrate(self, day):
-        """Updates the state variable and checks for phenologic stages
+        """Updates the state variable and checks the temp. sensitivity stages
         """
 
         p = self.params
@@ -144,12 +145,12 @@ class WOFOST_Sink_Dynamics(SimulationObject):
 
         number_of_sinks = s.NUMGR
 
+        # establish total leaf and stem dry weight at anthesis
         if DVS >= 1.0 and s.TAGBSF <= 0.:
-            # establish total leaf and stem dry weight at anthesis
             s.TAGBSF = TWLV + TWST
 
-        # Calculate the number of sinks as a function of temperature sensitivity
-        # and establish if DVS is in the heat sesnsitive period
+        # Calculate the number of sinks as a function of the temperature sensitivity
+        # and establish if DVS is in the heat sensitive period
         if s.HSTAGE == "not sensitive":
             if DVS >= p.DVSHEB:
                 self._next_stage(day)
@@ -208,6 +209,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
             except ZeroDivisionError:
                 msg = "Could not calculate heatstress. No days counted"
                 raise exc.PCSEError(msg)
+
             FHSTRESS = p.RDGRTB(MEAN_DTEMP)
         else:
             FHSTRESS = 1.0

@@ -24,8 +24,11 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     Area Index which is obtained by multiplying pod biomass with a fixed
     Specific Pod Area (SPA).
 
-    If the storage organs growth also depend on sink limitation ISINK==1,
-    low temperature reduces storage organs growth
+    If the storage organs growth also depend on sink limitation (ISINK==1),
+    low temperature reduces storage organs growth. In case the
+    sink_limitation is less than the soure_limitation the translocation
+    amount and consequently also the the net increase of the net stem
+    biomass should be adapted.
 
     **Simulation parameters**
 
@@ -75,6 +78,11 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
              increase
     FO       Fraction biomass to storage organs  DVS_Partitioning    -
     FR       Fraction biomass to roots           DVS_Partitioning    -
+    TRANSL   Weight that is translocated to      stem_dynamics      |kg ha-1 d-1|
+             storage organs
+    NUMGR    Number of sinks (grains, etc.)      heatstress          -
+    DRST     Death rate stem biomass             stem_dynamics      |kg ha-1 d-1|
+    GRST     Growth rate stem biomass            stem_dynamics      |kg ha-1 d-1|
     =======  =================================== =================  ============
     """
 
@@ -142,6 +150,8 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
             # set the source growth rate of the storage organs
             GWSO_SR = rates.GWSO
             NUMGR = self.kiosk["NUMGR"]
+            DRST  = self.kiosk["DRST"]
+            GRST  = self.kiosk["GRST"]
             if NUMGR > 0.:
                 # Low temperature reduction factor for the
                 # potential grain growth PGRIG
@@ -155,9 +165,12 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
                 GWSO_SK = min(GWSO_MX, GWSO_PT)
                 # source or sink limitation
                 rates.GWSO = min(GWSO_SR, GWSO_SK)
+                # in case of sink limitation
                 if GWSO_SK < GWSO_SR:
-                    # change translocation rate in case of sink limitation;
-                    rates.TRANSL = TRANSL -(GWSO_SR - GWSO_SK)
+                    # adapt translocation rate
+                    TRANSL = TRANSL -(GWSO_SR - GWSO_SK)
+                    # adapt net change in stem biomass
+                    rates.GWST = GRST - DRST - TRANSL
 
     @prepare_states
     def integrate(self, day):
