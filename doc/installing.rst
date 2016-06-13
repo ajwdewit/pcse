@@ -5,7 +5,7 @@ Installing PCSE
 Requirements and dependencies
 =============================
 
-PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using Python 2.7.9 and is known to work with
+PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using Python 2.7.11 and is known to work with
 the 3.x series (using the 2to3 tool). As Python is a platform independent language, PCSE
 works equally well on Linux, Windows or Mac OSX.
 Before installing PCSE, Python itself must be installed on your system. Most Linux systems provide
@@ -29,10 +29,120 @@ The dependencies of PCSE are the following:
 .. _PythonXY: https://python-xy.github.io/
 .. _HomeBrew: http://brew.sh
 
-How to install Python and PCSE
-==============================
+Setting up your python environment
+==================================
 
-In the present PCSE Documentation all examples of installing and using PCSE refer to Windows 7 platform. PCSE can be installed in many different ways and the best depends on your
+A convenient way to set up your python environment for PCSE is through the `Anaconda`_ python distribution.
+In the present PCSE Documentation all examples of installing and using PCSE refer to Windows 7 platform.
+
+First, we suggest you download and install the `MiniConda`_ python distribution which provides a minimum
+python environment that we will use to bootstrap a dedicated virtual environment for PCSE. For the rest
+of this guide we will assume that you use Windows 7 and install the
+32bit miniconda for python 3 (``Miniconda3-latest-Windows-x86.exe``). The virtual enviroment that
+we will create contains not only the dependencies for PCSE, it also includes many other useful packages
+such as `IPython`_ `Pandas`_ and the `Jupyter notebook`_. These packages will be used in the Getting Started section
+as well.
+
+.. _MiniConda: http://conda.pydata.org/miniconda.html
+.. _Pandas: http://pandas.pydata.org/
+.. _Jupyter notebook: https://jupyter.org/
+.. _IPython: https://ipython.org/
+
+After installing MiniConda you should open a command box and check that conda is installed properly:
+
+.. code-block:: doscon
+
+    C:\>conda info
+    Current conda install:
+
+                 platform : win-32
+            conda version : 4.0.5
+      conda-build version : not installed
+           python version : 3.5.1.final.0
+         requests version : 2.9.1
+         root environment : C:\Miniconda3  (writable)
+      default environment : C:\Miniconda3
+         envs directories : C:\Miniconda3\envs
+            package cache : C:\Miniconda3\pkgs
+             channel URLs : https://repo.continuum.io/pkgs/free/win-32/
+                            https://repo.continuum.io/pkgs/free/noarch/
+                            https://repo.continuum.io/pkgs/pro/win-32/
+                            https://repo.continuum.io/pkgs/pro/noarch/
+              config file : None
+        is foreign system : False
+
+Now we will use a Conda environment file to recreate the python environment that we use to develop and run
+PCSE. First you should download the conda environment file :download:`downloads/py2_pcse.yml` and save
+it on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
+using the command ``conda env create`` and tell conda to use the environment file with the option ``-f p2_pcse.yml``
+as show below:
+
+.. code-block:: doscon
+
+    D:\temp\make_env>conda env create -f py2_pcse.yml
+    Fetching package metadata: ....
+    .Solving package specifications: .........
+    Linking packages ...
+    [      COMPLETE      ]|##################################################| 100%
+    Requirement already satisfied (use --upgrade to upgrade): backports.ssl-match-hostname==3.4.0.2 in c:\miniconda3\envs\py2_pcse_b\lib\site-packages
+    Requirement already satisfied (use --upgrade to upgrade): line-profiler==1.0 in c:\miniconda3\envs\py2_pcse_b\lib\site-packages
+    Requirement already satisfied (use --upgrade to upgrade): sphinx-rtd-theme==0.1.7 in c:\miniconda3\envs\py2_pcse_b\lib\site-packages
+    Collecting tabulate==0.7.5
+    Installing collected packages: tabulate
+    Successfully installed tabulate-0.7.5
+    #
+    # To activate this environment, use:
+    # > activate py2_pcse
+    #
+
+You can then activate your environment (note the addition of ``[py2_pcse]`` on your command prompot) and
+run an upgrade to upgrade all packages to the latest versions:
+
+.. code-block:: doscon
+
+    D:\temp\make_env>activate py2_pcse_b
+    Deactivating environment "C:\Miniconda3"...
+    Activating environment "C:\Miniconda3\envs\py2_pcse"...
+
+    [py2_pcse] D:\temp\make_env>conda upgrade --all
+    Fetching package metadata: ....
+    Solving package specifications: .........
+
+    Package plan for installation in environment C:\Miniconda3\envs\py2_pcse:
+
+    The following packages will be downloaded:
+
+        package                    |            build
+        ---------------------------|-----------------
+        vs2008_runtime-9.00.30729.1|                1         1.1 MB
+        zlib-1.2.8                 |            vc9_3          95 KB
+
+    ... Lots of output here
+
+    Proceed ([y]/n)? y
+
+    Fetching packages ...
+    vs2008_runtime 100% |###############################| Time: 0:00:02 518.43 kB/s
+
+    ... Lots of output here
+
+    pyqt-4.11.4-py 100% |###############################| Time: 0:00:04 571.51 kB/s
+    tornado-4.3-py 100% |###############################| Time: 0:00:01 387.81 kB/s
+    Extracting packages ...
+    [      COMPLETE      ]|##################################################| 100%
+    Unlinking packages ...
+    [      COMPLETE      ]|##################################################| 100%
+    Linking packages ...
+            1 file(s) copied.######################################          |  81%
+    [      COMPLETE      ]|##################################################| 100%
+
+    [py2_pcse] D:\temp\make_env>
+
+
+Installing PCSE
+===============
+
+PCSE can be installed in many different ways and the best depends on your
 requirements. The most convenient option to install PCSE is through the Python Package
 Index (PyPI). Installing from PyPI is mostly useful if you are interested in using the functionality
 provided by PCSE in your own scripts, but are not interested in modifying or contributing to
