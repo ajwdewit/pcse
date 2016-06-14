@@ -168,7 +168,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
                     # adapt translocation rate, not all
                     # assimilates can be stored in storage organs
                     # consequently stem growth should also
-                    # be increased by the translocation reduction REDUCTL.
+                    # be increased with the translocation reduction REDUCTL.
                     rates.REDUCTL = (GWSO_SR - GWSO_SK)
 
 
