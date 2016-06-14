@@ -39,7 +39,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     SPA      Specific Pod Area                              SCr      |ha kg-1|
     GRMX     Maximal grain mass one grain                   SCr      |kg|
     PGRIG    Potential grain formation per grain            SCr      |kg|
-    TMGTB    Reduction factor of grain formation  as
+    TMGTB    Reduction factor of grain formation  as        TCr       -
              function. Values from SWHEAT model
     =======  ============================================= =======  ============
 
@@ -63,6 +63,8 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     DRSO     Death rate storage organs                          N   |kg ha-1 d-1|
     GWSO     Net change in storage organ biomass                N   |kg ha-1 d-1|
     TRANSL   Weight that is translocated to storage organs      N   |kg ha-1 d-1|
+    REDUCTL  Reduction of TRANSL resulting from sink            Y   |kg ha-1 d-1|
+             limitation
     =======  ================================================= ==== ============
 
     **Signals send or handled**

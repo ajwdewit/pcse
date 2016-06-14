@@ -107,8 +107,6 @@ class WOFOST_Stem_Dynamics(SimulationObject):
                 key/value pairs
         """
 
-        #Initial value for tanslocated biomass [kg.ha-1.day-1]:
-
         self.params = self.Parameters(parvalues)
         self.rates  = self.RateVariables(kiosk, publish=["DRST","TRANSL"])
         self.kiosk  = kiosk
@@ -145,8 +143,6 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         else:
             rates.TRANSL = 0.
 
-
-
         # Growth/death rate stems
         rates.GRST = ADMI * FS
         rates.DRST = params.RDRSTB(DVS) * states.WST
@@ -158,8 +154,6 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         params = self.params
         rates = self.rates
         states = self.states
-
-        DVS = self.kiosk["DVS"]
 
         # in case of sink limitation not all assimilates
         # can be translocated to the storage organs
@@ -176,4 +170,5 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         states.TWST = states.WST + states.DWST
 
         # Calculate Stem Area Index (SAI)
+        DVS = self.kiosk["DVS"]
         states.SAI = states.WST * params.SSATB(DVS)

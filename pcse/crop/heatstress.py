@@ -154,20 +154,15 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         if s.HSTAGE == "not sensitive":
             if DVS >= p.DVSHEB:
                 self._next_stage(day)
-
         elif s.HSTAGE == "temp sensitive":
             s.TSUM_DTEMP += r.DAYTEMP
             if DVS >= p.DVSHEF:
                 self._next_stage(day)
-
                 # number of sinks (per ha) as determined by total leaf and stem
                 # dry weight at anthesis
                 number_of_sinks = self._number_of_sinks()
-
-
         elif s.HSTAGE == "end temp sensitivity":
-            dummy = None
-
+            pass
         else:  # Problem no heat stage defined
             msg = "No HSTAGE defined in the heat stress around flowering module."
             raise exc.PCSEError(msg)
