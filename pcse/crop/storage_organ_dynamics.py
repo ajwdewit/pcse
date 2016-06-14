@@ -24,7 +24,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     Area Index which is obtained by multiplying pod biomass with a fixed
     Specific Pod Area (SPA).
 
-    If the storage organs growth also depend on sink limitation (ISINK==1),
+    If the storage organs growth also depends on sink limitation (ISINK==1),
     low temperature reduces storage organs growth. In case the
     sink_limitation is less than the soure_limitation the translocation
     amount and consequently also the the net increase of the net stem
@@ -81,8 +81,6 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     TRANSL   Weight that is translocated to      stem_dynamics      |kg ha-1 d-1|
              storage organs
     NUMGR    Number of sinks (grains, etc.)      heatstress          -
-    DRST     Death rate stem biomass             stem_dynamics      |kg ha-1 d-1|
-    GRST     Growth rate stem biomass            stem_dynamics      |kg ha-1 d-1|
     =======  =================================== =================  ============
     """
 
@@ -104,6 +102,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         GRSO = Float(-99.)
         DRSO = Float(-99.)
         GWSO = Float(-99.)
+        REDUCTL = Float(-99.)
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -114,7 +113,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk)
+        self.rates = self.RateVariables(kiosk,publish=["REDUCTL"])
         self.kiosk = kiosk
 
         # INITIAL STATES
@@ -150,8 +149,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
             # set the source growth rate of the storage organs
             GWSO_SR = rates.GWSO
             NUMGR = self.kiosk["NUMGR"]
-            DRST  = self.kiosk["DRST"]
-            GRST  = self.kiosk["GRST"]
+            rates.REDUCTL = 0.
             if NUMGR > 0.:
                 # Low temperature reduction factor for the
                 # potential grain growth PGRIG
@@ -167,10 +165,12 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
                 rates.GWSO = min(GWSO_SR, GWSO_SK)
                 # in case of sink limitation
                 if GWSO_SK < GWSO_SR:
-                    # adapt translocation rate
-                    TRANSL = TRANSL -(GWSO_SR - GWSO_SK)
-                    # adapt net change in stem biomass
-                    rates.GWST = GRST - DRST - TRANSL
+                    # adapt translocation rate, not all
+                    # assimilates can be stored in storage organs
+                    # consequently stem growth should also
+                    # be increased by the translocation reduction REDUCTL.
+                    rates.REDUCTL = (GWSO_SR - GWSO_SK)
+
 
     @prepare_states
     def integrate(self, day):
