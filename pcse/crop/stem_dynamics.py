@@ -160,7 +160,10 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         # consequently the stem growth rate has to be increased
         # with the translocation reduction REDUCTL
         if params.ISINK ==1:
-            REDUCTL = self.kiosk["REDUCTL"]
+            if self.kiosk["REDUCTL"] is None:
+                REDUCTL = 0
+            else:
+                REDUCTL = self.kiosk["REDUCTL"]
         else:
             REDUCTL = 0.
 
