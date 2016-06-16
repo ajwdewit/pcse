@@ -103,11 +103,11 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         NUMGR = Float(-99.)  # number of sinks (per ha).
 
         # States which register phenological events
-        DSB = Instance(datetime.date)  # Day where temp sensitivity begins.
-        DSE = Instance(datetime.date)  # Day where temp sensitivity ends.
+        DSB = Instance(datetime.date)  # Day where heat sensitivity begins.
+        DSE = Instance(datetime.date)  # Day where heat sensitivity ends.
 
         # Temperature sensitive stages
-        HSTAGE = Enum([None, "not sensitive", "temp sensitive", "end temp sensitivity"])
+        HSTAGE = Enum([None, "not sensitive", "heat sensitive", "end heat sensitivity"])
 
     # ---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues):
@@ -132,7 +132,7 @@ class WOFOST_Sink_Dynamics(SimulationObject):
     # ---------------------------------------------------------------------------
     @prepare_states
     def integrate(self, day):
-        """Updates the state variable and checks the temp. sensitivity stages
+        """Updates the state variable and checks the heat sensitivity stages
         """
 
         p = self.params
@@ -154,14 +154,14 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         if s.HSTAGE == "not sensitive":
             if DVS >= p.DVSHEB:
                 self._next_stage(day)
-        elif s.HSTAGE == "temp sensitive":
+        elif s.HSTAGE == "heat sensitive":
             s.TSUM_DTEMP += r.DAYTEMP
             if DVS >= p.DVSHEF:
                 self._next_stage(day)
                 # number of sinks (per ha) as determined by total leaf and stem
                 # dry weight at anthesis
                 number_of_sinks = self._number_of_sinks()
-        elif s.HSTAGE == "end temp sensitivity":
+        elif s.HSTAGE == "end heat sensitivity":
             pass
         else:  # Problem no heat stage defined
             msg = "No HSTAGE defined in the heat stress around flowering module."
@@ -171,19 +171,19 @@ class WOFOST_Sink_Dynamics(SimulationObject):
 
     # ---------------------------------------------------------------------------
     def _next_stage(self, day):
-        """Moves states.STAGE to the next temp sensitivity stage"""
+        """Moves states.STAGE to the next heat sensitivity stage"""
         s = self.states
 
         current_HSTAGE = s.HSTAGE
         if s.HSTAGE == "not sensitive":
-            s.HSTAGE = "temp sensitive"
+            s.HSTAGE = "heat sensitive"
             s.DSB = day
 
-        elif s.HSTAGE == "temp sensitive":
-            s.HSTAGE = "end temp sensitivity"
+        elif s.HSTAGE == "heat sensitive":
+            s.HSTAGE = "end heat sensitivity"
             s.DSE = day
 
-        else:  # Problem no heat stage defined
+        else:  # Problem: no heat sensitive stage defined
             msg = "No HSTAGE defined in temp sensitivity around flowering module."
             raise exc.PCSEError(msg)
 
@@ -198,13 +198,16 @@ class WOFOST_Sink_Dynamics(SimulationObject):
         s = self.states
 
         if p.IHEAT == 1:
+            # length of the heat sensitive period
             delta = s.DSE - s.DSB
             try:
+                # average DTEMP during the heat sensitive period
                 MEAN_DTEMP = s.TSUM_DTEMP / float(delta.days)
             except ZeroDivisionError:
                 msg = "Could not calculate heatstress. No days counted"
                 raise exc.PCSEError(msg)
 
+            # heatstress reduction factor
             FHSTRESS = p.RDGRTB(MEAN_DTEMP)
         else:
             FHSTRESS = 1.0
