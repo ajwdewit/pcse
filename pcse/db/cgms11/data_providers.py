@@ -235,7 +235,7 @@ class AgroManagementDataProvider(list):
     agro_management_template = """
           - {campaign_start_date}:
                 CropCalendar:
-                    crop_id: {crop_name}
+                    crop_id: '{crop_name}'
                     crop_start_date: {crop_start_date}
                     crop_start_type: {crop_start_type}
                     crop_end_date: {crop_end_date}

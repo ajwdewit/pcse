@@ -28,9 +28,9 @@ import array
 from math import log10
 
 from sqlalchemy import create_engine, MetaData, select, Table, and_, join
-from sqlalchemy.sql.expression import func
+import yaml
 
-from ...util import wind10to2, Afgen
+from ...util import wind10to2, Afgen, check_date
 from ... import exceptions as exc
 from ...base_classes import WeatherDataContainer, WeatherDataProvider
 
@@ -60,13 +60,6 @@ class SitedataError(exc.PCSEError):
 class SoildataError(exc.PCSEError):
     def __init__(self, grid, msg):
         value = "Failed to select soil type for grid %s: %s" % (grid, msg)
-        self.value = value
-    def __str__(self):
-         return repr(self.value)
-
-#-------------------------------------------------------------------------------
-class TimerdataError(exc.PCSEError):
-    def __init__(self, value):
         self.value = value
     def __str__(self):
          return repr(self.value)
@@ -537,77 +530,105 @@ def fetch_soildata(metadata, grid):
     logger.info("Succesfully retrieved soil parameter values from database")
     return soildata
 
-#-------------------------------------------------------------------------------
-def fetch_timerdata(metadata, grid, year, crop):
-    """Retrieve timerdata from DB for given grid, year, crop.
-    
-    Routine retrieves the data related to the timer of the system (sowing data,
-    emergence date, start date of waterbalance) from the CROP_CALENDAR.
-    The routine verifies that the start data of the water balance (column
-    'start_day') is before or equal to the start date of the crop (column
-    'crop_start_day')
-    
-    Returns a dictionary with WOFOST timer parameter name/value pairs.
+
+class AgroManagementDataProvider(list):
+    """Class for providing agromanagement data from the CROP_CALENDAR table in a CGMS9 database.
+
+    :param engine: SqlAlchemy engine object providing DB access
+    :param grid_no: Integer grid ID, maps to the grid_no column in the table
+    :param crop_no: Integer id of crop, maps to the crop_no column in the table
+    :param campaign_year: Integer campaign year, maps to the YEAR column in the table.
+           The campaign year refers to the year of the crop start. Thus for crops
+           crossing calendar years, the start_date can be in the previous year as the
+           harvest.
+
+    Note that by default the campaign_start_date is set equal to the crop_start_date which
+    means that the simulation starts when the crop starts. In some cases this is undesirable
+    and an earlier start date should be used. In that case use the `set_campaign_start_date(date)`
+    to update the campaign_start_date.
     """
+    agro_management_template = """
+          - {campaign_start_date}:
+                CropCalendar:
+                    crop_id: '{crop_name}'
+                    crop_start_date: {crop_start_date}
+                    crop_start_type: {crop_start_type}
+                    crop_end_date: {crop_end_date}
+                    crop_end_type: {crop_end_type}
+                    max_duration: {duration}
+                TimedEvents: null
+                StateEvents: null
+        """
 
-    # Define a logger for the PyWofost db_util routines
-    logger = logging.getLogger('PyWofost.db_util')
+    def __init__(self, engine, grid_no, crop_no, campaign_year):
+        list.__init__(self)
+        self.grid_no = int(grid_no)
+        self.crop_no = int(crop_no)
+        self.campaign_year = int(campaign_year)
+        self.crop_name = "not defined"
 
-    # Make initial output dictionary
-    timerdata = {"GRID_NO":grid, "CROP_NO":crop, "CAMPAIGNYEAR":year}
+        metadata = MetaData(engine)
+        table_cc = Table("crop_calendar", metadata, autoload=True)
 
-    # Create and execute SQL query
-    try:
-        table_crop_calendar = Table('crop_calendar', metadata, autoload=True)
-        r = select([table_crop_calendar],
-                   and_(table_crop_calendar.c.grid_no==grid,
-                        table_crop_calendar.c.year==year,
-                        table_crop_calendar.c.crop_no==crop)).execute()
+        r = select([table_cc], and_(table_cc.c.grid_no == self.grid_no,
+                                    table_cc.c.crop_no == self.crop_no,
+                                    table_cc.c.year == self.campaign_year)).execute()
         row = r.fetchone()
         r.close()
-
         if row is None:
-            msg = "Entry in crop_calendar not found!"
-            raise RuntimeError
+            msg = "Failed deriving crop calendar for grid_no %s, crop_no %s " % (grid_no, crop_no)
+            raise exc.PCSEError(msg)
 
-        # Start day of the whole system. Verify that
-        # start_date <= crop_start_date
-        if row.crop_start_date < row.start_date:
-            msg = ("crop_start_date (%s) before system start_date (%s)" %
-                   (row.crop_start_date, row.start_date))
-            raise RuntimeError(msg)
-        timerdata["START_DATE"] = row.start_date
+        # Determine the start date.
+        self.crop_start_date = check_date(row.crop_start_date)
+        self.campaign_start_date = self.crop_start_date
 
-        # Set start type
-        timerdata["CROP_START_TYPE"] = row.crop_start_type.lower()
+        # Determine the start date/type. Only sowing|emergence is accepted by PCSE/WOFOST
+        self.crop_start_type = str(row.crop_start_type).strip()
+        if self.crop_start_type not in ["sowing","emergence"]:
+            msg = "Unrecognized crop start type: %s" % self.crop_start_type
+            raise exc.PCSEError(msg)
 
-        # Set crop start day, it wil be used as emergence or sowing, 
-        # depending on CROP_START_TYPE
-        timerdata["CROP_START_DATE"] = row.crop_start_date
-    
-        # Set end of simulation type: fixed harvest or maturity
-        crop_end_type = row.crop_end_type.lower()
-        timerdata["CROP_END_TYPE"] = crop_end_type
-        timerdata["MAX_DURATION"] = row.max_duration
-        if (crop_end_type == "maturity") or (crop_end_type == "earliest"):
-            timerdata["CROP_END_DATE"] = row.crop_start_date + \
-                                         datetime.timedelta(days=row.max_duration)
-        elif (crop_end_type == "harvest"):
-            timerdata["CROP_END_DATE"] = row.crop_end_date
+        # Determine maximum duration of the crop
+        self.max_duration = int(row.max_duration)
+
+        # Determine crop end date/type and the end of the campaign
+        self.crop_end_type = str(row.crop_end_type).strip().lower()
+        if self.crop_end_type not in ["harvest", "earliest", "maturity"]:
+            msg = ("Unrecognized option for END_TYPE in table "
+                   "CROP_CALENDAR: %s" % row.end_type)
+            raise exc.PCSEError(msg)
+
+        if self.crop_end_type == "maturity":
+            self.crop_end_date = "null"
         else:
-            errstr = "Unknown crop_end_type: not maturity|harvest|earliest!"
-            raise RuntimeError(errstr)
+            self.crop_end_date = check_date(row.crop_end_date)
 
-        # End date of the simulation. This could be different for rotations of crops.
-        timerdata["END_DATE"] = timerdata["CROP_END_DATE"]
+        input = self._build_yaml_agromanagement()
+        self._parse_yaml(input)
 
-    except RuntimeError, exc:
-        errstr = "Failed to retrieve timer data from crop_calendar for "+\
-                 "grid %i, year %i, crop %i: " + str(exc)
-        raise TimerdataError(errstr % (grid, year, crop))
+    def _build_yaml_agromanagement(self):
+        """Builds the YAML agromanagent string"""
 
-    logger.info("Succesfully retrieved timerdata from crop calendar from database")
-    return timerdata
+        input = self.agro_management_template.format(campaign_start_date=self.campaign_start_date,
+                                                     crop_name=self.crop_no,
+                                                     crop_start_date=self.crop_start_date,
+                                                     crop_start_type=self.crop_start_type,
+                                                     crop_end_date=self.crop_end_date,
+                                                     crop_end_type=self.crop_end_type,
+                                                     duration=self.max_duration
+                                                     )
+        return input
+
+    def _parse_yaml(self, input):
+        """Parses the input YAML string and assigns to self"""
+        try:
+            items = yaml.load(input)
+        except yaml.YAMLError as e:
+            msg = "Failed parsing agromanagement string %s: %s" % (input, e)
+            raise exc.PCSEError(msg)
+        self.extend(items)
+
 
 #-------------------------------------------------------------------------------
 def fetch_sitedata(metadata, grid, year):
@@ -709,7 +730,6 @@ class GridWeatherDataProvider(WeatherDataProvider):
               "for grid %s"
         self.logger.info(msg % self.grid_no)
 
-    #---------------------------------------------------------------------------
     def _fetch_grid_weather_from_db(self, metadata):
         """Retrieves the meteo data from table 'grid_weather'.
         """
