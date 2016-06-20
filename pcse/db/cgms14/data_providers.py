@@ -657,7 +657,6 @@ class SiteDataProvider(dict):
 
     Note that the parameter SSI (Initial surface storage) is
     set to zero
-
     """
     
     def __init__(self, engine, idgrid, idcrop_parametrization, campaign_year, idstu):
@@ -685,10 +684,13 @@ class SiteDataProvider(dict):
             msg = ("Failed retrieving site data for grid_no=%s, idcrop_parametrization=%s, campaign_year=%s, "
                 "stu_no=%s" % (self.idgrid, self.idcrop_parametrization, self.campaign_year, self.idstu))
             raise exc.PCSEError(msg)
-        # What can we learn from table soil_initial_water???
-        # self["WAV"] = float(row.???)
         
-        # TODO: where can we find more site information?
+        # This is what we can learn from table soil_initial_water:
+        self["WAV"] = float(row.rooting_depth_potential_water)
+        self["IFUNRN"] = 0
+        self["NOTINF"] = 0
+        self["SSMAX"] = 0.0
+        self["SSI"] = 0.0
         
     def __str__(self):
         result = ("Site parameter values for grid_no=%s, idcrop_parametrization=%s (%s), stu_no=%s, "
