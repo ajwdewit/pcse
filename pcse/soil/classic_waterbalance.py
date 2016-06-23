@@ -46,7 +46,7 @@ class WaterbalancePP(SimulationObject):
         pass
     
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         self.states.SM = self.params.SMFCF
         
 
@@ -421,7 +421,7 @@ class WaterbalanceFD(SimulationObject):
 
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         s = self.states
         p = self.params
         r = self.rates
@@ -615,9 +615,9 @@ class WaterbalanceFDSnow(SimulationObject):
             self.snowcover.calc_rates(day, drv)
 
     @prepare_states
-    def integrate(self, day):
-        self.waterbalance.integrate(day)
+    def integrate(self, day, delt=1.0):
+        self.waterbalance.integrate(day, delt)
         if self.use_observed_snow_depth:
             self.states.SNOWDEPTH = self._SNOWDEPTH
         else:
-            self.snowcover.integrate(day)
+            self.snowcover.integrate(day, delt)

@@ -333,7 +333,7 @@ class NPK_Crop_Dynamics(SimulationObject):
         self._check_K_balance(day)
         
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         rates = self.rates
         states = self.states
 
@@ -355,8 +355,8 @@ class NPK_Crop_Dynamics(SimulationObject):
         states.AKRT += rates.RKRT
         states.AKSO += rates.RKSO
         
-        self.translocation.integrate(day)
-        self.demand_uptake.integrate(day)
+        self.translocation.integrate(day, delt)
+        self.demand_uptake.integrate(day, delt)
 
         # total NPK uptake from soil
         states.NUPTAKE_T += self.kiosk["RNUPTAKE"]

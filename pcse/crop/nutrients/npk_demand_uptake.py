@@ -295,7 +295,7 @@ class NPK_Demand_Uptake(SimulationObject):
             r.RKURT = (s.KDEMRT / KDEMTO) * r.RKUPTAKE
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         states = self.states
         
         # published states from the kiosk

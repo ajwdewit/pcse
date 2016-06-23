@@ -149,7 +149,7 @@ class Engine(BaseEngine):
 
         # Timer: starting day, final day and model output
         self.timer = Timer(self.kiosk, start_date, end_date, self.mconf)
-        self.day = self.timer()
+        self.day, delt = self.timer()
 
         # Driving variables
         self.weatherdataprovider = weatherdataprovider
@@ -184,16 +184,16 @@ class Engine(BaseEngine):
             self._finish_cropsimulation(day)
 
     #---------------------------------------------------------------------------
-    def integrate(self, day):
+    def integrate(self, day, delt):
 
         # Flush state variables from the kiosk before state updates
         self.kiosk.flush_states()
 
         if self.crop is not None:
-            self.crop.integrate(day)
+            self.crop.integrate(day, delt)
 
         if self.soil is not None:
-            self.soil.integrate(day)
+            self.soil.integrate(day, delt)
 
         # Set all rate variables to zero
         if settings.ZEROFY:
@@ -211,10 +211,10 @@ class Engine(BaseEngine):
             days_done += 1
 
             # Update timer
-            self.day = self.timer()
+            self.day, delt = self.timer()
 
             # State integration
-            self.integrate(self.day)
+            self.integrate(self.day, delt)
 
             # Driving variables
             self.drv = self._get_driving_variables(self.day)
@@ -235,10 +235,10 @@ class Engine(BaseEngine):
 
         while self.flag_terminate is False:
             # Update timer
-            self.day = self.timer()
+            self.day, delt = self.timer()
 
             # State integration
-            self.integrate(self.day)
+            self.integrate(self.day, delt)
 
             # Driving variables
             self.drv = self._get_driving_variables(self.day)

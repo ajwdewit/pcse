@@ -154,7 +154,7 @@ class Vernalisation(SimulationObject):
             rates.VERNFAC = 1.0
     #---------------------------------------------------------------------------
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         states = self.states
         rates = self.rates
         params = self.params
@@ -375,8 +375,9 @@ class DVS_Phenology(SimulationObject):
         # Vernalisation
         VERNFAC = 1.
         if p.IDSL >= 2:
-            self.vernalisation.calc_rates(day, drv)
-            VERNFAC = self.kiosk["VERNFAC"]
+            if s.STAGE == 'vegetative':
+                self.vernalisation.calc_rates(day, drv)
+                VERNFAC = self.kiosk["VERNFAC"]
 
         # Development rates
         if s.STAGE == "emerging":
@@ -403,7 +404,7 @@ class DVS_Phenology(SimulationObject):
         
     #---------------------------------------------------------------------------
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         """Updates the state variable and checks for phenologic stages
         """
 
@@ -413,7 +414,10 @@ class DVS_Phenology(SimulationObject):
 
         # Integrate vernalisation module
         if p.IDSL >= 2:
-            self.vernalisation.integrate(day)
+            if s.STAGE == 'vegetative':
+                self.vernalisation.integrate(day, delt)
+            else:
+                self.vernalisation.touch()
 
         # Integrate phenologic states
         s.TSUME += r.DTSUME
@@ -503,5 +507,5 @@ class DVS_Phenology_Wrapper(SimulationObject):
     def calc_rates(self, day, drv):
         self.phenology.calc_rates(day, drv)
 
-    def integrate(self, day):
-        self.phenology.integrate(day)
+    def integrate(self, day, delt=1.0):
+        self.phenology.integrate(day, delt)

@@ -214,7 +214,7 @@ class NPK_Translocation(SimulationObject):
             r.RKTLV = r.RKTST = r.RKTRT = 0.
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         p = self.params
         s = self.states
         

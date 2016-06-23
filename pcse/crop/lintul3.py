@@ -688,13 +688,13 @@ class Lintul3(SimulationObject):
             raise CarbonBalanceError("Carbon un-balance in crop model at day %s" % day)
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         # if before emergence there is no need to continue
         # because only the phenology is running.
         # Just run a touch() to to ensure that all state variables are available
         # in the kiosk
 
-        self.pheno.integrate(day)
+        self.pheno.integrate(day, delt)
         if self.pheno.get_variable("STAGE") == "emerging":
             self.touch()
             return

@@ -208,7 +208,7 @@ class Lintul3Soil(SimulationObject):
             raise WaterBalanceError("water un-balance in root zone at day %s" % day)
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         s = self.states
         p = self.params
         s.integrate(delta=1.)

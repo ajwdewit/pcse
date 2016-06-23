@@ -369,7 +369,7 @@ class FROSTOL(SimulationObject):
 
     #---------------------------------------------------------------------------
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         states = self.states
         rates  = self.rates
         params = self.params
@@ -505,7 +505,7 @@ class CERES_WinterKill(SimulationObject):
             rates.KILLFACTOR = limit(0, 0.96, KF)
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         states = self.states
         rates  = self.rates
         params = self.params

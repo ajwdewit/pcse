@@ -209,7 +209,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - KUPTR - r.RKSOIL
         
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         rates = self.rates
         states = self.states
 

@@ -134,7 +134,7 @@ class DVS_Partitioning(SimulationObject):
 #             raise exc.PartitioningError(msg)
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         """Update partitioning factors based on development stage (DVS)"""
 
         params = self.params
@@ -283,7 +283,7 @@ class DVS_Partitioning_NPK(SimulationObject):
             raise exc.PartitioningError(msg)
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         """
         Update partitioning factors based on development stage (DVS)
         and the Nitrogen nutrition Index (NNI)

@@ -109,7 +109,7 @@ class Timer(AncillaryObject):
             self.logger.info(msg)
             self._send_signal(signal=signals.terminate)
             
-        return self.current_date
+        return self.current_date, float(self.time_step.days)
 
 
 def simple_test():

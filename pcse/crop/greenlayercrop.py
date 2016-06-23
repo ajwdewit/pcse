@@ -98,12 +98,12 @@ class GreenLayerCrop(SimulationObject):
 
     #---------------------------------------------------------------------------
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         states = self.states
         
         # Integrate states on leaves, storage organs, stems and roots
-        self.ro_dynamics.integrate(day)
-        self.lv_dynamics.integrate(day)
+        self.ro_dynamics.integrate(day, delt)
+        self.lv_dynamics.integrate(day, delt)
 
         # total crop transpiration (CTRAT)
         states.CTRAT += self.kiosk["TRA"]

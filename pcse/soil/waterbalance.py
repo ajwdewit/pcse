@@ -859,7 +859,7 @@ class WaterbalanceLayered(SimulationObject):
     #---------------------------------------------------------------------------
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         s = self.states
         p = self.params
         r = self.rates
