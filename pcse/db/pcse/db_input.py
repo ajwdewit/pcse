@@ -21,7 +21,7 @@ Implements the following exceptions:
     - TimerdataError
 """
 import sys, os
-import datetime
+import datetime as dt
 import logging
 import copy
 import array
@@ -686,9 +686,13 @@ class GridWeatherDataProvider(WeatherDataProvider):
     
     """
     
-    def __init__(self, engine, grid_no, start_date, end_date):
+    def __init__(self, engine, grid_no, start_date=None, end_date=None):
 
         WeatherDataProvider.__init__(self)
+        if start_date is None:
+            start_date = dt.date(dt.MINYEAR, 1, 1)
+        if end_date is None:
+            end_date = dt.date(dt.MAXYEAR, 1, 1)
         self.grid_no = grid_no
         self.start_date = self.check_keydate(start_date)
         self.end_date = self.check_keydate(end_date)

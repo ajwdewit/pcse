@@ -95,12 +95,12 @@ as show below:
     # > activate py2_pcse
     #
 
-You can then activate your environment (note the addition of ``[py2_pcse]`` on your command prompot) and
+You can then activate your environment (note the addition of ``[py2_pcse]`` on your command prompt) and
 run an upgrade to upgrade all packages to the latest versions:
 
 .. code-block:: doscon
 
-    D:\temp\make_env>activate py2_pcse_b
+    D:\temp\make_env>activate py2_pcse
     Deactivating environment "C:\Miniconda3"...
     Activating environment "C:\Miniconda3\envs\py2_pcse"...
 
@@ -139,53 +139,38 @@ run an upgrade to upgrade all packages to the latest versions:
     [py2_pcse] D:\temp\make_env>
 
 
-Installing PCSE
-===============
+Installing and testing PCSE
+===========================
 
-PCSE can be installed in many different ways and the best depends on your
-requirements. The most convenient option to install PCSE is through the Python Package
-Index (PyPI). Installing from PyPI is mostly useful if you are interested in using the functionality
+The easiest way to install PCSE is through the python package index (`PyPI`_).
+Installing from PyPI is mostly useful if you are interested in using the functionality
 provided by PCSE in your own scripts, but are not interested in modifying or contributing to
-PCSE itself. Installing from PyPI is done using the package installer `pip`, but this
-will only work when you have write access on the Python site-packages
-folder. If you do not have this permission you should install PCSE into a
-`virtual environment`_.::
+PCSE itself. Installing from PyPI is done using the package installer `pip` which searches
+the python package index for a package, downloads and installs it into your python
+environment:
 
-    $ pip install PCSE
-    Downloading/unpacking PCSE
-      Running setup.py install for PCSE
-      ...
-      ...
-    Successfully installed PCSE
-    Cleaning up...
-    $
+.. code-block:: doscon
 
-.. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
+    [py2_pcse] D:\temp\make_env>pip install PCSE
+    Collecting PCSE
+    Requirement already satisfied (use --upgrade to upgrade): numpy>=1.6.0 in c:\miniconda3\envs\py2_pcse\lib\site-packages (from PCSE)
+    Requirement already satisfied (use --upgrade to upgrade): xlrd>0.9.0 in c:\miniconda3\envs\py2_pcse\lib\site-packages (from PCSE)
+    Requirement already satisfied (use --upgrade to upgrade): tabulate>=0.7.0 in c:\miniconda3\envs\py2_pcse\lib\site-packages (from PCSE)
+    Requirement already satisfied (use --upgrade to upgrade): SQLAlchemy>=0.8.0 in c:\miniconda3\envs\py2_pcse\lib\site-packages (from PCSE)
+    Installing collected packages: PCSE
+    Successfully installed PCSE-5.2
 
-The second option is useful if you want to develop or contribute to PCSE.
-In that case you should fork my `PCSE
+If you are wondering what the difference between `pip` and `conda` are than have a look
+`here <https://stackoverflow.com/questions/20994716/what-is-the-difference-between-pip-and-conda#20994790>`_
+
+If you want to develop with or contribute to PCSE, than you should fork the `PCSE
 repository`_ on GitHub and get a local copy of PCSE using `git clone`. See the help on github_
 and for Windows/Mac users the `GitHub Desktop`_ application.
 
 .. _GitHub Desktop: https://desktop.github.com/
 .. _GitHub: https://help.github.com/
 .. _PCSE repository: https://github.com/ajwdewit/pcse
-
-Finally, the last option is to download the PCSE package as a zip file from GitHub
-using the link `here`_. Just unzip the package at a suitable location.
-Note that the top directory in the zip file is `pcse-<branchname>`.
-The actual PCSE is package is inside this folder and needs to be put on your file system.
-For running the test included with PCSE, we assume that PCSE was downloaded as a zip file
-from GitHub and is installed under 'D:\\USERDATA\\pylib\\', your folder should now
-resemble the screenshot below.
-
-.. image:: figures/pylib.png
-
-.. _here: https://github.com/ajwdewit/pcse/archive/master.zip
-
-
-Testing the PCSE package
-========================
+.. _PyPI: https://pypi.python.org/pypi/PCSE
 
 To guarantee its integrity, the PCSE package includes a number of self
 tests that test individual components as well as the entire simulation. These tests
@@ -197,22 +182,22 @@ is stored in an SQLite database (pcse.db). This database can be found under
 PCSE for the first time. When you delete the database file manually it will be
 recreated next time you import PCSE.
 
-For importing PCSE we first need to add the location of PCSE ('D:\\USERDATA\\pylib\\')
-to the search path of Python::
+For testing the PCSE package we need to start python and import pcse:
 
-    C:\>python
-    Python 2.7.9 |Continuum Analytics, Inc.| (default, Dec 18 2014, 17:00:07) [MSC v.1500 32 bit (Intel)] on win32
+.. code-block:: doscon
+
+    [py2_pcse_b] D:\temp\make_env>python
+    Python 2.7.11 |Continuum Analytics, Inc.| (default, Mar  4 2016, 15:18:41) [MSC v.1500 32 bit (Intel)] on win32
     Type "help", "copyright", "credits" or "license" for more information.
     Anaconda is brought to you by Continuum Analytics.
-    Please check out: http://continuum.io/thanks and https://binstar.org    Enthought Python Distribution -- www.enthought.com
-    >>> import sys
-    >>> sys.path.append(r"D:\USERDATA\pylib")
-
-Next, PCSE can be imported and the tests can be executed by calling
-the `test()` function at the top of the package::
-
+    Please check out: http://continuum.io/thanks and https://anaconda.org
     >>> import pcse
     Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db
+    >>>
+
+
+Next, the tests can be executed by calling the `test()` function at the top of the package::
+
     >>> pcse.test()
     runTest (pcse.tests.test_abioticdamage.Test_FROSTOL) ... ok
     runTest (pcse.tests.test_assimilation.Test_WOFOST_Assimilation) ... ok
@@ -257,8 +242,9 @@ If the model output matches the expected output the test will report 'OK',
 otherwise an error will be produced with a detailed traceback on where the
 problem occurred. Note that the results may deviate from the output above
 because one or more tests may have been temporarily disabled (skipped) often
-due to problems with the test. Moreover, SQLAlchemy may complain with a
-warning that can be safely ignored::
+due to problems with the test.
+
+Moreover, SQLAlchemy may complain with a warning that can be safely ignored::
 
      /usr/lib/python2.7/dist-packages/sqlalchemy/types.py:307: SAWarning:
      Dialect sqlite+pysqlite does *not* support Decimal objects natively, and

@@ -12,8 +12,8 @@ An interactive PCSE/WOFOST session
 
 The easiest way to demonstrate PCSE is to import WOFOST from PCSE and run it from
 an interactive Python session. We will be using the `start_wofost()` script that
-connects to a the demo database which contains meteorologic data, soil data
-and crop data for a grid location in South-Spain.
+connects to a the demo database which contains meteorologic data, soil data,
+crop data and management data for a grid location in South-Spain.
 
 Initializing PCSE/WOFOST and advancing model state
 --------------------------------------------------
@@ -53,34 +53,59 @@ Showing that after 11 days the LAI value is 0.287. When we increase time
 with another 25 days, the LAI increases to 1.528. The `get_variable` method
 can retrieve any state or rate variable that is defined somewhere in the
 model. Finally, we can finish the crop season by letting it run until the
-model terminates and store the results to a file 'myresults.csv'::
+model terminates because the crop reaches maturity or the harvest date::
 
     >>> wofost_object.run_till_terminate()
-    >>> wofost_object.store_to_file("myresults.txt")
 
-Which should look like this :download:`downloads/myresults.txt`
+Next we retrieve the simulation results at each time-step ('output') of the
+simulation::
+
+    >>> output = wofost_object.get_output()
+
+We can now use the pandas package to turn the simulation output into a
+dataframe which is much easier to handle and can be exported to different
+file types. For example an excel file which should look like this
+:download:`downloads/wofost_results.xls`::
+
+    >>> import pandas as pd
+    >>> df = pd.DataFrame(output)
+    >>> df.to_excel("wofost_results.xls")
+
+Finally, we can retrieve the results at the end of the crop cycle (summary results)
+and have a look at these as well::
+
+    >>> summary_output = wofost_object.get_summary_output()
+    >>> msg = "Reached maturity at {DOM} with total biomass {TAGP} kg/ha "\
+    "and a yield of {TWSO} kg/ha."
+    >>> print(msg.format(**summary_output[0])
+    Reached maturity at 2000-05-31 with total biomass 15261.7521735 kg/ha and a yield of 7179.80460783 kg/ha.
+
+    >>> summary_output
+    [{'CTRAT': 22.457536342947606,
+      'DOA': datetime.date(2000, 3, 28),
+      'DOE': datetime.date(2000, 1, 1),
+      'DOH': None,
+      'DOM': datetime.date(2000, 5, 31),
+      'DOS': None,
+      'DOV': None,
+      'DVS': 2.01745939841335,
+      'LAIMAX': 6.132711275237731,
+      'RD': 60.0,
+      'TAGP': 15261.752173534584,
+      'TWLV': 3029.3693107257263,
+      'TWRT': 1546.990661062695,
+      'TWSO': 7179.8046078262705,
+      'TWST': 5052.578254982587}]
 
 Running PCSE/WOFOST with custom input data
 ==========================================
 
-.. note::
-    The inputs for PCSE models have been restructured and consist of three
-    parts: 1) model parameters (soil, crop and site parameters), 2) driving variables
-    and 3) agromanagement actions (what used to be called 'timerdata').
-    The description here for running PCSE/WOFOST uses the old method for backward
-    compatibility. However, this will change in future versions of PCSE.
-    See also the section on running :ref:`PCSE/LINTUL3 <RunningLINTUL3>`.
-
 For setting up PCSE/WOFOST with your
-own data sources you should understand that WOFOST uses 5 different types of
-inputs: `cropdata`, `soildata`, `timerdata`, `sitedata` and `driving variables`
-(e.g. weather data). The fact that these names end with 'data' is a bit of
-misnomer as they contain a mixture of parameter values, boundary conditions
-and events rather than data, except for the driving variables which
-can be considered as (observed) data. This terminology was inherited from the 
-previous WOFOST versions and it was kept because changing it would
-cause more confusion. PCSE provides several tools for reading parameters and
-weather data from files or databases.
+own data sources you should understand that WOFOST uses 3 different types of
+inputs: 1) model parameters for the crop, soil and site; 2) Daily weather observations
+for running the simulation and 3) agromanagement data that define the agromanagement
+practices such as sowing, harvesting and irrigation. PCSE provides several tools for
+reading these inputs from files, databases or internet resources.
 
 For the second example we will run a simulation for sugar beet in
 Wageningen (Netherlands) and we will read the input data step by step from
@@ -89,19 +114,17 @@ script. For the example we will assume that data files are in the directory
 `D:\\userdata\\pcse_examples` and all the parameter files needed can be
 found by unpacking this zip file :download:`downloads/quickstart_part2.zip`.
 
-First we will import the necessary modules and define the data directory.
-We also assume that you have the matplotlib package installed on your
-system.::
+First we will import the necessary modules and define the data directory::
 
     >>> import os
     >>> import pcse
     >>> import matplotlib.pyplot as plt
     >>> data_dir = r'D:\userdata\pcse_examples'
 
-Cropdata
---------
+Crop parameters
+---------------
 
-The Cropdata dictionary consists of parameter names (dictionary keys) and the
+The crop parameters consist of parameter names and the
 corresponding parameter values that are needed to parameterize the
 components of the crop simulation model. These are
 crop-specific values regarding phenology, assimilation, respiration,
@@ -110,22 +133,23 @@ is taken from the crop files in the `WOFOST Control Centre`_.
 
 .. _WOFOST Control Centre: http://www.wageningenur.nl/wofost
 
-The crop parameter values for many models in
+The crop parameters for many models in
 Wageningen are often provided in the CABO format that could be read
 with the `TTUTIL <http://edepot.wur.nl/17847>`_ FORTRAN library. PCSE
 tries to be backward compatible as much as possible and provides the
-:ref:`CABOFileReader <CABOFileReader>` for reading parameter files in CABO format::
+:ref:`CABOFileReader <CABOFileReader>` for reading parameter files in CABO format.
+the `CABOFileReader` returns a dictionary with the parameter name/value pairs::
 
     >>> from pcse.fileinput import CABOFileReader
     >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
     >>> cropdata = CABOFileReader(cropfile)
-    >>> print cropdata
+    >>> print(cropdata)
 
 Printing the cropdata dictionary gives you a listing of the header and
 all parameters and their values.
 
-Soildata
---------
+Soil parameters
+---------------
 
 The soildata dictionary provides the parameter name/value pairs related
 to the soil type and soil physical properties. The number of parameters is
@@ -137,59 +161,15 @@ This file is also taken from the soil files in the `WOFOST Control Centre`_ ::
     >>> soilfile = os.path.join(data_dir, 'ec3.soil')
     >>> soildata = CABOFileReader(soilfile)
 
-Timerdata
----------
+Site parameters
+---------------
 
-The timerdata dictionary provides the start date of the water balance,
-the start date and type of the crop simulation, the end date and type of the crop
-simulation and the maximum duration of the crop simulation. The latter is
-included to avoid unrealistically long simulations for example as a results of
-a too high temperature sum requirement. These values are used by the AgroManagement
-unit of PCSE. Currently, there is only an AgroManagement unit for single cropping
-seasons but this will change in the future allowing for crop rotations. Therefore,
-the approach for providing AgroManagement data (timerdata) will change.
-
-The following list gives an overview of the parameter names, values and types that
-need to be specified in the `timerdata` dictionary::
-
-        CAMPAIGNYEAR: year of the agricultural campaign (e.g. harvest year)
-          START_DATE: date of the start of the simulation
-            END_DATE: date last possible day of the simulation
-     CROP_START_TYPE: 'emergence' or 'sowing'
-     CROP_START_DATE: date of the start of the crop simulation
-       CROP_END_TYPE: 'maturity' | 'harvest' |'earliest'
-       CROP_END_DATE: date of the end of the crop simulation in case of CROP_END_TYPE == 'harvest' | 'earliest'
-        MAX_DURATION: maximum number of days of the crop simulation
-
-The CABO format does support date/time values, but the CABOFilereader
-cannot yet parse them. Moreover, Python supports date/time value natively and
-they can be defined using the Python-based PCSE file format. The crop calendar
-file for sugar beet in Wageningen `sugarbeet_calendar.pcse` can be read with
-the :ref:`PCSEFileReader <PCSEFileReader>`::
-
-    >>> from pcse.fileinput import PCSEFileReader
-    >>> crop_calendar_file = os.path.join(data_dir, 'sugarbeet_calendar.pcse')
-    >>> timerdata = PCSEFileReader(crop_calendar_file)
-    >>> print timerdata
-    PCSE parameter file contents loaded from:
-    D:\\userdata\\pcse_examples\\sugarbeet_calendar.pcse
-
-    CAMPAIGNYEAR: 2000 (<type 'int'>)
-    CROP_START_DATE: 2000-04-05 (<type 'datetime.date'>)
-    END_DATE: 2000-12-31 (<type 'datetime.date'>)
-    MAX_DURATION: 300 (<type 'int'>)
-    CROP_END_DATE: 2000-10-20 (<type 'datetime.date'>)
-    CROP_START_TYPE: emergence (<type 'str'>)
-    CROP_END_TYPE: harvest (<type 'str'>)
-    START_DATE: 2000-01-01 (<type 'datetime.date'>)
-
-Sitedata
---------
-
-The sitedata dictionary provides ancillary parameters that are not related to
-the crop, the soil or the agromanagement. Examples are the initial conditions of
+The site parameters provide ancillary parameters that are not related to
+the crop or the soil. Examples are the initial conditions of
 the water balance such as the initial soil moisture content (WAV) and
-the initial and maximum surface storage (SSI, SSMAX). For the moment, we will
+the initial and maximum surface storage (SSI, SSMAX). Also the
+atmospheric CO2 concentration is a typical site parameter.
+For the moment, we will
 define these parameters directly on the Python commandline::
 
     >>> sitedata = {'SSMAX'  : 0.,
@@ -197,10 +177,51 @@ define these parameters directly on the Python commandline::
                     'NOTINF' : 0,
                     'SSI'    : 0,
                     'WAV'    : 100,
-                    'SMLIM'  : 0.03}
+                    'SMLIM'  : 0.03,
+                    'CO2'    : 360.}
 
-Driving variables (weather data)
---------------------------------
+Finally, we need to pack the different sets of parameters into one variable
+using the `ParameterProvider`. This is needed because PCSE expects one
+variable that contains all parameter values. Using this approach has the
+additional advantage that parameters value can be easily overridden in case
+of running multiple simulations with slightly different parameter values::
+
+     >>> from pcse.base_classes import ParameterProvider
+     >>> parameters = ParameterProvider(cropdata=cropdata, soildata=soildata, sitedata=sitedata)
+
+AgroManagement
+--------------
+
+The agromanagement inputs provide the start date of the agricultural campaign,
+the start_date/start_type of the crop simulation, the end_date/end_type of the crop
+simulation and the maximum duration of the crop simulation. The latter is
+included to avoid unrealistically long simulations for example as a results of
+a too high temperature sum requirement.
+
+The agromanagement inputs are defined with a special syntax called `YAML`_ which allows
+to easily create more complex structures which is needed for defining the agromanagement.
+The agromanagement file for sugar beet in Wageningen `sugarbeet_calendar.agmt` can be read with
+the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>`::
+
+    >>> from pcse.fileinput import YAMLAgroManagementReader
+    >>> agromanagement_file = os.path.join(data_dir, 'sugarbeet_calendar.amgt')
+    >>> agromanagement = YAMLAgroManagementReader(agromanagement_file)
+    >>> print(agromanagement)
+     !!python/object/new:pcse.fileinput.yaml_agmt_loader.YAMLAgroManagementReader
+     listitems:
+     - 2000-01-01:
+         CropCalendar:
+           crop_end_date: 2000-10-20
+           crop_end_type: harvest
+           crop_id: sugar-beet
+           crop_start_date: 2000-04-05
+           crop_start_type: emergence
+           max_duration: 300
+         StateEvents: null
+         TimedEvents: null
+
+Daily weather observations
+--------------------------
 
 Daily weather variables are needed for running the simulation. There are several
 data providers in PCSE for reading weather data, see the section on
@@ -214,14 +235,14 @@ to retrieve the weather data from the NASA Power server the first time::
 
     >>> from pcse.db import NASAPowerWeatherDataProvider
     >>> wdp = NASAPowerWeatherDataProvider(latitude=52, longitude=5)
-    >>> print wdp
+    >>> print(wdp)
     Weather data provided by: NASAPowerWeatherDataProvider
     --------Description---------
     NASA/POWER Agroclimatology Daily Averaged Data
-    Dates (month/day/year): 01/01/1984 through 05/10/2014
+    Dates (month/day/year): 01/01/1984 through 06/26/2016
     Location: Latitude 52   Longitude 5
-    Location clarification: Integer values may indicate the lower left (south and west)
-    corner of the one degree lat/lon region that includes the requested locations
+    Location clarification: Integer values may indicate the lower left (south and west) corner of the one degree lat/lon reg
+    ion that includes the requested locations
     Elevation (meters): Average for one degree lat/lon region = 5
     Methodology Documentation:
     *Vegetation type: "Airport": flat rough grass
@@ -229,8 +250,8 @@ to retrieve the weather data from the NASA Power server the first time::
     Elevation:    5.0
     Latitude:  52.000
     Longitude:  5.000
-    Data available for 1997-01-01 - 2014-01-31
-    Number of missing days: 47
+    Data available for 1997-01-01 - 2015-10-31
+    Number of missing days: 53
 
 Importing, initializing and running a PCSE model
 ------------------------------------------------
@@ -239,8 +260,8 @@ Internally, PCSE uses a simulation `engine` to run a crop simulation. This
 engine takes a configuration file that specifies the components for the crop,
 the soil and the agromanagement that need to be used for the simulation.
 So any PCSE model can be started by importing the `engine` and initializing
-it with a given configuration file and the corresponding sitedata, cropdata,
-soildata, timerdata and weather data.
+it with a given configuration file and the corresponding parameters, weather
+data and agromanagement.
 
 However, as many users of PCSE only need a particular configuration (for
 example the WOFOST model for potential production), preconfigured Engines
@@ -249,22 +270,14 @@ the WOFOST model for water-limited simulation under freely draining soil
 conditions::
 
     >>> from pcse.models import Wofost71_WLP_FD
-    >>> wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, wdp)
+    >>> wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
 
 We can then run the simulation and show some final results such as the anthesis and
 harvest dates (DOA, DOH), total biomass (TAGP) and maximum LAI (LAIMAX).
 Next, we retrieve the time series of daily simulation output using the `get_output()`
 method on the WOFOST object::
 
-    >>> wofsim.run(days=400)
-    >>> print wofsim.get_variable("DOA")
-    2000-06-09
-    >>> print wofsim.get_variable("DOH")
-    2000-10-20
-    >>> print wofsim.get_variable("TAGP")
-    22783.5023325
-    >>> print wofsim.get_variable("LAIMAX")
-    5.11868342855
+    >>> wofsim.run_till_terminate()
     >>> output = wofsim.get_output()
     >>> len(output)
     294

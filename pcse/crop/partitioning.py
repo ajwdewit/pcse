@@ -246,7 +246,7 @@ class DVS_Partitioning_NPK(SimulationObject):
     def initialize(self, day, kiosk, cropdata):
         """
         :param day: start date of the simulation
-        :param kiosk: variable kiosk of this PyWOFOST instance
+        :param kiosk: variable kiosk of this PCSE instance
         :param cropdata: dictionary with WOFOST cropdata key/value pairs
         """
         self.params = self.Parameters(cropdata)

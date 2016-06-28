@@ -114,7 +114,7 @@ class Engine(BaseEngine):
     # Helper variables
     TMNSAV = Instance(deque)
     
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement=None, config=None):
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config=None):
 
         BaseEngine.__init__(self)
 
@@ -138,14 +138,9 @@ class Engine(BaseEngine):
         self._connect_signal(self._on_TERMINATE, signal=signals.terminate)
 
         # Component for agromanagement
-        if agromanagement is None:  # use AgroManagementSingleCrop
-            self.agromanager = self.mconf.AGROMANAGEMENT(self.kiosk, self.parameterprovider)
-            start_date = parameterprovider["START_DATE"]
-            end_date = parameterprovider["END_DATE"]
-        else:
-            self.agromanager = AgroManager(self.kiosk, agromanagement)
-            start_date = self.agromanager.start_date
-            end_date = self.agromanager.end_date
+        self.agromanager = self.mconf.AGROMANAGEMENT(self.kiosk, agromanagement)
+        start_date = self.agromanager.start_date
+        end_date = self.agromanager.end_date
 
         # Timer: starting day, final day and model output
         self.timer = Timer(self.kiosk, start_date, end_date, self.mconf)

@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Create a PyWofost database on any SQLAlchemy supported database
+################################
+# WARNING: this code is obsolete. Left here as it has some useful table definitions.
+################################
+"""Create a PCSE database on any SQLAlchemy supported database
 
-Creates the PyWofost database structure on the target database and fills it
-with a demo set of records from the SQLite database 'pywofost.db' that is
-included with the PyWofost distribution.
+Creates the PCSE demo database structure on the target database and fills it
+with a demo set of records from the SQLite database 'PCSE.db' that is
+included with the PCSE distribution.
 
 Public functions:
-  migrate_db : migrates the PyWOFOST database
+  migrate_db : migrates the PCSE database
   """
 from __future__ import print_function
 import os
@@ -25,8 +28,8 @@ class NewFloat(Numeric):
         return impltype(precision=self.precision, scale=self.scale)
 
 #-------------------------------------------------------------------------------
-def _create_pywofost_tables(metadata):
-    """Creates the pywofost DB tables, needs an SQLAlchemy metadata object.
+def _create_PCSE_tables(metadata):
+    """Creates the PCSE DB tables, needs an SQLAlchemy metadata object.
     """
 
     table_crop = Table('crop',metadata,

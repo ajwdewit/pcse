@@ -59,7 +59,7 @@ class PCSEFileReader(dict):
         2010-05-14
         >>>print fileparameters
         PCSE parameter file contents loaded from:
-        D:\UserData\pywofost\parfile.pw
+        D:\UserData\pcse_examples\parfile.pw
         
         This is the header of my parameter file.
 
