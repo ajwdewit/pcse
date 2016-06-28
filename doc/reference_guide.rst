@@ -168,11 +168,16 @@ for potential crop production::
     # Weekday: Monday is 0 and Sunday is 6
     OUTPUT_WEEKDAY = 0
 
-    # variables to save at SUMMARY_OUTPUT signals
+    # Summary variables to save at CROP_FINISH signals
     # Set to an empty list if you do not want any SUMMARY_OUTPUT
     SUMMARY_OUTPUT_VARS = ["DVS","LAIMAX","TAGP", "TWSO", "TWLV", "TWST",
                            "TWRT", "CTRAT", "RD", "DOS", "DOE", "DOA",
                            "DOM", "DOH", "DOV"]
+
+    # Summary variables to save at TERMINATE signals
+    # Set to an empty list if you do not want any TERMINAL_OUTPUT
+    TERMINAL_OUTPUT_VARS = []
+
 
 As you can see, the configuration file is written in plain python code.
 First of all, it defines the placeholders *SOIL*, *CROP* and
@@ -186,8 +191,9 @@ the modules that were imported at the start of the configuration file.
 The second part is for defining the
 variables (*OUTPUT_VARS*) that should be stored during the model run
 (during OUTPUT signals) and the details of the regular output interval.
-Finally, summary output can be defined that will be generated at the end
-of the simulation as a set of final outputs.
+Next, summary output *SUMMARY_OUTPUT_VARS* can be defined that will be generated at the end
+of each crop cycle. Finall, output can be collected at the end of the
+entire simulation (*TERMINAL_OUTPUT_VARS*).
 
 The relationship between models and the engine
 ----------------------------------------------

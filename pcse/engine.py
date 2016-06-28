@@ -24,7 +24,7 @@ from .base_classes import (VariableKiosk, WeatherDataProvider,
                            AncillaryObject, WeatherDataContainer,
                            SimulationObject, BaseEngine,
                            ParameterProvider, MultiCropParameterProvider)
-from .util import ConfigurationLoader
+from .util import ConfigurationLoader, check_date
 from .timer import Timer
 from . import signals
 from . import exceptions as exc
@@ -110,6 +110,7 @@ class Engine(BaseEngine):
     # placeholders for variables saved during model execution
     _saved_output = Instance(list)
     _saved_summary_output = Instance(list)
+    _saved_terminal_output = Instance(dict)
 
     # Helper variables
     TMNSAV = Instance(deque)
@@ -128,13 +129,13 @@ class Engine(BaseEngine):
         # Placeholder for variables to be saved during a model run
         self._saved_output = list()
         self._saved_summary_output = list()
+        self._saved_terminal_output = dict()
 
         # register handlers for starting/finishing the crop simulation, for
         # handling output and terminating the system
         self._connect_signal(self._on_CROP_START, signal=signals.crop_start)
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
         self._connect_signal(self._on_OUTPUT, signal=signals.output)
-        self._connect_signal(self._on_SUMMARY_OUTPUT, signal=signals.summary_output)
         self._connect_signal(self._on_TERMINATE, signal=signals.terminate)
 
         # Component for agromanagement
@@ -198,55 +199,63 @@ class Engine(BaseEngine):
         self.kiosk.flush_rates()
 
     #---------------------------------------------------------------------------
+    def _run(self):
+        """Make one time step of the simulation.
+        """
+
+        # Update timer
+        self.day, delt = self.timer()
+
+        # State integration
+        self.integrate(self.day, delt)
+
+        # Driving variables
+        self.drv = self._get_driving_variables(self.day)
+
+        # Agromanagement decisions
+        self.agromanager(self.day, self.drv)
+
+        # Rate calculation
+        self.calc_rates(self.day, self.drv)
+
+        if self.flag_terminate is True:
+            self._terminate_simulation(self.day)
+
+    #---------------------------------------------------------------------------
     def run(self, days=1):
         """Advances the system state with given number of days"""
 
         days_done = 0
         while (days_done < days) and (self.flag_terminate is False):
             days_done += 1
+            self._run()
 
-            # Update timer
-            self.day, delt = self.timer()
-
-            # State integration
-            self.integrate(self.day, delt)
-
-            # Driving variables
-            self.drv = self._get_driving_variables(self.day)
-
-            # Agromanagement decisions
-            self.agromanager(self.day, self.drv)
-
-            # Rate calculation
-            self.calc_rates(self.day, self.drv)
-        
-        if self.flag_terminate is True:
-            if self.soil is not None:
-                self.soil.finalize(self.day)
 
     #---------------------------------------------------------------------------
     def run_till_terminate(self):
         """Runs the system until a terminate signal is sent."""
 
         while self.flag_terminate is False:
-            # Update timer
-            self.day, delt = self.timer()
+            self._run()
 
-            # State integration
-            self.integrate(self.day, delt)
+    # ---------------------------------------------------------------------------
+    def run_till(self, rday):
+        """Runs the system until rday is reached."""
 
-            # Driving variables
-            self.drv = self._get_driving_variables(self.day)
+        try:
+            rday = check_date(rday)
+        except KeyError as e:
+            msg = "run_till() function needs a date object as input"
+            print(msg)
+            return
 
-            # Agromanagement decisions
-            self.agromanager(self.day, self.drv)
+        if rday <= self.day:
+            msg = "date argument for run_till() function before current model date."
+            print(msg)
+            return
 
-            # Rate calculation
-            self.calc_rates(self.day, self.drv)
-
-        if self.flag_terminate is True:
-            if self.soil is not None:
-                self.soil.finalize(self.day)
+        while self.flag_terminate is False and self.day < rday:
+            self._run()
 
     #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, crop_delete=False):
@@ -265,8 +274,7 @@ class Engine(BaseEngine):
         """
         self.flag_crop_finish = True
         self.flag_crop_delete = crop_delete
-        self.flag_summary_output = True
-        
+
     #---------------------------------------------------------------------------
     def _on_CROP_START(self, day, crop_id=None, crop_start_type=None,
                        crop_end_type=None):
@@ -284,6 +292,7 @@ class Engine(BaseEngine):
         self.parameterprovider.set_crop_type(crop_id, crop_start_type,
                                              crop_end_type)
         self.crop = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
+
     #---------------------------------------------------------------------------
     def _on_TERMINATE(self):
         """Sets the variable 'flag_terminate' to True when the signal TERMINATE
@@ -299,13 +308,6 @@ class Engine(BaseEngine):
         self.flag_output = True
         
     #---------------------------------------------------------------------------
-    def _on_SUMMARY_OUTPUT(self):
-        """Sets the variable 'flag_summary_output to True' when the signal
-        SUMMARY_OUTPUT was received.
-        """
-        self.flag_summary_output = True
-
-    #---------------------------------------------------------------------------
     def _finish_cropsimulation(self, day):
         """Finishes the CropSimulation object when variable 'flag_crop_finish'
         has been set to True based on the signal 'CROP_FINISH' being
@@ -317,8 +319,7 @@ class Engine(BaseEngine):
         self.crop.finalize(day)
 
         # Generate summary output after finalize() has been run.
-        if self.flag_summary_output:
-            self._save_summary_output()
+        self._save_summary_output()
 
         # Clear any override parameters in the ParameterProvider to avoid
         # lagging parameters for the next crop
@@ -330,6 +331,18 @@ class Engine(BaseEngine):
             self.flag_crop_delete = False
             self.crop._delete()
             self.crop = None
+
+    #---------------------------------------------------------------------------
+    def _terminate_simulation(self, day):
+        """Terminates the entire simulation.
+
+        First the finalize() call on the soil component is executed.
+        Next, the TERMINAL_OUTPUT is collected and stored.
+        """
+
+        if self.soil is not None:
+            self.soil.finalize(self.day)
+        self._save_terminal_output()
 
     #---------------------------------------------------------------------------
     def _get_driving_variables(self, day):
@@ -379,14 +392,19 @@ class Engine(BaseEngine):
     def _save_summary_output(self):
         """Appends selected model variables to self._saved_summary_output.
         """
-        # Switch off the flag for generating output
-        self.flag_summary_output = False
-
         # find current value of variables to are to be saved
         states = {}
         for var in self.mconf.SUMMARY_OUTPUT_VARS:
             states[var] = self.get_variable(var)
         self._saved_summary_output.append(states)
+
+    #---------------------------------------------------------------------------
+    def _save_terminal_output(self):
+        """Appends selected model variables to self._saved_terminal_output.
+        """
+        # find current value of variables to are to be saved
+        for var in self.mconf.TERMINAL_OUTPUT_VARS:
+            self._saved_terminal_output[var] = self.get_variable(var)
 
     #---------------------------------------------------------------------------
     def set_variable(self, varname, value):
@@ -423,6 +441,7 @@ class Engine(BaseEngine):
 
         return increments
 
+    #---------------------------------------------------------------------------
     def get_output(self):
         """Returns the variables have have been stored during the simulation.
 
@@ -432,8 +451,16 @@ class Engine(BaseEngine):
 
         return self._saved_output
 
+    #---------------------------------------------------------------------------
     def get_summary_output(self):
         """Returns the summary variables have have been stored during the simulation.
         """
 
         return self._saved_summary_output
+
+    #---------------------------------------------------------------------------
+    def get_terminal_output(self):
+        """Returns the terminal output variables have have been stored during the simulation.
+        """
+
+        return self._saved_terminal_output

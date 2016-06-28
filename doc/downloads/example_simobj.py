@@ -20,7 +20,7 @@ class CropProcess(SimulationObject):
         RATE1 = Float(-99.)
         RATE2 = Float(-99.)
 
-    def initialize(day, kiosk, parametervalues):
+    def initialize(self, day, kiosk, parametervalues):
         """Initializes the SimulationObject with given parametervalues."""
 
         self.kiosk = kiosk
@@ -36,7 +36,7 @@ class CropProcess(SimulationObject):
         self.rates = self.RateVariables(kiosk, publish=["RATE1","RATE2"])
         
     @prepare_rates
-    def calc_rates(day, drv):
+    def calc_rates(self, day, drv):
         """Calculate the rates of change."""
         
         self.rates.RATE1 = self.params.PAR1 * drv.IRRAD
@@ -46,7 +46,7 @@ class CropProcess(SimulationObject):
         self.logger.info(msg)
     
     @prepare_states
-    def integrate(day, delt):
+    def integrate(self, day, delt):
         """Integrate the rates of change on the current state variables
         multiplied by the time-step
         """
@@ -58,7 +58,7 @@ class CropProcess(SimulationObject):
         self.logger.info(msg)
 
     @prepare_states
-    def finalize(day):
+    def finalize(self, day):
         try:
             self.states.RATIO = self.states.STATE1/self.states.STATE2
         except ZeroDivisionError:

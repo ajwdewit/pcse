@@ -20,7 +20,7 @@ from .snowmaus import SnowMAUS
 class WaterbalancePP(SimulationObject):
     """Fake waterbalance for simulation under potential production.
     """
-    
+    #TODO: add soil evaporation to waterbalancePP
     class Parameters(ParamTemplate):
         SMFCF = Float(-99.)
 
