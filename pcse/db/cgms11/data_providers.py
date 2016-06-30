@@ -12,7 +12,7 @@ import datetime
 import logging
 
 from sqlalchemy import MetaData, select, Table, and_
-# from tabulate import tabulate
+from tabulate import tabulate
 import numpy as np
 import yaml
 
@@ -226,11 +226,16 @@ class AgroManagementDataProvider(list):
     :param campaign_year: Integer campaign year, maps to the YEAR column in the table.
            The campaign year usually refers to the year of the harvest. Thus for crops
            crossing calendar years, the start_date can be in the previous year.
+    :keyword campaign_start: Optional keyword that can be used to define the start of the
+           campaign. Note that by default the campaign_start_date is set equal to the
+           crop_start_date which means that the simulation starts when the crop starts.
+           This default behaviour can be changed using this keyword. It can have multiple meanings:
+           - if a date object is passed, the campaign is assumed to start on this date.
+           - if an int/float is passed, the campaign_start_date is calculated as the
+             crop_start_date minus the number of days provided by campaign_start.
 
-    Note that by default the campaign_start_date is set equal to the crop_start_date which
-    means that the simulation starts when the crop starts. In some cases this is undesirable
-    and an earlier start date should be used. In that case use the `set_campaign_start_date(date)`
-    to update the campaign_start_date.
+    For adjusting the campaign_start_Date, see also the `set_campaign_start_date(date)` method
+    to update the campaign_start_date on an existing AgroManagementDataProvider.
     """
     agro_management_template = """
           - {campaign_start_date}:
@@ -240,13 +245,13 @@ class AgroManagementDataProvider(list):
                     crop_start_type: {crop_start_type}
                     crop_end_date: {crop_end_date}
                     crop_end_type: {crop_end_type}
-                    max_duration: {duration}
+                    max_duration: {max_duration}
                 TimedEvents: null
                 StateEvents: null
           - {campaign_end_date}: null
         """
 
-    def __init__(self, engine, grid_no, crop_no, campaign_year):
+    def __init__(self, engine, grid_no, crop_no, campaign_year, campaign_start=None):
         list.__init__(self)
         self.grid_no = int(grid_no)
         self.crop_no = int(crop_no)
@@ -269,7 +274,6 @@ class AgroManagementDataProvider(list):
         # Determine the start date/type. Only sowing|emergence is accepted by PCSE/WOFOST
         cgms11_start_type = str(row.start_type).strip()
         self.crop_start_date = check_date(row.start_date)
-        self.campaign_start_date = self.crop_start_date
         if cgms11_start_type == "FIXED_SOWING":
             self.crop_start_type = "sowing"
         elif cgms11_start_type == "FIXED_EMERGENCE":
@@ -277,6 +281,25 @@ class AgroManagementDataProvider(list):
         else:
             msg = "Unsupported START_TYPE in CROP_CALENDAR table: %s" % row.start_type
             raise exc.PCSEError(msg)
+
+        # determine the campaign_start
+        if campaign_start is None:
+            self.campaign_start_date = self.crop_start_date
+        elif isinstance(campaign_start, (int, float)):
+            ndays = abs(int(campaign_start))
+            self.campaign_start_date = self.crop_start_date - datetime.timedelta(days=ndays)
+        else:
+            try:
+                campaign_start = check_date(campaign_start)
+                if campaign_start <= self.crop_start_date:
+                    self.campaign_start_date = self.crop_start_date
+                else:
+                    msg = "Date (%s) specified by keyword 'campaign_start' in call to AgroManagementDataProvider " \
+                          "is later then crop_start_date defined in the CGMS database."
+                    raise exc.PCSEError(msg % campaign_start)
+            except KeyError as e:
+                msg = "Value (%s) of keyword 'campaign_start' not recognized in call to AgroManagementDataProvider."
+                raise exc.PCSEError(msg % campaign_start)
 
         # Determine crop end date/type and the end of the campaign
         self.crop_end_type = str(row.end_type).strip().lower()
@@ -308,7 +331,7 @@ class AgroManagementDataProvider(list):
                                                      crop_start_type=self.crop_start_type,
                                                      crop_end_date=self.crop_end_date,
                                                      crop_end_type=self.crop_end_type,
-                                                     duration=self.max_duration,
+                                                     max_duration=self.max_duration,
                                                      campaign_end_date=self.campaign_end_date
                                                      )
         return input
@@ -584,7 +607,6 @@ class SoilDataIterator(list):
         (9050131, 625000000, 9000282, 50)
         (9050131, 625000000, 9000283, 50)
 
-    Ignore this line
     """
 
     # name of the table with Elementary Mapping Units
@@ -839,6 +861,10 @@ class SiteDataProvider(dict):
     Note that the parameter SSI (Initial surface storage) is
     set to zero
 
+    Moreover, the start date of the water balance is defined by the
+    column GIVEN_STARTDATE_WATBAL. This value can be accessed as
+    an attribute `start_date_waterbalance`.
+
     """
 
     def __init__(self, engine, grid_no, crop_no, campaign_year, stu_no):
@@ -873,6 +899,9 @@ class SiteDataProvider(dict):
                    "campaign_year=%s, stu_no=%s. Not implemented in PCSE/WOFOST (yet)."
                    % (self.grid_no, self.crop_no, self.campaign_year, self.stu_no))
             raise exc.PCSEError(msg)
+
+        # Start date water balance
+        self.start_date_waterbalance = check_date(row.given_startdate_watbal)
 
         # Derived global parameters from table SITE
         table_site = Table('site', metadata, autoload=True)
