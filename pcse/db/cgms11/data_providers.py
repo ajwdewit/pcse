@@ -9,10 +9,12 @@ Data providers are compatible with a CGMS 11 database schema.
 """
 
 import datetime
+import logging
 
 from sqlalchemy import MetaData, select, Table, and_
 from tabulate import tabulate
 import numpy as np
+import yaml
 
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import exceptions as exc
@@ -74,6 +76,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
         (datetime.date object)
     :param end_date: Retrieve meteo data up to and including end_date
         (datetime.date object)
+    :param recalc_ET: Set to True to force calculation of reference
+        ET values. Mostly useful when values have not been calculated
+        in the CGMS database.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
@@ -212,6 +217,152 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
         return wdc
 
 
+class AgroManagementDataProvider(list):
+    """Class for providing agromanagement data from the CROP_CALENDAR table in a CGMS11 database.
+
+    :param engine: SqlAlchemy engine object providing DB access
+    :param grid_no: Integer grid ID, maps to the grid_no column in the table
+    :param crop_no: Integer id of crop, maps to the crop_no column in the table
+    :param campaign_year: Integer campaign year, maps to the YEAR column in the table.
+           The campaign year usually refers to the year of the harvest. Thus for crops
+           crossing calendar years, the start_date can be in the previous year.
+    :keyword campaign_start: Optional keyword that can be used to define the start of the
+           campaign. Note that by default the campaign_start_date is set equal to the
+           crop_start_date which means that the simulation starts when the crop starts.
+           This default behaviour can be changed using this keyword. It can have multiple meanings:
+           - if a date object is passed, the campaign is assumed to start on this date.
+           - if an int/float is passed, the campaign_start_date is calculated as the
+             crop_start_date minus the number of days provided by campaign_start.
+
+    For adjusting the campaign_start_Date, see also the `set_campaign_start_date(date)` method
+    to update the campaign_start_date on an existing AgroManagementDataProvider.
+    """
+    agro_management_template = """
+          - {campaign_start_date}:
+                CropCalendar:
+                    crop_id: '{crop_name}'
+                    crop_start_date: {crop_start_date}
+                    crop_start_type: {crop_start_type}
+                    crop_end_date: {crop_end_date}
+                    crop_end_type: {crop_end_type}
+                    max_duration: {max_duration}
+                TimedEvents: null
+                StateEvents: null
+          - {campaign_end_date}: null
+        """
+
+    def __init__(self, engine, grid_no, crop_no, campaign_year, campaign_start=None):
+        list.__init__(self)
+        self.grid_no = int(grid_no)
+        self.crop_no = int(crop_no)
+        self.campaign_year = int(campaign_year)
+        self.crop_name = fetch_crop_name(engine, self.crop_no)
+        self.db_resource = str(engine)[7:-1]
+
+        metadata = MetaData(engine)
+        table_cc = Table("crop_calendar", metadata, autoload=True)
+
+        r = select([table_cc], and_(table_cc.c.grid_no == self.grid_no,
+                                    table_cc.c.crop_no == self.crop_no,
+                                    table_cc.c.year == self.campaign_year)).execute()
+        row = r.fetchone()
+        r.close()
+        if row is None:
+            msg = "Failed deriving crop calendar for grid_no %s, crop_no %s " % (grid_no, crop_no)
+            raise exc.PCSEError(msg)
+
+        # Determine the start date/type. Only sowing|emergence is accepted by PCSE/WOFOST
+        cgms11_start_type = str(row.start_type).strip()
+        self.crop_start_date = check_date(row.start_date)
+        if cgms11_start_type == "FIXED_SOWING":
+            self.crop_start_type = "sowing"
+        elif cgms11_start_type == "FIXED_EMERGENCE":
+            self.crop_start_type = "emergence"
+        else:
+            msg = "Unsupported START_TYPE in CROP_CALENDAR table: %s" % row.start_type
+            raise exc.PCSEError(msg)
+
+        # determine the campaign_start
+        if campaign_start is None:
+            self.campaign_start_date = self.crop_start_date
+        elif isinstance(campaign_start, (int, float)):
+            ndays = abs(int(campaign_start))
+            self.campaign_start_date = self.crop_start_date - datetime.timedelta(days=ndays)
+        else:
+            try:
+                campaign_start = check_date(campaign_start)
+                if campaign_start <= self.crop_start_date:
+                    self.campaign_start_date = self.crop_start_date
+                else:
+                    msg = "Date (%s) specified by keyword 'campaign_start' in call to AgroManagementDataProvider " \
+                          "is later then crop_start_date defined in the CGMS database."
+                    raise exc.PCSEError(msg % campaign_start)
+            except KeyError as e:
+                msg = "Value (%s) of keyword 'campaign_start' not recognized in call to AgroManagementDataProvider."
+                raise exc.PCSEError(msg % campaign_start)
+
+        # Determine crop end date/type and the end of the campaign
+        self.crop_end_type = str(row.end_type).strip().lower()
+        if self.crop_end_type not in ["harvest", "earliest", "maturity"]:
+            msg = ("Unrecognized option for END_TYPE in table "
+                   "CROP_CALENDAR: %s" % row.end_type)
+            raise exc.PCSEError(msg)
+
+        # Determine maximum duration of the crop
+
+        if self.crop_end_type == "maturity":
+            self.crop_end_date = "null"
+            self.max_duration = int(row.max_duration)
+            self.campaign_end_date = self.crop_start_date + datetime.timedelta(days=self.max_duration)
+        else:
+            self.crop_end_date = check_date(row.end_date)
+            self.campaign_end_date = self.crop_end_date
+            self.max_duration = (self.crop_end_date - self.crop_start_date).days + 1
+
+        input = self._build_yaml_agromanagement()
+        self._parse_yaml(input)
+
+    def _build_yaml_agromanagement(self):
+        """Builds the YAML agromanagent string"""
+
+        input = self.agro_management_template.format(campaign_start_date=self.campaign_start_date,
+                                                     crop_name=self.crop_name,
+                                                     crop_start_date=self.crop_start_date,
+                                                     crop_start_type=self.crop_start_type,
+                                                     crop_end_date=self.crop_end_date,
+                                                     crop_end_type=self.crop_end_type,
+                                                     max_duration=self.max_duration,
+                                                     campaign_end_date=self.campaign_end_date
+                                                     )
+        return input
+
+    def _parse_yaml(self, input):
+        """Parses the input YAML string and assigns to self"""
+        try:
+            items = yaml.load(input)
+        except yaml.YAMLError as e:
+            msg = "Failed parsing agromanagement string %s: %s" % (input, e)
+            raise exc.PCSEError(msg)
+        self.extend(items)
+
+    def set_campaign_start_date(self, start_date):
+        """Updates the value for the campaign_start_date.
+
+        This is useful only when the INITIAL_SOIL_WATER table in CGMS11 defines a different
+        campaign_start
+        """
+        self.campaign_start_date = check_date(start_date)
+        input = self._build_yaml_agromanagement()
+        self._parse_yaml(input)
+
+    def __str__(self):
+        msg1 = ("Agromanagement data for crop_no=%i (%s) derived from: %s" %
+               (self.crop_no, self.crop_name, self.db_resource))
+        msg2 = self._build_yaml_agromanagement()
+        msg = "  %s:\n %s" % (msg1, msg2)
+        return msg
+
+
 class TimerDataProvider(dict):
     """Class for providing timerdata from the CROP_CALENDAR table in a CGMS11 database.
 
@@ -245,6 +396,10 @@ class TimerDataProvider(dict):
 
     def __init__(self, engine, grid_no, crop_no, campaign_year):
         dict.__init__(self)
+
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        self.logger = logging.getLogger(loggername)
 
         self.grid_no = int(grid_no)
         self.crop_no = int(crop_no)
@@ -296,9 +451,25 @@ class TimerDataProvider(dict):
             raise exc.PCSEError(msg)
 
         # Maximum duration of crop cycle
-        self["MAX_DURATION"] = int(row.max_duration)
+        max_dur = int(row.max_duration)
+        if crop_end_type == "maturity":
+            if max_dur < 150:
+                msg = "Found low value for MAX_DURATION (%i days). Forcing to 300 days!"
+                self.logger.warn(msg, max_dur)
+                max_dur = 300
+        elif crop_end_type in ["harvest", "earliest"]:
+            # days to end of crop cycle
+            days_to_harvest = (self["CROP_END_DATE"] - self["CROP_START_DATE"]).days
+            if max_dur < days_to_harvest:
+                # recalculate max duration and add some days
+                omax_dur = max_dur
+                max_dur = days_to_harvest + 10
+                msg = "MAX_DURATION (%i) lower then the days-to-harvest (%i). forcing MAX_DURATION to %i days"
+                self.logger.warn(msg, omax_dur, days_to_harvest, max_dur)
+
+        self["MAX_DURATION"] = max_dur
         # simulation end date equals CROP_START_DATE + MAX_DURATION
-        self["END_DATE"] = self["CROP_START_DATE"] + datetime.timedelta(days=row.max_duration)
+        self["END_DATE"] = self["CROP_START_DATE"] + datetime.timedelta(days=max_dur)
 
     def set_START_DATE(self, start_date):
         """Updates the value for START_DATE in TimerDataProvider
@@ -316,8 +487,8 @@ class TimerDataProvider(dict):
 
 
 class SoilDataProviderSingleLayer(dict):
-    """Class for providing soil data from the ROOING_DEPTH AND
-    SOIL_PHYSICAL_GROUP tableS in a CGMS11 database. This
+    """Class for providing soil data from the ROOTING_DEPTH AND
+    SOIL_PHYSICAL_GROUP tableS in a CGMS9/11 database. This
     applies to the single layered soil only.
 
     :param engine: SqlAlchemy engine object providing DB access
@@ -421,21 +592,25 @@ class SoilDataIterator(list):
     Instances of this class behave like a list, allowing to iterate
     over the soils in a CGMS grid. An example::
 
-    >>> soil_iterator = SoilDataIterator(engine, grid_no=15060)
-    >>> print(soildata)
-    Soil data for grid_no=15060 derived from oracle+cx_oracle://cgms12eu:***@eurdas.world
-      smu_no=9050131, area=625000000, stu_no=9000282 covering 50% of smu.
-        Soil parameters {'SMLIM': 0.312, 'SMFCF': 0.312, 'SMW': 0.152, 'CRAIRC': 0.06,
-                         'KSUB': 10.0, 'RDMSOL': 10.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.439}
-      smu_no=9050131, area=625000000, stu_no=9000283 covering 50% of smu.
-        Soil parameters {'SMLIM': 0.28325, 'SMFCF': 0.28325, 'SMW': 0.12325, 'CRAIRC': 0.06,
-                         'KSUB': 10.0, 'RDMSOL': 40.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.42075}
-    >>> for smu_no, area, stu_no, percentage, soil_par in soildata:
-    ...     print(smu_no, area, stu_no, percentage)
-    ...
-    (9050131, 625000000, 9000282, 50)
-    (9050131, 625000000, 9000283, 50)
+        >>> soil_iterator = SoilDataIterator(engine, grid_no=15060)
+        >>> print(soildata)
+        Soil data for grid_no=15060 derived from oracle+cx_oracle://cgms12eu:***@eurdas.world
+          smu_no=9050131, area=625000000, stu_no=9000282 covering 50% of smu.
+            Soil parameters {'SMLIM': 0.312, 'SMFCF': 0.312, 'SMW': 0.152, 'CRAIRC': 0.06,
+                             'KSUB': 10.0, 'RDMSOL': 10.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.439}
+          smu_no=9050131, area=625000000, stu_no=9000283 covering 50% of smu.
+            Soil parameters {'SMLIM': 0.28325, 'SMFCF': 0.28325, 'SMW': 0.12325, 'CRAIRC': 0.06,
+                             'KSUB': 10.0, 'RDMSOL': 40.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.42075}
+        >>> for smu_no, area, stu_no, percentage, soil_par in soildata:
+        ...     print(smu_no, area, stu_no, percentage)
+        ...
+        (9050131, 625000000, 9000282, 50)
+        (9050131, 625000000, 9000283, 50)
+
     """
+
+    # name of the table with Elementary Mapping Units
+    emu_table_name = "emu"
 
     def __init__(self, engine, grid_no):
 
@@ -455,13 +630,13 @@ class SoilDataIterator(list):
         """Retrieves the relevant SMU for given grid_no from
         table EMU.
         """
-        table_emu = Table("emu", metadata, autoload=True)
+        table_emu = Table(self.emu_table_name, metadata, autoload=True)
         r = select([table_emu.c.smu_no, table_emu.c.area],
                    table_emu.c.grid_no == grid_no).execute()
         rows = r.fetchall()
         if rows is None:
             msg = ("No soil mapping units (SMU) found for grid_no=%i "
-                   "in table EMU" % grid_no)
+                   "in table %s" % (grid_no, self.emu_table_name))
             raise exc.PCSEError(msg)
 
         return rows
@@ -648,7 +823,7 @@ class CropDataProvider(dict):
                 self.campaign_year, self.db_resource))
         single_values = []
         tabular_values = []
-        for pcode in sorted(self.iterkeys()):
+        for pcode in sorted(self.keys()):
             value = self[pcode]
             if not isinstance(value, list):
                 single_values.append((pcode, value))
@@ -686,6 +861,10 @@ class SiteDataProvider(dict):
     Note that the parameter SSI (Initial surface storage) is
     set to zero
 
+    Moreover, the start date of the water balance is defined by the
+    column GIVEN_STARTDATE_WATBAL. This value can be accessed as
+    an attribute `start_date_waterbalance`.
+
     """
 
     def __init__(self, engine, grid_no, crop_no, campaign_year, stu_no):
@@ -720,6 +899,9 @@ class SiteDataProvider(dict):
                    "campaign_year=%s, stu_no=%s. Not implemented in PCSE/WOFOST (yet)."
                    % (self.grid_no, self.crop_no, self.campaign_year, self.stu_no))
             raise exc.PCSEError(msg)
+
+        # Start date water balance
+        self.start_date_waterbalance = check_date(row.given_startdate_watbal)
 
         # Derived global parameters from table SITE
         table_site = Table('site', metadata, autoload=True)
