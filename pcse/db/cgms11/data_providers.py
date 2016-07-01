@@ -11,7 +11,7 @@ Data providers are compatible with a CGMS 11 database schema.
 import datetime
 
 from sqlalchemy import MetaData, select, Table, and_
-# from tabulate import tabulate
+from tabulate import tabulate
 import numpy as np
 
 from ...util import wind10to2, safe_float, check_date, reference_ET
@@ -74,9 +74,6 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
         (datetime.date object)
     :param end_date: Retrieve meteo data up to and including end_date
         (datetime.date object)
-    :param recalc_ET: Set to True to force calculation of reference
-        ET values. Mostly useful when values have not been calculated
-         in the CGMS database.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
@@ -651,7 +648,7 @@ class CropDataProvider(dict):
                 self.campaign_year, self.db_resource))
         single_values = []
         tabular_values = []
-        for pcode in sorted(self.keys()):
+        for pcode in sorted(self.iterkeys()):
             value = self[pcode]
             if not isinstance(value, list):
                 single_values.append((pcode, value))
