@@ -282,7 +282,7 @@ class AgroManagementDataProvider(list):
             msg = "Unsupported START_TYPE in CROP_CALENDAR table: %s" % row.start_type
             raise exc.PCSEError(msg)
 
-        # determine the campaign_start
+        # determine the campaign_start_date
         if campaign_start is None:
             self.campaign_start_date = self.crop_start_date
         elif isinstance(campaign_start, (int, float)):
@@ -292,7 +292,7 @@ class AgroManagementDataProvider(list):
             try:
                 campaign_start = check_date(campaign_start)
                 if campaign_start <= self.crop_start_date:
-                    self.campaign_start_date = self.crop_start_date
+                    self.campaign_start_date = campaign_start
                 else:
                     msg = "Date (%s) specified by keyword 'campaign_start' in call to AgroManagementDataProvider " \
                           "is later then crop_start_date defined in the CGMS database."
