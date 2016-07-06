@@ -686,6 +686,10 @@ class SiteDataProvider(dict):
     column POTENTIAL_WATER_STARTDATE. This value can be accessed as
     an attribute `start_date_waterbalance`.
     """
+    _defaults = {"IFUNRN": 0,
+                 "NOTINF": 0,
+                 "SSMAX": 0.0,
+                 "SSI": 0.0}
 
     def __init__(self, engine, idgrid, idcrop_parametrization, campaign_year, idstu):
         # Initialise
@@ -720,10 +724,7 @@ class SiteDataProvider(dict):
         self.start_date_waterbalance = check_date(row.potential_water_startdate)
 
         # Set some missing parameters in CGMS14 to default values
-        self["IFUNRN"] = 0
-        self["NOTINF"] = 0
-        self["SSMAX"] = 0.0
-        self["SSI"] = 0.0
+        self.update(self._defaults)
 
     def __str__(self):
         result = ("Site parameter values for grid_no=%s, idcrop_parametrization=%s (%s), stu_no=%s, "
