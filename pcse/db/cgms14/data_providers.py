@@ -66,7 +66,7 @@ class STU_Suitability(set):
         sc = sm.execute()
         rows = sc.fetchall()
         sc.close()
-        if not rows is None or len(rows) == 0:
+        if not rows:
             msg = "No suitable soil type unit found for idcrop_parametrization=%s"
             raise exc.PCSEError(msg % idcrop_parametrization)
         set.__init__(self, [int(row.idstu) for row in rows])
@@ -282,7 +282,7 @@ class AgroManagementDataProvider(list):
 
         # determine the campaign_start_date
         if campaign_start is None:
-            self.amdict["campaign_start_date"] = self.crop_start_date
+            self.amdict["campaign_start_date"] = self.amdict['crop_start_date']
         elif isinstance(campaign_start, (int, float)):
             ndays = abs(int(campaign_start))
             self.amdict["campaign_start_date"] = self.amdict["crop_start_date"] - dt.timedelta(days=ndays)
@@ -337,10 +337,10 @@ class SoilDataProviderSingleLayer(dict):
                                  ("K0", "HYDR_CONDUCT_SATUR"),
                                  ("SOPE", "MAX_PERCOL_ROOT_ZONE"),
                                  ("KSUB", "MAX_PERCOL_SUBSOIL")]
-    soil_moisture_content_parameters = [("SMFCF", "SOIL_MOISTURE_FC"),
-                                        ("SM0", "SOIL_MOISTURE_SAT"),
-                                        ("SMW", "SOIL_MOISTURE_WP"),
-                                        ("RDMSOL", "DEPTH")]  # CALCULATED_ROOTING_?
+    soil_moisture_content_parameters = [("SMFCF", "soil_moisture_fc"),
+                                        ("SM0", "soil_moisture_sat"),
+                                        ("SMW", "soil_moisture_wp"),
+                                        ("RDMSOL", "depth")]  # CALCULATED_ROOTING_?
 
     def __init__(self, engine, idstu):
         # Initialise

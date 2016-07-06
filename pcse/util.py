@@ -995,3 +995,19 @@ def check_date(indate):
         else:
             msg = "Input value not recognized as date: %s"
             raise KeyError(msg % indate)
+
+
+class DummySoilDataProvider(dict):
+    """This class is to provide some dummy soil parameters which are needed for potential production simulation
+    """
+    _defaults = {"SMFCF":0.3,
+                 "SM0":0.4,
+                 "SMW":0.1,
+                 "RDMSOL":120,
+                 "CRAIRC":0.06,
+                 "K0":10.,
+                 "SOPE":10.,
+                 "KSUB":10.}
+
+    def __init__(self):
+        self.update(self._defaults)
