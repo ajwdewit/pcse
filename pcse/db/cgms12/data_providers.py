@@ -67,7 +67,7 @@ class STU_Suitability(set):
 
 
 class WeatherObsGridDataProvider(WeatherDataProvider):
-    """Retrieves meteodata from the WEATHER_OBS_GRID table in a CGMS11
+    """Retrieves meteodata from the WEATHER_OBS_GRID table in a CGMS12
     compatible database.
 
     :param engine: SqlAlchemy engine object providing DB access
@@ -218,7 +218,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
 
 
 class AgroManagementDataProvider(list):
-    """Class for providing agromanagement data from the CROP_CALENDAR table in a CGMS11 database.
+    """Class for providing agromanagement data from the CROP_CALENDAR table in a CGMS12 database.
 
     :param engine: SqlAlchemy engine object providing DB access
     :param grid_no: Integer grid ID, maps to the grid_no column in the table
@@ -272,11 +272,11 @@ class AgroManagementDataProvider(list):
             raise exc.PCSEError(msg)
 
         # Determine the start date/type. Only sowing|emergence is accepted by PCSE/WOFOST
-        cgms11_start_type = str(row.start_type).strip()
+        cgms12_start_type = str(row.start_type).strip()
         self.crop_start_date = check_date(row.start_date)
-        if cgms11_start_type == "FIXED_SOWING":
+        if cgms12_start_type == "FIXED_SOWING":
             self.crop_start_type = "sowing"
-        elif cgms11_start_type == "FIXED_EMERGENCE":
+        elif cgms12_start_type == "FIXED_EMERGENCE":
             self.crop_start_type = "emergence"
         else:
             msg = "Unsupported START_TYPE in CROP_CALENDAR table: %s" % row.start_type
@@ -348,7 +348,7 @@ class AgroManagementDataProvider(list):
     def set_campaign_start_date(self, start_date):
         """Updates the value for the campaign_start_date.
 
-        This is useful only when the INITIAL_SOIL_WATER table in CGMS11 defines a different
+        This is useful only when the INITIAL_SOIL_WATER table in CGMS12 defines a different
         campaign_start
         """
         self.campaign_start_date = check_date(start_date)
@@ -363,132 +363,9 @@ class AgroManagementDataProvider(list):
         return msg
 
 
-class TimerDataProvider(dict):
-    """Class for providing timerdata from the CROP_CALENDAR table in a CGMS11 database.
-
-    :param engine: SqlAlchemy engine object providing DB access
-    :param grid_no: Integer grid ID, maps to the GRID_NO column in the table
-    :param crop_no: Integer crop ID, maps to the CROP_NO column in the table
-    :param campaign_year: Integer campaign year, maps to the YEAR column in the table.
-        The campaign year usually refers to the year of the harvest. Thus for crops
-        crossing calendar years, the start_date can be in the previous year.
-
-    Note that there is a difficulty in the CGMS database for determining the START_DATE
-    of the system. The START_DATE can be determined by the column GIVEN_STARTDATE_WATBAL
-    in the INITIAL_SOIL_WATER table. However, for retrieving this value we also need
-    to have the soil number (STU_NO) which we do not have yet and which is not needed
-    for retrieving the crop calendar itself.
-
-    For the moment, we therefore do set the START_DATE equal to the CROP_START_DATA
-    in the TimerDataProvider and provide a method `set_START_DATE()` for resetting
-    it to another value.
-    """
-
-    # Note that the following entries must be available:
-    #    CAMPAIGNYEAR: year of the agricultural campaign (e.g. harvest year)
-    #      START_DATE: date of the start of the simulation
-    #        END_DATE: date last possible day of the simulation
-    # CROP_START_TYPE: "emergence" or "sowing"
-    # CROP_START_DATE: date of the start of the crop simulation
-    #   CROP_END_TYPE: "maturity" | "harvest" |"earliest"
-    #   CROP_END_DATE: date of the end of the crop simulation in case of CROP_END_TYPE == "harvest" | "earliest"
-    #    MAX_DURATION: maximum number of days of the crop simulation
-
-    def __init__(self, engine, grid_no, crop_no, campaign_year):
-        dict.__init__(self)
-
-        loggername = "%s.%s" % (self.__class__.__module__,
-                                self.__class__.__name__)
-        self.logger = logging.getLogger(loggername)
-
-        self.grid_no = int(grid_no)
-        self.crop_no = int(crop_no)
-        self.campaign_year = int(campaign_year)
-        self.crop_name = fetch_crop_name(engine, self.crop_no)
-        self.db_resource = str(engine)[7:-1]
-
-        metadata = MetaData(engine)
-        table_cc = Table("crop_calendar", metadata, autoload=True)
-
-        r = select([table_cc], and_(table_cc.c.grid_no == self.grid_no,
-                                    table_cc.c.crop_no == self.crop_no,
-                                    table_cc.c.year == self.campaign_year)).execute()
-        row = r.fetchone()
-        r.close()
-        if row is None:
-            msg = "Failed deriving crop calendar for grid_no %s, crop_no %s " % (grid_no, crop_no)
-            raise exc.PCSEError(msg)
-
-        # Get the campaign year
-        self["CAMPAIGNYEAR"] = row.year
-
-        # Determine the start type. Only sowing|emergence is accepted by PCSE/WOFOST
-        start_type = str(row.start_type).strip()
-        if start_type == "FIXED_SOWING":
-            self["CROP_START_TYPE"] = "sowing"
-        elif start_type == "FIXED_EMERGENCE":
-            self["CROP_START_TYPE"] = "emergence"
-        else:
-            msg = "Unsupported START_TYPE in CROP_CALENDAR table: %s" % row.start_type
-            raise exc.PCSEError(msg)
-
-        # Start date for the crop, we force a datetime.date value
-        self["CROP_START_DATE"] = check_date(row.start_date)
-        # Set the system START_DATE equal to the CROP_START_DATE
-        self["START_DATE"] = self["CROP_START_DATE"]
-
-        # set END_TYPE and CROP_END_DATE (if applicable) for the crop: maturity|harvest|earliest
-        crop_end_type = str(row.end_type).strip().lower()
-        if crop_end_type == "maturity":
-            self["CROP_END_TYPE"] = crop_end_type
-            self["CROP_END_DATE"] = None
-        elif crop_end_type in ["harvest", "earliest"]:
-            self["CROP_END_TYPE"] = crop_end_type
-            self["CROP_END_DATE"] = check_date(row.end_date)
-        else:
-            msg = ("Unrecognized option for END_TYPE in table "
-                   "CROP_CALENDAR: %s" % crop_end_type)
-            raise exc.PCSEError(msg)
-
-        # Maximum duration of crop cycle
-        max_dur = int(row.max_duration)
-        if crop_end_type == "maturity":
-            if max_dur < 150:
-                msg = "Found low value for MAX_DURATION (%i days). Forcing to 300 days!"
-                self.logger.warn(msg, max_dur)
-                max_dur = 300
-        elif crop_end_type in ["harvest", "earliest"]:
-            # days to end of crop cycle
-            days_to_harvest = (self["CROP_END_DATE"] - self["CROP_START_DATE"]).days
-            if max_dur < days_to_harvest:
-                # recalculate max duration and add some days
-                omax_dur = max_dur
-                max_dur = days_to_harvest + 10
-                msg = "MAX_DURATION (%i) lower then the days-to-harvest (%i). forcing MAX_DURATION to %i days"
-                self.logger.warn(msg, omax_dur, days_to_harvest, max_dur)
-
-        self["MAX_DURATION"] = max_dur
-        # simulation end date equals CROP_START_DATE + MAX_DURATION
-        self["END_DATE"] = self["CROP_START_DATE"] + datetime.timedelta(days=max_dur)
-
-    def set_START_DATE(self, start_date):
-        """Updates the value for START_DATE in TimerDataProvider
-        """
-        self["START_DATE"] = check_date(start_date)
-
-    def __str__(self):
-        msg = ("Timer data for crop_no=%i (%s) derived from: %s\n" %
-               (self.crop_no, self.crop_name, self.db_resource))
-        t = "  %s: %s\n"
-        for k in sorted(self.keys()):
-            msg += t % (k, self[k])
-
-        return msg
-
-
 class SoilDataProviderSingleLayer(dict):
     """Class for providing soil data from the ROOTING_DEPTH AND
-    SOIL_PHYSICAL_GROUP tableS in a CGMS9/11 database. This
+    SOIL_PHYSICAL_GROUP tableS in a CGMS8/12 database. This
     applies to the single layered soil only.
 
     :param engine: SqlAlchemy engine object providing DB access

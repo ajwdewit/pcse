@@ -34,6 +34,7 @@ from ...util import wind10to2, Afgen, check_date
 from ... import exceptions as exc
 from ...base_classes import WeatherDataContainer, WeatherDataProvider
 
+
 #-------------------------------------------------------------------------------
 class MeteodataError(exc.PCSEError):
     """Exception for EnsembleMeteoCl."""
@@ -532,7 +533,7 @@ def fetch_soildata(metadata, grid):
 
 
 class AgroManagementDataProvider(list):
-    """Class for providing agromanagement data from the CROP_CALENDAR table in a CGMS9 database.
+    """Class for providing agromanagement data from the CROP_CALENDAR table in a PCSE database.
 
     :param engine: SqlAlchemy engine object providing DB access
     :param grid_no: Integer grid ID, maps to the grid_no column in the table
@@ -541,11 +542,9 @@ class AgroManagementDataProvider(list):
            The campaign year refers to the year of the crop start. Thus for crops
            crossing calendar years, the start_date can be in the previous year as the
            harvest.
-
-    Note that by default the campaign_start_date is set equal to the crop_start_date which
-    means that the simulation starts when the crop starts. In some cases this is undesirable
-    and an earlier start date should be used. In that case use the `set_campaign_start_date(date)`
-    to update the campaign_start_date.
+    
+    Note that this AgroManagementDataProvider is only used for the internal PCSE database
+    and not to be used for CGMS databases.
     """
     agro_management_template = """
           - {campaign_start_date}:
@@ -668,122 +667,6 @@ def fetch_sitedata(metadata, grid, year):
 
     logger.info("Successfully retrieved site variables from database")
     return sitedata
-
-#----------------------------------------------------------------------------
-class GridWeatherDataProvider(WeatherDataProvider):
-    """Retrieves meteodata from the GRID_WEATHER table in a CGMS database.
-    
-    :param metadata: SqlAlchemy metadata object providing DB access
-    :param grid_no:  Grid ID of PyWofost run
-    :param startdate: Retrieve meteo data starting with startdate
-        (datetime.date object)
-    :param enddate: Retrieve meteo data up to and including enddate
-        (datetime.date object)
-        
-    Note that all meteodata is first retrieved from the DB and stored
-    internally. Therefore, no DB connections are stored within the class
-    instance. This makes that class instances can be pickled.
-    
-    """
-    
-    def __init__(self, engine, grid_no, start_date=None, end_date=None):
-
-        WeatherDataProvider.__init__(self)
-        if start_date is None:
-            start_date = dt.date(dt.MINYEAR, 1, 1)
-        if end_date is None:
-            end_date = dt.date(dt.MAXYEAR, 1, 1)
-        self.grid_no = grid_no
-        self.start_date = self.check_keydate(start_date)
-        self.end_date = self.check_keydate(end_date)
-        self.timeinterval = (end_date - start_date).days + 1
-
-        metadata = MetaData(engine)
-
-        # Get location info (lat/lon/elevation)
-        self._fetch_location_from_db(metadata)
-
-        # Retrieved meteo data
-        self._fetch_grid_weather_from_db(metadata)
-            
-    #---------------------------------------------------------------------------
-    def _fetch_location_from_db(self, metadata):
-        """Retrieves latitude, longitude, elevation from 'grid' table and
-        assigns them to self.latitude, self.longitude, self.elevation."""
-
-        # Pull Latitude value for grid nr from database
-
-        try:
-            table_grid = Table('grid', metadata, autoload=True)
-            r = select([table_grid.c.latitude, table_grid.c.longitude,
-                        table_grid.c.altitude],
-                       table_grid.c.grid_no==self.grid_no).execute()
-            row = r.fetchone()
-            r.close()
-            if row is None:
-                raise Exception
-        except Exception as exc:
-            msg = "Failed deriving location info for grid %s" % self.grid_no
-            raise MeteodataError(msg)
-
-        self.latitude = row.latitude
-        self.longitude = row.longitude
-        self.elevation = row.altitude
-
-        msg = "Succesfully retrieved location information from 'grid' table "+\
-              "for grid %s"
-        self.logger.info(msg % self.grid_no)
-
-    def _fetch_grid_weather_from_db(self, metadata):
-        """Retrieves the meteo data from table 'grid_weather'.
-        """
-        
-        try:
-            table_gw = Table('grid_weather', metadata, autoload=True)
-            r = select([table_gw],and_(table_gw.c.grid_no==self.grid_no,
-                                       table_gw.c.day>=self.start_date,
-                                       table_gw.c.day<=self.end_date)
-                       ).execute()
-            rows = r.fetchall()
-
-            c = len(rows)
-            if c < self.timeinterval:
-                msg =  "Only %i records selected from table 'grid_weather' "+\
-                       "for grid %i, period %s -- %s."
-                self.logger.warn(msg % (c, self.grid_no, self.start_date,
-                                        self.end_date))
-
-            meteopackager = self._make_WeatherDataContainer
-            for row in rows:
-                DAY = self.check_keydate(row.day)
-                t = {"DAY": DAY, "LAT": self.latitude,
-                     "LON": self.longitude, "ELEV": self.elevation}
-                wdc = meteopackager(row, t)
-                self._store_WeatherDataContainer(wdc, DAY)
-        except Exception, e:
-            errstr = "Failure reading meteodata: " + str(e)
-            raise MeteodataError(errstr)
-
-        msg = ("Successfully retrieved weather data from 'grid_weather' table "
-               "for grid %s between %s and %s")
-        self.logger.info(msg % (self.grid_no, self.start_date, self.end_date))
-    
-    #---------------------------------------------------------------------------
-    def _make_WeatherDataContainer(self, row, t):
-        """Process record from grid_weather including unit conversion."""
-
-        t.update({"TMAX": float(row.maximum_temperature),
-                  "TMIN": float(row.minimum_temperature),
-                  "VAP":  float(row.vapour_pressure),
-                  "WIND": wind10to2(float(row.windspeed)),
-                  "RAIN": float(row.rainfall)/10.,
-                  "E0":  float(row.e0)/10.,
-                  "ES0": float(row.es0)/10.,
-                  "ET0": float(row.et0)/10.,
-                  "IRRAD": float(row.calculated_radiation)*1000.})
-        wdc = WeatherDataContainer(**t)
-        
-        return wdc
 
 
 #----------------------------------------------------------------------------
