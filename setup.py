@@ -3,8 +3,6 @@ from setuptools import setup, find_packages
 import os
 import io
 
-#import pcse
-
 here = os.path.abspath(os.path.dirname(__file__))
 
 def read(*filenames, **kwargs):
@@ -20,7 +18,6 @@ long_description = read('README.rst')
 
 setup(
     name='PCSE',
-    #version=pcse.__version__,
     version="5.2.0",
     url='http://github.com/ajwdewit/pcse/',
     author='Allard de Wit',
@@ -51,7 +48,6 @@ setup(
         'License :: OSI Approved :: European Union Public Licence 1.1 (EUPL 1.1)',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Fortran',
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering']
 )
