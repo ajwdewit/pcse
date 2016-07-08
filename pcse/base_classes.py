@@ -1321,7 +1321,7 @@ class WeatherDataProvider(object):
                 self.logger.debug(msg)
             try:
                 return self.store[(keydate, 0)]
-            except KeyError, e:
+            except KeyError as e:
                 msg = "No weather data for %s." % keydate
                 raise exc.WeatherDataProviderError(msg)
         else:

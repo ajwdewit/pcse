@@ -16,14 +16,15 @@ Functions defined here:
 
 """
 import os
-import unittest
 import random
+import unittest
 
 from sqlalchemy import create_engine, MetaData, select, Table, and_, func
 from sqlalchemy.types import Date as saDate
 
-from ..run_wofost import run_wofost
+from .run_wofost import run_wofost
 from ..settings import settings
+
 
 #-------------------------------------------------------------------------------
 class WofostBenchmarkRetriever:

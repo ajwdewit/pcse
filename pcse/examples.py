@@ -8,17 +8,18 @@ Function defined here:
 * run_example_ensemble
 * run_example_enkf
 """
-import sys, os
 import datetime
-import time
-import socket
 import logging
 import logging.config
+import os
+import socket
+import time
 
-from sqlalchemy import create_engine, MetaData, Table
 import numpy
+from sqlalchemy import create_engine, MetaData, Table
 
-from .run_wofost import run_wofost
+from pcse.pcse.tests.run_wofost import run_wofost
+
 
 def run_example1(dsn=None):
     """Simple example for running PyWOFOST

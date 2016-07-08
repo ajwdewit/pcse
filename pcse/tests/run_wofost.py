@@ -6,12 +6,12 @@ import datetime as dt
 from sqlalchemy import create_engine, MetaData, Table
 import sqlalchemy as sa
 
-from .db.pcse import fetch_cropdata, fetch_sitedata, fetch_soildata, GridWeatherDataProvider, \
+from ..db.pcse import fetch_cropdata, fetch_sitedata, fetch_soildata, GridWeatherDataProvider, \
     AgroManagementDataProvider
-from .base_classes import ParameterProvider
-from .models import Wofost71_WLP_FD, Wofost71_PP
-from . import exceptions as exc
-from .util import merge_dict
+from ..base_classes import ParameterProvider
+from ..models import Wofost71_WLP_FD, Wofost71_PP
+from .. import exceptions as exc
+from ..util import merge_dict
 
 
 def store_to_database(metadata, output, summary_output, runid):

@@ -22,7 +22,7 @@ class GridWeatherDataProvider(WeatherDataProvider):
     """Retrieves meteodata from the GRID_WEATHER table in a CGMS database.
 
     :param metadata: SqlAlchemy metadata object providing DB access
-    :param grid_no:  Grid ID of PyWofost run
+    :param grid_no:  CGMS Grid ID
     :param startdate: Retrieve meteo data starting with startdate
         (datetime.date object)
     :param enddate: Retrieve meteo data up to and including enddate

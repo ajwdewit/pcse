@@ -50,6 +50,6 @@ tools and numerical/statistical packages. PCSE has several interesting features:
 
 To contribute to PCSE, you can fork your own copy at https://github.com/ajwdewit/pcse
 
-Full documentation is available on http://pcse.readthedocs.org
+Full documentation is available on http://pcse.readthedocs.io
 
 .. _FST: http://models.pps.wur.nl/sites/models.pps.wur.nl/files/FST%203.pdf

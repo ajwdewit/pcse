@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Routines for retrieving data from the PyWofost database.
+"""Routines for retrieving data from the PCSE demo database.
  
 Implements the following functions:
     - fetch_cropdata()
@@ -79,8 +79,8 @@ def fetch_cropdata(metadata, grid, year, crop):
     be extended when additional parameters are to be retrieved.
     """
     
-    # Define a logger for the PyWofost db_util routines
-    logger = logging.getLogger('PyWofost.db_util')
+    # Define a logger for the PCSE db_util routines
+    logger = logging.getLogger('PCSE.db_util')
 
     # Create initial dictionary 
     cropdata={}    
@@ -265,8 +265,8 @@ def fetch_soilparams(metadata, grid, soilgroup):
     raising a SoildataError
     """
     
-    # Define a logger for the PyWofost db_util routines
-    logger = logging.getLogger('PyWofost41.db_input') #Logger()
+    # Define a logger for the PCSE db_util routines
+    logger = logging.getLogger('PCSE41.db_input') #Logger()
 
     # Define soil physical variable parameter codes
     # defined as (code_parname, db_parname)
@@ -417,8 +417,8 @@ def fetch_soildata_layered(metadata, grid):
     Returns a dictionary with WOFOST soil parameter name/value pairs.
     """
     
-    # Define a logger for the PyWofost db_util routines
-    logger = logging.getLogger('PyWofost.db_util')
+    # Define a logger for the PCSE db_util routines
+    logger = logging.getLogger('PCSE.db_util')
     
     soildata = dict()
     table_soiltype = Table('soil_type', metadata, autoload=True)
@@ -472,8 +472,8 @@ def fetch_soildata(metadata, grid):
     Returns a dictionary with WOFOST soil parameter name/value pairs.
     """
     
-    # Define a logger for the PyWofost db_util routines
-    logger = logging.getLogger('PyWofost.db_util')
+    # Define a logger for the PCSE db_util routines
+    logger = logging.getLogger('PCSE.db_util')
     
     soildata = {}
     # Select soil from the table SOIL_TYPE
@@ -633,13 +633,13 @@ class AgroManagementDataProvider(list):
 def fetch_sitedata(metadata, grid, year):
     """Retrieve site data from DB for given grid, year.
     
-    Pulls sitedata from the PyWofost database 'SITE' table,
+    Pulls sitedata from the PCSE database 'SITE' table,
     
     Returns a dictionary with site parameter name/value pairs.
     """
 
-    # Define a logger for the PyWofost db_util routines
-    logger = logging.getLogger('PyWofost.db_util')
+    # Define a logger for the PCSE db_util routines
+    logger = logging.getLogger('PCSE.db_util')
 
     try:
         #Get all settings from table 'SITE'
@@ -674,7 +674,7 @@ class EnsembleGridWeatherDataProvider(WeatherDataProvider):
     """Retrieves ensemble meteodata from database.
     
     :param metadata: SqlAlchemy metadata object providing DB access
-    :param grid_no:  Grid ID of PyWofost run
+    :param grid_no:  CGMS Grid ID
     :param startdate: Retrieve meteo data starting with startdate
         (datetime.date object)
     :param enddate: Retrieve meteo data up to and including enddate
