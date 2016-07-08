@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Create a PyWofost database on any SQLAlchemy supported database
+################################
+# WARNING: this code is obsolete. Left here as it has some useful table definitions.
+################################
+"""Create a PCSE database on any SQLAlchemy supported database
 
-Creates the PyWofost database structure on the target database and fills it
-with a demo set of records from the SQLite database 'pywofost.db' that is
-included with the PyWofost distribution.
+Creates the PCSE demo database structure on the target database and fills it
+with a demo set of records from the SQLite database 'PCSE.db' that is
+included with the PCSE distribution.
 
 Public functions:
-  migrate_db : migrates the PyWOFOST database
+  migrate_db : migrates the PCSE database
   """
+from __future__ import print_function
 import os
 from sqlalchemy import *
 
@@ -24,8 +28,8 @@ class NewFloat(Numeric):
         return impltype(precision=self.precision, scale=self.scale)
 
 #-------------------------------------------------------------------------------
-def _create_pywofost_tables(metadata):
-    """Creates the pywofost DB tables, needs an SQLAlchemy metadata object.
+def _create_PCSE_tables(metadata):
+    """Creates the PCSE DB tables, needs an SQLAlchemy metadata object.
     """
 
     table_crop = Table('crop',metadata,
@@ -204,7 +208,7 @@ def _create_pywofost_tables(metadata):
         schema=None)
     table_tasklist.create()
         
-    print "Tables created!"
+    print("Tables created!")
 
 #-------------------------------------------------------------------------------
 def _fill_pywofost_tables(engine, metadata, table_collection):
@@ -217,15 +221,15 @@ def _fill_pywofost_tables(engine, metadata, table_collection):
     
     exc = []
     for tablename in table_collection:
-        print "Filling table %s" % tablename
+        print("Filling table %s" % tablename)
         if len(table_collection[tablename]) > 0:
             t = Table(tablename, metadata, autoload=True)
             try:
                 engine.execute(t.insert(), table_collection[tablename])
-            except Exception, inst:
+            except Exception as inst:
                 exc += [inst]
     for e in exc:
-        print e
+        print(e)
 
 #-------------------------------------------------------------------------------
 def _retrieve_records_from_source(metadata):
@@ -271,37 +275,36 @@ See: http://www.sqlalchemy.org/docs/06/core/engines.html#supported-databases
 """
 
     # Open target database connection
-    if target_dsn == None:
-        print "No target_dsn specified, see docstring on migrate_db() function"
-        print "for dsn specification."
+    if target_dsn is None:
+        print("No target_dsn specified, see docstring on migrate_db() function"
+              " for dsn specification.")
         return
     try:
         target_engine = create_engine(target_dsn)
         target_metadata = MetaData(target_engine)
-    except Exception, e:
-        print "Unable to open connection to database, due to following exception:"
-        print e.args[0]
+    except Exception as e:
+        print("Unable to open connection to database, due to following exception:"
+              " %s" % e.args[0])
         return
 
     # Open source database connection
     installdir = os.path.dirname(os.path.abspath(__file__))
-    db_location = os.path.join(installdir,"pywofost.db")
+    db_location = os.path.join(installdir, "pywofost.db")
     dsn = "sqlite:///" + db_location
     try:
         source_engine = create_engine(dsn)
         source_metadata = MetaData(source_engine)
-    except Exception, e:
-        print "Unable to open connection to pywofost demo database"
-        print "with the following exception:"
-        print e.args[0]
+    except Exception as e:
+        print("Unable to open connection to pywofost demo database"
+              "with the following exception:\n %s" % e.args[0])
     
     # Build database
     try:
         _create_pywofost_tables(target_metadata)
         table_collection = _retrieve_records_from_source(source_metadata)
         _fill_pywofost_tables(target_engine, target_metadata, table_collection)
-        print "PyWOFOST demo database succesfully migrated!"
-    except Exception, e:
-        print "Migrating the database failed with the following exception:"
-        print e.args[0]
+        print("PyWOFOST demo database succesfully migrated!")
+    except Exception as e:
+        print("Migrating the database failed with the "
+              "following exception:\n %s" % e.args[0])
 

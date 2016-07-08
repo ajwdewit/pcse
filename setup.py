@@ -3,8 +3,6 @@ from setuptools import setup, find_packages
 import os
 import io
 
-#import pcse
-
 here = os.path.abspath(os.path.dirname(__file__))
 
 def read(*filenames, **kwargs):
@@ -20,26 +18,27 @@ long_description = read('README.rst')
 
 setup(
     name='PCSE',
-    #version=pcse.__version__,
-    version="5.1.1",
+    version="5.2.0",
     url='http://github.com/ajwdewit/pcse/',
     download_url='http://github.com/ajwdewit/pcse/tarball/5.1.1',
     license='EUPL',
     author='Allard de Wit',
     install_requires=['numpy>=1.6.0',
                       'SQLAlchemy>=0.8.0',
-                      'xlrd>0.9.0',
-                      'tabulate>=0.7.0'],
+                      'PyYAML>=3.11',
+                      'tabulate>=0.7.0',
+                      'xlrd>=0.9.3',
+                      'xlwt>=1.0.0'],
     author_email='allard.dewit@wur.nl',
-    description='Framework for developing crop simulation models, includes an '
-                'implementation of the WOFOST crop simulation model.',
+    description='Framework for developing crop simulation models, includes an implementation of '
+                'the WOFOST and LINTUL crop simulation models.',
     long_description=long_description,
     packages=find_packages(),
     include_package_data=True,
-#    package_data = {
-#        # Include any files *.txt, *.rst, *.conf, *.csv or *.sql files:
-#        '': ['*.txt', '*.rst', '*.conf', '*.csv', '*.sql'],
-#    },
+    package_data = {
+        # Include any files *.txt, *.rst, *.conf, *.csv or *.sql files:
+        '': ['*.txt', '*.rst', '*.conf', '*.csv', '*.sql'],
+    },
     platforms='any',
     test_suite='pcse.tests.make_test_suite',
     use_2to3=True,
@@ -51,7 +50,6 @@ setup(
         'License :: OSI Approved :: European Union Public Licence 1.1 (EUPL 1.1)',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Fortran',
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering']
 )

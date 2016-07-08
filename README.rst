@@ -23,9 +23,9 @@ in pure python code which makes it more flexible, easier to modify and extensibl
 allowing easy interfacing with databases, graphical user interfaces, visualization
 tools and numerical/statistical packages. PCSE has several interesting features:
 
-* Implementation in pure python and the core system has no dependencies outside
-  the python standard library, although some additional modules rely on `NumPy` and
-  database access uses `SQLAlchemy`.
+* Implementation in pure python and the core system has a small number of dependencies outside the python standard
+  library. Most of these can be automatically installed from the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`,
+  `tabulate`, `xlwt`, `xlrd`) although some additional modules rely on `NumPy`.
 
 * Modular design allowing you to add or change components relatively quickly with
   a simple but powerful approach to communicate variables between modules.
@@ -42,10 +42,14 @@ tools and numerical/statistical packages. PCSE has several interesting features:
 * Tools are available for reading parameter and weather files from existing models to
   have as much backward compatibility as possible.
 
+* An `AgroManager` module which allows to define the agromanagement actions that
+  happen on a farmers field. Such actions can be specified as events based on
+  time or model state.
+
 * Built-in testing of program modules ensuring integrity of the system.
 
 To contribute to PCSE, you can fork your own copy at https://github.com/ajwdewit/pcse
 
-Full documentation is available on http://pcse.readthedocs.org
+Full documentation is available on http://pcse.readthedocs.io
 
 .. _FST: http://models.pps.wur.nl/sites/models.pps.wur.nl/files/FST%203.pdf

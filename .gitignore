@@ -12,6 +12,7 @@ pip-delete-this-directory.txt
 # Sphinx documentation
 docs/_build/
 doc/_build/
+doc/build.log
 
 # Sqlite DB
 *.db
@@ -21,3 +22,14 @@ env/
 
 # PyCharm configuration files
 .idea/
+/org.eclipse.core.resources.prefs
+/.pydevproject
+/.project
+/lintul3-springwheat-test.py
+
+pcse/tests/test_data/*.cache
+
+# build environment
+PCSE.egg-info/*
+dist/*
+build/*

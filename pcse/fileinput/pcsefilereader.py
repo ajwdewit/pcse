@@ -59,7 +59,7 @@ class PCSEFileReader(dict):
         2010-05-14
         >>>print fileparameters
         PCSE parameter file contents loaded from:
-        D:\UserData\pywofost\parfile.pw
+        D:\UserData\pcse_examples\parfile.pw
         
         This is the header of my parameter file.
 
@@ -86,10 +86,12 @@ class PCSEFileReader(dict):
             msg = "Could not find parameter file '%s'" % self.fname_fp
             raise RuntimeError(msg)
 
-        execfile(self.fname_fp, {}, self)
+        # compile and execute the contents of the file
+        bytecode = compile(open(self.fname_fp).read(), self.fname_fp, 'exec')
+        exec(bytecode, {}, self)
         
         # Remove any members in self that are python modules
-        keys = self.keys()
+        keys = list(self.keys())
         for k in keys:
             if inspect.ismodule(self[k]):
                 self.pop(k)

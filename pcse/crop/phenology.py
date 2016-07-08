@@ -154,7 +154,7 @@ class Vernalisation(SimulationObject):
             rates.VERNFAC = 1.0
     #---------------------------------------------------------------------------
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         states = self.states
         rates = self.rates
         params = self.params
@@ -375,44 +375,36 @@ class DVS_Phenology(SimulationObject):
         # Vernalisation
         VERNFAC = 1.
         if p.IDSL >= 2:
-            self.vernalisation.calc_rates(day, drv)
-            VERNFAC = self.kiosk["VERNFAC"]
+            if s.STAGE == 'vegetative':
+                self.vernalisation.calc_rates(day, drv)
+                VERNFAC = self.kiosk["VERNFAC"]
 
+        # Development rates
         if s.STAGE == "emerging":
             r.DTSUME = limit(0., (p.TEFFMX - p.TBASEM), (drv.TEMP - p.TBASEM))
-            
-        elif s.STAGE == 'vegetative':
-            # Temperature sum increase
-            DTSUM = p.DTSMTB(drv.TEMP)
+            r.DTSUM = 0.
+            r.DVR = 0.
 
-            # Development rate
-            r.DTSUM = DTSUM * VERNFAC * DVRED
+        elif s.STAGE == 'vegetative':
+            r.DTSUME = 0.
+            r.DTSUM = p.DTSMTB(drv.TEMP) * VERNFAC * DVRED
             r.DVR = r.DTSUM/p.TSUM1
 
-        elif s.STAGE == 'reproductive':
-            # Temperature sum increase
+        elif s.STAGE in ['reproductive', 'mature']:
+            r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP)
-
-            # Development rate
             r.DVR = r.DTSUM/p.TSUM2
-            
-        elif s.STAGE == 'mature':
-            # Temperature sum increase
-            r.DTSUM = p.DTSMTB(drv.TEMP)
 
-            # Development rate
-            r.DVR = r.DTSUM/p.TSUM2
-            
         else: # Problem: no stage defined
-            msg = "No STAGE defined in phenology submodule"
-            raise exc.PCSEError(msg)
+            msg = "Unrecognized STAGE defined in phenology submodule: %s"
+            raise exc.PCSEError(msg, self.states.STAGE)
         
         msg = "Finished rate calculation for %s"
         self.logger.debug(msg % day)
         
     #---------------------------------------------------------------------------
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         """Updates the state variable and checks for phenologic stages
         """
 
@@ -422,30 +414,29 @@ class DVS_Phenology(SimulationObject):
 
         # Integrate vernalisation module
         if p.IDSL >= 2:
-            self.vernalisation.integrate(day)
+            if s.STAGE == 'vegetative':
+                self.vernalisation.integrate(day, delt)
+            else:
+                self.vernalisation.touch()
 
+        # Integrate phenologic states
+        s.TSUME += r.DTSUME
+        s.DVS += r.DVR
+        s.TSUM += r.DTSUM
+
+        # Check if a new stage is reached
         if s.STAGE == "emerging":
-            s.TSUME += r.DTSUME
             if s.TSUME >= p.TSUMEM:
                 self._next_stage(day)
-                
         elif s.STAGE == 'vegetative':
-            s.DVS += r.DVR
-            s.TSUM += r.DTSUM
             if s.DVS >= 1.0:
                 self._next_stage(day)
                 s.DVS = 1.0
-                
         elif s.STAGE == 'reproductive':
-            s.DVS += r.DVR
-            s.TSUM += r.DTSUM
             if s.DVS >= p.DVSEND:
                 self._next_stage(day)
-                
         elif s.STAGE == 'mature':
-            s.DVS += r.DVR
-            s.TSUM += r.DTSUM
-            
+            pass
         else: # Problem no stage defined
             msg = "No STAGE defined in phenology submodule"
             raise exc.PCSEError(msg)
@@ -475,7 +466,8 @@ class DVS_Phenology(SimulationObject):
             s.DOM = day
             if p.CROP_END_TYPE in ["maturity","earliest"]:
                 self._send_signal(signal=signals.crop_finish,
-                                  day=day, finish_type="maturity")
+                                  day=day, finish="maturity",
+                                  crop_delete=True)
         elif s.STAGE == "mature":
             msg = "Cannot move to next phenology stage: maturity already reached!"
             raise exc.PCSEError(msg)
@@ -515,5 +507,5 @@ class DVS_Phenology_Wrapper(SimulationObject):
     def calc_rates(self, day, drv):
         self.phenology.calc_rates(day, drv)
 
-    def integrate(self, day):
-        self.phenology.integrate(day)
+    def integrate(self, day, delt=1.0):
+        self.phenology.integrate(day, delt)

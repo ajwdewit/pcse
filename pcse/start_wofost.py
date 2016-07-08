@@ -2,10 +2,12 @@
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 import sys, os
+import datetime as dt
 
 from sqlalchemy import create_engine, MetaData, Table
 
-from . import db
+from .db.pcse import GridWeatherDataProvider, fetch_soildata, fetch_sitedata, fetch_cropdata, \
+    AgroManagementDataProvider
 from .base_classes import ParameterProvider
 from .models import Wofost71_PP, Wofost71_WLP_FD
 from .settings import settings
@@ -48,27 +50,24 @@ def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
         dsn = "sqlite:///" + db_location
     
     # Open database connections
-    pywofost_engine = create_engine(dsn)
-    pywofost_metadata = MetaData(pywofost_engine)
+    DBengine = create_engine(dsn)
+    DBmetadata = MetaData(DBengine)
     
     # Get input data from database
-    sitedata  = db.pcse.fetch_sitedata(pywofost_metadata, grid, year)
-    timerdata = db.pcse.fetch_timerdata(pywofost_metadata,grid, year, crop)
-    cropdata = db.pcse.fetch_cropdata(pywofost_metadata, grid, year, crop)
-    soildata = db.pcse.fetch_soildata(pywofost_metadata, grid)
-    parvalues = ParameterProvider(sitedata, timerdata, soildata, cropdata)
+    agromanagement = AgroManagementDataProvider(DBengine, grid, crop, year)
+    sited  = fetch_sitedata(DBmetadata, grid, year)
+    cropd = fetch_cropdata(DBmetadata, grid, year, crop)
+    soild = fetch_soildata(DBmetadata, grid)
+    parvalues = ParameterProvider(sitedata=sited, soildata=soild, cropdata=cropd)
 
-    startdate = timerdata["START_DATE"]
-    enddate = timerdata["END_DATE"]
-    wdp = \
-        db.pcse.GridWeatherDataProvider(pywofost_metadata, grid_no=grid, startdate=startdate, enddate=enddate)
+    wdp = GridWeatherDataProvider(DBengine, grid_no=grid)
                              
     # Initialize PCSE/WOFOST
     mode = mode.strip().lower()
     if mode == 'pp':
-        wofsim = Wofost71_PP(sitedata, timerdata, soildata, cropdata, wdp)
+        wofsim = Wofost71_PP(parvalues, wdp, agromanagement)
     elif mode == 'wlp':
-        wofsim = Wofost71_WLP_FD(sitedata, timerdata, soildata, cropdata, wdp)
+        wofsim = Wofost71_WLP_FD(parvalues, wdp, agromanagement)
     else:
         msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'" % mode
         raise RuntimeError(msg)

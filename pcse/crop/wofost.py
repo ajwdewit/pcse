@@ -238,7 +238,7 @@ class Wofost(SimulationObject):
 
     #---------------------------------------------------------------------------
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         rates = self.rates
         states = self.states
 
@@ -246,7 +246,7 @@ class Wofost(SimulationObject):
         crop_stage = self.pheno.get_variable("STAGE")
 
         # Phenology
-        self.pheno.integrate(day)
+        self.pheno.integrate(day, delt)
 
         # if before emergence there is no need to continue
         # because only the phenology is running.
@@ -257,13 +257,13 @@ class Wofost(SimulationObject):
             return
 
         # Partitioning
-        self.part.integrate(day)
+        self.part.integrate(day, delt)
         
         # Integrate states on leaves, storage organs, stems and roots
-        self.ro_dynamics.integrate(day)
-        self.so_dynamics.integrate(day)
-        self.st_dynamics.integrate(day)
-        self.lv_dynamics.integrate(day)
+        self.ro_dynamics.integrate(day, delt)
+        self.so_dynamics.integrate(day, delt)
+        self.st_dynamics.integrate(day, delt)
+        self.lv_dynamics.integrate(day, delt)
 
         # Integrate total (living+dead) above-ground biomass of the crop
         states.TAGP = self.kiosk["TWLV"] + \

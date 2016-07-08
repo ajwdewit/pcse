@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2016 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), July 2016
 """
-Copyright (c) 2004-2015 Alterra, Wageningen-UR
-
 The Python Crop Simulation Environment (PCSE) has been developed
 to facilitate implementing crop simulation models that were 
 developed in Wageningen. PCSE provides a set of building blocks
@@ -18,8 +16,8 @@ and state integration and the initialization of parameters
 in a PCSE model. Moreover PCSE provides support for reusing
 input files and weather files that are used by FST models.
 
-PCSE currently provides an implementation of the WOFOST crop 
-simulation model and variants of WOFOST with extended
+PCSE currently provides an implementation of the WOFOST and LINTUL crop
+simulation models and variants of WOFOST with extended
 capabilities.
 
 See Also
@@ -29,10 +27,9 @@ See Also
 * http://pcse.readthedocs.org
 """
 from __future__ import print_function
-
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
-__version__ = "5.1.1"
+__version__ = "5.2.0"
 __stable__ = True
 
 import sys, os
@@ -79,7 +76,7 @@ from . import util
 from . import db
 from . import fileinput
 from . import tests
-from . import agromanagement
+from . import agromanager
 from . import soil
 from . import crop
 from .start_wofost import start_wofost
@@ -87,7 +84,7 @@ from .start_wofost import start_wofost
 # If no PCSE demo database, build it!
 pcse_db_file = os.path.join(settings.PCSE_USER_HOME, "pcse.db")
 if not os.path.exists(pcse_db_file):
-    print("Building PCSE demo database at: %s ..." % pcse_db_file, end="")
+    print("Building PCSE demo database at: %s ..." % pcse_db_file, end=" ")
     pcse_home = os.path.dirname(__file__)
     pcse_db_dump_file = os.path.join(pcse_home, "db", "pcse", "pcse_dump.sql")
     try:

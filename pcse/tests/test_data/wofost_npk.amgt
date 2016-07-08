@@ -1,0 +1,18 @@
+Version: 1.0
+AgroManagement:
+- 1976-01-01:
+    CropCalendar:
+        crop_id: winter-wheat
+        crop_start_date: 1976-01-01
+        crop_start_type: emergence
+        crop_end_date:
+        crop_end_type: maturity
+        max_duration: 300
+    TimedEvents:
+    -   event_signal: apply_npk
+        name:  Timed N/P/K application table
+        comment: All fertilizer amounts in kg/ha
+        events_table:
+        - 1976-04-29: {N_amount: 0., P_amount: 40., K_amount: 20., N_recovery: 0.7, P_recovery: 0.7, K_recovery: 0.7}
+        - 1976-06-16: {N_amount: 0., P_amount: 10., K_amount: 20., N_recovery: 0.7, P_recovery: 0.7, K_recovery: 0.7}
+    StateEvents: null

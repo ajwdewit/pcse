@@ -154,7 +154,7 @@ class SnowMAUS(SimulationObject):
         r.RSNOWMELT = limit(0, (s.SWEDEPTH - r.RSNOWSUBLIM), RSNOWMELT)        
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         s = self.states
         r = self.rates
         p = self.params

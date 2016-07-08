@@ -97,7 +97,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         """
         
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk)
+        self.rates  = self.RateVariables(kiosk, publish="DRST")
         self.kiosk  = kiosk
 
         # INITIAL STATES
@@ -131,7 +131,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         rates.GWST = rates.GRST - rates.DRST
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         params = self.params
         rates = self.rates
         states = self.states

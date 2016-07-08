@@ -202,19 +202,23 @@ class FROSTOL(SimulationObject):
 
     *Rate variables*
 
-    ======== ================================================= ==== ============
-     Name     Description                                      Pbl      Unit
-    ======== ================================================= ==== ============
-    RH       Rate of hardening                                  N    |C day-1|
-    RDH_TEMP Rate of dehardening due to temperature             N    |C day-1|
-    RDH_RESP Rate of dehardening due to respiration stress      N    |C day-1|
-    RDH_TSTR Rate of dehardening due to temperature stress      N    |C day-1| 
-    IDFS     Frost stress, yes (1) or no (0). Frost stress is   N    -
-             defined as: RF_FROST > 0
-    RF_FROST Reduction factor on leave biomass as a function    Y    -
-             of min. crown temperature and LT50T: ranges 
-             from 0 (no damage) to 1 (complete kill).
-    ======== ================================================= ==== ============
+    ========== ================================================= ==== ============
+     Name       Description                                      Pbl      Unit
+    ========== ================================================= ==== ============
+    RH         Rate of hardening                                  N    |C day-1|
+    RDH_TEMP   Rate of dehardening due to temperature             N    |C day-1|
+    RDH_RESP   Rate of dehardening due to respiration stress      N    |C day-1|
+    RDH_TSTR   Rate of dehardening due to temperature stress      N    |C day-1|
+    IDFS       Frost stress, yes (1) or no (0). Frost stress is   N    -
+               defined as: RF_FROST > 0
+    RF_FROST   Reduction factor on leave biomass as a function    Y    -
+               of min. crown temperature and LT50T: ranges
+               from 0 (no damage) to 1 (complete kill).
+    RF_FROST_T Total frost kill through the growing season        N    -
+               is computed as the multiplication of the daily
+               frost kill events, 0 means no damage, 1 means
+               total frost kill.
+    ========== ================================================= ==== ============
 
     
     *External dependencies:*
@@ -242,6 +246,9 @@ class FROSTOL(SimulationObject):
     """
     crown_temperature = Instance(SimulationObject)
 
+    # Helper variable for remaining crop fraction as a result of frost kill
+    _CROP_FRACTION_REMAINING = Float(1.0)
+
     class Parameters(ParamTemplate):
         IDSL      = Float(-99.)
         LT50C     = Float(-99.)
@@ -266,6 +273,7 @@ class FROSTOL(SimulationObject):
         LT50T = Float(-99.)
         LT50I = Float(-99.)
         IDFST = Int(-99)
+        RF_FROST_T = Float(-99)
 
     #---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues, testing=False):
@@ -281,7 +289,7 @@ class FROSTOL(SimulationObject):
         # Define initial states
         LT50I = -0.6 + 0.142 * self.params.LT50C
         self.states = self.StateVariables(kiosk, LT50T=LT50I, LT50I=LT50I,
-                                          IDFST=0)
+                                          IDFST=0, RF_FROST_T=0.)
 
         # Check on vernalization
         if self.params.IDSL < 2:
@@ -341,11 +349,14 @@ class FROSTOL(SimulationObject):
         # stretches from -inf to inf, some limits must be applied. In this
         # case we assume that killfactor < 0.05 means no kill and
         # killfactor > 0.95 means complete kill.
-        killfactor = 1/(1 + exp((TMIN_CROWN-(s.LT50T))/p.FROSTOL_KILLCF))
-        if killfactor < 0.05:
+        if TMIN_CROWN < 0.:
+            killfactor = 1/(1 + exp((TMIN_CROWN - s.LT50T)/p.FROSTOL_KILLCF))
+            if killfactor < 0.05:
+                killfactor = 0.
+            elif killfactor > 0.95:
+                killfactor = 1.
+        else:
             killfactor = 0.
-        elif killfactor > 0.95:
-            killfactor = 1.
 
         # Frost stress occurring yes/no
         r.IDFS = 1 if (killfactor > 0.) else 0
@@ -353,9 +364,12 @@ class FROSTOL(SimulationObject):
         # Reduction factor on leave biomass
         r.RF_FROST = killfactor
 
+        # Fraction of the remaining standing crop
+        self._CROP_FRACTION_REMAINING *= (1. - killfactor)
+
     #---------------------------------------------------------------------------
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         states = self.states
         rates  = self.rates
         params = self.params
@@ -368,7 +382,12 @@ class FROSTOL(SimulationObject):
 
         # Count number of days with frost stress
         states.IDFST += rates.IDFS
-#-------------------------------------------------------------------------------
+
+        # Total cumulative frost kill computed as 1 minus the fraction
+        # of remaining living crop
+        states.RF_FROST_T = 1. - self._CROP_FRACTION_REMAINING
+
+
 class CERES_WinterKill(SimulationObject):
     """Implementation of the winter-kill module in the CERES-wheat model (CWWK).
 
@@ -486,7 +505,7 @@ class CERES_WinterKill(SimulationObject):
             rates.KILLFACTOR = limit(0, 0.96, KF)
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         states = self.states
         rates  = self.rates
         params = self.params

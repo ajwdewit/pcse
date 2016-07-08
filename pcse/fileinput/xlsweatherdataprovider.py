@@ -19,11 +19,14 @@ kJ_to_J = lambda x, s: x*1000.
 kPa_to_hPa = lambda x, s: x*10.
 mm_to_cm = lambda x, s: x/10.
 
+
 class NoDataError(PCSEError):
     pass
 
+
 class OutOfRange(PCSEError):
     pass
+
 
 def xlsdate_to_date(value, sheet):
     """Convert an excel date into a python date
@@ -35,15 +38,15 @@ def xlsdate_to_date(value, sheet):
     year, month, day, hr, min, sec = xlrd.xldate_as_tuple(value, sheet.book.datemode)
     return dt.date(year, month, day)
 
+
 class ExcelWeatherDataProvider(WeatherDataProvider):
     """Reading weather data from an excel file.
 
     :param xls_fname: name of the Excel file to be read
-    :param mising_snow_depth: the value that should use for missing SNOW_DEPTH
-    values
+    :param mising_snow_depth: the value that should use for missing SNOW_DEPTH values
 
-    For reading weather data from file, initially on the CABOWeatherDataProvider
-    was available that read its data from text in the CABOWeater format.
+    For reading weather data from file, initially only the CABOWeatherDataProvider
+    was available that reads its data from a text file in the CABO Weather format.
     Nevertheless, building CABO weather files is tedious as for each year a new
     file must constructed. Moreover it is rather error prone and formatting
     mistakes are easily leading to errors.
@@ -123,7 +126,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         labels = [cell.value for cell in sheet.row(self.label_row)]
 
         # Start reading all rows with data
-        rownums = range(sheet.nrows)
+        rownums = list(range(sheet.nrows))
         for rownum in rownums[self.data_start_row:]:
             try:
                 row = sheet.row(rownum)
@@ -174,12 +177,15 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
     def _load_cache_file(self, xls_fname):
 
-        cache_filename = self._find_cache_file(xls_fname)
-        if cache_filename is None:
-            return False
-        else:
-            self._load(cache_filename)
-            return True
+         cache_filename = self._find_cache_file(xls_fname)
+         if cache_filename is None:
+             return False
+         else:
+             try:
+                 self._load(cache_filename)
+                 return True
+             except:
+                 return False
 
     def _find_cache_file(self, xls_fname):
         """Try to find a cache file for file name
@@ -211,6 +217,6 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         cache_filename = self._get_cache_filename(xls_fname)
         try:
             self._dump(cache_filename)
-        except (IOError, EnvironmentError), e:
+        except (IOError, EnvironmentError) as e:
             msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)

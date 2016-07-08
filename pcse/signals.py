@@ -79,12 +79,13 @@ keywords.*
  Indicates that a new crop cycle will start.
  
  self._send_signal(signal=signals.crop_start, day=<date>,
-                   cropsimulation=<CropSimulationObj>)
+                   crop_id=<string>, crop_start_type=<string>,
+                   crop_end_type=<string>)
 
  keyword arguments with signals.crop_start:
     
     * day: Current date
-    * cropsimulation: a CropSimulation object
+    * crop_id: a string identifying the crop
 
 **CROP_FINISH**
 
@@ -104,7 +105,8 @@ keyword arguments with signals.crop_finish:
 
 **TERMINATE**
  
- Indicates that the entire system should terminate (crop & soil water balance)
+ Indicates that the entire system should terminate (crop & soil water balance) and
+ that terminal output should be collected.
 
  self._send_signal(signal=signals.terminate)
 
@@ -128,6 +130,31 @@ keyword arguments with signals.crop_finish:
 
  No keyword arguments are defined for this signal
 
+**APPLY_NPK**
+
+Is used for application of Nitrate/Phosphate/Potassium (N/P/K) fertilizer
+
+self._send_signal(signal=signals.apply_npk, N_amount=<float>, P_amount=<float>, K_amount=<float>,
+                  N_recovery<float>, P_recovery=<float>, K_recovery=<float>)
+
+Keyword arguments with signals.apply_npk:
+
+    * N/P/K_amount: Amount of fertilizer in kg/ha applied on this day.
+    * N/P/K_recovery: Recovery fraction for the given type of fertilizer
+
+
+**IRRIGATE**
+
+Is used for sending irrigation events.
+
+self._send_signal(signal=signals.irrigate, amount=<float>, efficiency=<float>)
+
+Keyword arguments with signals.irrigate:
+
+    * amount: Amount of irrigation in cm water applied on this day.
+    * efficiency: efficiency of irrigation, meaning that the total amount of water that
+      is added to the soil reservoir equals amount * efficiency
+
 
 .. _PyDispatcher: http://pydispatcher.sourceforge.net/
 """
@@ -138,4 +165,6 @@ crop_finish = "CROP_FINISH"
 terminate = "TERMINATE"
 output = "OUTPUT"
 summary_output = "SUMMARY_OUTPUT"
-
+apply_npk = "APPLY_NPK"
+apply_n = "APPLY_N"
+irrigate = "IRRIGATE" 

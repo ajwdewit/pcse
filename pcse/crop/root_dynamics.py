@@ -115,7 +115,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk)
+        self.rates = self.RateVariables(kiosk, publish="DRRT")
         self.kiosk = kiosk
         
         # INITIAL STATES
@@ -155,7 +155,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
             rates.RR = 0.
     
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         rates = self.rates
         states = self.states
 
@@ -264,7 +264,7 @@ class Simple_Root_Dynamics(SimulationObject):
         rates.RR = min((states.RDM - states.RD), params.RRI)
     
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         rates = self.rates
         states = self.states
 

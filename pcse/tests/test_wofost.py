@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-"""Module defines code for running unittests on the complete PyWofost model.
+"""Module defines code for running unittests on the complete PCSE/WOFOST model.
 
 Unit tests for individual components are included in the sources files of these
 components.
@@ -16,14 +16,15 @@ Functions defined here:
 
 """
 import os
-import unittest
 import random
+import unittest
 
 from sqlalchemy import create_engine, MetaData, select, Table, and_, func
 from sqlalchemy.types import Date as saDate
 
-from ..run_wofost import run_wofost
+from .run_wofost import run_wofost
 from ..settings import settings
+
 
 #-------------------------------------------------------------------------------
 class WofostBenchmarkRetriever:
@@ -139,7 +140,7 @@ class WofostTestingTemplate(unittest.TestCase):
     def run_benchmark(self, var_to_benchmark, precision):
         benchmark_data = self.BenchmarkRetriever(var_to_benchmark)
         msg = "Failure to retrieve benchmark data."
-        self.failUnless(len(benchmark_data)>0, msg)
+        self.assertTrue(len(benchmark_data) > 0, msg)
         n_assert = 0
         for (day, benchmark) in benchmark_data:
             value = self.OutputRetriever(day, var_to_benchmark)

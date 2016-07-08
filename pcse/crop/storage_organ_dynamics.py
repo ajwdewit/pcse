@@ -125,7 +125,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         rates.GWSO = rates.GRSO - rates.DRSO
 
     @prepare_states
-    def integrate(self, day):
+    def integrate(self, day, delt=1.0):
         params = self.params
         rates = self.rates
         states = self.states

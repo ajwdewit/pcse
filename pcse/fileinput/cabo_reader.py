@@ -159,7 +159,9 @@ class CABOFileReader(dict):
         rest = re.sub(regexp, "", parsections)
         rest = rest.replace(";", "")
         if rest.strip() != "":
-            msg = "Failed to parse: %s" % rest
+            msg = "Failed to parse the CABO file!\n" +\
+                  ("Found the following parameter definitions:\n %s" % par_definitions) + \
+                  ("Failed to parse:\n %s" % rest)
             raise PCSEError(msg)
         return par_definitions
         
@@ -214,15 +216,15 @@ class CABOFileReader(dict):
             try:
                 value = self._parse_table_values(valuestr)
                 self[parname] = value
-            except (ValueError), exc:
+            except (ValueError) as exc:
                 msg = "Failed to parse table parameter %s: %s" % (parname, valuestr)
                 raise PCSEError(msg)
-            except (LengthError), exc:
+            except (LengthError) as exc:
                 msg = "Failed to parse table parameter %s: %s. \n" % (parname, valuestr)
                 msg += "Table parameter should contain at least 4 values "
                 msg += "instead got %i" 
                 raise PCSEError(msg % exc.value[0])
-            except (XYPairsError), exc:
+            except (XYPairsError) as exc:
                 msg = "Failed to parse table parameter %s: %s\n" % (parname, valuestr)
                 msg += "Parameter should be have even number of positions."
                 raise XYPairsError(msg)
@@ -232,6 +234,6 @@ class CABOFileReader(dict):
         for line in self.header:
             msg += line+"\n"
         msg += "------------------------------------\n"
-        for key, value in self.iteritems():
+        for key, value in self.items():
             msg += ("%s: %s %s\n" % (key, value, type(value)))
         return msg

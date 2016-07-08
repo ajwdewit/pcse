@@ -1,8 +1,7 @@
 .. include:: abbreviations.txt
 
-******************************
-Model code documentation (API)
-******************************
+How to read
+===========
 
 The API documentation provides a description of the interface and internals of 
 all SimulationObjects, AncillaryObjects and utility routines available in the
@@ -40,7 +39,7 @@ The tables specifying state/rate variables have the following columns:
     3. Whether the variable is published in the kiosk or not: Y|N
     4. The physical unit of the variable.
     
-Finally, all public methods of all object are described as well.
+Finally, all public methods of all objects are described as well.
 
 Engine and models
 =================
@@ -57,8 +56,22 @@ Engine and models
 Agromanagement
 ==============
 
-.. automodule:: pcse.agromanagement
+The routines below implement the agromanagement system in PCSE including crop calendars, rotations,
+state and timed events. For reading agromanagement data from a file or a database structure see the sections
+on the :ref:`reading file input <FileInput>` and the :ref:`database tools <DBtools>`.
+
+.. autoclass:: pcse.agromanager.AgroManager
     :members:
+
+.. autoclass:: pcse.agromanager.CropCalendar
+    :members:
+
+.. autoclass:: pcse.agromanager.TimedEventsDispatcher
+    :members:
+
+.. autoclass:: pcse.agromanager.StateEventsDispatcher
+    :members:
+
 
 The Timer
 =========
@@ -70,7 +83,7 @@ The waterbalance
 ================
 
 The PCSE distribution provides several waterbalance modules:
-    1. WaterbalancePP which is used for simulation under non-waterlimited
+    1. WaterbalancePP which is used for simulation under non-water-limited
        production
     2. WaterbalanceFD which is used for simulation of water-limited production
        under conditions of freely draining soils
@@ -159,12 +172,15 @@ Abiotic damage
 .. .. autoclass:: pcse.crop.abioticdamage.CERES_WinterKill
 ..    :members:
 
+.. _BaseClasses:
+
 Base classes
 ============
 
 The base classes define much of the functionality which is used "under the
 hood" in PCSE. Except for the `VariableKiosk` and the `WeatherDataContainer`
 all classes are not to be called directly but should be subclassed instead.
+
 
 
 VariableKiosk
@@ -193,6 +209,8 @@ Base and utility classes for weather data
 
 .. autoclass:: pcse.base_classes.WeatherDataContainer
     :members:
+
+.. _Signals:
 
 Signals defined
 ===============
@@ -228,32 +246,35 @@ files in PCSE format.
 .. autoclass:: pcse.fileinput.PCSEFileReader
     :members:
 
+.. _ExcelWeatherDataProvider:
+.. autoclass:: pcse.fileinput.ExcelWeatherDataProvider
+
+.. _CSVWeatherDataProvider:
+.. autoclass:: pcse.fileinput.CSVWeatherDataProvider
+
+.. _YAMLAgroManagementReader:
+.. autoclass:: pcse.fileinput.YAMLAgroManagementReader
+
+.. _DBtools:
+
 The database tools
 ------------------
 
-The database tools contain functions and classes for retrieving parameters
-and weather database from several database structures. The database
-structure is mostly derived from the database used for the Crop Growth
-Monitoring System (CGMS_).
+The database tools contain functions and classes for retrieving agromanagement,
+parameter values and weather variables from database structures implemented for
+different versions of the European `Crop Growth Monitoring System <CGMS>`_.
 
-.. _CGMS: http://mars.jrc.ec.europa.eu/mars/About-us/AGRI4CAST/Models-Software-Tools/Crop-Growth-Monitoring-System-CGMS
+Note that the data providers only provide functionality for *reading* data,
+there are no tools here *writing* simulation results to a CGMS database. This was
+done on purpose as writing data can be a complex matter and it is our
+experience that this can be done more easily with dedicated database loader
+tools such as `SQLLoader`_ for ORACLE or the ``load data infile`` syntax of MySQL
 
-The PCSE database
-.................
+.. _SQLLoader: http://www.oracle.com/technetwork/database/enterprise-edition/sql-loader-overview-095816.html
 
-The PCSE database structure is very similar to a CGMS9 structure but has some
-modifications for dealing with dates in the CROP_CALENDAR table and uses
-different table names and structure for model output.
+.. _CGMS: https://ec.europa.eu/jrc/en/mars
 
-.. autofunction:: pcse.db.pcse.fetch_cropdata
-.. autofunction:: pcse.db.pcse.fetch_soildata
-.. autofunction:: pcse.db.pcse.fetch_timerdata
-.. autofunction:: pcse.db.pcse.fetch_sitedata
-
-.. _GridWeatherDataProvider:
-
-.. autoclass:: pcse.db.pcse.GridWeatherDataProvider
-    :members:
+.. _CGMS9tools:
 
 The CGMS9 database
 ..................
@@ -264,10 +285,58 @@ by CGMS executable version 9 and 10.
 .. autoclass:: pcse.db.cgms9.GridWeatherDataProvider
     :members:
 
+.. autoclass:: pcse.db.cgms9.SoilDataIterator
+    :members:
+
+.. autoclass:: pcse.db.cgms9.CropDataProvider
+    :members:
+
+.. autoclass:: pcse.db.cgms9.STU_Suitability
+    :members:
+
+.. autoclass:: pcse.db.cgms9.SiteDataProvider
+    :members:
+
+.. _CGMS11tools:
+
 The CGMS11 database
 ...................
 
-Tools for reading a CGMS11 database are under construction.
+The CGMS11 tools are for reading data from a database structure that is used
+by CGMS executable version 11.
+
+
+.. automodule:: pcse.db.cgms11
+    :members:
+
+.. autoclass:: WeatherObsGridDataProvider
+    :members:
+
+.. autoclass:: AgroManagementDataProvider
+    :members:
+
+.. autoclass:: SoilDataIterator
+    :members:
+
+.. autoclass:: CropDataProvider
+    :members:
+
+.. autoclass:: STU_Suitability
+    :members:
+
+.. autoclass:: SiteDataProvider
+    :members:
+
+.. _CGMS14tools:
+
+The CGMS14 database
+...................
+
+The CGMS14 database is the database structure that is compatible with the 2015 BioMA implementation
+of WOFOST. Note that the CGMS14 database structure is considerably different from CGMS9 and CGMS11.
+
+.. _CGMS14_data_providers:
+
 
 The NASA POWER database
 .......................
