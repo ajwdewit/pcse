@@ -18,9 +18,9 @@ long_description = read('README.rst')
 
 setup(
     name='PCSE',
-    version="5.2.0",
+    version="5.2.1",
     url='http://github.com/ajwdewit/pcse/',
-    download_url='http://github.com/ajwdewit/pcse/tarball/5.1.1',
+    download_url='http://github.com/ajwdewit/pcse/tarball/5.2.1',
     license='EUPL',
     author='Allard de Wit',
     install_requires=['numpy>=1.6.0',
