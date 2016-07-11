@@ -1,0 +1,55 @@
+# SQL scripts for demo database
+include pcse/db/pcse/pcse_dump.sql
+
+# Model configuration files
+include pcse/conf/GreenLayerCrop.conf
+include pcse/conf/Lintul3.conf
+include pcse/conf/Wofost71_NPK.conf
+include pcse/conf/Wofost71_PP.conf
+include pcse/conf/Wofost71_WLP_FD.conf
+include pcse/conf/Wofost_winterkill.conf
+
+# Test data and input files
+include pcse/tests/test_data/10870_munchen_flughafen.csv
+include pcse/tests/test_data/2297_sweden.csv
+include pcse/tests/test_data/8011_asturias.csv
+include pcse/tests/test_data/8443_ronda.csv
+include pcse/tests/test_data/evapotranspiration_testdata.py
+include pcse/tests/test_data/frostol_testdata.py
+include pcse/tests/test_data/lintul3.csv
+include pcse/tests/test_data/LINTUL3_reference_results.csv
+include pcse/tests/test_data/lintul3_springwheat.amgt
+include pcse/tests/test_data/lintul3_springwheat.crop
+include pcse/tests/test_data/lintul3_springwheat.site
+include pcse/tests/test_data/lintul3_springwheat.soil
+include pcse/tests/test_data/NL1.976
+include pcse/tests/test_data/NL1.977
+include pcse/tests/test_data/NL1.978
+include pcse/tests/test_data/NL1.979
+include pcse/tests/test_data/NL1.980
+include pcse/tests/test_data/NL1.981
+include pcse/tests/test_data/NL1.982
+include pcse/tests/test_data/NL1.983
+include pcse/tests/test_data/NL1.984
+include pcse/tests/test_data/NL1.985
+include pcse/tests/test_data/NL1.986
+include pcse/tests/test_data/NL1.987
+include pcse/tests/test_data/NL1.988
+include pcse/tests/test_data/NL1.989
+include pcse/tests/test_data/NL1.990
+include pcse/tests/test_data/NL1.991
+include pcse/tests/test_data/NL1.992
+include pcse/tests/test_data/NL1.993
+include pcse/tests/test_data/NL1.994
+include pcse/tests/test_data/NL1.995
+include pcse/tests/test_data/NL1.996
+include pcse/tests/test_data/NL1.997
+include pcse/tests/test_data/NL1.998
+include pcse/tests/test_data/NL1.999
+include pcse/tests/test_data/respiration_testdata.py
+include pcse/tests/test_data/wofost_npk.amgt
+include pcse/tests/test_data/wofost_npk.crop
+include pcse/tests/test_data/wofost_npk_reference_results.csv
+include pcse/tests/test_data/wofost_npk.site
+include pcse/tests/test_data/wofost_npk.soil
+

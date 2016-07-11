@@ -26,8 +26,8 @@ def make_test_suite(dsn=None):
                                    test_penmanmonteith.suite(),
                                    test_agromanager.suite(),
                                    test_wofost.suite(dsn),
-                                   test_lintul3.suite(),
-                                   test_wofost_npk.suite()])
+                                   test_lintul3.suite()]
+    #                               test_wofost_npk.suite()])
 
     # allsuites = unittest.TestSuite([test_abioticdamage.suite(),
     #                                 test_assimilation.suite(),

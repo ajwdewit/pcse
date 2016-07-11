@@ -920,7 +920,7 @@ is available that uses a simple CSV data format, :ref:`CSVWeatherDataProvider <C
 
 Second, there is a set of WeatherDataProviders that derive the weather data from the database tables
 implemented in the different versions of the `European Crop Growth Monitoring System`_ including a
-:ref:`CGMS9 <CGMS9tools>` database, a :ref:`CGMS11 <CGMS11tools>` database and
+:ref:`CGMS8 <CGMS8tools>` database, a :ref:`CGMS12 <CGMS12tools>` database and
 a :ref:`CGMS14 <CGMS14tools>` database.
 
 Finally, there is the global weather data provided by the agroclimatology from the
@@ -963,8 +963,10 @@ used to write parameter files for models in FORTRAN or FST. A more versatile rea
 This also implies that all the python syntax features can be used in PCSE parameter files.
 
 Finally, several data providers exist for retrieving crop, soil and site parameter values from the database
-of the Crop Growth Monitoring System including data providers for a :ref:`CGMS9 <CGMS9tools>` database,
-a :ref:`CGMS11 <CGMS11tools>` database and a :ref:`CGMS14 <CGMS14tools>` database.
+of the Crop Growth Monitoring System including data providers for a
+:ref:`CGMS8 <CGMS8tools>` database,
+a :ref:`CGMS12 <CGMS12tools>` database and a :ref:`CGMS14 <CGMS14tools>`
+database.
 
 As described earlier, PCSE needs parameters to define the soil, the crop and and additional
 ancillary class of parameters called 'site'. Nevertheless, the different modules in PCSE have
@@ -1025,7 +1027,7 @@ this datastructure the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>
 which can be provided directly as input into the Engine.
 
 For reading Agromanagement input from a CGMS database see the sections on the database tools for
-a :ref:`CGMS9 <CGMS9tools>` database, a :ref:`CGMS11 <CGMS11tools>` database and
+a :ref:`CGMS8 <CGMS8tools>` database, a :ref:`CGMS12 <CGMS12tools>` database and
 a :ref:`CGMS14 <CGMS14tools>` database. Note that the support for defining agromanagement
 in CGMS databases is limited to crop calendars only. The CGMS database has no support for defining state and
 timed events yet.
