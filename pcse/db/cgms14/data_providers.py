@@ -250,10 +250,10 @@ class AgroManagementDataProvider(list):
         self.idcrop_parametrization = idcrop_parametrization
         self.crop_name = fetch_crop_name(engine, idcrop_parametrization)
         self.campaign_year = campaign_year
-        metadata = MetaData(engine)
         self.amdict = {}
 
         # Use the idcrop_parametrization to search in the table crop_calendars 
+        metadata = MetaData(engine)
         t = Table("crop_calendars", metadata, autoload=True)
         sm = select([t], and_(t.c.idgrid == self.idgrid,
                               t.c.idcrop_parametrization == self.idcrop_parametrization,
@@ -299,15 +299,8 @@ class AgroManagementDataProvider(list):
                 msg = "Value (%s) of keyword 'campaign_start' not recognized in call to AgroManagementDataProvider."
                 raise exc.PCSEError(msg % campaign_start)
 
-        input = self.agro_management_template.format(self.amdict)
-
-        try:
-            items = yaml.load(input)
-        except yaml.YAMLError as e:
-            msg = "Failed parsing agromanagement string %s: %s" % (input, e)
-            raise exc.PCSEError(msg)
-
-        self.extend(items)
+        input = self._build_yaml_agromanagement()
+        self._parse_yaml(input)
 
     def conditional_datecopy(self, testkey, targetkey, value1, value2):
         if self.amdict == None: return
@@ -318,6 +311,31 @@ class AgroManagementDataProvider(list):
                 self.amdict[targetkey] = check_date(self.amdict[value2])
         except KeyError:
             raise exc.PCSEError("Failed to add value to dictionary for key %s" % targetkey)
+
+    def _build_yaml_agromanagement(self):
+        """Builds the YAML agromanagent string"""
+
+        return self.agro_management_template.format(self.amdict)
+
+    def _parse_yaml(self, input):
+        """Parses the input YAML string and assigns to self"""
+        try:
+            items = yaml.load(input)
+        except yaml.YAMLError as e:
+            msg = "Failed parsing agromanagement string %s: %s" % (input, e)
+            raise exc.PCSEError(msg)
+        del self[:]
+        self.extend(items)
+
+    def set_campaign_start_date(self, start_date):
+        """Updates the value for the campaign_start_date.
+
+        This is useful only when the INITIAL_SOIL_WATER table in CGMS12 defines a different
+        campaign_start
+        """
+        self.amdict["campaign_start_date"] = check_date(start_date)
+        input = self._build_yaml_agromanagement()
+        self._parse_yaml(input)
 
 
 class SoilDataProviderSingleLayer(dict):
