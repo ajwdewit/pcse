@@ -1193,7 +1193,7 @@ class WeatherDataProvider(object):
     longitude = None
     latitude = None
     elevation = None
-    description = None
+    description = []
     _first_date = None
     _last_date = None
     angstA = None

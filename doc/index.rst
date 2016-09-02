@@ -8,8 +8,8 @@
 PCSE: The Python Crop Simulation Environment
 ============================================
 
-PCSE (Python Crop Simulation Environment) is a Python package for building crop simulation models, in particular
-the crop models developed in Wageningen (Netherlands). PCSE provides the
+PCSE (Python Crop Simulation Environment) is a Python package for building crop simulation models,
+in particular the crop models developed in Wageningen (Netherlands). PCSE provides the
 environment to implement crop simulation models, the tools for reading ancillary
 data (weather, soil, agromanagement) and the components for simulating biophysical
 processes such as phenology, respiration and evapotranspiration. PCSE also
@@ -21,9 +21,9 @@ the MARS crop yield forecasting system which is used operationally for crop moni
 yield prediction in Europe and beyond.
 
 Originally, models developed in Wageningen were often written using FORTRAN or the
-FORTRAN Simulation Environment (FSE) both of which
-are very good tools, but they lack the capability to work interactively, and make use
-of many great tools that are available nowadays (XML, databases, web, etc).
+FORTRAN Simulation Environment (FSE). Both are very good tools, but they have become
+somewhat outdated and are difficult to integrate with many of the great tools that are available
+nowadays (XML, databases, web, etc).
 Like so many other software packages, PCSE was developed to facilitate my own research work. I wanted something
 that was more easy to work with, more interactive and more flexible while still implementing
 the sound computational approach of FSE. For this reason PCSE was developed in Python

@@ -54,6 +54,9 @@ class GridWeatherDataProvider(WeatherDataProvider):
         # Retrieved meteo data
         self._fetch_grid_weather_from_db(metadata)
 
+        # Description
+        self.description = "Weather data derived for grid_no: %i" % grid_no
+
     #---------------------------------------------------------------------------
     def _fetch_location_from_db(self, metadata):
         """Retrieves latitude, longitude, elevation from 'grid' table and
@@ -247,6 +250,7 @@ class AgroManagementDataProvider(list):
         except yaml.YAMLError as e:
             msg = "Failed parsing agromanagement string %s: %s" % (input, e)
             raise exc.PCSEError(msg)
+        del self[:]
         self.extend(items)
 
     def set_campaign_start_date(self, start_date):
