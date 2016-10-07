@@ -13,15 +13,14 @@ PCSE version 5.2 brings the following new features:
   campaigns. The AgroManager uses a new format based on YAML to store agromanagement definitions.
 - The water-limited production simulation with WOFOST now supports irrigation using the new AgroManager.
   An example notebook has been added to explain the different irrigation options.
-- Support for reading input data from a CGMS14 database
+- Support for reading input data from a CGMS8 and CGMS14 database
 
 What's new in PCSE 5.1
 ======================
 
 PCSE version 5.1 brings the following new features:
 
-- Support for reading input data (weather, soil, crop parameters) from a
-CGMS12 database. CGMS is the acronym for
+- Support for reading input data (weather, soil, crop parameters) from a CGMS12 database. CGMS is the acronym for
   Crop Growth Monitoring System and was developed by Alterra in cooperation with the MARS unit of the Joint Research
   Centre for crop monitoring and yield forecasting in Europe. It uses a database structure for storing weather
   data and model simulation results which can be read by PCSE. See the MARSwiki_ for the database definition.

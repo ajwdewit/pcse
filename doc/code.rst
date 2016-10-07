@@ -303,7 +303,7 @@ The CGMS12 database
 ...................
 
 The CGMS12 tools are for reading data from a CGMS12 database structure that
- is used by CGMS executable version 11 and BioMA 2014.
+is used by CGMS executable version 11 and BioMA 2014.
 
 
 .. automodule:: pcse.db.cgms12
@@ -351,13 +351,11 @@ The NASA POWER database
 Convenience routines
 --------------------
 
-These routines are there for conveniently starting a WOFOST simulation. They
-are mainly used in the tutorial and examples but can be used to further
-elaborating on when writing your own scripts.
+These routines are there for conveniently starting a WOFOST simulation
+for the demonstration and tutorials. They can serve as an example to
+build your own script but have no further relevance.
 
 .. autofunction:: pcse.start_wofost.start_wofost
-
-.. autofunction:: pcse.run_wofost.run_wofost
 
 
 Miscelaneous utilities

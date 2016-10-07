@@ -128,8 +128,7 @@ class WaterbalanceFD(SimulationObject):
     WDRT      Amount of water added to root zone by increase    N    cm
               of root growth
     TOTINF    Total amount of infiltration                      N    cm
-    TOTIRR    Total amount of irrigation (not implemented       N    cm
-              yet)
+    TOTIRR    Total amount of effective irrigation              N    cm
     PERCT     Total amount of water percolating from rooted     N    cm
               zone to subsoil
     LOSST     Total amount of water lost to deeper soil         N    cm
@@ -153,8 +152,8 @@ class WaterbalanceFD(SimulationObject):
              the evapotranspiration module 
     RAIN     Rainfall rate for current day                      N    |cmday-1|
     RIN      Infiltration rate for current day                  N    |cmday-1|
-    RIRR     Irrigation rate for current day. Is always set     N    |cmday-1|
-             to zero as irrigation is not handled currently
+    RIRR     Effective irrigation rate for current day,         N    |cmday-1|
+             computed as irrigation amount * efficiency.
     PERC     Percolation rate to non-rooted zone                N    |cmday-1|
     LOSS     Rate of water loss to deeper soil                  N    |cmday-1|
     DW       Change in amount of water in rooted zone as a      N    |cmday-1|

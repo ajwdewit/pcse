@@ -81,8 +81,8 @@ PCSE also has its limitations, in fact there are several:
   time-step. Although the internal time-step of modules can be made more fine-grained if needed.
 
 * No graphical user interface. However the lack of a user interface is partly compensated by using PCSE with the
-  `pandas <http://pandas.pydata.org/>`_ package and the `IPython notebook <https://ipython.org/notebook.html>`_.
-  PCSE output can be easily converted to a pandas `DataFrame` which can be used to display charts in an IPython
+  `pandas <http://pandas.pydata.org/>`_ package and the `Jupyter notebook <https://jupyter.org/>`_.
+  PCSE output can be easily converted to a pandas `DataFrame` which can be used to display charts in an Jupyter
   notebook.
 
 License

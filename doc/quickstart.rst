@@ -100,12 +100,15 @@ and have a look at these as well::
 Running PCSE/WOFOST with custom input data
 ==========================================
 
-For setting up PCSE/WOFOST with your
-own data sources you should understand that WOFOST uses 3 different types of
-inputs: 1) model parameters for the crop, soil and site; 2) Daily weather observations
-for running the simulation and 3) agromanagement data that define the agromanagement
-practices such as sowing, harvesting and irrigation. PCSE provides several tools for
-reading these inputs from files, databases or internet resources.
+For running PCSE/WOFOST (and PCSE models in general) with your own data sources you need three different types of
+inputs:
+
+1. Model parameters that parameterize the different model components. These parameters usually
+   consist of a set of crop parameters (or multiple sets in case of crop rotations), a set of soil parameters
+   and a set of site parameters. The latter provide ancillary parameters that are specific for a location.
+2. Driving variables represented by weather data which can be derived from various sources.
+3. Agromanagement actions which specify the farm activities that will take place on the field that is simulated
+   by PCSE.
 
 For the second example we will run a simulation for sugar beet in
 Wageningen (Netherlands) and we will read the input data step by step from
@@ -138,7 +141,7 @@ Wageningen are often provided in the CABO format that could be read
 with the `TTUTIL <http://edepot.wur.nl/17847>`_ FORTRAN library. PCSE
 tries to be backward compatible as much as possible and provides the
 :ref:`CABOFileReader <CABOFileReader>` for reading parameter files in CABO format.
-the `CABOFileReader` returns a dictionary with the parameter name/value pairs::
+the CABOFileReader returns a dictionary with the parameter name/value pairs::
 
     >>> from pcse.fileinput import CABOFileReader
     >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
@@ -339,15 +342,8 @@ First we will import the necessary modules and define the data directory. We als
 .. _pandas: http://pandas.pydata.org
 .. _PyYAML: http://pyyaml.org/wiki/PyYAML
 
-For running the PCSE/LINTUL3 (and PCSE models in general), you need three types of inputs:
-
-1. Model parameters that parameterize the different model components. These parameters usually
-   consist of a set of crop parameters (or multiple sets in case of crop rotations), a set of soil parameters
-   and a set of site parameters. The latter provide ancillary parameters that are specific for a location.
-2. Driving variables represented by weather data which can be derived from various sources.
-3. Agromanagement actions which specify the farm activities that will take place on the field that is simulated
-   by PCSE. For defining the agromanagement we will use the new `AgroManager` which replaces the `timerdata`
-   definition that was used previously.
+Similar to the previous example, for running the PCSE/LINTUL3 model we need to define the tree types of inputs
+(parameters, weather data and agromanagement).
 
 Reading model parameters
 ------------------------

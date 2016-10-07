@@ -13,7 +13,7 @@ Python through the native package manager. For Windows users the most straightfo
 Python is through one of the prepackaged Python distributions such as `Enthought Canopy`_,
 `Anaconda`_ or `PythonXY`_. The advantage of the prepackaged distributions is that they provide a working
 version of Numpy out-of-the-box which can be difficult to install on Windows. Mac OSX users can most easily
-install Python and Numpy using `HomeBrew`_, i.e brew install Python Numpy
+install Python and Numpy using `HomeBrew`_, i.e ``brew install Python Numpy``.
 
 The dependencies of PCSE are the following:
 
@@ -72,14 +72,17 @@ After installing MiniConda you should open a command box and check that conda is
         is foreign system : False
 
 Now we will use a Conda environment file to recreate the python environment that we use to develop and run
-PCSE. First you should download the conda environment file :download:`downloads/py2_pcse.yml` and save
-it on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
-using the command ``conda env create`` and tell conda to use the environment file with the option ``-f p2_pcse.yml``
+PCSE. First you should download the conda environment file which comes in two flavours, a bare minimum
+environment for running PCSE (:download:`downloads/py2_pcse.yml`) and a more complete environment which
+includes the Jupyter notebook, Pandas and IPython (:download:`downloads/py2_pcse_full.yml`). If you intend
+to run the 'Getting started' section, you should take the latter one. Save the environment file
+on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
+using the command ``conda env create`` and tell conda to use the environment file with the option ``-f p2_pcse_full.yml``
 as show below:
 
 .. code-block:: doscon
 
-    D:\temp\make_env>conda env create -f py2_pcse.yml
+    D:\temp\make_env>conda env create -f py2_pcse_full.yml
     Fetching package metadata: ....
     .Solving package specifications: .........
     Linking packages ...
@@ -186,7 +189,7 @@ For testing the PCSE package we need to start python and import pcse:
 
 .. code-block:: doscon
 
-    [py2_pcse_b] D:\temp\make_env>python
+    [py2_pcse] D:\temp\make_env>python
     Python 2.7.11 |Continuum Analytics, Inc.| (default, Mar  4 2016, 15:18:41) [MSC v.1500 32 bit (Intel)] on win32
     Type "help", "copyright", "credits" or "license" for more information.
     Anaconda is brought to you by Continuum Analytics.
@@ -194,7 +197,6 @@ For testing the PCSE package we need to start python and import pcse:
     >>> import pcse
     Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db
     >>>
-
 
 Next, the tests can be executed by calling the `test()` function at the top of the package::
 

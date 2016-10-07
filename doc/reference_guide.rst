@@ -144,7 +144,7 @@ for potential crop production::
 
     from pcse.soil.classic_waterbalance import WaterbalancePP
     from pcse.crop.wofost import Wofost
-    from pcse.agromanagement import AgroManagementSingleCrop
+    from pcse.agromanager import AgroManager
 
     # Module to be used for water balance
     SOIL = WaterbalancePP
@@ -153,7 +153,7 @@ for potential crop production::
     CROP = Wofost
 
     # Module to use for AgroManagement actions
-    AGROMANAGEMENT = AgroManagementSingleCrop
+    AGROMANAGEMENT = AgroManager
 
     # variables to save at OUTPUT signals
     # Set to an empty list if you do not want any OUTPUT
@@ -192,8 +192,16 @@ The second part is for defining the
 variables (*OUTPUT_VARS*) that should be stored during the model run
 (during OUTPUT signals) and the details of the regular output interval.
 Next, summary output *SUMMARY_OUTPUT_VARS* can be defined that will be generated at the end
-of each crop cycle. Finall, output can be collected at the end of the
+of each crop cycle. Finally, output can be collected at the end of the
 entire simulation (*TERMINAL_OUTPUT_VARS*).
+
+.. note::
+    Model configuration files for models that are included in the PCSE package
+    reside in the 'conf/' folder inside the package. When the Engine is started
+    with the name of a configuration file, it searches this folder to locate the file.
+    This implies that if you want the start the Engine with your own (modified)
+    configuration file, you *must* specify it as an absolute or relative path
+    otherwise the Engine will not find it.
 
 The relationship between models and the engine
 ----------------------------------------------
@@ -366,9 +374,12 @@ Similarly, state variables can only be changed during the state update while the
 of change are locked. This mechanism ensures that rate/state updates are carried out
 in the correct order.
 
-Finally, instances of rate variables have one additional method, called `zerofy()`.
+Finally, instances of RatesTemplate have one additional method, called `zerofy()` while
+instances of StatesTemplate have one additional method called `touch()`.
 Calling `zerofy()` is normally done by the Engine and explicitly sets all rates of change
-to zero.
+to zero. Calling `touch()` on a states object is only useful when the states variables
+do not need to be updated, but you do want to be sure that any published state variables
+will remain available in the VariableKiosk.
 
 
 The AgroManager
@@ -402,7 +413,7 @@ or twice in the growing cycle. So for a 200-day growing cycle there will be
 198 days where the parameters do not carry any information. Nevertheless, they
 would still be present in the function call, thereby decreasing the computational
 efficiency and the readability of the code. Therefore, PCSE uses a very different
-approach for agromanagement events which is based on signals (see XXX).
+approach for agromanagement events which is based on signals (see :ref:`Broadcasting signals`).
 
 .. _refguide_agromanagement:
 
@@ -702,6 +713,8 @@ be published by indicating them with the `publish=[<var1>,<var2>,...]` keyword w
 initializing rate/state variables, while retrieving values from the VariableKiosk works
 through the normal dictionary look up. For more details on the VariableKiosk see the
 description in the :ref:`BaseClasses` section.
+
+.. _Broadcasting signals:
 
 Broadcasting signals
 --------------------

@@ -230,9 +230,10 @@ class AgroManagementDataProvider(list):
            campaign. Note that by default the campaign_start_date is set equal to the
            crop_start_date which means that the simulation starts when the crop starts.
            This default behaviour can be changed using this keyword. It can have multiple meanings:
-           - if a date object is passed, the campaign is assumed to start on this date.
-           - if an int/float is passed, the campaign_start_date is calculated as the
-             crop_start_date minus the number of days provided by campaign_start.
+
+               - if a date object is passed, the campaign is assumed to start on this date.
+               - if an int/float is passed, the campaign_start_date is calculated as the
+                 crop_start_date minus the number of days provided by campaign_start.
 
     For adjusting the campaign_start_Date, see also the `set_campaign_start_date(date)` method
     to update the campaign_start_date on an existing AgroManagementDataProvider.

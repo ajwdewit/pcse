@@ -1,7 +1,6 @@
 # Soil hydraulic properties
-WCAD   = 0.10 			
-WCWP   = 0.20
-WCFC   = 0.40
-WCWET  = 0.45
-WCST   = 0.50
+WCAD   = 0.10 			# Water content at air dry
+WCWP   = 0.20           # Water content at wilting point    
+WCFC   = 0.40           # Water content at field capacity
+WCST   = 0.50           # Water content at saturation
 DRATE  = 30.  			# Maximum drainage rate of the soil (mm/day) 
