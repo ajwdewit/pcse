@@ -103,10 +103,10 @@ class TestAgroManager4(TestAgroManagerSimpleTestTemplate):
                         name:  Timed irrigation events
                         comment: All irrigation amounts in cm
                         events_table:
-                        - 2000-01-01: {irrigation_amount: 2, efficiency: 0.7}
-                        - 2000-01-21: {irrigation_amount: 5, efficiency: 0.7}
-                        - 2000-03-18: {irrigation_amount: 3, efficiency: 0.7}
-                        - 2000-08-19: {irrigation_amount: 2, efficiency: 0.7}
+                        - 2000-01-01: {amount: 2, efficiency: 0.7}
+                        - 2000-01-21: {amount: 5, efficiency: 0.7}
+                        - 2000-03-18: {amount: 3, efficiency: 0.7}
+                        - 2000-08-19: {amount: 2, efficiency: 0.7}
                     StateEvents:
                 """
     start_date = date(1999, 8, 1)
@@ -131,10 +131,10 @@ class TestAgroManager5(TestAgroManagerSimpleTestTemplate):
                         name:  Timed irrigation events
                         comment: All irrigation amounts in cm
                         events_table:
-                        - 2000-01-01: {irrigation_amount: 2, efficiency: 0.7}
-                        - 2000-01-21: {irrigation_amount: 5, efficiency: 0.7}
-                        - 2000-03-18: {irrigation_amount: 3, efficiency: 0.7}
-                        - 2000-03-19: {irrigation_amount: 2, efficiency: 0.7}
+                        - 2000-01-01: {amount: 2, efficiency: 0.7}
+                        - 2000-01-21: {amount: 5, efficiency: 0.7}
+                        - 2000-03-18: {amount: 3, efficiency: 0.7}
+                        - 2000-03-19: {amount: 2, efficiency: 0.7}
                     -   event_signal: apply_npk
                         name:  Timed N/P/K application table
                         comment: All fertilizer amounts in kg/ha
@@ -169,7 +169,7 @@ class TestAgroManager5(TestAgroManagerSimpleTestTemplate):
                         name: Soil moisture driven irrigation scheduling
                         comment: all irrigation amounts in cm
                         events_table:
-                        - 0.15: {irrigation_amount: 2, efficiency: 0.7}
+                        - 0.15: {amount: 2, efficiency: 0.7}
                 - 2001-12-15:
                 """
 
@@ -193,7 +193,7 @@ class TestAgroManager6(unittest.TestCase):
                         name: Soil moisture driven irrigation scheduling
                         comment: all irrigation amounts in cm
                         events_table:
-                        - 0.15: {irrigation_amount: 2, efficiency: 0.7}
+                        - 0.15: {amount: 2, efficiency: 0.7}
                 """
 
     def runTest(self):
@@ -219,10 +219,10 @@ class TestAgroManager7(unittest.TestCase):
                        name:  Timed irrigation events
                        comment: All irrigation amounts in cm
                        events_table:
-                       - 2000-01-01: {irrigation_amount: 2, efficiency: 0.7}
-                       - 2000-01-21: {irrigation_amount: 5, efficiency: 0.7}
-                       - 2001-03-18: {irrigation_amount: 3, efficiency: 0.7}
-                       - 2000-03-19: {irrigation_amount: 2, efficiency: 0.7}
+                       - 2000-01-01: {amount: 2, efficiency: 0.7}
+                       - 2000-01-21: {amount: 5, efficiency: 0.7}
+                       - 2001-03-18: {amount: 3, efficiency: 0.7}
+                       - 2000-03-19: {amount: 2, efficiency: 0.7}
                     StateEvents:
                 - 2001-01-01: null
                 """
