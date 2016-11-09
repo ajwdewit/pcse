@@ -472,13 +472,15 @@ class CGMSEngine(Engine):
     simulation cycle but without altering the crop and soil components. This had the effect that after the
     crop cycle finished, all state variables were kept at the same value while the day counter increased.
     This behaviour is useful for two reasons:
+
     1. CGMS generally produces dekadal output and when a day-of-maturity or day-of-harvest does not coincide
-    with a dekad boundary the final simulation values remain available and are stored at the next dekad.
+       with a dekad boundary the final simulation values remain available and are stored at the next dekad.
     2. When aggregating spatial simulations with variability in day-of-maturity or day-of-harvest it ensures
-    that records are available in the database tables. So GroupBy clauses in SQL queries produce the right
-    results when computing spatial averages.
+       that records are available in the database tables. So GroupBy clauses in SQL queries produce the right
+       results when computing spatial averages.
 
     The difference with the Engine are:
+
     1. Crop rotations are not supported
     2. After a CROP_FINISH signal, the engine will continue, updating the
        timer but the soil, crop and agromanagement will not execute their simulation cycles.
