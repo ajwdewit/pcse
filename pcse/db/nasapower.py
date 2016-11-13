@@ -206,7 +206,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
         # build URL for retrieving data
         server = "power.larc.nasa.gov"
-        t_url = ("http://{server}/cgi-bin/cgiwrap/solar/agro.cgi?" +
+        t_url = ("https://{server}/cgi-bin/cgiwrap/solar/agro.cgi?" +
                  "email=agroclim%40larc.nasa.gov&step=1&lat={lat}&lon={lon}" +
                  "&ms=1&ds=1&ys=1984&me={month}&de={day}&ye={year}&p=toa_dwn&" +
                  "p=swv_dwn&p=lwv_dwn&p=T2M&p=T2MN&p=T2MX&p=RH2M&" +
