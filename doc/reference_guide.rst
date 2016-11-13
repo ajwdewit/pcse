@@ -465,8 +465,8 @@ An example of an agromanagement definition file::
             name:  Timed irrigation events
             comment: All irrigation amounts in cm
             events_table:
-            - 2000-05-25: {irrigation_amount: 3.0}
-            - 2000-06-30: {irrigation_amount: 2.5}
+            - 2000-05-25: {amount: 3.0, efficiency=0.7}
+            - 2000-06-30: {amount: 2.5, efficiency=0.7}
         StateEvents:
         -   event_signal: apply_npk
             event_state: DVS
@@ -494,10 +494,10 @@ An example of an agromanagement definition file::
             name:  Timed irrigation events
             comment: All irrigation amounts in cm
             events_table:
-            - 2001-06-01: {irrigation_amount: 2.0}
-            - 2001-07-21: {irrigation_amount: 5.0}
-            - 2001-08-18: {irrigation_amount: 3.0}
-            - 2001-09-19: {irrigation_amount: 2.5}
+            - 2001-06-01: {amount: 2.0, efficiency=0.7}
+            - 2001-07-21: {amount: 5.0, efficiency=0.7}
+            - 2001-08-18: {amount: 3.0, efficiency=0.7}
+            - 2001-09-19: {amount: 2.5, efficiency=0.7}
         -   event_signal: apply_npk
             name:  Timed N/P/K application table
             comment: All fertilizer amounts in kg/ha
@@ -620,9 +620,9 @@ date::
             name:  Timed irrigation events
             comment: All irrigation amounts in cm
             events_table:
-            - 2000-05-01: {irrigation_amount: 2, efficiency: 0.7}
-            - 2000-06-21: {irrigation_amount: 5, efficiency: 0.7}
-            - 2000-07-18: {irrigation_amount: 3, efficiency: 0.7}
+            - 2000-05-01: {amount: 2, efficiency: 0.7}
+            - 2000-06-21: {amount: 5, efficiency: 0.7}
+            - 2000-07-18: {amount: 3, efficiency: 0.7}
         StateEvents:
 
 In the case that there is no harvest date provided and the crop runs till maturity, the end date from
@@ -645,7 +645,7 @@ of the simulation. Therefore, this definition will lead to an error::
             name: irrigation scheduling on volumetric soil moisture content
             comment: all irrigation amounts in cm
             events_table:
-            - 0.25: {irrigation_amount: 2, efficiency: 0.7}
+            - 0.25: {amount: 2, efficiency: 0.7}
 
 Exchanging data between model components
 ========================================

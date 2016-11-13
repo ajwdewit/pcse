@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2016 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), October 2016
 """Miscellaneous utilities for PCSE
 """
 import os, sys
@@ -9,22 +9,14 @@ import copy
 from math import log10, cos, sin, asin, sqrt, exp
 from collections import namedtuple
 from bisect import bisect_left
-try:
-    # support both python2 and python3
-    from collections import MutableMapping
-except ImportError:
-    from UserDict import DictMixin as MutableMapping
 import textwrap
 import sqlite3
-import pdb
-
-
-import numpy as np
 
 from . import exceptions as exc
 
 Celsius2Kelvin = lambda x: x + 273.16
 hPa2kPa = lambda x: x/10.
+
 # Saturated Vapour pressure [kPa] at temperature temp [C]
 SatVapourPressure = lambda temp: 0.6108 * exp((17.27 * temp) / (237.3 + temp))
 
@@ -300,7 +292,7 @@ def penman_monteith(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
 
     return ET0
 
-#-------------------------------------------------------------------------------
+
 def check_angstromAB(xA, xB):
     """Routine checks validity of Angstrom coefficients.
     
@@ -388,15 +380,11 @@ def doy(day):
     """Converts a date or datetime object to day-of-year (Jan 1st = doy 1)
     """
     # Check if day is a date or datetime object
-    if isinstance(day, datetime.date):
-        pass
-    elif isinstance(day, datetime.datetime):
-        day = day.date()
+    if isinstance(day, (datetime.date, datetime.datetime)):
+        return day.timetuple().tm_yday
     else:
         msg = "Parameter day is not a date or datetime object."
         raise RuntimeError(msg)
-
-    return (day-datetime.date(day.year,1,1)).days + 1
 
 
 def limit(min, max, v):
@@ -603,7 +591,7 @@ def astro(day, latitude, radiation, _cache={}):
 
     return retvalue
 
-#-------------------------------------------------------------------------------
+
 class Afgen(object):
     """Emulates the AFGEN function in WOFOST.
     
@@ -692,104 +680,6 @@ class Afgen(object):
             v *= self.unit
 
         return v
-
-#-------------------------------------------------------------------------------
-class Afgen2(object):
-    """Emulates the AFGEN function in TTUTIL with Numpy.interp
-    
-    :param tbl_xy: List or array of XY value pairs describing the function
-        the X values should be mononically increasing.
-    :param unit: The interpolated values is returned with given
-        `unit <http://pypi.python.org/pypi/Unum/4.1.0>`_ assigned.
-    
-    Returns the interpolated value provided with the 
-    absicca value at which the interpolation should take place.
-    
-    example::
-    
-        >>> tbl_xy = [0,0,1,1,5,10]
-        >>> f =  Afgen(tbl_xy)
-        >>> f(0.5)
-        0.5
-        >>> f(1.5)
-        2.125
-        >>> f(5)
-        10.0
-        >>> f(6)
-        10.0
-        >>> f(-1)
-        0.0
-    """
-    
-    def __init__(self, tbl_xy, unit=None):
-    
-        x = tbl_xy[0::2]
-        y = tbl_xy[1::2]
-        
-        # Determine if there are empty pairs in tbl_xy by searching
-        # for the point where x stops monotonically increasing
-        xpos = np.arange(1, len(x))
-        ibreak = False
-        for i in xpos:
-            if x[i] <= x[i-1]:
-                ibreak = True
-                break
-        
-        if ibreak is True:
-            x = x[0:i]
-            y = y[0:i]
-        
-        self.x = x
-        self.y = y
-        self.unit = unit
-    
-    def __call__(self, p):
-        
-        v = np.interp(p, self.x, self.y)
-        
-        # if a unum unit is defined, multiply with a unit
-        if self.unit is not None:
-            v *= self.unit
-        return float(v)
-    
-    def __str__(self):
-        msg = "AFGEN interpolation over (X,Y) pairs:\n"
-        for (x,y) in zip(self.x, self.y):
-            msg += ("(%f,%f)\n " % (x,y))
-        msg += "\n"
-        if self.unit is not None:
-             msg += "Return value as unit: %s" % self.unit
-        return msg
-
-#-------------------------------------------------------------------------------
-class Chainmap(MutableMapping):
-    """Combine multiple mappings for sequential lookup.
-
-    For example, to emulate Python's normal lookup sequence:
-
-        import __builtin__
-        pylookup = Chainmap(locals(), globals(), vars(__builtin__))
-    
-    recipe taken from http://code.activestate.com/recipes/305268/
-    Available natively in the connections module in python 3.3
-    """
-
-    def __init__(self, *maps):
-        self._maps = maps
-
-    def __getitem__(self, key):
-        for mapping in self._maps:
-            try:
-                return mapping[key]
-            except KeyError:
-                pass
-        raise KeyError(key)
-        
-    def keys(self):
-        k = []
-        for mapping in self._maps:
-            return k.extend(mapping.keys)
-        return k
 
 
 def merge_dict(d1, d2, overwrite=False):
@@ -909,8 +799,8 @@ def is_a_month(day):
         if (day == datetime.date(day.year, day.month+1, 1) - \
                    datetime.timedelta(days=1)):
             return True
-
     return False
+
 
 def is_a_week(day, weekday=0):
     """Default weekday is Monday. Monday is 0 and Sunday is 6"""
@@ -938,8 +828,8 @@ def is_a_dekad(day):
         elif (day == datetime.date(day.year, day.month+1, 1) -
                      datetime.timedelta(days=1)):
             return True
-
     return False
+
 
 def load_SQLite_dump_file(dump_file_name, SQLite_db_name):
     """Build an SQLite database <SQLite_db_name> from dump file <dump_file_name>.
@@ -952,6 +842,7 @@ def load_SQLite_dump_file(dump_file_name, SQLite_db_name):
     con.executescript(str_sql_dump)
     con.close()
 
+
 def safe_float(x):
     """Returns the value of x converted to float, if fails return None.
     """
@@ -959,6 +850,7 @@ def safe_float(x):
         return float(x)
     except (ValueError, TypeError):
         return None
+
 
 def check_date(indate):
         """Check representations of date and try to force into a datetime.date

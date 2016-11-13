@@ -464,3 +464,115 @@ class Engine(BaseEngine):
         """
 
         return self._saved_terminal_output
+
+class CGMSEngine(Engine):
+    """Engine to mimic CGMS behaviour.
+
+    The original CGMS did not terminate when the crop cycles was finished but instead continued with its
+    simulation cycle but without altering the crop and soil components. This had the effect that after the
+    crop cycle finished, all state variables were kept at the same value while the day counter increased.
+    This behaviour is useful for two reasons:
+
+    1. CGMS generally produces dekadal output and when a day-of-maturity or day-of-harvest does not coincide
+       with a dekad boundary the final simulation values remain available and are stored at the next dekad.
+    2. When aggregating spatial simulations with variability in day-of-maturity or day-of-harvest it ensures
+       that records are available in the database tables. So GroupBy clauses in SQL queries produce the right
+       results when computing spatial averages.
+
+    The difference with the Engine are:
+
+    1. Crop rotations are not supported
+    2. After a CROP_FINISH signal, the engine will continue, updating the
+       timer but the soil, crop and agromanagement will not execute their simulation cycles.
+       As a consequence, all state variables will retain their value.
+    3. TERMINATE signals have no effect.
+    4. CROP_FINISH signals will never remove the CROP SimulationObject.
+    5. run() and run_till_terminate() are not supported, only run_till() is supported.
+    """
+
+    flag_crop_finish = False
+    # Because of the intended behaviour of CGMSEngine flag_crop_delete is always False
+    flag_crop_delete = False
+
+    def run(self, days=1):
+        msg = "run() is not supported in the CGMSEngine, use: run_till(<date>)"
+        raise NotImplementedError(msg)
+
+    def run_till_terminate(self):
+        msg = "run_till_terminate() is not supported in the CGMSEngine, use: run_till(<date>)"
+        raise NotImplementedError(msg)
+
+    def run_till(self, rday):
+        """Runs the system until rday is reached."""
+
+        try:
+            rday = check_date(rday)
+        except KeyError as e:
+            msg = "run_till() function needs a date object as input"
+            print(msg)
+            return
+
+        if rday <= self.day:
+            msg = "date argument for run_till() function before current model date."
+            print(msg)
+            return
+
+        while self.day < rday:
+            self._run()
+
+    def _run(self):
+        """Make one time step of the simulation.
+        """
+
+        # Update timer
+        self.day, delt = self.timer()
+
+        if self.flag_crop_finish is False:
+            # State integration
+            self.integrate(self.day, delt)
+
+            # Driving variables
+            self.drv = self._get_driving_variables(self.day)
+
+            # Agromanagement decisions
+            self.agromanager(self.day, self.drv)
+
+            # Rate calculation
+            self.calc_rates(self.day, self.drv)
+
+        elif self.flag_crop_finish is True:
+            # Run the finalize section of the crop and soil simulation and sub-components
+            self.crop.finalize(self.day)
+            self.soil.finalize(self.day)
+
+            # Generate summary output after finalize() has been run.
+            self._save_summary_output()
+
+            # Set self.flag_crop_finish to None indicating that the simulation cycle should not continue
+            self.flag_crop_finish = None
+
+            # Still retain output if flag is set
+            if self.flag_output:
+                self._save_output(self.day)
+        else:
+            # Do nothing but still retain output if flag is set
+            if self.flag_output:
+                self._save_output(self.day)
+
+    def _on_CROP_FINISH(self, day, *args, **kwargs):
+        """Sets the variable 'flag_crop_finish' to True when the signal
+        CROP_FINISH is received.
+
+        """
+        self.flag_crop_finish = True
+
+    def _on_TERMINATE(self):
+        "TERMINATE is not implemented for CGMS Engine. This is only here to intercept the TERMINATE signal."
+        pass
+
+    def _finish_cropsimulation(self, day):
+        """This is already implemented in _run().
+
+        This method is just here to intercept the call to _finish_cropsimulation() from calc_rates().
+        """
+        pass

@@ -2,5 +2,6 @@
 WCAD   = 0.10 			# Water content at air dry
 WCWP   = 0.20           # Water content at wilting point    
 WCFC   = 0.40           # Water content at field capacity
+WCWET  = 0.45           # Water content at above which oxygen stress occurs
 WCST   = 0.50           # Water content at saturation
-DRATE  = 30.  			# Maximum drainage rate of the soil (mm/day) 
+DRATE  = 30.  			# Maximum drainage rate of the soil (mm/day)
