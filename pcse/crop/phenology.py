@@ -466,7 +466,7 @@ class DVS_Phenology(SimulationObject):
             s.DOM = day
             if p.CROP_END_TYPE in ["maturity","earliest"]:
                 self._send_signal(signal=signals.crop_finish,
-                                  day=day, finish="maturity",
+                                  day=day, finish_type="maturity",
                                   crop_delete=True)
         elif s.STAGE == "mature":
             msg = "Cannot move to next phenology stage: maturity already reached!"
@@ -485,7 +485,7 @@ class DVS_Phenology(SimulationObject):
         strictly related to phenology (but to management) this is the most
         logical place to put it.
         """
-        if finish_type == 'harvest':
+        if finish_type in ['harvest', 'earliest']:
             self._for_finalize["DOH"] = day
 
 
