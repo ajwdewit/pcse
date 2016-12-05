@@ -7,12 +7,14 @@ a class for testing STU suitability for a given crop.
 
 Data providers are compatible with a CGMS 8 database schema.
 """
+import os
 import datetime as dt
 
 from sqlalchemy import MetaData, select, Table, and_
 import yaml
 
 from ...util import check_date, wind10to2
+from ... import settings
 from ... import exceptions as exc
 from ..cgms12.data_providers import fetch_crop_name
 from ...base_classes import WeatherDataProvider, WeatherDataContainer
@@ -37,25 +39,50 @@ class GridWeatherDataProvider(WeatherDataProvider):
     def __init__(self, engine, grid_no, start_date=None, end_date=None):
 
         WeatherDataProvider.__init__(self)
-        if start_date is None:
-            start_date = dt.date(dt.MINYEAR, 1, 1)
-        if end_date is None:
-            end_date = dt.date(dt.MAXYEAR, 1, 1)
-        self.grid_no = grid_no
-        self.start_date = self.check_keydate(start_date)
-        self.end_date = self.check_keydate(end_date)
-        self.timeinterval = (end_date - start_date).days + 1
+        self.grid_no = int(grid_no)
+        if not self._self_load_cache(self.grid_no):
+            if start_date is None:
+                start_date = dt.date(dt.MINYEAR, 1, 1)
+            if end_date is None:
+                end_date = dt.date(dt.MAXYEAR, 1, 1)
+            self.start_date = self.check_keydate(start_date)
+            self.end_date = self.check_keydate(end_date)
+            self.timeinterval = (end_date - start_date).days + 1
 
-        metadata = MetaData(engine)
+            metadata = MetaData(engine)
 
-        # Get location info (lat/lon/elevation)
-        self._fetch_location_from_db(metadata)
+            # Get location info (lat/lon/elevation)
+            self._fetch_location_from_db(metadata)
 
-        # Retrieved meteo data
-        self._fetch_grid_weather_from_db(metadata)
+            # Retrieved meteo data
+            self._fetch_grid_weather_from_db(metadata)
 
-        # Description
-        self.description = "Weather data derived for grid_no: %i" % grid_no
+            # Description
+            self.description = "Weather data derived for grid_no: %i" % self.grid_no
+
+            # Save cache file
+            fname = self._get_cache_filename(self.grid_no)
+            self._dump(fname)
+
+    def _get_cache_filename(self, grid_no):
+        fname = "%s_grid_%i.cache" % (self.__class__.__name__, grid_no)
+        cache_filename = os.path.join(settings.METEO_CACHE_DIR, fname)
+        return cache_filename
+
+    def _self_load_cache(self, grid_no):
+        """Checks if a cache file exists and tries to load it."""
+        cache_fname = self._get_cache_filename(grid_no)
+        if os.path.exists(cache_fname):
+            r = os.stat(cache_fname)
+            cache_file_date = dt.date.fromtimestamp(r.st_mtime)
+            age = (dt.date.today() - cache_file_date).days
+            if age < 1:
+                try:
+                    self._load(cache_fname)
+                    return True
+                except exc.PCSEError:
+                    pass
+        return False
 
     #---------------------------------------------------------------------------
     def _fetch_location_from_db(self, metadata):
