@@ -93,9 +93,8 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     # Get Agromanagement
     agromanagement = AgroManagementDataProvider(db_engine, grid, crop, year)
 
-    start_date = agromanagement[0].keys()[0]
-    end_date = start_date + dt.timedelta(days=365)
-    wdp = GridWeatherDataProvider(db_engine, grid_no=grid, start_date=start_date, end_date=end_date)
+    # Get weather data
+    wdp = GridWeatherDataProvider(db_engine, grid_no=grid)
                              
     # Initialize PCSE/WOFOST
     mode = mode.strip().lower()
