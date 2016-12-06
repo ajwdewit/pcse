@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2016 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), July 2016
+# Allard de Wit (allard.dewit@wur.nl), December 2016
 """
 The Python Crop Simulation Environment (PCSE) has been developed
 to facilitate implementing crop simulation models that were 
@@ -29,7 +29,7 @@ See Also
 from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
-__version__ = "5.2.4"
+__version__ = "5.2.5"
 __stable__ = True
 
 import sys, os

@@ -15,6 +15,14 @@ PCSE version 5.2 brings the following new features:
   An example notebook has been added to explain the different irrigation options.
 - Support for reading input data from a CGMS8 and CGMS14 database
 
+Changes in 5.2.5:
+
+- Bug fixes in agromanager causing problems with crop_end_type="earliest" or "harvest"
+- Caching was added to the CGMS weather data providers
+- Added CGMSEngine that mimics behaviour of the classic CGMS: after the cropping season is over, a call
+  to _run() will increase the DAY, but the internal state variables do not change anymore, although they
+  are kept available and can be queried and stored in OUTPUT.
+
 What's new in PCSE 5.1
 ======================
 
