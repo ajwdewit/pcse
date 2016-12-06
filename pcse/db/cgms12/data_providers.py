@@ -8,7 +8,8 @@ a class for testing STU suitability for a given crop.
 Data providers are compatible with a CGMS 11 database schema.
 """
 
-import datetime
+import os
+import datetime as dt
 import logging
 
 from sqlalchemy import MetaData, select, Table, and_
@@ -19,7 +20,7 @@ import yaml
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import exceptions as exc
 from ...base_classes import WeatherDataContainer, WeatherDataProvider
-
+from ... import settings
 
 def fetch_crop_name(engine, crop_no):
     """Retrieves the name of the crop from the CROP table for
@@ -95,34 +96,59 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
 
         WeatherDataProvider.__init__(self)
 
-        self.grid_no = grid_no
+        self.grid_no = int(grid_no)
         self.recalc_ET = recalc_ET
 
-        try:
-            self.start_date = self.check_keydate(start_date)
-        except KeyError:
-            self.start_date = None
+        if not self._self_load_cache(self.grid_no):
+            try:
+                self.start_date = self.check_keydate(start_date)
+            except KeyError:
+                self.start_date = None
 
-        try:
-            self.end_date = self.check_keydate(end_date)
-        except KeyError:
-            self.end_date = None
+            try:
+                self.end_date = self.check_keydate(end_date)
+            except KeyError:
+                self.end_date = None
 
-        try:
-            self.time_interval = (end_date - start_date).days + 1
-        except TypeError:
-            self.time_interval = None
+            try:
+                self.time_interval = (end_date - start_date).days + 1
+            except TypeError:
+                self.time_interval = None
 
-        metadata = MetaData(engine)
-        # Get location info (lat/lon/elevation)
-        self._fetch_location_from_db(metadata)
-        # Retrieved meteo data
-        self._fetch_weather_from_db(metadata)
+            metadata = MetaData(engine)
+            # Get location info (lat/lon/elevation)
+            self._fetch_location_from_db(metadata)
+            # Retrieved meteo data
+            self._fetch_weather_from_db(metadata)
 
-        # Provide a description that is shown when doing a print()
-        line1 = "Weather data retrieved from CGMS 11 db %s" % str(engine)[7:-1]
-        line2 = "for grid_no: %s" % self.grid_no
-        self.description = [line1, line2]
+            # Provide a description that is shown when doing a print()
+            line1 = "Weather data retrieved from CGMS 11 db %s" % str(engine)[7:-1]
+            line2 = "for grid_no: %s" % self.grid_no
+            self.description = [line1, line2]
+
+        # Save cache file
+        fname = self._get_cache_filename(self.grid_no)
+        self._dump(fname)
+
+    def _get_cache_filename(self, grid_no):
+        fname = "%s_grid_%i.cache" % (self.__class__.__name__, grid_no)
+        cache_filename = os.path.join(settings.METEO_CACHE_DIR, fname)
+        return cache_filename
+
+    def _self_load_cache(self, grid_no):
+        """Checks if a cache file exists and tries to load it."""
+        cache_fname = self._get_cache_filename(grid_no)
+        if os.path.exists(cache_fname):
+            r = os.stat(cache_fname)
+            cache_file_date = dt.date.fromtimestamp(r.st_mtime)
+            age = (dt.date.today() - cache_file_date).days
+            if age < 1:
+                try:
+                    self._load(cache_fname)
+                    return True
+                except exc.PCSEError:
+                    pass
+        return False
 
     #---------------------------------------------------------------------------
     def _fetch_location_from_db(self, metadata):
@@ -156,8 +182,8 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
 
         try:
             # if start_date/end_date are None, define a date in the far past/future
-            start_date = self.start_date if self.start_date is not None else datetime.date(1, 1, 1)
-            end_date = self.end_date if self.end_date is not None else datetime.date(9999, 1, 1)
+            start_date = self.start_date if self.start_date is not None else dt.date(1, 1, 1)
+            end_date = self.end_date if self.end_date is not None else dt.date(9999, 1, 1)
             table_db = Table("weather_obs_grid", metadata, autoload=True)
             r = select([table_db], and_(table_db.c.grid_no == self.grid_no,
                                         table_db.c.day >= start_date,
@@ -288,7 +314,7 @@ class AgroManagementDataProvider(list):
             self.campaign_start_date = self.crop_start_date
         elif isinstance(campaign_start, (int, float)):
             ndays = abs(int(campaign_start))
-            self.campaign_start_date = self.crop_start_date - datetime.timedelta(days=ndays)
+            self.campaign_start_date = self.crop_start_date - dt.timedelta(days=ndays)
         else:
             try:
                 campaign_start = check_date(campaign_start)
@@ -314,7 +340,7 @@ class AgroManagementDataProvider(list):
         if self.crop_end_type == "maturity":
             self.crop_end_date = "null"
             self.max_duration = int(row.max_duration)
-            self.campaign_end_date = self.crop_start_date + datetime.timedelta(days=self.max_duration)
+            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration)
         else:
             self.crop_end_date = check_date(row.end_date)
             self.campaign_end_date = self.crop_end_date
