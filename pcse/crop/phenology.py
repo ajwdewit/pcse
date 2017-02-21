@@ -314,7 +314,7 @@ class DVS_Phenology(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk)
+        self.rates = self.RateVariables(kiosk, publish="DVR")
         self.kiosk = kiosk
 
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)

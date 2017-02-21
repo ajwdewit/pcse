@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+# Adapted for translocation for stem dry matter by
+# Iwan Supit (iwan.supit@wur.nl), June 2016
 
 from ..traitlets import Float, Int, Instance, AfgenTrait
 from ..decorators import prepare_rates, prepare_states
@@ -26,6 +28,8 @@ class WOFOST_Stem_Dynamics(SimulationObject):
     =======  ============================================= =======  ============
      Name     Description                                   Type     Unit
     =======  ============================================= =======  ============
+    FRTRL    fraction of stem dry weight that can be        SCr        -
+             remobilized for grain growth
     TDWI     Initial total crop dry weight                  SCr       |kg ha-1|
     RDRSTB   Relative death rate of stems as a function     TCr       -
              of development stage
@@ -53,6 +57,8 @@ class WOFOST_Stem_Dynamics(SimulationObject):
     GRST     Growth rate stem biomass                           N   |kg ha-1 d-1|
     DRST     Death rate stem biomass                            N   |kg ha-1 d-1|
     GWST     Net change in stem biomass                         N   |kg ha-1 d-1|
+    TRANSL   Amount of stem biomass that can be tarnslocated    Y   |kg ha-1 d-1|
+    DVR      Development rate                                   N     -
     =======  ================================================= ==== ============
     
     **Signals send or handled**
@@ -61,20 +67,24 @@ class WOFOST_Stem_Dynamics(SimulationObject):
     
     **External dependencies:**
     
-    =======  =================================== =================  ============
-     Name     Description                         Provided by         Unit
-    =======  =================================== =================  ============
-    DVS      Crop development stage              DVS_Phenology       -
-    ADMI     Above-ground dry matter             CropSimulation     |kg ha-1 d-1|
+    =======  =================================== =================       ============
+     Name     Description                         Provided by             Unit
+    =======  =================================== =================       ============
+    DVS      Crop development stage              DVS_Phenology             -
+    DVR      Crop development rate               DVS_Phenology             -
+    ADMI     Above-ground dry matter             CropSimulation          |kg ha-1 d-1|
              increase
-    FR       Fraction biomass to roots           DVS_Partitioning    - 
-    FS       Fraction biomass to stems           DVS_Partitioning    - 
-    =======  =================================== =================  ============
+    FR       Fraction biomass to roots           DVS_Partitioning          -
+    FS       Fraction biomass to stems           DVS_Partitioning          -
+    REDUCTL  Translocation reduction             storage_organ_dynamics  |kg ha-1 d-1|
+    =======  =================================== ======================  ============
     """
 
     class Parameters(ParamTemplate):      
         RDRSTB = AfgenTrait()
         SSATB  = AfgenTrait()
+        ISINK  = Float(-99.)
+        FRTRL  = Float(-99.)
         TDWI   = Float(-99.)
 
     class StateVariables(StatesTemplate):
@@ -87,6 +97,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         GRST = Float(-99.)
         DRST = Float(-99.)
         GWST = Float(-99.)
+        TRANSL = Float(-99.)
         
     def initialize(self, day, kiosk, parvalues):
         """
@@ -95,9 +106,9 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         :param parvalues: `ParameterProvider` object providing parameters as
                 key/value pairs
         """
-        
+
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk, publish="DRST")
+        self.rates  = self.RateVariables(kiosk, publish=["DRST","TRANSL"])
         self.kiosk  = kiosk
 
         # INITIAL STATES
@@ -121,14 +132,22 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         states = self.states
         params = self.params
         
-        DVS = self.kiosk["DVS"]
-        FS = self.kiosk["FS"]
+        DVS  = self.kiosk["DVS"]
+        DVR  = self.kiosk["DVR"]
+        FS   = self.kiosk["FS"]
         ADMI = self.kiosk["ADMI"]
+
+        # Calcualte the amount of stem dry matter that can be translocated
+        if DVS > 1.0:
+            rates.TRANSL = (states.WST + states.DWST) * DVR * params.FRTRL
+        else:
+            rates.TRANSL = 0.
 
         # Growth/death rate stems
         rates.GRST = ADMI * FS
         rates.DRST = params.RDRSTB(DVS) * states.WST
-        rates.GWST = rates.GRST - rates.DRST
+        rates.GWST = rates.GRST - rates.DRST - rates.TRANSL
+
 
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -136,8 +155,20 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         rates = self.rates
         states = self.states
 
+        # in case of sink limitation not all assimilates
+        # can be translocated to the storage organs
+        # consequently the stem growth rate has to be increased
+        # with the translocation reduction REDUCTL
+        if params.ISINK ==1:
+            if self.kiosk["REDUCTL"] is None:
+                REDUCTL = 0
+            else:
+                REDUCTL = self.kiosk["REDUCTL"]
+        else:
+            REDUCTL = 0.
+
         # Stem biomass (living, dead, total)
-        states.WST += rates.GWST
+        states.WST += (rates.GWST + REDUCTL)
         states.DWST += rates.DRST
         states.TWST = states.WST + states.DWST
 
