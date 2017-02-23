@@ -23,7 +23,7 @@ from .traitlets import Instance, Bool
 from .base_classes import (VariableKiosk, WeatherDataProvider,
                            AncillaryObject, WeatherDataContainer,
                            SimulationObject, BaseEngine,
-                           ParameterProvider, MultiCropParameterProvider)
+                           ParameterProvider)
 from .util import ConfigurationLoader, check_date
 from .timer import Timer
 from . import signals
@@ -276,9 +276,9 @@ class Engine(BaseEngine):
         self.flag_crop_delete = crop_delete
 
     #---------------------------------------------------------------------------
-    def _on_CROP_START(self, day, crop_id=None, crop_start_type=None,
-                       crop_end_type=None):
-        """Starts
+    def _on_CROP_START(self, day, crop_name=None, variety_name=None,
+                       crop_start_type=None, crop_end_type=None):
+        """Starts the crop
         """
         self.logger.debug("Received signal 'CROP_START' on day %s" % day)
 
@@ -289,8 +289,8 @@ class Engine(BaseEngine):
                    "crop_delete=True")
             raise exc.PCSEError(msg)
 
-        self.parameterprovider.set_crop_type(crop_id, crop_start_type,
-                                             crop_end_type)
+        self.parameterprovider.set_active_crop(crop_name, variety_name, crop_start_type,
+                                               crop_end_type)
         self.crop = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
 
     #---------------------------------------------------------------------------

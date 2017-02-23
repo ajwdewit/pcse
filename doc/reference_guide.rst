@@ -454,7 +454,8 @@ An example of an agromanagement definition file::
     AgroManagement:
     - 1999-08-01:
         CropCalendar:
-            crop_id: winter-wheat
+            crop_name: wheat
+            variety_name: winter-wheat
             crop_start_date: 1999-09-15
             crop_start_type: sowing
             crop_end_date:
@@ -483,7 +484,8 @@ An example of an agromanagement definition file::
         StateEvents
     - 2001-03-01:
         CropCalendar:
-            crop_id: fodder-maize
+            crop_name: maize
+            variety_name: fodder-maize
             crop_start_date: 2001-04-15
             crop_start_type: sowing
             crop_end_date:
@@ -515,7 +517,7 @@ At each time step the instance of `CropCalendar` is called
 and at the dates defined by its parameters it initiates the appropriate actions:
 
 - sowing/emergence: A `crop_start` signal is dispatched including the parameters needed to
-  start the new crop simulation object (crop_start_type and crop_id)
+  start the new crop simulation object (crop_name, variety_name, crop_start_type and crop_end_type)
 - maturity/harvest: the crop cycle is ended by dispatching a `crop_finish` signal with the
   appropriate parameters.
 
@@ -585,11 +587,12 @@ The first option is to explicitly define the end date of the simulation by addin
 An example of an agromanagement definition with a 'trailing empty campaigns' (YAML format) is
 given below. This example will run the simulation until 2001-01-01::
 
-    Version: 1.0
+    Version: 1.0.0
     AgroManagement:
     - 1999-08-01:
         CropCalendar:
-            crop_id: winter-wheat
+            crop_name: wheat
+            variety_name: winter-wheat
             crop_start_date: 1999-09-15
             crop_start_type: sowing
             crop_end_date:
@@ -605,11 +608,12 @@ is retrieved from the crop calendar and/or the timed events that are scheduled. 
 end date will be 2000-08-05 as this is the harvest date and there are no timed events scheduled after this
 date::
 
-    Version: 1.0
+    Version: 1.0.0
     AgroManagement:
     - 1999-09-01:
         CropCalendar:
-            crop_id: winter-wheat
+            crop_name: wheat
+            variety_name: winter-wheat
             crop_start_date: 1999-10-01
             crop_start_type: sowing
             crop_end_date: 2000-08-05

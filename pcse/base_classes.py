@@ -20,6 +20,7 @@ from . import exceptions as exc
 from .decorators import prepare_states
 from .settings import settings
 
+
 class VariableKiosk(dict):
     """VariableKiosk for registering and publishing state variables in PCSE.
     
@@ -1481,6 +1482,7 @@ class ParameterProvider(MutableMapping):
     _override = dict()
     _unique_parameters = list()
     _iter = 0  # Counter for iterator
+    _ncrops_activated = 0  # Counts the number of times `set_crop_type()` has been called.
 
     def __init__(self, sitedata=None, timerdata=None, soildata=None, cropdata=None):
         if sitedata is not None:
@@ -1503,18 +1505,54 @@ class ParameterProvider(MutableMapping):
         self._maps = [self._override, self._sitedata, self._timerdata, self._soildata, self._cropdata]
         self._test_uniqueness()
 
-    def set_crop_type(self, crop_id=None, crop_start_type=None, crop_end_type=None):
-        """Set the start_type and end type of the crop which is relevant for
-        the phenology module.
+    def set_active_crop(self, crop_name=None, variety_name=None, crop_start_type=None, crop_end_type=None):
+        """Activate the crop parameters for the given crop_name and variety_name.
 
-        :param crop_id: string identifying the crop type, is ignored as only
+        :param crop_name: string identifying the crop name, is ignored as only
+               one crop is assumed to be here.
+        :param variety_name: string identifying the variety name, is ignored as only
                one crop is assumed to be here.
         :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
         :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
+
+        In case of crop rotations, there is a new set of crop parameters needed when a new
+        crop is started. This routine activates the crop parameters for the given crop_name and
+        variety_name. The `crop_name`, `variety_name` `crop_start_type` and `crop_end_type`
+        are defined in the agromanagement and supported by the AgroManager.
+
+        Note that many CropDataProviders are not designed for crop rotations and only support a single
+        crop whose parameters are active by default. In this case a call to `set_active_crop()` has no
+        effect and the `crop_name` and `variety_name` parameters are ignored.
+        CropDataProviders that support crop rotations explicitly have to subclass from
+        `pcse.base_classes.MultiCropDataProvider` in order to be recognized.
+
+        Besides the crop parameters, this method also sets the `crop_start_type` and `crop_end_type` of the
+        crop which is required for all crops by the phenology module.
+
         """
 
         self._timerdata["CROP_START_TYPE"] = crop_start_type
         self._timerdata["CROP_END_TYPE"] = crop_end_type
+        if isinstance(self._cropdata, MultiCropDataProvider):
+            # we have a MultiCropDataProvider, so set the active crop and variety
+            self._cropdata.set_active_crop(crop_name, variety_name)
+        else:
+            # we do not have a MultiCropDataProvider, this means that crop rotations are not supported
+            # At the first call this is OK. However issue a warning with subsequent calls
+            # to set_crop_type() are done because we cannot change the set of crop parameters
+            if self._ncrops_activated == 0:
+                pass
+            else:
+                # has been called multiple times
+                msg = "A second crop was scheduled: however, the CropDataProvider does not " \
+                      "support multiple crop parameter sets. This will only work for crop" \
+                      "rotations with the same crop."
+                loggername = "%s.%s" % (self.__class__.__module__,
+                                        self.__class__.__name__)
+                logger = logging.getLogger(loggername)
+                logger.warning(msg)
+
+        self._ncrops_activated += 1
         self._test_uniqueness()
 
     def set_override(self, varname, value, check=True):
@@ -1651,84 +1689,18 @@ class ParameterProvider(MutableMapping):
             self._iter = 0
             raise StopIteration
 
-class MultiCropParameterProvider(ParameterProvider):
-    """Parameter provider that allows multiple crop
-    parameter sets to be specified. This ParameterProvider is
-    designed to be combined with the AgroManager in order to
-    facilitate crop rotations.
 
-    Note that timerdata does not have to be provided anymore
-    because this role has been taken over by the AgroManager.
+class MultiCropDataProvider(dict):
 
-    :param sitedata: A dictionary with site parameters
-    :param soildata: A dictionary with soil parameters
-    :param multi_cropdata: A dict of dicts with the crop parameters
-        keyed on the `crop_id` used in the crop calendar. For
-        example:  multi_cropdata = {'winter-wheat': {<parameters for winter-wheat>},
-                                    'maize': {<parameters for maize>},
-                                    etc...
-    :keyword max_root_depth_name: The name of the crop parameter specifying the
-        maximum crop rooting depth. Defaults to "RDMCR"
-    :keyword init_root_depth_name: The name of the crop parameter specifying the
-        initial crop rooting depth. Defaults to "RDI".
+        def __init__(self):
+            self._store = {}
 
-    warning:: The WOFOST ClassicWaterBalance needs to know the maximum rooting depth
-    of all crops (RDMCR) in order to define its soil layers. Therefore all
-    sets of crop parameters are searched for the maximum value of RDMCR. Moreover, the
-    initial rooting depth (RDI) needs to be the same across all crop types. The names
-    of these parameter can be provided through the keywords specified above but default
-    to 'RDMCR' and 'RDI'.
-    """
-    _multi_cropdata = dict()
-    _RDMCR_max = 0.  # maximum rooting depth across all crop types for the water balance
-    _RDI = 0.   # Initial rooting depth
+        def set_active_crop(self, crop_name, variety_name):
+            """Sets the crop parameters for the crop identified by crop_name and variety_name.
 
-    def __init__(self, sitedata, soildata, multi_cropdata, max_root_depth_name="RDMCR",
-                 init_root_depth_name="RDI"):
+            Needs to be implemented by each subclass of MultiCropDataProvider
+            """
+            msg = "'set_crop_type' method should be implemented specifically for each" \
+                  "subclass of MultiCropDataProvider."
+            raise NotImplementedError(msg)
 
-        self._sitedata = sitedata
-        self._soildata = soildata
-        self._cropdata = {}
-        self._timerdata = {}
-        self._multi_cropdata = multi_cropdata
-
-        # Get maximum rooting depth and initial rooting depth over all crops
-        RDI = []
-        for crop_id, cropdata in self._multi_cropdata.items():
-            if cropdata[max_root_depth_name] > self._RDMCR_max:
-                self._RDMCR_max = cropdata[max_root_depth_name]
-            RDI.append(cropdata[init_root_depth_name])
-
-        # Test if all crops have the same initial rooting depth
-        if len(set(RDI)) > 1:
-            msg = "Initial rooting depth (%s) not the same across all crop types." % init_root_depth_name
-            raise exc.PCSEError(msg)
-        self._RDI = RDI[0]
-
-        # update the cropdata to provide default values for RDI and RDMCR which
-        # are need by the waterbalance at the initialization.
-        self._cropdata[max_root_depth_name] = self._RDMCR_max
-        self._cropdata[init_root_depth_name] = self._RDI
-
-        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
-        self._test_uniqueness()
-
-    def set_crop_type(self, crop_id=None, crop_start_type=None, crop_end_type=None):
-        """Switch the crop parameters in the MultiCropParameterProvider to crop type given by crop_id.
-
-        :param crop_id: string identifying the crop type
-        :param crop_start_type: start type for the given crop: 'sowing'|'emergence'
-        :param crop_end_type: end type for the given crop: 'maturity'|'harvest'|'earliest'
-        """
-
-        if crop_id not in self._multi_cropdata:
-            msg = "Crop parameters for crop (%s) cannot be found in the multi_cropdata." % crop_id
-            raise exc.PCSEError(msg)
-
-        self._cropdata.clear()
-        self._cropdata.update(self._multi_cropdata[crop_id])
-        self._timerdata["CROP_START_TYPE"] = crop_start_type
-        self._timerdata["CROP_END_TYPE"] = crop_end_type
-
-        self._maps = [self._sitedata, self._timerdata, self._soildata, self._cropdata]
-        self._test_uniqueness()

@@ -41,7 +41,7 @@ class NPK_Soil_Dynamics(SimulationObject):
                   mineralisation
     KSOILBASE_FR  Fraction of base soil N that comes available   SSi        -
                   every day
-    DVSNPK_STOP   Development stage after which no nutrients
+    DVS_NPK_STOP   Development stage after which no nutrients
                   are taken up from the soil by the crop.
     BG_N_SUPPLY   Background supply of N through atmospheric     SSi      |kg ha-1 d-1|
                   deposition.
@@ -125,7 +125,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         KSOILBASE = Float(-99.)  # total mineral soil K available at start of growth period [kg N/ha]
         KSOILBASE_FR = Float(-99.)  # fraction of soil mineral K coming available per day [day-1]
         
-        DVSNPK_STOP = Float(-99.)  # Development stage after which no nutrients are absorbed
+        DVS_NPK_STOP = Float(-99.)  # Development stage after which no nutrients are absorbed
 
         # Background rates of N/P/K supply [kg/ha/day]
         BG_N_SUPPLY = Float()
@@ -195,7 +195,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         
         TRANRF = TRA/TRAMX
         
-        if DVS < p.DVSNPK_STOP and TRANRF > 0.01 :
+        if DVS < p.DVS_NPK_STOP and TRANRF > 0.01 :
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.

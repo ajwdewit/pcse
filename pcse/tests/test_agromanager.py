@@ -31,7 +31,8 @@ class TestAgroManager1(TestAgroManagerSimpleTestTemplate):
                 AgroManagement:
                 - 1999-08-01:
                     CropCalendar:
-                        crop_id: winter-wheat
+                        crop_name: wheat
+                        variety_name: winter-wheat
                         crop_start_date: 1999-09-15
                         crop_start_type: sowing
                         crop_end_date:
@@ -52,7 +53,8 @@ class TestAgroManager2(TestAgroManagerSimpleTestTemplate):
                 AgroManagement:
                 - 1999-08-01:
                     CropCalendar:
-                        crop_id: winter-wheat
+                        crop_name: wheat
+                        variety_name: winter-wheat
                         crop_start_date: 1999-09-15
                         crop_start_type: sowing
                         crop_end_date:
@@ -72,7 +74,8 @@ class TestAgroManager3(TestAgroManagerSimpleTestTemplate):
                 AgroManagement:
                 - 1999-08-01:
                     CropCalendar:
-                        crop_id: winter-wheat
+                        crop_name: wheat
+                        variety_name: winter-wheat
                         crop_start_date: 1999-09-15
                         crop_start_type: sowing
                         crop_end_date: 2000-07-31
@@ -92,7 +95,8 @@ class TestAgroManager4(TestAgroManagerSimpleTestTemplate):
                 AgroManagement:
                 - 1999-08-01:
                     CropCalendar:
-                        crop_id: winter-wheat
+                        crop_name: wheat
+                        variety_name: winter-wheat
                         crop_start_date: 1999-09-15
                         crop_start_type: sowing
                         crop_end_date: 2000-07-31
@@ -120,7 +124,8 @@ class TestAgroManager5(TestAgroManagerSimpleTestTemplate):
                 AgroManagement:
                 - 1999-08-01:
                     CropCalendar:
-                        crop_id: winter-wheat
+                        crop_name: wheat
+                        variety_name: winter-wheat
                         crop_start_date: 1999-09-15
                         crop_start_type: sowing
                         crop_end_date:
@@ -146,7 +151,8 @@ class TestAgroManager5(TestAgroManagerSimpleTestTemplate):
                     StateEvents:
                 - 2001-01-01:
                     CropCalendar:
-                        crop_id: fodder-maize
+                        crop_name: maize
+                        variety_name: fodder-maize
                         crop_start_date: 2001-04-15
                         crop_start_type: sowing
                         crop_end_date:
@@ -244,7 +250,8 @@ class TestAgroManager8(unittest.TestCase):
                 AgroManagement:
                 - 2000-01-01:
                     CropCalendar:
-                        crop_id: fodder-maize
+                        crop_name: maize
+                        variety_name: fodder-maize
                         crop_start_date: 2001-04-15
                         crop_start_type: sowing
                         crop_end_date:

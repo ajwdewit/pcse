@@ -214,11 +214,12 @@ the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>`::
      listitems:
      - 2000-01-01:
          CropCalendar:
-           crop_end_date: 2000-10-20
-           crop_end_type: harvest
-           crop_id: sugar-beet
+           crop_name: sugarbeet
+           variety_name: sugarbeet_601
            crop_start_date: 2000-04-05
            crop_start_type: emergence
+           crop_end_date: 2000-10-20
+           crop_end_type: harvest
            max_duration: 300
          StateEvents: null
          TimedEvents: null
@@ -393,11 +394,12 @@ for the current example looks like this:
 
 .. code:: yaml
 
-    Version: 1.0
+    Version: 1.0.0
     AgroManagement:
     - 2006-01-01:
         CropCalendar:
-            crop_id: spring-wheat
+            crop_name: wheat
+            variety_name: spring-wheat
             crop_start_date: 2006-03-31
             crop_start_type: emergence
             crop_end_date: 2006-08-20
@@ -417,9 +419,9 @@ for the current example looks like this:
 The agromanagement definition starts with `Version:` indicating the version number of the agromanagement file
 while the actual definition starts after the label `AgroManagement:`. Next a date must be provided which sets the
 start date of the campaign (and the start date of the simulation). Each campaign is defined by zero or one
-CropCalendars and zero or more TimedEvents and/or StateEvents. The CropCalendar defines the crop type, date of sowing,
-date of harvesting, etc. while the Timed/StateEvents define actions that are either connected to a date or
-to a model state.
+CropCalendars and zero or more TimedEvents and/or StateEvents. The CropCalendar defines the crop name,
+variety_name, date of sowing, date of harvesting, etc. while the Timed/StateEvents define actions that are
+either connected to a date or to a model state.
 
 In the current example, the campaign starts on 2006-01-01, there is a crop calendar for spring-wheat starting on
 2006-03-31 with a harvest date of 2006-08-20 or earlier if the crop reaches maturity before this date.
@@ -438,7 +440,8 @@ Loading the agromanagement definition must by done with the YAMLAgroManagementRe
         CropCalendar:
           crop_end_date: 2006-10-20
           crop_end_type: earliest
-          crop_id: spring-wheat
+          crop_name: wheat
+          variety_name: spring-wheat
           crop_start_date: 2006-03-31
           crop_start_type: emergence
           max_duration: 300
