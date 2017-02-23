@@ -75,7 +75,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     cache file that can be restored much quicker compared to loading the YAML files.
     When reading YAML files from the local file system, care is taken to ensure that the
     cache file is re-created when updates to the local YAML are made. However, it should
-    be stressed that this is *not* possible for when parameters are retrieved from a URL
+    be stressed that this is *not* possible when parameters are retrieved from a URL
     and there is a risk that parameters are loaded from an outdated cache file. In that
     case use `force_reload=True` to force loading the parameters from the URL.
     """
@@ -93,9 +93,6 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     compatible_version = "1.0.0"
 
     def __init__(self, fpath=None, repository=None, force_reload=False):
-        """
-
-        """
         MultiCropDataProvider.__init__(self)
 
         if not self._load_cache(fpath) or force_reload:
