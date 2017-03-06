@@ -18,6 +18,7 @@ import os, sys
 from collections import deque
 import logging
 import datetime
+import gc
 
 from .traitlets import Instance, Bool
 from .base_classes import (VariableKiosk, WeatherDataProvider,
@@ -331,6 +332,11 @@ class Engine(BaseEngine):
             self.flag_crop_delete = False
             self.crop._delete()
             self.crop = None
+            # Run a dedicated garbage collection, because it was demonstrated
+            # that the standard python GC did not garbage collect the crop
+            # simulation object. This caused signals to be received by crop simulation
+            # objects that were supposed to be garbage collected already.
+            gc.collect()
 
     #---------------------------------------------------------------------------
     def _terminate_simulation(self, day):
