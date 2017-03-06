@@ -952,8 +952,61 @@ the NASA Power data from the internet for a given latitude and longitude.
 
 .. _Data providers for parameter values:
 
-Data providers for parameter values
------------------------------------
+Data providers for crop parameter values
+----------------------------------------
+
+PCSE has a specific data provider for crop parameters: the YAMLCropDataprovider.
+The difference with the generic data providers is that
+this data provider can read and store the parameter sets for multiple
+crops while the generic data providers only can hold a single set.
+This crop data providers is therefore suitable
+for running crop rotations with different crop types as the data provider
+can switch the active crop.
+
+The most basic use is to call YAMLCropDataProvider with no parameters. It will
+than pull the crop parameters from the github repository at
+https://github.com/ajwdewit/WOFOST_crop_parameters::
+
+    >>> from pcse.fileinput import YAMLCropDataProvider
+    >>> p = YAMLCropDataProvider()
+    >>> print(p)
+    YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
+
+All crops and varieties have been loaded from the YAML file, however no activate
+crop has been set. Therefore, we need to activate a a particular crop and variety:
+
+    >>> p.set_active_crop('wheat', 'Winter_wheat_101')
+    >>> print(p)
+    YAMLCropDataProvider - current active crop 'wheat' with variety 'Winter_wheat_101'
+    Available crop parameters:
+     {'DTSMTB': [0.0, 0.0, 30.0, 30.0, 45.0, 30.0], 'NLAI_NPK': 1.0, 'NRESIDLV': 0.004,
+     'KCRIT_FR': 1.0, 'RDRLV_NPK': 0.05, 'TCPT': 10, 'DEPNR': 4.5, 'KMAXRT_FR': 0.5,
+     ...
+     ...
+     'TSUM2': 1194, 'TSUM1': 543, 'TSUMEM': 120}
+
+Additionally, it is possible to load YAML parameter files from your local file system::
+
+    >>> p = YAMLCropDataProvider(fpath=r"D:\UserData\sources\WOFOST_crop_parameters")
+    >>> print(p)
+    YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
+
+Finally, it is possible to pull data from your fork of my github repository by specifying
+the URL to that repository::
+
+    >>> p = YAMLCropDataProvider(repository="https://raw.githubusercontent.com/<your_account>/WOFOST_crop_parameters/master/")
+
+To increase performance of loading parameters, the YAMLCropDataProvider will create a
+cache file that can be restored much quicker compared to loading the YAML files.
+When reading YAML files from the local file system, care is taken to ensure that the
+cache file is re-created when updates to the local YAML are made. However, it should
+be stressed that this is *not* possible when parameters are retrieved from a URL
+and there is a risk that parameters are loaded from an outdated cache file. In that
+case use `force_reload=True` to force loading the parameters from the URL.
+
+
+Generic data providers for parameters
+-------------------------------------
 
 PCSE provides several modules for retrieving parameter values for use in simulation models.
 The general concept that is used by all data providers for parameters is that they return a

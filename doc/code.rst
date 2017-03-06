@@ -182,7 +182,6 @@ hood" in PCSE. Except for the `VariableKiosk` and the `WeatherDataContainer`
 all classes are not to be called directly but should be subclassed instead.
 
 
-
 VariableKiosk
 -------------
 .. autoclass:: pcse.base_classes.VariableKiosk
@@ -254,6 +253,9 @@ files in PCSE format.
 
 .. _YAMLAgroManagementReader:
 .. autoclass:: pcse.fileinput.YAMLAgroManagementReader
+
+.. _YAMLCropDataProvider:
+.. autoclass:: pcse.fileinput.YAMLCropDataProvider
 
 .. _DBtools:
 
