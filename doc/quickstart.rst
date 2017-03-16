@@ -172,16 +172,15 @@ the crop or the soil. Examples are the initial conditions of
 the water balance such as the initial soil moisture content (WAV) and
 the initial and maximum surface storage (SSI, SSMAX). Also the
 atmospheric CO2 concentration is a typical site parameter.
-For the moment, we will
-define these parameters directly on the Python commandline::
+For the moment, we can define these parameters directly on the Python commandline
+as a simple python dictionary. However, it is more convenient to use the
+:ref:`WOFOST71SiteDataProvider <WOFOST71SiteDataProvider>` that documents the
+site parameters and provides sensible defaults::
 
-    >>> sitedata = {'SSMAX'  : 0.,
-                    'IFUNRN' : 0,
-                    'NOTINF' : 0,
-                    'SSI'    : 0,
-                    'WAV'    : 100,
-                    'SMLIM'  : 0.03,
-                    'CO2'    : 360.}
+    >>> from pcse.util import WOFOST71SiteDataProvider
+    >>> sitedata = WOFOST71SiteDataProvider(WAV=100, CO2=360)
+    >>> print(sitedata)
+    {'SMLIM': 0.4, 'NOTINF': 0, 'CO2': 360.0, 'SSI': 0.0, 'SSMAX': 0.0, 'IFUNRN': 0, 'WAV': 100.0}
 
 Finally, we need to pack the different sets of parameters into one variable
 using the `ParameterProvider`. This is needed because PCSE expects one
@@ -215,7 +214,7 @@ the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>`::
      - 2000-01-01:
          CropCalendar:
            crop_name: sugarbeet
-           variety_name: sugarbeet_601
+           variety_name: sugar_beet_601
            crop_start_date: 2000-04-05
            crop_start_type: emergence
            crop_end_date: 2000-10-20

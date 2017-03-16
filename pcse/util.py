@@ -890,7 +890,11 @@ def check_date(indate):
 
 
 class DummySoilDataProvider(dict):
-    """This class is to provide some dummy soil parameters which are needed for potential production simulation
+    """This class is to provide some dummy soil parameters for potential production simulation.
+
+    Simulation of potential production levels is independent of the soil. Nevertheless, the model
+    does not some parameter values. This data provider provides some hard coded parameter values for
+    this situation.
     """
     _defaults = {"SMFCF":0.3,
                  "SM0":0.4,
@@ -919,3 +923,62 @@ def version_tuple(v):
     True
     """
     return tuple(map(int, (v.split("."))))
+
+
+class WOFOST71SiteDataProvider(dict):
+    """Site data provider for WOFOST 7.1.
+
+    Site specific parameters for WOFOST 7.1 can be provided through this data provider as well as through
+    a normal python dictionary. The sole purpose of implementing this data provider is that the site
+    parameters for WOFOST are documented, checked and that sensible default values are given.
+
+    The following site specific parameter values can be set through this data provider::
+
+        - IFUNRN    Indicates whether non-infiltrating fraction of rain is a function of storm size (1)
+                    or not (0). Default 0
+        - NOTINF    Maximum fraction of rain not-infiltrating into the soil [0-1], default 0.
+        - SSMAX     Maximum depth of water that can be stored on the soil surface [cm]
+        - SSI       Initial depth of water stored on the surface [cm]
+        - WAV       Initial amount of water in total soil profile [cm]
+        - SMLIM     Initial maximum moisture content in initial rooting depth zone [0-1], default 0.4
+        - CO2       Atmospheric CO2 level (ppm), default 360.
+    """
+    
+    _defaults = {"IFUNRN": (0, {0, 1}, int),
+                 "NOTINF": (0, [0., 1.], float),
+                 "SSI": (0., [0., 100.], float),
+                 "SSMAX": (0., [0., 100.], float),
+                 "WAV": (None, [0., 100.], float),
+                 "SMLIM": (0.4, [0., 1.], float),
+                 "CO2": (360., [300., 1400.], float)}
+    _required = ["WAV"]
+
+    def __init__(self, **kwargs):
+        dict.__init__(self)
+        
+        for par_name, (default_value, par_range, par_conversion) in self._defaults.items():
+            if par_name not in kwargs:
+                # parameter was not provided, use the default if possible
+                if par_name in self._required:
+                    msg = "Value for parameter '%s' must be provided!" % par_name
+                    raise exc.PCSEError(msg)
+                else:
+                    v = default_value
+            else:
+                # parameter was provided, check value for type and range
+                v = par_conversion(kwargs.pop(par_name))
+                if isinstance(par_range, set):
+                    if v not in par_range:
+                        msg = "Value for parameter '%s' can only have values: %s" % (par_name, par_range)
+                        raise exc.PCSEError(msg)
+                else:
+                    if not (par_range[0] <= v <= par_range[1]):
+                        msg = "Value for parameter '%s' out of range %s-%s" % \
+                              (par_name, par_range[0], par_range[1])
+                        raise exc.PCSEError(msg)
+            self[par_name] = v
+
+        # Check if kwargs is empty
+        if kwargs:
+            msg = "Unknown parameter values provided to WOFOSTSiteDataProvider: %s" % kwargs
+            print(msg)

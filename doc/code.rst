@@ -257,6 +257,23 @@ files in PCSE format.
 .. _YAMLCropDataProvider:
 .. autoclass:: pcse.fileinput.YAMLCropDataProvider
 
+
+Simple or dummy data providers
+------------------------------
+
+This class of data providers can be used to provide parameter values in cases
+where separate files or a database is not needed or not practical. An example
+is the set of soil parameters for simulation of potential production conditions
+where the value of the parameters does not matter but nevertheless some values
+must be provided to the model.
+
+.. _DummySoilDataProvider:
+.. autoclass:: pcse.util.DummySoilDataProvider
+
+.. _WOFOST71SiteDataProvider:
+.. autoclass:: pcse.util.WOFOST71SiteDataProvider
+
+
 .. _DBtools:
 
 The database tools
