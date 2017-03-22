@@ -9,7 +9,7 @@ import csv
 import yaml
 
 from ..engine import Engine
-from ..base_classes import MultiCropParameterProvider
+from ..base_classes import ParameterProvider
 from ..fileinput import CABOFileReader, CABOWeatherDataProvider
 
 test_data_dir =  os.path.join(os.path.dirname(__file__), "test_data")
@@ -21,10 +21,10 @@ class TestWOFOSTNPK_WinterWheat(unittest.TestCase):
         amgt = yaml.load(open(os.path.join(test_data_dir, "wofost_npk.amgt")))['AgroManagement']
         soil = CABOFileReader(os.path.join(test_data_dir, "wofost_npk.soil"))
         site = CABOFileReader(os.path.join(test_data_dir, "wofost_npk.site"))
-        crop = {"winter-wheat": CABOFileReader(os.path.join(test_data_dir, "wofost_npk.crop"))}
+        crop = CABOFileReader(os.path.join(test_data_dir, "wofost_npk.crop"))
         weather = CABOWeatherDataProvider("NL1", test_data_dir)
 
-        parvalues = MultiCropParameterProvider(sitedata=site, soildata=soil, multi_cropdata=crop)
+        parvalues = ParameterProvider(sitedata=site, soildata=soil, cropdata=crop)
         wofost = Engine(parvalues,  weather, agromanagement=amgt, config="Wofost71_NPK.conf")
         wofost.run(days=300)
         self.output = wofost.get_output()

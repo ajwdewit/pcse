@@ -454,7 +454,8 @@ An example of an agromanagement definition file::
     AgroManagement:
     - 1999-08-01:
         CropCalendar:
-            crop_id: winter-wheat
+            crop_name: wheat
+            variety_name: winter-wheat
             crop_start_date: 1999-09-15
             crop_start_type: sowing
             crop_end_date:
@@ -483,7 +484,8 @@ An example of an agromanagement definition file::
         StateEvents
     - 2001-03-01:
         CropCalendar:
-            crop_id: fodder-maize
+            crop_name: maize
+            variety_name: fodder-maize
             crop_start_date: 2001-04-15
             crop_start_type: sowing
             crop_end_date:
@@ -515,12 +517,12 @@ At each time step the instance of `CropCalendar` is called
 and at the dates defined by its parameters it initiates the appropriate actions:
 
 - sowing/emergence: A `crop_start` signal is dispatched including the parameters needed to
-  start the new crop simulation object (crop_start_type and crop_id)
+  start the new crop simulation object (crop_name, variety_name, crop_start_type and crop_end_type)
 - maturity/harvest: the crop cycle is ended by dispatching a `crop_finish` signal with the
   appropriate parameters.
 
 For a detailed description of a crop calendar see the code documentation on the CropCalendar in the
-section on :ref:`Agromanagement <Agromanagement>`.
+section on :ref:`Agromanagement <AgromanagementCode>`.
 
 Timed events
 ------------
@@ -534,7 +536,7 @@ Note that when multiple events are connected to the same date, the order in whic
 undetermined.
 
 For a detailed description of a timed events see the code documentation on the TimedEventsDispatcher
-in the section on :ref:`Agromanagement <Agromanagement>`.
+in the section on :ref:`Agromanagement <AgromanagementCode>`.
 
 
 State events
@@ -569,7 +571,7 @@ Note that when multiple events are connected to the same state value, the order 
 undetermined.
 
 For a detailed description of a state events see the code documentation on the StateEventsDispatcher
-in the section on :ref:`Agromanagement <Agromanagement>`.
+in the section on :ref:`Agromanagement <AgromanagementCode>`.
 
 
 Finding the start and end date of a simulation
@@ -585,11 +587,12 @@ The first option is to explicitly define the end date of the simulation by addin
 An example of an agromanagement definition with a 'trailing empty campaigns' (YAML format) is
 given below. This example will run the simulation until 2001-01-01::
 
-    Version: 1.0
+    Version: 1.0.0
     AgroManagement:
     - 1999-08-01:
         CropCalendar:
-            crop_id: winter-wheat
+            crop_name: wheat
+            variety_name: winter-wheat
             crop_start_date: 1999-09-15
             crop_start_type: sowing
             crop_end_date:
@@ -605,11 +608,12 @@ is retrieved from the crop calendar and/or the timed events that are scheduled. 
 end date will be 2000-08-05 as this is the harvest date and there are no timed events scheduled after this
 date::
 
-    Version: 1.0
+    Version: 1.0.0
     AgroManagement:
     - 1999-09-01:
         CropCalendar:
-            crop_id: winter-wheat
+            crop_name: wheat
+            variety_name: winter-wheat
             crop_start_date: 1999-10-01
             crop_start_type: sowing
             crop_end_date: 2000-08-05
@@ -948,8 +952,61 @@ the NASA Power data from the internet for a given latitude and longitude.
 
 .. _Data providers for parameter values:
 
-Data providers for parameter values
------------------------------------
+Data providers for crop parameter values
+----------------------------------------
+
+PCSE has a specific data provider for crop parameters: the YAMLCropDataprovider.
+The difference with the generic data providers is that
+this data provider can read and store the parameter sets for multiple
+crops while the generic data providers only can hold a single set.
+This crop data providers is therefore suitable
+for running crop rotations with different crop types as the data provider
+can switch the active crop.
+
+The most basic use is to call YAMLCropDataProvider with no parameters. It will
+than pull the crop parameters from the github repository at
+https://github.com/ajwdewit/WOFOST_crop_parameters::
+
+    >>> from pcse.fileinput import YAMLCropDataProvider
+    >>> p = YAMLCropDataProvider()
+    >>> print(p)
+    YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
+
+All crops and varieties have been loaded from the YAML file, however no activate
+crop has been set. Therefore, we need to activate a a particular crop and variety:
+
+    >>> p.set_active_crop('wheat', 'Winter_wheat_101')
+    >>> print(p)
+    YAMLCropDataProvider - current active crop 'wheat' with variety 'Winter_wheat_101'
+    Available crop parameters:
+     {'DTSMTB': [0.0, 0.0, 30.0, 30.0, 45.0, 30.0], 'NLAI_NPK': 1.0, 'NRESIDLV': 0.004,
+     'KCRIT_FR': 1.0, 'RDRLV_NPK': 0.05, 'TCPT': 10, 'DEPNR': 4.5, 'KMAXRT_FR': 0.5,
+     ...
+     ...
+     'TSUM2': 1194, 'TSUM1': 543, 'TSUMEM': 120}
+
+Additionally, it is possible to load YAML parameter files from your local file system::
+
+    >>> p = YAMLCropDataProvider(fpath=r"D:\UserData\sources\WOFOST_crop_parameters")
+    >>> print(p)
+    YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
+
+Finally, it is possible to pull data from your fork of my github repository by specifying
+the URL to that repository::
+
+    >>> p = YAMLCropDataProvider(repository="https://raw.githubusercontent.com/<your_account>/WOFOST_crop_parameters/master/")
+
+To increase performance of loading parameters, the YAMLCropDataProvider will create a
+cache file that can be restored much quicker compared to loading the YAML files.
+When reading YAML files from the local file system, care is taken to ensure that the
+cache file is re-created when updates to the local YAML are made. However, it should
+be stressed that this is *not* possible when parameters are retrieved from a URL
+and there is a risk that parameters are loaded from an outdated cache file. In that
+case use `force_reload=True` to force loading the parameters from the URL.
+
+
+Generic data providers for parameters
+-------------------------------------
 
 PCSE provides several modules for retrieving parameter values for use in simulation models.
 The general concept that is used by all data providers for parameters is that they return a

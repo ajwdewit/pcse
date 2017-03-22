@@ -260,7 +260,8 @@ class AgroManagementDataProvider(list):
     agro_management_template = """
           - {0[campaign_start_date]}:
                 CropCalendar:
-                    crop_id: {0[crop_name]}
+                    crop_name: '{0[crop_name]}'
+                    variety_name: '{0[variety_name]}'
                     crop_start_date: {0[crop_start_date]}
                     crop_start_type: {0[start_period]}
                     crop_end_date: {0[crop_end_date]}
@@ -307,6 +308,9 @@ class AgroManagementDataProvider(list):
         self.amdict["campaign_start_date"] = check_date(self.amdict["crop_start_date"])
         self.amdict["campaign_end_date"] = check_date(self.amdict["crop_end_date"])
         self.amdict["crop_name"] = self.crop_name
+        # We do not get a variety_name from the CGMS database, so we make one
+        # as <crop_name>_<grid>_<year>
+        self.amdict["variety_name"] = "%s_%s_%s" % (self.crop_name, self.idgrid, self.campaign_year)
 
         # determine the campaign_start_date
         if campaign_start is None:

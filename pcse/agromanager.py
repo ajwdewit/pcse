@@ -64,7 +64,8 @@ class CropCalendar(HasTraits, DispatcherObject):
       appropriate parameters.
 
     :param kiosk: The PCSE VariableKiosk instance
-    :param crop_id: String identifying the crop
+    :param crop_name: String identifying the crop
+    :param variety_name: String identifying the variety
     :param crop_start_date: Start date of the crop simulation
     :param crop_start_type: Start type of the crop simulation ('sowing', 'emergence')
     :param crop_end_date: End date of the crop simulation
@@ -75,7 +76,8 @@ class CropCalendar(HasTraits, DispatcherObject):
     """
 
     # Characteristics of the crop cycle
-    crop_id = Unicode()
+    crop_name = Unicode()
+    variety_name = Unicode()
     crop_start_date = Instance(date)
     crop_start_type = Enum(["sowing", "emergence"])
     crop_end_date = Instance(date)
@@ -92,7 +94,7 @@ class CropCalendar(HasTraits, DispatcherObject):
     duration = Int(0)
     in_crop_cycle = Bool(False)
 
-    def __init__(self, kiosk, crop_id=None, crop_start_date=None,
+    def __init__(self, kiosk, crop_name=None, variety_name=None, crop_start_date=None,
                  crop_start_type=None, crop_end_date=None, crop_end_type=None, max_duration=None):
 
         # set up logging
@@ -101,7 +103,8 @@ class CropCalendar(HasTraits, DispatcherObject):
 
         self.logger = logging.getLogger(loggername)
         self.kiosk = kiosk
-        self.crop_id = crop_id
+        self.crop_name = crop_name
+        self.variety_name = variety_name
         self.crop_start_date = crop_start_date
         self.crop_start_type = crop_start_type
         self.crop_end_date = crop_end_date
@@ -129,8 +132,9 @@ class CropCalendar(HasTraits, DispatcherObject):
         # check that crop_start_date is within the campaign interval
         r = check_date_range(self.crop_start_date, campaign_start_date, next_campaign_start_date)
         if r is not True:
-            msg = "Start date (%s) for crop '%s' not within campaign window (%s - %s)." % \
-                  (self.crop_start_date, self.crop_id, campaign_start_date, next_campaign_start_date)
+            msg = "Start date (%s) for crop '%s' vareity '%s' not within campaign window (%s - %s)." % \
+                  (self.crop_start_date, self.crop_name, self.variety_name,
+                   campaign_start_date, next_campaign_start_date)
             raise exc.PCSEError(msg)
 
     def __call__(self, day):
@@ -148,10 +152,10 @@ class CropCalendar(HasTraits, DispatcherObject):
         if day == self.crop_start_date:  # Start a new crop
             self.duration = 0
             self.in_crop_cycle = True
-            msg = "Starting crop (%s) on day %s" % (self.crop_id, day)
+            msg = "Starting crop (%s) with variety (%s) on day %s" % (self.crop_name, self.variety_name, day)
             self.logger.info(msg)
-            self._send_signal(signal=signals.crop_start, day=day,
-                              crop_id=self.crop_id, crop_start_type=self.crop_start_type,
+            self._send_signal(signal=signals.crop_start, day=day, crop_name=self.crop_name,
+                              variety_name=self.variety_name, crop_start_type=self.crop_start_type,
                               crop_end_type=self.crop_end_type)
 
         # end of the crop cycle
@@ -546,7 +550,8 @@ class AgroManager(AncillaryObject):
         AgroManagement:
         - 1999-08-01:
             CropCalendar:
-                crop_id: winter-wheat
+                crop_name: wheat
+                variety_name: winter-wheat
                 crop_start_date: 1999-09-15
                 crop_start_type: sowing
                 crop_end_date:
@@ -575,7 +580,8 @@ class AgroManager(AncillaryObject):
             StateEvents
         - 2001-03-01:
             CropCalendar:
-                crop_id: fodder-maize
+                crop_name: maize
+                variety_name: fodder-maize
                 crop_start_date: 2001-04-15
                 crop_start_type: sowing
                 crop_end_date:
@@ -733,7 +739,8 @@ class AgroManager(AncillaryObject):
             AgroManagement:
             - 1999-08-01:
                 CropCalendar:
-                    crop_id: winter-wheat
+                    crop_name: winter-wheat
+                    variety_name: winter-wheat
                     crop_start_date: 1999-09-15
                     crop_start_type: sowing
                     crop_end_date:
@@ -751,7 +758,8 @@ class AgroManager(AncillaryObject):
             AgroManagement:
             - 2001-01-01:
                 CropCalendar:
-                    crop_id: fodder-maize
+                    crop_name: maize
+                    variety_name: fodder-maize
                     crop_start_date: 2001-04-15
                     crop_start_type: sowing
                     crop_end_date:
@@ -781,7 +789,8 @@ class AgroManager(AncillaryObject):
             AgroManagement:
             - 1999-09-01:
                 CropCalendar:
-                    crop_id: winter-wheat
+                    crop_name: wheat
+                    variety_name: winter-wheat
                     crop_start_date: 1999-10-01
                     crop_start_type: sowing
                     crop_end_date: 2000-08-05

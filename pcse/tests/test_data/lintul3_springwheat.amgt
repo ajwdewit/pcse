@@ -2,7 +2,8 @@ Version: 1.0
 AgroManagement:
 - 1997-01-01:
     CropCalendar:
-        crop_id: spring-wheat
+        crop_name: wheat
+        variety_name: spring-wheat
         crop_start_date: 1997-03-31
         crop_start_type: emergence
         crop_end_date: 1997-10-20

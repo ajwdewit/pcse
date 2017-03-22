@@ -20,7 +20,7 @@ class NPK_Crop_Dynamics(SimulationObject):
     ===========  ================================================ =======  ======================
      Name         Description                                      Type     Unit
     ===========  ================================================ =======  ======================
-    DVSNPK_STOP   DVS above which no crop N-P-K uptake occurs      SCr       -
+    DVS_NPK_STOP   DVS above which no crop N-P-K uptake occurs      SCr       -
 
     NMAXLV_TB      Maximum N concentration in leaves as            TCr     kg N kg-1 dry biomass
                    function of dvs
@@ -153,7 +153,7 @@ class NPK_Crop_Dynamics(SimulationObject):
     AKSOI = Float(-99.)  # initial soil K amount in storage organs
 
     class Parameters(ParamTemplate):
-        DVSNPK_STOP = Float(-99.)
+        DVS_NPK_STOP = Float(-99.)
         NMAXLV_TB = AfgenTrait()
         PMAXLV_TB = AfgenTrait()
         KMAXLV_TB = AfgenTrait()

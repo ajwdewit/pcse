@@ -184,7 +184,8 @@ class AgroManagementDataProvider(list):
     agro_management_template = """
           - {campaign_start_date}:
                 CropCalendar:
-                    crop_id: '{crop_name}'
+                    crop_name: '{crop_name}'
+                    variety_name: '{variety_name}'
                     crop_start_date: {crop_start_date}
                     crop_start_type: {crop_start_type}
                     crop_end_date: {crop_end_date}
@@ -259,8 +260,12 @@ class AgroManagementDataProvider(list):
     def _build_yaml_agromanagement(self):
         """Builds the YAML agromanagent string"""
 
+        # We do not get a variety_name from the CGMS database, so we make one
+        # as <crop_name>_<grid>_<year>
+        variety_name = "%s_%s_%s" % (self.crop_name, self.grid_no, self.campaign_year)
         input = self.agro_management_template.format(campaign_start_date=self.campaign_start_date,
                                                      crop_name=self.crop_name,
+                                                     variety_name=variety_name,
                                                      crop_start_date=self.crop_start_date,
                                                      crop_start_type=self.crop_start_type,
                                                      crop_end_date=self.crop_end_date,

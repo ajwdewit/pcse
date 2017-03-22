@@ -5,7 +5,7 @@
 Data providers for weather, soil, crop, timer and site data. Also
 a class for testing STU suitability for a given crop.
 
-Data providers are compatible with a CGMS 11 database schema.
+Data providers are compatible with a CGMS12 database schema.
 """
 
 import os
@@ -122,7 +122,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
             self._fetch_weather_from_db(metadata)
 
             # Provide a description that is shown when doing a print()
-            line1 = "Weather data retrieved from CGMS 11 db %s" % str(engine)[7:-1]
+            line1 = "Weather data retrieved from CGMS12 db %s" % str(engine)[7:-1]
             line2 = "for grid_no: %s" % self.grid_no
             self.description = [line1, line2]
 
@@ -177,7 +177,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
 
     #---------------------------------------------------------------------------
     def _fetch_weather_from_db(self, metadata):
-        """Retrieves the meteo data from table "grid_weather".
+        """Retrieves the meteo data from table 'weather_obs_grid'
         """
 
         try:
@@ -216,7 +216,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
 
     #---------------------------------------------------------------------------
     def _make_WeatherDataContainer(self, row, t):
-        """Process record from grid_weather including unit conversion."""
+        """Process record from 'weather_obs_grid' including unit conversion."""
 
         t.update({"TMAX": float(row.temperature_max),
                   "TMIN": float(row.temperature_min),
@@ -267,7 +267,8 @@ class AgroManagementDataProvider(list):
     agro_management_template = """
           - {campaign_start_date}:
                 CropCalendar:
-                    crop_id: '{crop_name}'
+                    crop_name: '{crop_name}'
+                    variety_name: '{variety_name}'
                     crop_start_date: {crop_start_date}
                     crop_start_type: {crop_start_type}
                     crop_end_date: {crop_end_date}
@@ -351,9 +352,12 @@ class AgroManagementDataProvider(list):
 
     def _build_yaml_agromanagement(self):
         """Builds the YAML agromanagent string"""
-
+        # We do not get a variety_name from the CGMS database, so we make one
+        # as <crop_name>_<grid>_<year>
+        variety_name = "%s_%s_%s" % (self.crop_name, self.grid_no, self.campaign_year)
         input = self.agro_management_template.format(campaign_start_date=self.campaign_start_date,
                                                      crop_name=self.crop_name,
+                                                     variety_name=variety_name,
                                                      crop_start_date=self.crop_start_date,
                                                      crop_start_type=self.crop_start_type,
                                                      crop_end_date=self.crop_end_date,

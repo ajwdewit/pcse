@@ -177,8 +177,8 @@ DVSDLT   =  1.0     ! development stage above which death of leaves starts in de
 
 ** nutrient use
 RDRLV_NPK    = 0.05     ! max. relative death rate of leaves due to nutrient (N-P-K) stress
-DVSNPK_STOP  = 1.3      ! development stage above which no crop N-P-K uptake does occur
-DVSNPK_TRANSL = 0.8      ! development stage above which N-P-K translocation to storage organs does occur 
+DVS_NPK_STOP  = 1.3      ! development stage above which no crop N-P-K uptake does occur
+DVS_NPK_TRANSL = 0.8      ! development stage above which N-P-K translocation to storage organs does occur
 NPK_TRANSLRT_FR    = 0.15     ! N-P-K translocations from roots as a fraction of resp. total N-P-K amounts translocated from leaves and stems
 NCRIT_FR = 1.00     ! optimal N concentration as fraction of maximum N concentration
 PCRIT_FR = 1.00     ! optimal P concentration as fraction of maximum P concentration

@@ -67,7 +67,7 @@ class NPK_Demand_Uptake(SimulationObject):
 
     NFIX_FR        fraction of crop nitrogen uptake by           SCr     kg N kg-1 dry biomass
                    biological fixation
-    DVSNPK_STOP    Development stage after which no nutrients    SCr     -
+    DVS_NPK_STOP    Development stage after which no nutrients    SCr     -
                    are taken up from the soil by the crop.
     ============  ============================================= ======= =======================
 
@@ -164,7 +164,7 @@ class NPK_Demand_Uptake(SimulationObject):
         TCKT = Float(-99.)  # time coefficient for K translocation to storage organs [days]
 
         NFIX_FR = Float(-99.)  # fraction of crop nitrogen uptake by biological fixation
-        DVSNPK_STOP = Float(-99.)  # development stage above which no crop N-P-K uptake does occur
+        DVS_NPK_STOP = Float(-99.)  # development stage above which no crop N-P-K uptake does occur
 
     class StateVariables(StatesTemplate):
         NDEMLV = Float(-99.)
@@ -255,10 +255,10 @@ class NPK_Demand_Uptake(SimulationObject):
         r.RPUSO = min(s.PDEMSO, PTRANSLOCATABLE)/p.TCPT
         r.RKUSO = min(s.KDEMSO, KTRANSLOCATABLE)/p.TCKT
 
-#       No nutrients are absorbed after development stage DVSNPK_STOP or
+#       No nutrients are absorbed after development stage DVS_NPK_STOP or
 #       when severe water shortage occurs i.e. TRANRF <= 0.01
         TRANRF = TRA/TRAMX
-        if DVS < p.DVSNPK_STOP and TRANRF > 0.01:
+        if DVS < p.DVS_NPK_STOP and TRANRF > 0.01:
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.

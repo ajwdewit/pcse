@@ -79,13 +79,16 @@ keywords.*
  Indicates that a new crop cycle will start.
  
  self._send_signal(signal=signals.crop_start, day=<date>,
-                   crop_id=<string>, crop_start_type=<string>,
-                   crop_end_type=<string>)
+                   crop_name=<string>, variety_name=<string>,
+                   crop_start_type=<string>, crop_end_type=<string>)
 
  keyword arguments with signals.crop_start:
     
     * day: Current date
-    * crop_id: a string identifying the crop
+    * crop_name: a string identifying the crop
+    * variety_name: a string identifying the crop variety
+    * crop_start_type: either 'sowing' or 'emergence'
+    * crop_end_type: either 'maturity', 'harvest' or 'earliest'
 
 **CROP_FINISH**
 

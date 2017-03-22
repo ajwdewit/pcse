@@ -51,10 +51,10 @@ Engine and models
     :members:
 
 
-.. _Agromanagement:
+.. _AgromanagementCode:
 
-Agromanagement
-==============
+Agromanagement modules
+======================
 
 The routines below implement the agromanagement system in PCSE including crop calendars, rotations,
 state and timed events. For reading agromanagement data from a file or a database structure see the sections
@@ -182,7 +182,6 @@ hood" in PCSE. Except for the `VariableKiosk` and the `WeatherDataContainer`
 all classes are not to be called directly but should be subclassed instead.
 
 
-
 VariableKiosk
 -------------
 .. autoclass:: pcse.base_classes.VariableKiosk
@@ -254,6 +253,26 @@ files in PCSE format.
 
 .. _YAMLAgroManagementReader:
 .. autoclass:: pcse.fileinput.YAMLAgroManagementReader
+
+.. _YAMLCropDataProvider:
+.. autoclass:: pcse.fileinput.YAMLCropDataProvider
+
+
+Simple or dummy data providers
+------------------------------
+
+This class of data providers can be used to provide parameter values in cases
+where separate files or a database is not needed or not practical. An example
+is the set of soil parameters for simulation of potential production conditions
+where the value of the parameters does not matter but nevertheless some values
+must be provided to the model.
+
+.. _DummySoilDataProvider:
+.. autoclass:: pcse.util.DummySoilDataProvider
+
+.. _WOFOST71SiteDataProvider:
+.. autoclass:: pcse.util.WOFOST71SiteDataProvider
+
 
 .. _DBtools:
 

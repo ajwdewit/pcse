@@ -172,16 +172,15 @@ the crop or the soil. Examples are the initial conditions of
 the water balance such as the initial soil moisture content (WAV) and
 the initial and maximum surface storage (SSI, SSMAX). Also the
 atmospheric CO2 concentration is a typical site parameter.
-For the moment, we will
-define these parameters directly on the Python commandline::
+For the moment, we can define these parameters directly on the Python commandline
+as a simple python dictionary. However, it is more convenient to use the
+:ref:`WOFOST71SiteDataProvider <WOFOST71SiteDataProvider>` that documents the
+site parameters and provides sensible defaults::
 
-    >>> sitedata = {'SSMAX'  : 0.,
-                    'IFUNRN' : 0,
-                    'NOTINF' : 0,
-                    'SSI'    : 0,
-                    'WAV'    : 100,
-                    'SMLIM'  : 0.03,
-                    'CO2'    : 360.}
+    >>> from pcse.util import WOFOST71SiteDataProvider
+    >>> sitedata = WOFOST71SiteDataProvider(WAV=100, CO2=360)
+    >>> print(sitedata)
+    {'SMLIM': 0.4, 'NOTINF': 0, 'CO2': 360.0, 'SSI': 0.0, 'SSMAX': 0.0, 'IFUNRN': 0, 'WAV': 100.0}
 
 Finally, we need to pack the different sets of parameters into one variable
 using the `ParameterProvider`. This is needed because PCSE expects one
@@ -214,11 +213,12 @@ the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>`::
      listitems:
      - 2000-01-01:
          CropCalendar:
-           crop_end_date: 2000-10-20
-           crop_end_type: harvest
-           crop_id: sugar-beet
+           crop_name: sugarbeet
+           variety_name: sugar_beet_601
            crop_start_date: 2000-04-05
            crop_start_type: emergence
+           crop_end_date: 2000-10-20
+           crop_end_type: harvest
            max_duration: 300
          StateEvents: null
          TimedEvents: null
@@ -393,11 +393,12 @@ for the current example looks like this:
 
 .. code:: yaml
 
-    Version: 1.0
+    Version: 1.0.0
     AgroManagement:
     - 2006-01-01:
         CropCalendar:
-            crop_id: spring-wheat
+            crop_name: wheat
+            variety_name: spring-wheat
             crop_start_date: 2006-03-31
             crop_start_type: emergence
             crop_end_date: 2006-08-20
@@ -417,9 +418,9 @@ for the current example looks like this:
 The agromanagement definition starts with `Version:` indicating the version number of the agromanagement file
 while the actual definition starts after the label `AgroManagement:`. Next a date must be provided which sets the
 start date of the campaign (and the start date of the simulation). Each campaign is defined by zero or one
-CropCalendars and zero or more TimedEvents and/or StateEvents. The CropCalendar defines the crop type, date of sowing,
-date of harvesting, etc. while the Timed/StateEvents define actions that are either connected to a date or
-to a model state.
+CropCalendars and zero or more TimedEvents and/or StateEvents. The CropCalendar defines the crop name,
+variety_name, date of sowing, date of harvesting, etc. while the Timed/StateEvents define actions that are
+either connected to a date or to a model state.
 
 In the current example, the campaign starts on 2006-01-01, there is a crop calendar for spring-wheat starting on
 2006-03-31 with a harvest date of 2006-08-20 or earlier if the crop reaches maturity before this date.
@@ -438,7 +439,8 @@ Loading the agromanagement definition must by done with the YAMLAgroManagementRe
         CropCalendar:
           crop_end_date: 2006-10-20
           crop_end_type: earliest
-          crop_id: spring-wheat
+          crop_name: wheat
+          variety_name: spring-wheat
           crop_start_date: 2006-03-31
           crop_start_type: emergence
           max_duration: 300

@@ -2,7 +2,8 @@ Version: 1.0
 AgroManagement:
 - 1976-01-01:
     CropCalendar:
-        crop_id: winter-wheat
+        crop_name: wheat
+        variety_name: winter-wheat
         crop_start_date: 1976-01-01
         crop_start_type: emergence
         crop_end_date:
