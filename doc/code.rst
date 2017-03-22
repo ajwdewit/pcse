@@ -51,10 +51,10 @@ Engine and models
     :members:
 
 
-.. _Agromanagement:
+.. _AgromanagementCode:
 
-Agromanagement
-==============
+Agromanagement modules
+======================
 
 The routines below implement the agromanagement system in PCSE including crop calendars, rotations,
 state and timed events. For reading agromanagement data from a file or a database structure see the sections

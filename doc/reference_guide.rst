@@ -522,7 +522,7 @@ and at the dates defined by its parameters it initiates the appropriate actions:
   appropriate parameters.
 
 For a detailed description of a crop calendar see the code documentation on the CropCalendar in the
-section on :ref:`Agromanagement <Agromanagement>`.
+section on :ref:`Agromanagement <AgromanagementCode>`.
 
 Timed events
 ------------
@@ -536,7 +536,7 @@ Note that when multiple events are connected to the same date, the order in whic
 undetermined.
 
 For a detailed description of a timed events see the code documentation on the TimedEventsDispatcher
-in the section on :ref:`Agromanagement <Agromanagement>`.
+in the section on :ref:`Agromanagement <AgromanagementCode>`.
 
 
 State events
@@ -571,7 +571,7 @@ Note that when multiple events are connected to the same state value, the order 
 undetermined.
 
 For a detailed description of a state events see the code documentation on the StateEventsDispatcher
-in the section on :ref:`Agromanagement <Agromanagement>`.
+in the section on :ref:`Agromanagement <AgromanagementCode>`.
 
 
 Finding the start and end date of a simulation
