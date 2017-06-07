@@ -1236,6 +1236,24 @@ class WeatherDataProvider(object):
 
         self.store.update(store)
 
+    def export(self):
+        """Exports the contents of the WeatherDataProvider as a list of dictionaries.
+
+        The results from export can be directly converted to a Pandas dataframe
+        which is convenient for plotting or analyses.
+        """
+        if self.supports_ensembles:
+            # We have to include the member_id in each dict with weather data
+            pass
+        else:
+            weather_data = []
+            days = sorted([r[0] for r in self.store.keys()])
+            for day in days:
+                wdc = self(day)
+                r = {key: getattr(wdc, key) for key in wdc.__slots__ if hasattr(wdc, key)}
+                weather_data.append(r)
+        return weather_data
+
     @property
     def first_date(self):
         try:
