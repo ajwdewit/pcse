@@ -728,6 +728,8 @@ class Simple_Evapotranspiration(SimulationObject):
         SM0    = Float(-99.)
         SMW    = Float(-99.)
         SMFCF  = Float(-99.)
+        CFET = Float(-99.)
+        DEPNR = Float(-99.)
 
     class RateVariables(RatesTemplate):
         EVWMX = Float(-99.)
@@ -760,9 +762,7 @@ class Simple_Evapotranspiration(SimulationObject):
         KGLOB = 0.75*KDIF
   
         # crop specific correction on potential transpiration rate
-        # CFET set to 1.
-        CFET = 1.
-        ET0 = CFET * drv.ET0
+        ET0 = p.CFET * drv.ET0
   
         # maximum evaporation and transpiration rates
         EKL = exp(-KGLOB * LAI)
@@ -771,9 +771,7 @@ class Simple_Evapotranspiration(SimulationObject):
         r.TRAMX = max(0.000001, ET0 * (1.-EKL))
         
         # Critical soil moisture
-        # set DEPNR to 4.5 (typical for cereals)
-        DEPNR = 4.5
-        SWDEP = SWEAF(ET0, DEPNR)
+        SWDEP = SWEAF(ET0, p.DEPNR)
         
         SMCR = (1.-SWDEP)*(p.SMFCF-p.SMW) + p.SMW
 

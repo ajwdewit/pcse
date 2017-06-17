@@ -53,3 +53,34 @@ class LINTUL3(Engine):
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
+
+
+class FAO_WRSI_Potential(Engine):
+    """Convenience function for computing potential crop water requirements with a (modified) FAO WRSI approach.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+
+    config = "GreenLayerCrop_PP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class FAO_WRSI_WaterLimited(Engine):
+    """Convenience function for computing actual crop water use including the Water Requirements
+    Satisfaction Index with a (modified) FAO WRSI approach.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+
+    config = "GreenLayerCrop_WLP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)

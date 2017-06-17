@@ -62,6 +62,10 @@ class GreenLayerCrop(SimulationObject):
         CTRAT = Float(-99.) # Crop total transpiration
         DOF = Instance(datetime.date)
         FINISH = Instance(str)
+        WRSI = Float()
+        SumPET = Float() # Sum of potential crop evapotranspiration
+        SumAET = Float() # Sum of actual crop evapotranspiration
+
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -78,7 +82,8 @@ class GreenLayerCrop(SimulationObject):
         self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
 
-        self.states = self.StateVariables(kiosk, CTRAT=0.0, DOF=None, FINISH=None)
+        self.states = self.StateVariables(kiosk, CTRAT=0.0, DOF=None, FINISH=None, WRSI=100,
+                                          SumPET=0., SumAET=0.)
             
         # assign handler for CROP_FINISH signal
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
@@ -106,12 +111,18 @@ class GreenLayerCrop(SimulationObject):
         self.lv_dynamics.integrate(day, delt)
 
         # total crop transpiration (CTRAT)
-        states.CTRAT += self.kiosk["TRA"]
+        states.CTRAT += self.kiosk["TRA"] * delt
+
+        # Sum of total and actual evapotranspiration
+        states.SumPET += (self.kiosk["TRAMX"] + self.kiosk["EVS"]) * delt
+        states.SumAET += (self.kiosk["TRA"] + self.kiosk["EVS"]) * delt
+        # compute Water Requirements Satisfaction Index according to FAO
+        states.WRSI = states.SumAET/states.SumPET * 100
         
     #---------------------------------------------------------------------------
-    def _on_CROP_FINISH(self, day, finish):
+    def _on_CROP_FINISH(self, day, finish_type, *args, **kwargs):
         """Handler for setting day of finish (DOF) and reason for
         crop finishing (FINISH).
         """
         self._for_finalize["DOF"] = day
-        self._for_finalize["FINISH"]= finish
+        self._for_finalize["FINISH"]= finish_type

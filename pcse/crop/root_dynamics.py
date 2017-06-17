@@ -229,24 +229,20 @@ class Simple_Root_Dynamics(SimulationObject):
         RD   = Float(-99.)
         RDM  = Float(-99.)
         
-    def initialize(self, day, kiosk, cropdata, soildata):
+    def initialize(self, day, kiosk, parameters):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param soildata: dictionary with WOFOST soildata key/value pairs
+        :param parameters: ParameterProvider object with key/value pairs
         """
-        
-        # Merge cropdata and soildata dictionaries in order to pass them to
-        # the Parameters class.
-        parvalues = merge_dict(cropdata, soildata)
-        
-        self.params = self.Parameters(parvalues)
+
+        self.params = self.Parameters(parameters)
         self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
         
         # INITIAL STATES
         params = self.params
+
         # Initial root depth states
         rdmax = max(params.RDI, min(params.RDMCR, params.RDMSOL))
         RDM = rdmax
