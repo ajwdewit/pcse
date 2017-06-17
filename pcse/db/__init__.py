@@ -7,3 +7,4 @@ from . import cgms8
 from . import cgms12
 from . import cgms14
 from .nasapower import NASAPowerWeatherDataProvider
+from .isidore_weatherdataprovider import GridWeatherDataProvider
