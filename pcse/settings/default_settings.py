@@ -27,6 +27,9 @@ PCSE_USER_HOME = _os.path.join(_os.path.expanduser("~"), ".pcse")
 # Location for meteo cache files
 METEO_CACHE_DIR = _os.path.join(PCSE_USER_HOME, "meteo_cache")
 
+# Do range checks for meteo variables
+METEO_RANGE_CHECKS = True
+
 # PCSE sets all rate variables to zero after state integration for consistency.
 # You can disable this behaviour for increased performance.
 ZEROFY = True

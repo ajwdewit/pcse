@@ -1131,11 +1131,14 @@ class WeatherDataContainer(SlotPickleMixin):
 
     def __setattr__(self, key, value):
         # Override to allow range checking on known meteo variables.
-        if key in self.ranges:
-            vmin, vmax = self.ranges[key]
-            if not vmin <= value <= vmax:
-                msg = "Value (%s) for meteo variable '%s' outside allowed range (%s, %s)." % (value, key, vmin, vmax)
-                raise exc.PCSEError(msg)
+
+        # Skip range checking if disabled by user
+        if settings.METEO_RANGE_CHECKS:
+            if key in self.ranges:
+                vmin, vmax = self.ranges[key]
+                if not vmin <= value <= vmax:
+                    msg = "Value (%s) for meteo variable '%s' outside allowed range (%s, %s)." % (value, key, vmin, vmax)
+                    raise exc.PCSEError(msg)
         SlotPickleMixin.__setattr__(self, key, value)
 
     def __str__(self):

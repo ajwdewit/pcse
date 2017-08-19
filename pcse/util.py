@@ -6,6 +6,9 @@
 import os, sys
 import datetime
 import copy
+import platform
+import tempfile
+import logging
 from math import log10, cos, sin, asin, sqrt, exp
 from collections import namedtuple
 from bisect import bisect_left
@@ -982,3 +985,28 @@ class WOFOST71SiteDataProvider(dict):
         if kwargs:
             msg = "Unknown parameter values provided to WOFOSTSiteDataProvider: %s" % kwargs
             print(msg)
+
+
+def get_user_home():
+    """A reasonable platform independent way to get the user home folder.
+    If PCSE runs under a system user then return the temp directory as returned
+    by tempfile.gettempdir()
+    """
+    user_home = None
+    if platform.system() == "Windows":
+        user = os.getenv("USERNAME")
+        if user is not None:
+            user_home = os.path.expanduser("~")
+    elif platform.system() == "Linux":
+        user = os.getenv("USER")
+        if user is not None:
+            user_home = os.path.expanduser("~")
+    else:
+        msg = "Platform not recognized, using system temp directory for PCSE settings."
+        logger = logging.getLogger("pcse")
+        logger.warning(msg)
+
+    if user_home is None:
+        user_home = tempfile.gettempdir()
+
+    return user_home

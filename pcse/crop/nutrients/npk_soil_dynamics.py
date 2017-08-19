@@ -228,7 +228,7 @@ class NPK_Soil_Dynamics(SimulationObject):
 
         r = self.rates
         r.unlock()
-        r.FERT_K_SUPPLY = N_amount * N_recovery
+        r.FERT_N_SUPPLY = N_amount * N_recovery
         r.FERT_P_SUPPLY = P_amount * P_recovery
         r.FERT_K_SUPPLY = K_amount * K_recovery
         r.lock()

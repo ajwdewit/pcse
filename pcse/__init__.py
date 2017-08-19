@@ -41,7 +41,7 @@ def setup():
     sys.path.
     """
 
-    user_home = os.path.expanduser("~")
+    user_home = util.get_user_home()
     pcse_user_home = os.path.join(user_home, ".pcse")
     if not os.path.exists(pcse_user_home):
         os.mkdir(pcse_user_home)
