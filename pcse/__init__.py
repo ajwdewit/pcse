@@ -33,6 +33,7 @@ __version__ = "5.3.0"
 __stable__ = False
 
 import sys, os
+from . import util
 
 # First define and run setup before importing the rest of the stuff
 def setup():
@@ -65,14 +66,12 @@ def setup():
                     cline = "# " + line
                 fp.write(cline)
 
-
 setup()
 
 import logging.config
 from .settings import settings
 logging.config.dictConfig(settings.LOG_CONFIG)
 
-from . import util
 from . import db
 from . import fileinput
 from . import tests
