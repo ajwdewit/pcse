@@ -19,13 +19,26 @@ from .snowmaus import SnowMAUS
 
 class WaterbalancePP(SimulationObject):
     """Fake waterbalance for simulation under potential production.
+
+    Keeps the soil moisture content at field capacity and only accumulates crop transpiration
+    and soil evaporation rates through the course of the simulation
     """
-    #TODO: add soil evaporation to waterbalancePP
+    # Counter for Days-Dince-Last-Rain
+    DSLR = Float(1)
+    # rainfall rate of previous day
+    RAINold = Float(0)
+
     class Parameters(ParamTemplate):
         SMFCF = Float(-99.)
 
     class StateVariables(StatesTemplate):
         SM = Float(-99.)
+        WTRAT = Float(-99.)
+        EVST = Float(-99.)
+
+    class RateVariables(RatesTemplate):
+        EVS = Float(-99.)
+        WTRA = Float(-99.)
 
     def initialize(self, day, kiosk, parvalues):
         """    
@@ -38,16 +51,51 @@ class WaterbalancePP(SimulationObject):
         soil) and one state variable (`SM`: the volumetric soil moisture).
         """
         self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(kiosk, publish="EVS")
         self.states = self.StateVariables(kiosk, SM=self.params.SMFCF,
-                                          publish="SM")
+                                          publish="SM", EVST=0, WTRAT=0)
     
     @prepare_rates
     def calc_rates(self, day, drv):
-        pass
-    
+
+        r = self.rates
+        # Transpiration and maximum soil and surface water evaporation rates
+        # are calculated by the crop Evapotranspiration module.
+        # However, if the crop is not yet emerged then set TRA=0 and use
+        # the potential soil/water evaporation rates directly because there is
+        # no shading by the canopy.
+        if "TRA" not in self.kiosk:
+            r.WTRA = 0.
+            EVSMX = drv.ES0
+        else:
+            r.WTRA = self.kiosk["TRA"]
+            EVSMX = self.kiosk["EVSMX"]
+
+        # Actual evaporation rates
+
+        if self.RAINold >= 1:
+            # If rainfall amount >= 1cm on previous day assume maximum soil
+            # evaporation
+            r.EVS = EVSMX
+            self.DSLR = 1.
+        else:
+            # Else soil evaporation is a function days-since-last-rain (DSLR)
+            self.DSLR += 1
+            EVSMXT = EVSMX * (sqrt(self.DSLR) - sqrt(self.DSLR - 1))
+            r.EVS = min(EVSMX, EVSMXT + self.RAINold)
+
+        # Hold rainfall amount to keep track of soil surface wetness and reset self.DSLR if needed
+        self.RAINold = drv.RAIN
+
     @prepare_states
     def integrate(self, day, delt=1.0):
+
+        # Keep soil moisture on field capacity
         self.states.SM = self.params.SMFCF
+
+        # Accumulated transpiration and soil evaporation amounts
+        self.states.EVST += self.rates.EVS * delt
+        self.states.WTRAT += self.rates.WTRA * delt
         
 
 class WaterbalanceFD(SimulationObject):
@@ -318,7 +366,7 @@ class WaterbalanceFD(SimulationObject):
                            WTRAT=0., EVST=0., EVWT=0., TSR=0.,
                            RAINT=0., WDRT=0., TOTINF=0., TOTIRR=0.,
                            PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
-        self.rates = self.RateVariables(kiosk)
+        self.rates = self.RateVariables(kiosk, publish="EVS")
         
         # Connect to CROP_EMERGED/CROP_FINISH signals for water balance to
         # search for crop transpiration values
@@ -372,7 +420,8 @@ class WaterbalanceFD(SimulationObject):
                 # Else soil evaporation is a function days-since-last-rain (DSLR)
                 self.DSLR += 1
                 EVSMXT = EVSMX*(sqrt(self.DSLR) - sqrt(self.DSLR-1))
-                r.EVS = min(EVSMX, EVSMXT + self.RINold)
+                EVS = min(EVSMX, EVSMXT + self.RINold)
+                r.EVS = min(EVS, s.W)
         
         # Preliminary infiltration rate (RINPRE)
         if s.SS < 0.1:

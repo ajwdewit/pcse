@@ -77,7 +77,7 @@ and have a look at these as well::
     >>> summary_output = wofost_object.get_summary_output()
     >>> msg = "Reached maturity at {DOM} with total biomass {TAGP} kg/ha "\
     "and a yield of {TWSO} kg/ha."
-    >>> print(msg.format(**summary_output[0])
+    >>> print(msg.format(**summary_output[0]))
     Reached maturity at 2000-05-31 with total biomass 15261.7521735 kg/ha and a yield of 7179.80460783 kg/ha.
 
     >>> summary_output

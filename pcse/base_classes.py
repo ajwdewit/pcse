@@ -1131,11 +1131,14 @@ class WeatherDataContainer(SlotPickleMixin):
 
     def __setattr__(self, key, value):
         # Override to allow range checking on known meteo variables.
-        if key in self.ranges:
-            vmin, vmax = self.ranges[key]
-            if not vmin <= value <= vmax:
-                msg = "Value (%s) for meteo variable '%s' outside allowed range (%s, %s)." % (value, key, vmin, vmax)
-                raise exc.PCSEError(msg)
+
+        # Skip range checking if disabled by user
+        if settings.METEO_RANGE_CHECKS:
+            if key in self.ranges:
+                vmin, vmax = self.ranges[key]
+                if not vmin <= value <= vmax:
+                    msg = "Value (%s) for meteo variable '%s' outside allowed range (%s, %s)." % (value, key, vmin, vmax)
+                    raise exc.PCSEError(msg)
         SlotPickleMixin.__setattr__(self, key, value)
 
     def __str__(self):
@@ -1235,6 +1238,24 @@ class WeatherDataProvider(object):
             raise exc.PCSEError(msg)
 
         self.store.update(store)
+
+    def export(self):
+        """Exports the contents of the WeatherDataProvider as a list of dictionaries.
+
+        The results from export can be directly converted to a Pandas dataframe
+        which is convenient for plotting or analyses.
+        """
+        if self.supports_ensembles:
+            # We have to include the member_id in each dict with weather data
+            pass
+        else:
+            weather_data = []
+            days = sorted([r[0] for r in self.store.keys()])
+            for day in days:
+                wdc = self(day)
+                r = {key: getattr(wdc, key) for key in wdc.__slots__ if hasattr(wdc, key)}
+                weather_data.append(r)
+        return weather_data
 
     @property
     def first_date(self):
