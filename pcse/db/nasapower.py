@@ -146,7 +146,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         recs = self._process_power_records(powerdata)
 
         # Determine Angstrom A/B parameters
-        self.AngstA, self.AngstB = self._estimate_AngstAB(recs)
+        self.angstA, self.angstB = self._estimate_AngstAB(recs)
 
         # Start building the weather data containers
         self._make_WeatherDataContainers(recs)
