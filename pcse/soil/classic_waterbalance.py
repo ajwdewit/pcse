@@ -44,7 +44,7 @@ class WaterbalancePP(SimulationObject):
         """    
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
-        :param soildata: dictionary with WOFOST soildata key/value pairs
+        :param parvalues: ParameterProvider object containing all parameters
     
         This waterbalance keeps the soil moisture always at field capacity. Therefore   
         `WaterbalancePP` has only one parameter (`SMFCF`: the field capacity of the
@@ -247,6 +247,8 @@ class WaterbalanceFD(SimulationObject):
     rooted_layer_needs_reset = Bool(False)
     # placeholder for irrigation
     _RIRR = Float(0.)
+    # default depth of upper layer (root zone)
+    ULDEPTH = Float(10.)
 
     class Parameters(ParamTemplate):
         # Soil parameters
@@ -265,9 +267,9 @@ class WaterbalanceFD(SimulationObject):
         WAV    = Float(-99.)
         NOTINF = Float(-99.)
         # crop parameters
-        IAIRDU = Float(-99.)
-        RDMCR  = Float(-99.)
-        RDI    = Float(-99.)
+        # IAIRDU = Float(-99.)
+        # RDMCR  = Float(-99.)
+        # RDI    = Float(-99.)
 
     class StateVariables(StatesTemplate):
         SM = Float(-99.)
@@ -308,17 +310,11 @@ class WaterbalanceFD(SimulationObject):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE  instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
-        :param soildata: dictionary with WOFOST soildata key/value pairs
-        :param sitedata: dictionary with WOFOST sitedata key/value pairs
+        :param parvalues: ParameterProvider containing all parameters
         """
 
         # Check validity of maximum soil moisture amount in topsoil (SMLIM)
-        SMLIM = parvalues["SMLIM"]
-        if parvalues["IAIRDU"] == 1: # applicable only for flooded rice crops
-            SMLIM = parvalues["SM0"]
-        else:
-            SMLIM = limit(parvalues["SMW"], parvalues["SM0"], SMLIM)
+        SMLIM = limit(parvalues["SMW"], parvalues["SM0"],  parvalues["SMLIM"])
 
         if SMLIM != parvalues["SMLIM"]:
             msg = "SMLIM not in valid range, changed from %f to %f."
@@ -328,9 +324,9 @@ class WaterbalanceFD(SimulationObject):
         self.params = self.Parameters(parvalues)
         p = self.params
         
-        # Current, maximum and old rooting depth
-        RD = p.RDI
-        RDM = max(p.RDI, min(p.RDMSOL, p.RDMCR))
+        # set default RD to 10 cm, maximum and old rooting depth
+        RD = self.ULDEPTH
+        RDM = max(RD, p.RDMSOL)
         self.RDold = RD
         self.RDM = RDM
         
@@ -449,14 +445,14 @@ class WaterbalanceFD(SimulationObject):
         # loss of water at the lower end of the maximum root zone
         # equilibrium amount of soil moisture below rooted zone
         WELOW = p.SMFCF * (self.RDM - RD)
-        LOSS  = limit(0., p.KSUB, (s.WLOW - WELOW + PERC1))
+        r.LOSS  = limit(0., p.KSUB, (s.WLOW - WELOW + PERC1))
         # for rice water losses are limited to K0/20
-        if (p.IAIRDU == 1):
-            LOSS = min(LOSS, p.K0/20.)
-        r.LOSS = LOSS
+        # if (p.IAIRDU == 1):
+        #     LOSS = min(LOSS, p.K0/20.)
+        # r.LOSS = LOSS
 
         # percolation not to exceed uptake capacity of subsoil
-        PERC2 = ((self.RDM -RD) * p.SM0 - s.WLOW) + LOSS
+        PERC2 = ((self.RDM -RD) * p.SM0 - s.WLOW) + r.LOSS
         r.PERC  = min(PERC1,PERC2)
 
         # adjustment of infiltration rate
@@ -518,16 +514,17 @@ class WaterbalanceFD(SimulationObject):
 
         # Redefine the rootzone when the crop is finished. As a result there
         # no roots anymore (variable RD) and the rootzone shifts back to its
-        # initial depth (params.RDI). As a result the amount of water in the
-        # initial rooting depth and the unrooted layer must be redistributed. 
+        # default depth (10 cm). As a result the amount of water in the
+        # default rooting depth and the unrooted layer must be redistributed.
         # Note that his is a rather artificial solution resulting from the fact
-        # that the rooting depth is user as to define a layer in the WOFOST
+        # that the rooting depth is used to define a layer in the WOFOST
         # water balance.
+        RD = self._determine_rooting_depth()
+
         if self.rooted_layer_needs_reset is True:
-            self._reset_rootzone()
+            self._reset_root_zone(self.RDold, RD)
 
         # calculation of new amount of soil moisture in rootzone by root growth
-        RD = self._determine_rooting_depth()            
         if (RD - self.RDold) > 0.001:
             # water added to root zone by root growth, in cm
             WDR = s.WLOW * (RD - self.RDold)/(self.RDM - self.RDold)
@@ -571,48 +568,88 @@ class WaterbalanceFD(SimulationObject):
     
     def _determine_rooting_depth(self):
         """Determines appropriate use of the rooting depth (RD)
+
+        This function includes the logic to determine the depth of the upper (rooted)
+        layer of the water balance. See the comment in the code for a detailed description.
         """
         p = self.params
 
-        if self.in_crop_cycle is False:
-
-            # Crop finished
-            if  "RD" in self.kiosk:
-                # Only happens at the final simulation cycle when value for
-                # SM still has to be computed. This also applies that a reset
-                # of the root zone layer is needed in the next update cycle.
+        if not self.in_crop_cycle:  # We are not in a cropping cycle
+            if "RD" in self.kiosk:
+                # Only happens at the end of a crop cycle when a CROP_FINISH
+                # signal has been sent but the water balance states still have
+                # to be computed in order to finish the simulation cycle.
+                # This also implies that a reset of the root zone layer will be
+                # done in the next cycle.
                 RD = self.kiosk["RD"]
-                self.rooted_layer_needs_reset = True
             else:
-                # not in crop cycle hold RD at initial value RDI
-                RD = p.RDI
-            
-        else: # In cropping season
+                # Hold RD at default value
+                RD = self.ULDEPTH
+
+        else:  # In cropping cycle, return crop rooting depth
             RD = self.kiosk["RD"]
             
         return RD
     
-    def _reset_rootzone(self):
+    def _reset_root_zone(self, RDold, RDnew):
+        """Redistributes the water between the root zone and the lower zone.
+
+        :param RDold: The previous root zone depth [cm]
+        :param RDnew: The new root zone depth [cm]
+
+        Redistribution of water is needed when the crop is finished and the root
+        zone shifts back from the crop rooted depth to the default depth of the
+        upper (rooted) layer of the water balance. Or when the initial rooting
+        depth of a crop is different from the default one used by the water
+        balance module (10 cm)
+        """
         s = self.states
         p = self.params
         
         self.rooted_layer_needs_reset = False
-        
-        # water added to the subsoil by root zone reset
-        WDR = s.W * (self.RDold - p.RDI)/(self.RDold)
-        s.WLOW += WDR
 
-        # total water subtracted from, rootzone by root zone reset
-        s.WDRT -= WDR
-        # amount of soil moisture in new resetted rootzone
-        s.W -= WDR
-                
-        
+        if RDnew == RDold:
+            # Despite a reset, the new root zone has the same depth as the old root zone.
+            # Since most crops have a default initial root zone of 10 cm this will
+            # often be the case. No further action is needed here
+            pass
+        elif RDnew < RDold:
+            # root zone shifts up. This happens often when a crop is finished
+            # and the root zone shifts back to its default value.
+
+            # water added to the subsoil from the root zone
+            WDR = s.W * (RDold - RDnew)/RDold
+            s.WLOW += WDR
+
+            # total water subtracted from, root zone by root zone reset
+            s.WDRT -= WDR
+            # amount of soil moisture in new redefined root zone
+            s.W -= WDR
+        elif RDnew > RDold:
+            # root zone shifts down. This situation is less common but it can happen
+            # when the initial depth of a new crop (RDI) is larger then the default
+            # root zone depth (10 cm)
+
+            # water added from the subsoil to the root zone
+            WDR = s.WLOW * (RDnew - RDold)/(p.RDMSOL - RDold)
+
+            # reduce amount of water in subsoil
+            s.WLOW -= WDR
+            # increase amount of water in root zone
+            s.W += WDR
+            # total water add to rootzone by root zone reset
+            s.WDRT += WDR
+
+        # Update the old root zone to the new value
+        self.RDold = RDnew
+
     def _on_CROP_START(self):
         self.in_crop_cycle = True
-        
+        self.rooted_layer_needs_reset = True
+
     def _on_CROP_FINISH(self):
         self.in_crop_cycle = False
+        self.rooted_layer_needs_reset = True
 
     def _on_IRRIGATE(self, amount, efficiency):
         self._RIRR = amount * efficiency
