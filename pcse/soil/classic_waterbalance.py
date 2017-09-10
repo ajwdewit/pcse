@@ -3,7 +3,7 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 """Python implementations of the WOFOST waterbalance modules for simulation
 of potential production (`WaterbalancePP`) and water-limited production
-(`WaterbalanceFD`)under freely draining conditions.
+(`WaterbalanceFD`) under freely draining conditions.
 """
 from math import sqrt
 
@@ -114,15 +114,21 @@ class WaterbalanceFD(SimulationObject):
     zone to second layer), and the loss of water beyond the maximum root zone. 
 
     The textural profile of the soil is conceived as homogeneous. Initially the
-    soil profile consists of two layers, the actually rooted  soil and the soil
-    immediately below the rooted zone until the maximum rooting depth (soil and
-    crop dependent). The extension of the root zone from initial rooting depth
-    to maximum rooting depth is described in Root_Dynamics class. From the
-    moment that the maximum rooting depth is reached the soil profile is
-    described as a one layer system. The class WaterbalanceFD is derived
-    from WATFD.FOR in WOFOST7.1
+    soil profile consists of two layers, the actually rooted soil and the soil
+    immediately below the rooted zone until the maximum rooting depth is reached
+    by roots(soil and crop dependent). The extension of the root zone from the
+    initial rooting depth to maximum rooting depth is described in Root_Dynamics
+    class. From the moment that the maximum rooting depth is reached the soil
+    profile may be described as a one layer system depending if the roots are
+    able to penetrate the entire profile. If not a non-rooted part remains
+    at the bottom of the profile.
+
+    The class WaterbalanceFD is derived from WATFD.FOR in WOFOST7.1 with the
+    exception that the depth of the soil is now completely determined by the
+    maximum soil depth (RDMSOL) and not by the minimum of soil depth and crop
+    maximum rooting depth (RDMCR).
     
-    **Simulation parameters:** (provide in crop, soil and sitedata dictionary)
+    **Simulation parameters:**
     
     ======== =============================================== =======  ==========
      Name     Description                                     Type     Unit
@@ -146,9 +152,6 @@ class WaterbalanceFD(SimulationObject):
               the soil
     SMLIM     Initial maximum moisture content in initial      SSi     -
               rooting depth zone.
-    IAIRDU    Switch airducts on (1) or off (0)                SCr     - 
-    RDMCR     Maximum rooting depth of the crop                SCr      cm
-    RDI       Initial rooting depth of the crop                SCr      cm
     ======== =============================================== =======  ==========
 
     **State variables:**
@@ -242,13 +245,14 @@ class WaterbalanceFD(SimulationObject):
     NINFTB = Instance(Afgen)
     # Flag indicating crop present or not
     in_crop_cycle = Bool(False)
-    # Flag indicating that a crop was removed and therefore the thickness 
-    # of the rootzone shift back to its initial value (params.RDI)
+    # Flag indicating that a crop was started or finished and therefore the depth
+    # of the root zone may have changed, required a redistribution of water
+    # between the root zone and the lower zone
     rooted_layer_needs_reset = Bool(False)
     # placeholder for irrigation
     _RIRR = Float(0.)
-    # default depth of upper layer (root zone)
-    ULDEPTH = Float(10.)
+    # default depth of upper layer (root zone depth)
+    DEFAULT_RD = Float(10.)
 
     class Parameters(ParamTemplate):
         # Soil parameters
@@ -266,10 +270,6 @@ class WaterbalanceFD(SimulationObject):
         SSI    = Float(-99.)
         WAV    = Float(-99.)
         NOTINF = Float(-99.)
-        # crop parameters
-        # IAIRDU = Float(-99.)
-        # RDMCR  = Float(-99.)
-        # RDI    = Float(-99.)
 
     class StateVariables(StatesTemplate):
         SM = Float(-99.)
@@ -324,8 +324,8 @@ class WaterbalanceFD(SimulationObject):
         self.params = self.Parameters(parvalues)
         p = self.params
         
-        # set default RD to 10 cm, maximum and old rooting depth
-        RD = self.ULDEPTH
+        # set default RD to 10 cm, also derive maximum depth and old rooting depth
+        RD = self.DEFAULT_RD
         RDM = max(RD, p.RDMSOL)
         self.RDold = RD
         self.RDM = RDM
@@ -364,7 +364,7 @@ class WaterbalanceFD(SimulationObject):
                            PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
         self.rates = self.RateVariables(kiosk, publish="EVS")
         
-        # Connect to CROP_EMERGED/CROP_FINISH signals for water balance to
+        # Connect to CROP_START/CROP_FINISH signals for water balance to
         # search for crop transpiration values
         self._connect_signal(self._on_CROP_START, signals.crop_start)
         self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
@@ -385,7 +385,7 @@ class WaterbalanceFD(SimulationObject):
         r.RAIN = drv.RAIN
 
         # Transpiration and maximum soil and surface water evaporation rates
-        # are calculated by the crop Evapotranspiration module. 
+        # are calculated by the crop evapotranspiration module.
         # However, if the crop is not yet emerged then set TRA=0 and use
         # the potential soil/water evaporation rates directly because there is
         # no shading by the canopy.
@@ -446,10 +446,6 @@ class WaterbalanceFD(SimulationObject):
         # equilibrium amount of soil moisture below rooted zone
         WELOW = p.SMFCF * (self.RDM - RD)
         r.LOSS  = limit(0., p.KSUB, (s.WLOW - WELOW + PERC1))
-        # for rice water losses are limited to K0/20
-        # if (p.IAIRDU == 1):
-        #     LOSS = min(LOSS, p.K0/20.)
-        # r.LOSS = LOSS
 
         # percolation not to exceed uptake capacity of subsoil
         PERC2 = ((self.RDM -RD) * p.SM0 - s.WLOW) + r.LOSS
@@ -492,7 +488,7 @@ class WaterbalanceFD(SimulationObject):
 
         # amount of water in rooted zone
         W_NEW = s.W + r.DW
-        if (W_NEW < 0.0):
+        if W_NEW < 0.0:
             # If negative soil water depth, set W to zero and subtract W_NEW
             # from total soil evaporation to keep the balance. 
             # Note: W_NEW is negative here!!
@@ -512,27 +508,31 @@ class WaterbalanceFD(SimulationObject):
 
         # CHANGE OF ROOTZONE SUBSYSTEM BOUNDARY
 
-        # Redefine the rootzone when the crop is finished. As a result there
-        # no roots anymore (variable RD) and the rootzone shifts back to its
-        # default depth (10 cm). As a result the amount of water in the
-        # default rooting depth and the unrooted layer must be redistributed.
-        # Note that his is a rather artificial solution resulting from the fact
-        # that the rooting depth is used to define a layer in the WOFOST
-        # water balance.
+        # First get the actual rooting depth
         RD = self._determine_rooting_depth()
 
+        # Redefine the rootzone when a crop is started or finished. In the former
+        # case the default root zone (10 cm) may not match the initial rooting
+        # depth of the crop (RDI). In the latter case, the crop rooting depth
+        # disappears and the root zone shifts back to its default position as
+        # defined by (self.DEFAULT_RD) In both cases water in the rooted and
+        # non-rooted layer must be redistributed between the layers in order to
+        # keep the balance.
+        # Note that his is a rather artificial solution resulting from the fact
+        # that the rooting depth is used to define the upper layer in the WOFOST
+        # water balance.
         if self.rooted_layer_needs_reset is True:
             self._reset_root_zone(self.RDold, RD)
 
-        # calculation of new amount of soil moisture in rootzone by root growth
+        # calculation of new amount of soil moisture in root zone by root growth
         if (RD - self.RDold) > 0.001:
             # water added to root zone by root growth, in cm
             WDR = s.WLOW * (RD - self.RDold)/(self.RDM - self.RDold)
             s.WLOW -= WDR
 
-            # total water addition to rootzone by root growth
+            # total water addition to root zone by root growth
             s.WDRT += WDR
-            # amount of soil moisture in extended rootzone
+            # amount of soil moisture in extended root zone
             s.W += WDR
 
         # mean soil moisture content in rooted zone
@@ -550,17 +550,17 @@ class WaterbalanceFD(SimulationObject):
         # for rootzone (WBALRT) and whole system (WBALTT)
         s.WBALRT = s.TOTINF + s.WI + s.WDRT - s.EVST - s.WTRAT - s.PERCT - s.W
         s.WBALTT = (p.SSI + s.RAINT + s.TOTIRR + s.WI - s.W + s.WLOWI - 
-                    s.WLOW - s.WTRAT- s.EVWT - s.EVST - s.TSR - s.LOSST - s.SS)
+                    s.WLOW - s.WTRAT - s.EVWT - s.EVST - s.TSR - s.LOSST - s.SS)
         if abs(s.WBALRT) > 0.0001:
             msg = "Water balance for root zone does not close."
             raise exc.WaterBalanceError(msg)
 
         if abs(s.WBALTT) > 0.0001:
             msg = "Water balance for complete soil profile does not close.\n"
-            msg += ("Total INIT + IN:   %f\n" % (s.WI+s.WLOWI+p.SSI+s.TOTIRR+
+            msg += ("Total INIT + IN:   %f\n" % (s.WI + s.WLOWI + p.SSI+s.TOTIRR +
                                                  s.RAINT))
-            msg += ("Total FINAL + OUT: %f\n" % (s.W+s.WLOW+s.SS+s.EVWT+s.EVST+
-                                                 s.WTRAT+s.TSR+s.LOSST))
+            msg += ("Total FINAL + OUT: %f\n" % (s.W + s.WLOW + s.SS + s.EVWT + s.EVST +
+                                                 s.WTRAT + s.TSR + s.LOSST))
             raise exc.WaterBalanceError(msg)
         
         # Run finalize on the subSimulationObjects
@@ -584,7 +584,7 @@ class WaterbalanceFD(SimulationObject):
                 RD = self.kiosk["RD"]
             else:
                 # Hold RD at default value
-                RD = self.ULDEPTH
+                RD = self.DEFAULT_RD
 
         else:  # In cropping cycle, return crop rooting depth
             RD = self.kiosk["RD"]
