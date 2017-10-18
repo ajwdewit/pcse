@@ -9,7 +9,7 @@ import copy
 import platform
 import tempfile
 import logging
-from math import log10, cos, sin, asin, sqrt, exp
+from math import log10, cos, sin, asin, sqrt, exp, pi, radians
 from collections import namedtuple
 from bisect import bisect_left
 import textwrap
@@ -435,26 +435,19 @@ def daylength(day, latitude, angle=-4, _cache={}):
         pass
     
     # constants
-    RAD = 0.0174533
-    PI = 3.1415926
-
-    # map python functions to capitals
-    SIN = sin
-    COS = cos
-    ASIN = asin
-    REAL = float
+    RAD = radians(1.)
 
     # calculate daylength
     ANGLE = angle
     LAT = latitude
-    DEC = -ASIN(SIN(23.45*RAD)*COS(2.*PI*(REAL(IDAY)+10.)/365.))
-    SINLD = SIN(RAD*LAT)*SIN(DEC)
-    COSLD = COS(RAD*LAT)*COS(DEC)
-    AOB   = (-SIN(ANGLE*RAD)+SINLD)/COSLD
+    DEC = -asin(sin(23.45*RAD)*cos(2.*pi*(float(IDAY)+10.)/365.))
+    SINLD = sin(RAD*LAT)*sin(DEC)
+    COSLD = cos(RAD*LAT)*cos(DEC)
+    AOB = (-sin(ANGLE*RAD)+SINLD)/COSLD
 
     # daylength
     if abs(AOB) <= 1.0:
-        DAYLP = 12.0*(1.+2.*ASIN((-SIN(ANGLE*RAD)+SINLD)/COSLD)/PI)
+        DAYLP = 12.0*(1.+2.*asin((-sin(ANGLE*RAD)+SINLD)/COSLD)/pi)
     elif AOB > 1.0:
         DAYLP = 24.0
     else:
@@ -517,26 +510,17 @@ def astro(day, latitude, radiation, _cache={}):
         pass
 
     # constants
-    RAD = 0.0174533
-    PI = 3.1415926
+    RAD = radians(1.)
     ANGLE = -4.
 
-    # map python functions to capitals
-    SIN = sin
-    COS = cos
-    ASIN = asin
-    REAL = float
-    SQRT = sqrt
-    ABS = abs
-
     # Declination and solar constant for this day
-    DEC = -ASIN(SIN(23.45*RAD)*COS(2.*PI*(REAL(IDAY)+10.)/365.))
-    SC  = 1370.*(1.+0.033*COS(2.*PI*REAL(IDAY)/365.))
+    DEC = -asin(sin(23.45*RAD)*cos(2.*pi*(float(IDAY)+10.)/365.))
+    SC  = 1370.*(1.+0.033*cos(2.*pi*float(IDAY)/365.))
 
     # calculation of daylength from intermediate variables
     # SINLD, COSLD and AOB
-    SINLD = SIN(RAD*LAT)*SIN(DEC)
-    COSLD = COS(RAD*LAT)*COS(DEC)
+    SINLD = sin(RAD*LAT)*sin(DEC)
+    COSLD = cos(RAD*LAT)*cos(DEC)
     AOB = SINLD/COSLD
 
     # For very high latitudes and days in summer and winter a limit is
@@ -545,11 +529,11 @@ def astro(day, latitude, radiation, _cache={}):
 
     # Calculate solution for base=0 degrees
     if abs(AOB) <= 1.0:
-        DAYL  = 12.0*(1.+2.*ASIN(AOB)/PI)
+        DAYL  = 12.0*(1.+2.*asin(AOB)/pi)
         # integrals of sine of solar height
-        DSINB  = 3600.*(DAYL*SINLD+24.*COSLD*SQRT(1.-AOB**2)/PI)
+        DSINB  = 3600.*(DAYL*SINLD+24.*COSLD*sqrt(1.-AOB**2)/pi)
         DSINBE = 3600.*(DAYL*(SINLD+0.4*(SINLD**2+COSLD**2*0.5))+
-                 12.*COSLD*(2.+3.*0.4*SINLD)*SQRT(1.-AOB**2)/PI)
+                 12.*COSLD*(2.+3.*0.4*SINLD)*sqrt(1.-AOB**2)/pi)
     else:
         if AOB >  1.0: DAYL = 24.0
         if AOB < -1.0: DAYL = 0.0
@@ -558,9 +542,9 @@ def astro(day, latitude, radiation, _cache={}):
         DSINBE = 3600.*(DAYL*(SINLD+0.4*(SINLD**2+COSLD**2*0.5)))
 
     # Calculate solution for base=-4 (ANGLE) degrees
-    AOB_CORR = (-SIN(ANGLE*RAD)+SINLD)/COSLD
+    AOB_CORR = (-sin(ANGLE*RAD)+SINLD)/COSLD
     if abs(AOB_CORR) <= 1.0:
-        DAYLP = 12.0*(1.+2.*ASIN(AOB_CORR)/PI)
+        DAYLP = 12.0*(1.+2.*asin(AOB_CORR)/pi)
     elif AOB_CORR > 1.0:
         DAYLP = 24.0
     elif AOB_CORR < -1.0:
