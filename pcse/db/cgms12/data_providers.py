@@ -817,7 +817,7 @@ class SiteDataProvider(dict):
         r = select([table_site]).execute()
         row = r.fetchone()
         self["IFUNRN"] = int(row.ifunrn)
-        self["NOTINF"] = int(row.notinf)
+        self["NOTINF"] = float(row.notinf)
         self["SSMAX"] = float(row.max_surface_storage)
         self["SSI"] = 0.
 

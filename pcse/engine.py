@@ -19,6 +19,7 @@ from collections import deque
 import logging
 import datetime
 import gc
+import pandas
 
 from .traitlets import Instance, Bool
 from .base_classes import (VariableKiosk, WeatherDataProvider,
@@ -95,7 +96,8 @@ class Engine(BaseEngine):
     soil = Instance(SimulationObject)
     agromanager = Instance(AncillaryObject)
     weatherdataprovider = Instance(WeatherDataProvider)
-    drv = Instance(WeatherDataContainer)
+    # drv = Instance(WeatherDataContainer)
+    drv = None
     kiosk = Instance(VariableKiosk)
     timer = Instance(Timer)
     day = Instance(datetime.date)
