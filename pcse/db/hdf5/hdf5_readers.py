@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2017 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), November 2017
+"""
+Data providers for weather, soil, crop, timer and site data. Also
+a class for testing STU suitability for a given crop.
+
+Data providers are compatible with a CGMS12 database schema but assume
+that tables are stored in a pandas HDFstore. See also:
+https://pandas.pydata.org/pandas-docs/stable/io.html#io-hdf5
+"""
 import os, sys
 import datetime as dt
 
@@ -14,6 +25,12 @@ from ..wofost_parameters import WOFOST_optional_parameters, WOFOST_parameter_cod
 
 
 def fetch_crop_name(HDFstore, crop_no):
+    """Retrieves the name of the crop from the CROP table for
+    given crop_no.
+
+    :param HDFstore: path to HDFstore to retrieve data from
+    :param crop_no: Integer crop ID, maps to the CROP_NO column in the table
+    """
     HDFstore = os.path.abspath(HDFstore)
     if not os.path.exists(HDFstore):
         msg = "Cannot find HDFstore at: %s" % HDFstore
@@ -277,7 +294,7 @@ class SoilDataProviderSingleLayer(dict):
 class AgroManagementDataProvider(list):
     """Class for providing agromanagement data from the CROP_CALENDAR table in a HDF5 file.
 
-    :param engine: SqlAlchemy engine object providing DB access
+    :param HDFstore: path to HDFstore to retrieve data from
     :param grid_no: Integer grid ID, maps to the grid_no column in the table
     :param crop_no: Integer id of crop, maps to the crop_no column in the table
     :param campaign_year: Integer campaign year, maps to the YEAR column in the table.
@@ -426,7 +443,7 @@ class AgroManagementDataProvider(list):
 class STU_Suitability(set):
     """Returns a set() of suitable STU's for given crop_no.
 
-    :param engine: SqlAlchemy engine object providing DB access
+    :param HDFstore: path to HDFstore to retrieve data from
     :param crop_no: Integer crop ID, maps to the CROP_NO column in the table
     """
 
@@ -457,7 +474,7 @@ class STU_Suitability(set):
 class SiteDataProvider(dict):
     """Provides the site data from the tables INITIAL_SOIL_WATER and SITE.
 
-    :param engine: SqlAlchemy engine object providing DB access
+    :param HDFstore: path to HDFstore to retrieve data from
     :param grid_no:  Grid number (int)
     :param crop_no: Crop number (int)
     :param campaign_year: Campaign year (int)
@@ -519,12 +536,15 @@ class SiteDataProvider(dict):
 class SoilDataIterator(list):
     """Class for iterating over the different soils in a CGMS grid.
 
+    :param HDFstore: path to HDFstore to retrieve data from
+    :param grid_no: Integer grid ID, maps to the grid_no column in the table
+
     Instances of this class behave like a list, allowing to iterate
     over the soils in a CGMS grid. An example::
 
-        >>> soil_iterator = SoilDataIterator(engine, grid_no=15060)
+        >>> soil_iterator = SoilDataIterator(HDFstore, grid_no=15060)
         >>> print(soildata)
-        Soil data for grid_no=15060 derived from oracle+cx_oracle://cgms12eu:***@eurdas.world
+        Soil data for grid_no=15060 derived from /home/wit015/test/CGMS12EU.h5
           smu_no=9050131, area=625000000, stu_no=9000282 covering 50% of smu.
             Soil parameters {'SMLIM': 0.312, 'SMFCF': 0.312, 'SMW': 0.152, 'CRAIRC': 0.06,
                              'KSUB': 10.0, 'RDMSOL': 10.0, 'K0': 10.0, 'SOPE': 10.0, 'SM0': 0.439}
