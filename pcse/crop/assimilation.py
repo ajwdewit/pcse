@@ -115,7 +115,7 @@ def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
 
         # absorbed flux in W/m2 for shaded leaves and assimilation
         VISSHD = VISDF+VIST-VISD
-        FGRSH  = AMAX*(1.-exp(-VISSHD*EFF/max(2.0,AMAX)))
+        FGRSH  = AMAX*(1.-exp(-VISSHD*EFF/max(2.0, AMAX)))
 
         # direct light absorbed by leaves perpendicular on direct
         # beam and assimilation of sunlit leaf area

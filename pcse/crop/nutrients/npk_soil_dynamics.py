@@ -184,18 +184,9 @@ class NPK_Soil_Dynamics(SimulationObject):
         r = self.rates
         s = self.states
         p = self.params
-        
-        TRA   = self.kiosk["TRA"]
-        TRAMX = self.kiosk["TRAMX"]
-        DVS   = self.kiosk["DVS"]
-        
-        NUPTR = self.kiosk["RNUPTAKE"]
-        PUPTR = self.kiosk["RPUPTAKE"]
-        KUPTR = self.kiosk["RKUPTAKE"]
-        
-        TRANRF = TRA/TRAMX
-        
-        if DVS < p.DVS_NPK_STOP and TRANRF > 0.01 :
+        k = self.kiosk
+
+        if k.DVS < p.DVS_NPK_STOP and k.RFTRA > 0.01:
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.
@@ -204,9 +195,9 @@ class NPK_Soil_Dynamics(SimulationObject):
         r.RPSOIL = -max(0., min(p.PSOILBASE_FR * self.PSOILI * NutrientLIMIT, s.PSOIL))
         r.RKSOIL = -max(0., min(p.KSOILBASE_FR * self.KSOILI * NutrientLIMIT, s.KSOIL))
                
-        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - NUPTR - r.RNSOIL
-        r.RPAVAIL = r.FERT_P_SUPPLY + p.BG_P_SUPPLY - PUPTR - r.RPSOIL
-        r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - KUPTR - r.RKSOIL
+        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - k.RNUPTAKE - r.RNSOIL
+        r.RPAVAIL = r.FERT_P_SUPPLY + p.BG_P_SUPPLY - k.RPUPTAKE - r.RPSOIL
+        r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - k.RKUPTAKE - r.RKSOIL
         
     @prepare_states
     def integrate(self, day, delt=1.0):

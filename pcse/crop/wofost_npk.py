@@ -199,6 +199,7 @@ class WofostNPK(SimulationObject):
     def calc_rates(self, day, drv):
         params = self.params
         rates  = self.rates
+        k = self.kiosk
 
         # Phenology
         self.pheno.calc_rates(day, drv)
@@ -218,12 +219,8 @@ class WofostNPK(SimulationObject):
         # nutrient status and reduction factor
         NNI, NPKI, NPKREF = self.npk_stress(day, drv)
 
-        # water stress reduction
-        TRA = self.kiosk["TRA"]
-        TRAMX = self.kiosk["TRAMX"]
-        
-        # Select minimum of nutrient and water stress
-        reduction = min(NPKREF, TRA/TRAMX)
+        # Select minimum of nutrient and water/oxygen stress
+        reduction = min(NPKREF, k.RFTRA)
 
         rates.GASS = rates.PGASS * reduction
 

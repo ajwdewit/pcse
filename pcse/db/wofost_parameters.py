@@ -10,8 +10,8 @@ WOFOST_parameter_codes_tabular = ("AMAXTB", "DTSMTB", "FLTB", "FOTB", "FRTB", "F
                            "TMPFTB", "VERNRTB")
 # Some parameters have to be converted from a single to a tabular form
 WOFOST_single2tabular = {"SSA": ("SSATB", [0., None, 2.0, None]),
-                  "KDIF": ("KDIFTB", [0., None, 2.0, None]),
-                  "EFF": ("EFFTB", [0., None, 40., None])}
+                         "KDIF": ("KDIFTB", [0., None, 2.0, None]),
+                         "EFF": ("EFFTB", [0., None, 40., None])}
 # Default values for additional parameters not defined in CGMS
 WOFOST_parameters_additional = {"DVSI": 0.0, "IOX": 0}
 # Parameters which are optional (mainly dealing with vernalisation)

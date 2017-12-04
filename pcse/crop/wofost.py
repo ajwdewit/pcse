@@ -185,9 +185,9 @@ class Wofost(SimulationObject):
     #---------------------------------------------------------------------------
     @prepare_rates
     def calc_rates(self, day, drv):
-        params = self.params
-        rates  = self.rates
-        states = self.states
+        p = self.params
+        r = self.rates
+        k = self.kiosk
 
         # Phenology
         self.pheno.calc_rates(day, drv)
@@ -199,30 +199,28 @@ class Wofost(SimulationObject):
             return
 
         # Potential assimilation
-        rates.PGASS = self.assim(day, drv)
+        r.PGASS = self.assim(day, drv)
 
         # (evapo)transpiration rates
         self.evtra(day, drv)
 
         # water stress reduction
-        TRA = self.kiosk["TRA"]
-        TRAMX = self.kiosk["TRAMX"]
-        rates.GASS = rates.PGASS * TRA/TRAMX
+        r.GASS = r.PGASS * k.RFTRA
 
         # Respiration
-        rates.PMRES = self.mres(day, drv)
-        rates.MRES  = min(rates.GASS, rates.PMRES)
+        r.PMRES = self.mres(day, drv)
+        r.MRES  = min(r.GASS, r.PMRES)
 
         # Net available assimilates
-        rates.ASRC  = rates.GASS - rates.MRES
+        r.ASRC  = r.GASS - r.MRES
 
         # DM partitioning factors (pf), conversion factor (CVF),
         # dry matter increase (DMI) and check on carbon balance
         pf = self.part.calc_rates(day, drv)
-        CVF = 1./((pf.FL/params.CVL + pf.FS/params.CVS + pf.FO/params.CVO) *
-                  (1.-pf.FR) + pf.FR/params.CVR)
-        rates.DMI = CVF * rates.ASRC
-        self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES,
+        CVF = 1./((pf.FL/p.CVL + pf.FS/p.CVS + pf.FO/p.CVO) *
+                  (1.-pf.FR) + pf.FR/p.CVR)
+        r.DMI = CVF * r.ASRC
+        self._check_carbon_balance(day, r.DMI, r.GASS, r.MRES,
                                    CVF, pf)
 
         # distribution over plant organ
@@ -231,7 +229,7 @@ class Wofost(SimulationObject):
         self.ro_dynamics.calc_rates(day, drv)
         # Aboveground dry matter increase and distribution over stems,
         # leaves, organs
-        rates.ADMI = (1. - pf.FR) * rates.DMI
+        r.ADMI = (1. - pf.FR) * r.DMI
         self.st_dynamics.calc_rates(day, drv)
         self.so_dynamics.calc_rates(day, drv)
         self.lv_dynamics.calc_rates(day, drv)

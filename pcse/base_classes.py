@@ -115,6 +115,11 @@ class VariableKiosk(dict):
         """
         return dict.__contains__(self, item)
 
+    def __getattr__(self, item):
+        """Allow use of attribute notation (eg "kiosk.LAI") on published rates or states.
+        """
+        return dict.__getitem__(self, item)
+
     def __str__(self):
         msg = "Contents of VariableKiosk:\n"
         msg += " * Registered state variables: %i\n" % len(self.registered_states)

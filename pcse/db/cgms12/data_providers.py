@@ -21,6 +21,7 @@ from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import exceptions as exc
 from ...base_classes import WeatherDataContainer, WeatherDataProvider
 from ... import settings
+from .. import wofost_parameters
 
 def fetch_crop_name(engine, crop_no):
     """Retrieves the name of the crop from the CROP table for
@@ -80,6 +81,8 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     :param recalc_ET: Set to True to force calculation of reference
         ET values. Mostly useful when values have not been calculated
         in the CGMS database.
+    :param recalc_TEMP: Set to True to force calculation of daily average
+        temperature (TEMP) from TMIN and TMAX: TEMP = (TMIN+TMAX)/2.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
@@ -92,12 +95,13 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     angstA = 0.18
     angstB = 0.55
     def __init__(self, engine, grid_no, start_date=None, end_date=None,
-                 recalc_ET=False):
+                 recalc_ET=False, recalc_TEMP=False):
 
         WeatherDataProvider.__init__(self)
 
         self.grid_no = int(grid_no)
         self.recalc_ET = recalc_ET
+        self.recalc_TEMP = recalc_TEMP
 
         if not self._self_load_cache(self.grid_no):
             try:
@@ -238,6 +242,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
             t.update({"E0":  e0/10.,
                       "ES0": es0/10.,
                       "ET0": et0/10.})
+
+        if self.recalc_TEMP:
+            t["TEMP"] = (float(row.temperature_max) + float(row.temperature_min))/2.
 
         wdc = WeatherDataContainer(**t)
         return wdc
@@ -584,21 +591,13 @@ class CropDataProvider(dict):
     """
 
     # Define single and tabular crop parameter values
-    parameter_codes_single = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC",
-                              "DLO", "DVSEND", "EFF", "IAIRDU", "IDSL", "KDIF",
-                              "LAIEM", "PERDL", "Q10", "RDI", "RDMCR", "RGRLAI",
-                              "RML", "RMO", "RMR", "RMS", "RRI", "SPA", "SPAN", "SSA",
-                              "TBASE", "TBASEM", "TDWI", "TEFFMX", "TSUM1", "TSUM2",
-                              "TSUMEM")
-    parameter_codes_tabular = ("AMAXTB", "DTSMTB", "FLTB", "FOTB", "FRTB", "FSTB",
-                               "RDRRTB", "RDRSTB", "RFSETB", "SLATB", "TMNFTB",
-                               "TMPFTB")
+    parameter_codes_single = wofost_parameters.WOFOST_parameter_codes_single
+    parameter_codes_tabular = wofost_parameters.WOFOST_parameter_codes_tabular
     # Some parameters have to be converted from a single to a tabular form
-    single2tabular = {"SSA": ("SSATB", [0., None, 2.0, None]),
-                      "KDIF": ("KDIFTB", [0., None, 2.0, None]),
-                      "EFF": ("EFFTB", [0., None, 40., None])}
+    single2tabular = wofost_parameters.WOFOST_single2tabular
     # Default values for additional parameters not defined in CGMS
-    parameters_additional = {"DVSI": 0.0, "IOX": 0}
+    parameters_additional = wofost_parameters.WOFOST_parameters_additional
+    parameters_optional = wofost_parameters.WOFOST_optional_parameters
 
     def __init__(self, engine, grid_no, crop_no, campaign_year):
         dict.__init__(self)
@@ -644,8 +643,9 @@ class CropDataProvider(dict):
                             table_crop_pv.c.parameter_code == parameter_code)).execute()
             row = r.fetchone()
             if row is None:
-                msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
-                raise exc.PCSEError(msg % (self.crop_no, parameter_code))
+                if parameter_code not in self.parameters_optional:
+                    msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
+                    raise exc.PCSEError(msg % (self.crop_no, parameter_code))
             if parameter_code not in self.single2tabular:
                 self[parameter_code] = float(row.parameter_xvalue)
             else:
@@ -662,8 +662,9 @@ class CropDataProvider(dict):
                        order_by=[table_crop_pv.c.parameter_code]).execute()
             rows = r.fetchall()
             if not rows:
-                msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
-                raise exc.PCSEError(msg % (self.crop_no, parameter_code))
+                if parameter_code not in self.parameters_optional:
+                    msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
+                    raise exc.PCSEError(msg % (self.crop_no, parameter_code))
             if len(rows) == 1:
                 msg = ("Single parameter value found for crop_no=%s, parameter_code='%s' while "
                        "tabular parameter expected." % (crop_no, parameter_code))

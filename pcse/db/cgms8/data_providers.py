@@ -13,7 +13,7 @@ import datetime as dt
 from sqlalchemy import MetaData, select, Table, and_
 import yaml
 
-from ...util import check_date, wind10to2
+from ...util import check_date, wind10to2, reference_ET, safe_float
 from ... import settings
 from ... import exceptions as exc
 from ..cgms12.data_providers import fetch_crop_name
@@ -29,6 +29,9 @@ class GridWeatherDataProvider(WeatherDataProvider):
         (datetime.date object)
     :param enddate: Retrieve meteo data up to and including enddate
         (datetime.date object)
+    :param recalc_ET: Set to True to force calculation of reference
+        ET values. Mostly useful when values have not been calculated
+        in the CGMS database.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
@@ -36,10 +39,13 @@ class GridWeatherDataProvider(WeatherDataProvider):
 
     """
 
-    def __init__(self, engine, grid_no, start_date=None, end_date=None):
+    def __init__(self, engine, grid_no, start_date=None, end_date=None,
+                 recalc_ET=False):
 
         WeatherDataProvider.__init__(self)
         self.grid_no = int(grid_no)
+        self.recalc_ET = recalc_ET
+
         if not self._self_load_cache(self.grid_no):
             if start_date is None:
                 start_date = dt.date(dt.MINYEAR, 1, 1)
@@ -155,10 +161,20 @@ class GridWeatherDataProvider(WeatherDataProvider):
                   "VAP":  float(row.vapour_pressure),
                   "WIND": wind10to2(float(row.windspeed)),
                   "RAIN": float(row.rainfall)/10.,
-                  "E0":  float(row.e0)/10.,
-                  "ES0": float(row.es0)/10.,
-                  "ET0": float(row.et0)/10.,
-                  "IRRAD": float(row.calculated_radiation)*1000.})
+                  "IRRAD": float(row.calculated_radiation)*1000.,
+                  "SNOWDEPTH": safe_float(row.snowdepth)})
+
+        if not self.recalc_ET:
+            t.update({"E0":  float(row.e0)/10.,
+                      "ES0": float(row.es0)/10.,
+                      "ET0": float(row.et0)/10.})
+        else:
+            e0, es0, et0 = reference_ET(ANGSTA=self.angstA,
+                                        ANGSTB=self.angstB, **t)
+            t.update({"E0":  e0/10.,
+                      "ES0": es0/10.,
+                      "ET0": et0/10.})
+
         wdc = WeatherDataContainer(**t)
 
         return wdc

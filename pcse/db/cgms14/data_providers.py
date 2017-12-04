@@ -20,6 +20,7 @@ from ... import exceptions as exc
 from ...base_classes import WeatherDataContainer, WeatherDataProvider
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import settings
+from .. import wofost_parameters
 
 
 def fetch_crop_name(engine, idcrop_parametrization):
@@ -94,11 +95,12 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     angstB = 0.55
 
     def __init__(self, engine, idgrid, start_date=None, end_date=None,
-                 recalc_ET=False, table_name='weather_era_grid'):
+                 recalc_ET=False, recalc_TEMP=False, table_name='weather_era_grid'):
         # Initialise
         WeatherDataProvider.__init__(self)
         self.idgrid = idgrid
         self.recalc_ET = recalc_ET
+        self.recalc_TEMP = recalc_TEMP
         self.table_name = table_name
 
         if not self._self_load_cache(self.idgrid):
@@ -241,6 +243,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
             t.update({"E0": e0 / 10.,
                       "ES0": es0 / 10.,
                       "ET0": et0 / 10.})
+
+        if self.recalc_TEMP:
+            t["TEMP"] = (float(row.temperature_max) + float(row.temperature_min))/2.
 
         result = WeatherDataContainer(**t)
         return result
@@ -523,19 +528,14 @@ class CropDataProvider(dict):
         crossing calendar years, the start_date can be in the previous year.
     """
     # Define single and tabular crop parameter values
-    parameter_codes_single = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC",
-                              "DLO", "DVSEND", "EFF", "IAIRDU", "IDSL", "KDIF", "LAIEM", "PERDL",
-                              "Q10", "RDI", "RDMCR", "RGRLAI", "RML", "RMO", "RMR", "RMS", "RRI",
-                              "SPA", "SPAN", "SSA", "TBASE", "TBASEM", "TDWI", "TEFFMX", "TSUM1",
-                              "TSUM2", "TSUMEM")
-    parameter_codes_tabular = ("AMAXTB", "DTSMTB", "FLTB", "FOTB", "FRTB", "FSTB",
-                               "RDRRTB", "RDRSTB", "RFSETB", "SLATB", "TMNFTB", "TMPFTB")
+    parameter_codes_single = wofost_parameters.WOFOST_parameter_codes_single
+    parameter_codes_tabular = wofost_parameters.WOFOST_parameter_codes_tabular
     # Some parameters have to be converted from a single to a tabular form
-    single2tabular = {"SSA": ("SSATB", [0., None, 2.0, None]),
-                      "KDIF": ("KDIFTB", [0., None, 2.0, None]),
-                      "EFF": ("EFFTB", [0., None, 40., None])}
+    single2tabular = wofost_parameters.WOFOST_single2tabular
     # Default values for additional parameters not defined in CGMS
-    parameters_additional = {"DVSI": 0.0, "IOX": 0}
+    parameters_additional = wofost_parameters.WOFOST_parameters_additional
+    # Optional parameters, mainly dealing with vernalisation
+    parameters_optional = wofost_parameters.WOFOST_optional_parameters
 
     def __init__(self, engine, idgrid, idcrop_parametrization):
         dict.__init__(self)
@@ -594,16 +594,16 @@ class CropDataProvider(dict):
 
         # Check that we have had all the single and single2tabular parameters now
         for parameter_code in (self.parameter_codes_single + tuple(self.single2tabular.keys())):
-            if not (parameter_code in self.single2tabular):
-                if parameter_code not in self:
-                    found = False
-                else:
+            found = False
+            if parameter_code not in self.single2tabular:
+                if parameter_code in self:
                     found = True
             else:
-                found = False
                 for key in self:
-                    if key.startswith(parameter_code): found = True; break
-            if not found:
+                    if key.startswith(parameter_code):
+                        found = True
+                        break
+            if not found and parameter_code not in self.parameters_optional:
                 msg = ("No parameter value found for idcrop_parametrization=%s, "
                        "parameter_code='%s'." % (self.idcrop_parametrization, parameter_code))
                 raise exc.PCSEError(msg)
@@ -619,7 +619,7 @@ class CropDataProvider(dict):
                         order_by=[t2.c.crop_parameter]).execute()
             rows = sc.fetchall()
             sc.close()
-            if not rows:
+            if not rows and crop_parameter not in self.parameters_optional:
                 msg = ("No parameter value found for "
                        "idcrop_parametrization=%s, crop_parameter='%s'.")
                 raise exc.PCSEError(msg % (self.idcrop_parameterization, crop_parameter))

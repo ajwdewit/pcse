@@ -230,18 +230,7 @@ class NPK_Demand_Uptake(SimulationObject):
         r = self.rates
         s = self.states
         p = self.params
-
-        NAVAIL = self.kiosk["NAVAIL"]  # total mineral N from soil and fertiliser  [kg ha-1]
-        PAVAIL = self.kiosk["PAVAIL"]  # total mineral P from soil and fertiliser  [kg ha-1]
-        KAVAIL = self.kiosk["KAVAIL"]  # total mineral K from soil and fertiliser  [kg ha-1]
-
-        TRA   = self.kiosk["TRA"]
-        TRAMX = self.kiosk["TRAMX"]
-        DVS   = self.kiosk["DVS"]
-
-        NTRANSLOCATABLE = self.kiosk["NTRANSLOCATABLE"]  # N supply to storage organs [kg ha-1]
-        PTRANSLOCATABLE = self.kiosk["PTRANSLOCATABLE"]  # P supply to storage organs [kg ha-1]
-        KTRANSLOCATABLE = self.kiosk["KTRANSLOCATABLE"]  # K supply to storage organs [kg ha-1]
+        k = self.kiosk
 
 #       total NPK demand of leaves, stems and roots
         NDEMTO = s.NDEMLV + s.NDEMST + s.NDEMRT
@@ -251,14 +240,13 @@ class NPK_Demand_Uptake(SimulationObject):
 #       NPK uptake rate in storage organs (kg N ha-1 d-1)
 #       is the mimimum of supply and demand divided by the
 #       time coefficient for N/P/K translocation
-        r.RNUSO = min(s.NDEMSO, NTRANSLOCATABLE)/p.TCNT
-        r.RPUSO = min(s.PDEMSO, PTRANSLOCATABLE)/p.TCPT
-        r.RKUSO = min(s.KDEMSO, KTRANSLOCATABLE)/p.TCKT
+        r.RNUSO = min(s.NDEMSO, k.NTRANSLOCATABLE)/p.TCNT
+        r.RPUSO = min(s.PDEMSO, k.PTRANSLOCATABLE)/p.TCPT
+        r.RKUSO = min(s.KDEMSO, k.KTRANSLOCATABLE)/p.TCKT
 
 #       No nutrients are absorbed after development stage DVS_NPK_STOP or
-#       when severe water shortage occurs i.e. TRANRF <= 0.01
-        TRANRF = TRA/TRAMX
-        if DVS < p.DVS_NPK_STOP and TRANRF > 0.01:
+#       when severe water shortage occurs i.e. RFTRA <= 0.01
+        if k.DVS < p.DVS_NPK_STOP and k.RFTRA > 0.01:
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.
@@ -267,9 +255,9 @@ class NPK_Demand_Uptake(SimulationObject):
         r.RNFIX = (max(0., p.NFIX_FR * NDEMTO) * NutrientLIMIT)
 
         # NPK uptake rate from soil
-        r.RNUPTAKE = (max(0., min(NDEMTO - r.RNFIX, NAVAIL)) * NutrientLIMIT)
-        r.RPUPTAKE = (max(0., min(PDEMTO, PAVAIL)) * NutrientLIMIT)
-        r.RKUPTAKE = (max(0., min(KDEMTO, KAVAIL)) * NutrientLIMIT)
+        r.RNUPTAKE = (max(0., min(NDEMTO - r.RNFIX, k.NAVAIL)) * NutrientLIMIT)
+        r.RPUPTAKE = (max(0., min(PDEMTO, k.PAVAIL)) * NutrientLIMIT)
+        r.RKUPTAKE = (max(0., min(KDEMTO, k.KAVAIL)) * NutrientLIMIT)
 
         # NPK uptake rate
         # if no demand then uptake rate = 0.
@@ -296,64 +284,42 @@ class NPK_Demand_Uptake(SimulationObject):
 
     @prepare_states
     def integrate(self, day, delt=1.0):
-        states = self.states
-        
-        # published states from the kiosk
-        DVS = self.kiosk["DVS"]
-        WLV = self.kiosk["WLV"]
-        WST = self.kiosk["WST"]
-        WRT = self.kiosk["WRT"]
-        WSO = self.kiosk["WSO"]
-        
-        ANLV = self.kiosk["ANLV"]
-        ANST = self.kiosk["ANST"]
-        ANRT = self.kiosk["ANRT"]
-        ANSO = self.kiosk["ANSO"]
-        
-        APLV = self.kiosk["APLV"]
-        APST = self.kiosk["APST"]
-        APRT = self.kiosk["APRT"]
-        APSO = self.kiosk["APSO"]
-        
-        AKLV = self.kiosk["AKLV"]
-        AKST = self.kiosk["AKST"]
-        AKRT = self.kiosk["AKRT"]
-        AKSO = self.kiosk["AKSO"]
-        
-        params = self.params
+        s = self.states
+        p = self.params
+        k = self.kiosk
 
 #       Maximum NPK concentrations in leaves [kg N kg-1 DM]
-        NMAXLV = params.NMAXLV_TB(DVS)
-        PMAXLV = params.PMAXLV_TB(DVS)
-        KMAXLV = params.KMAXLV_TB(DVS)
+        NMAXLV = p.NMAXLV_TB(k.DVS)
+        PMAXLV = p.PMAXLV_TB(k.DVS)
+        KMAXLV = p.KMAXLV_TB(k.DVS)
         
 #       Maximum NPK concentrations in stems and roots [kg N kg-1 DM]
-        NMAXST = params.NMAXST_FR * NMAXLV
-        NMAXRT = params.NMAXRT_FR * NMAXLV
-        NMAXSO = params.NMAXSO
+        NMAXST = p.NMAXST_FR * NMAXLV
+        NMAXRT = p.NMAXRT_FR * NMAXLV
+        NMAXSO = p.NMAXSO
       
-        PMAXST = params.PMAXST_FR * PMAXLV
-        PMAXRT = params.PMAXRT_FR * PMAXLV
-        PMAXSO = params.PMAXSO      
+        PMAXST = p.PMAXST_FR * PMAXLV
+        PMAXRT = p.PMAXRT_FR * PMAXLV
+        PMAXSO = p.PMAXSO
       
-        KMAXST = params.KMAXST_FR * KMAXLV
-        KMAXRT = params.KMAXRT_FR * KMAXLV
-        KMAXSO = params.KMAXSO
+        KMAXST = p.KMAXST_FR * KMAXLV
+        KMAXRT = p.KMAXRT_FR * KMAXLV
+        KMAXSO = p.KMAXSO
 
 #       N demand [kg ha-1]
-        states.NDEMLV = max(NMAXLV*WLV - ANLV, 0.)  # maybe should be divided by one day, see equation 5 Shibu etal 2010
-        states.NDEMST = max(NMAXST*WST - ANST, 0.)
-        states.NDEMRT = max(NMAXRT*WRT - ANRT, 0.)
-        states.NDEMSO = max(NMAXSO*WSO - ANSO, 0.)
+        s.NDEMLV = max(NMAXLV * k.WLV - k.ANLV, 0.)  # maybe should be divided by one day, see equation 5 Shibu etal 2010
+        s.NDEMST = max(NMAXST * k.WST - k.ANST, 0.)
+        s.NDEMRT = max(NMAXRT * k.WRT - k.ANRT, 0.)
+        s.NDEMSO = max(NMAXSO * k.WSO - k.ANSO, 0.)
 
 #       P demand [kg ha-1]
-        states.PDEMLV = max(PMAXLV*WLV - APLV, 0.)
-        states.PDEMST = max(PMAXST*WST - APST, 0.)
-        states.PDEMRT = max(PMAXRT*WRT - APRT, 0.)
-        states.PDEMSO = max(PMAXSO*WSO - APSO, 0.)
+        s.PDEMLV = max(PMAXLV * k.WLV - k.APLV, 0.)
+        s.PDEMST = max(PMAXST * k.WST - k.APST, 0.)
+        s.PDEMRT = max(PMAXRT * k.WRT - k.APRT, 0.)
+        s.PDEMSO = max(PMAXSO * k.WSO - k.APSO, 0.)
 
 #       K demand [kg ha-1]
-        states.KDEMLV = max(KMAXLV*WLV - AKLV, 0.)
-        states.KDEMST = max(KMAXST*WST - AKST, 0.)
-        states.KDEMRT = max(KMAXRT*WRT - AKRT, 0.)
-        states.KDEMSO = max(KMAXSO*WSO - AKSO, 0.)
+        s.KDEMLV = max(KMAXLV * k.WLV - k.AKLV, 0.)
+        s.KDEMST = max(KMAXST * k.WST - k.AKST, 0.)
+        s.KDEMRT = max(KMAXRT * k.WRT - k.AKRT, 0.)
+        s.KDEMSO = max(KMAXSO * k.WSO - k.AKSO, 0.)
