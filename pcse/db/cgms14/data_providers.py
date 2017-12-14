@@ -620,9 +620,9 @@ class CropDataProvider(dict):
             rows = sc.fetchall()
             sc.close()
             if not rows and crop_parameter not in self.parameters_optional:
-                msg = ("No parameter value found for "
-                       "idcrop_parametrization=%s, crop_parameter='%s'.")
-                raise exc.PCSEError(msg % (self.idcrop_parameterization, crop_parameter))
+                msg = "No parameter value found for idcrop_parametrization=%s, crop_parameter='%s'."
+                raise exc.PCSEError(msg % (self.idcrop_parametrization, crop_parameter))
+
             if len(rows) == 1:
                 msg = ("Single parameter value found for idcrop_parametrization=%s, "
                        "crop_parameter='%s' while tabular parameter expected." %

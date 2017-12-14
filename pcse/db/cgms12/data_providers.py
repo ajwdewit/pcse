@@ -643,7 +643,9 @@ class CropDataProvider(dict):
                             table_crop_pv.c.parameter_code == parameter_code)).execute()
             row = r.fetchone()
             if row is None:
-                if parameter_code not in self.parameters_optional:
+                if parameter_code in self.parameters_optional:
+                    continue
+                else:
                     msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
                     raise exc.PCSEError(msg % (self.crop_no, parameter_code))
             if parameter_code not in self.single2tabular:
