@@ -91,8 +91,8 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     :param table_name: 
     """
     # default values for the Angstrom parameters in the sunshine duration model
-    angstA = 0.18
-    angstB = 0.55
+    angstA = 0.29
+    angstB = 0.49
 
     def __init__(self, engine, idgrid, start_date=None, end_date=None,
                  recalc_ET=False, recalc_TEMP=False, table_name='weather_era_grid'):
