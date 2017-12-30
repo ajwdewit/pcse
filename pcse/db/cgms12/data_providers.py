@@ -92,8 +92,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     for the grid is retrieved.
     """
     # default values for the Angstrom parameters in the sunshine duration model
-    angstA = 0.18
-    angstB = 0.55
+    angstA = 0.29
+    angstB = 0.49
+
     def __init__(self, engine, grid_no, start_date=None, end_date=None,
                  recalc_ET=False, recalc_TEMP=False):
 
@@ -643,7 +644,9 @@ class CropDataProvider(dict):
                             table_crop_pv.c.parameter_code == parameter_code)).execute()
             row = r.fetchone()
             if row is None:
-                if parameter_code not in self.parameters_optional:
+                if parameter_code in self.parameters_optional:
+                    continue
+                else:
                     msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
                     raise exc.PCSEError(msg % (self.crop_no, parameter_code))
             if parameter_code not in self.single2tabular:

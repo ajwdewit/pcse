@@ -38,6 +38,9 @@ class GridWeatherDataProvider(WeatherDataProvider):
     instance. This makes that class instances can be pickled.
 
     """
+    # default values for the Angstrom parameters in the sunshine duration model
+    angstA = 0.29
+    angstB = 0.49
 
     def __init__(self, engine, grid_no, start_date=None, end_date=None,
                  recalc_ET=False):
