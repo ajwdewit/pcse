@@ -320,8 +320,7 @@ class DVS_Phenology(SimulationObject):
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
 
         # Define initial states
-        DVS = self.params.DVSI
-        DOS, DOE, STAGE = self._get_initial_stage(day)
+        DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
         self.states = self.StateVariables(kiosk, publish="DVS",
                                           TSUM=0., TSUME=0., DVS=DVS,
                                           DOS=DOS, DOE=DOE, DOA=None, DOM=None,
@@ -342,6 +341,7 @@ class DVS_Phenology(SimulationObject):
             STAGE = "vegetative"
             DOE = day
             DOS = None
+            DVS = p.DVSI
 
             # send signal to indicate crop emergence
             self._send_signal(signals.crop_emerged)
@@ -350,12 +350,13 @@ class DVS_Phenology(SimulationObject):
             STAGE = "emerging"
             DOS = day
             DOE = None
+            DVS = -0.1
 
         else:
             msg = "Unknown start type: %s" % p.CROP_START_TYPE
             raise exc.PCSEError(msg)
             
-        return (DOS, DOE, STAGE)
+        return DVS, DOS, DOE, STAGE
 
     #---------------------------------------------------------------------------
     @prepare_rates
@@ -383,7 +384,7 @@ class DVS_Phenology(SimulationObject):
         if s.STAGE == "emerging":
             r.DTSUME = limit(0., (p.TEFFMX - p.TBASEM), (drv.TEMP - p.TBASEM))
             r.DTSUM = 0.
-            r.DVR = 0.
+            r.DVR = 0.1 * r.DTSUME/p.TSUMEM
 
         elif s.STAGE == 'vegetative':
             r.DTSUME = 0.
@@ -426,8 +427,9 @@ class DVS_Phenology(SimulationObject):
 
         # Check if a new stage is reached
         if s.STAGE == "emerging":
-            if s.TSUME >= p.TSUMEM:
+            if s.DVS >= 0.0:
                 self._next_stage(day)
+                s.DVS = 0.
         elif s.STAGE == 'vegetative':
             if s.DVS >= 1.0:
                 self._next_stage(day)
@@ -487,25 +489,3 @@ class DVS_Phenology(SimulationObject):
         """
         if finish_type in ['harvest', 'earliest']:
             self._for_finalize["DOH"] = day
-
-
-class DVS_Phenology_Wrapper(SimulationObject):
-    """This is wrapper class that wraps the DVS_phenology simulation object
-    in such a way that it can run directly in the Engine. This means that
-    it can be used direct in a configuration file::
-
-        CROP = DVS_Phenology_Wrapper
-
-    This is useful for running only the phenology instead of the entire
-    crop simulation.
-    """
-    phenology = Instance(SimulationObject)
-
-    def initialize(self, day, kiosk, cropdata, soildata, sitedata, start_type, stop_type):
-        self.phenology = DVS_Phenology(day, kiosk, cropdata, start_type,  stop_type)
-
-    def calc_rates(self, day, drv):
-        self.phenology.calc_rates(day, drv)
-
-    def integrate(self, day, delt=1.0):
-        self.phenology.integrate(day, delt)

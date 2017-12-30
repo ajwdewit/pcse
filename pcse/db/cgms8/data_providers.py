@@ -162,7 +162,7 @@ class GridWeatherDataProvider(WeatherDataProvider):
                   "WIND": wind10to2(float(row.windspeed)),
                   "RAIN": float(row.rainfall)/10.,
                   "IRRAD": float(row.calculated_radiation)*1000.,
-                  "SNOWDEPTH": safe_float(row.snowdepth)})
+                  "SNOWDEPTH": safe_float(row.snow_depth)})
 
         if not self.recalc_ET:
             t.update({"E0":  float(row.e0)/10.,
