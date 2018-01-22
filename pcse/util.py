@@ -242,8 +242,8 @@ def penman_monteith(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
     # Vapour pressure to kPa
     VAP = hPa2kPa(VAP)
 
-    # atmospheric pressure (kPa)
-    T = Celsius2Kelvin(TMPA)
+    # atmospheric pressure at standard temperature of 293K (kPa)
+    T = 293.0
     PATM = 101.3 * pow((T - (0.0065*ELEV))/T, 5.26)
 
     # psychrometric constant (kPa/Celsius)

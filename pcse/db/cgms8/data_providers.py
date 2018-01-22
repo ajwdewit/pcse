@@ -148,7 +148,7 @@ class GridWeatherDataProvider(WeatherDataProvider):
                 wdc = meteopackager(row, t)
                 self._store_WeatherDataContainer(wdc, DAY)
         except Exception as e:
-            errstr = "Failure reading meteodata: " + str(e)
+            errstr = "Failure reading meteodata for day %s: %s" % (row.day, str(e))
             raise exc.PCSEError(errstr)
 
         msg = ("Successfully retrieved weather data from 'grid_weather' table "
