@@ -32,6 +32,7 @@ class GridWeatherDataProvider(WeatherDataProvider):
     :param recalc_ET: Set to True to force calculation of reference
         ET values. Mostly useful when values have not been calculated
         in the CGMS database.
+    :param use_cache: Set to False to ignore read/writing a cache file.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
@@ -43,13 +44,14 @@ class GridWeatherDataProvider(WeatherDataProvider):
     angstB = 0.49
 
     def __init__(self, engine, grid_no, start_date=None, end_date=None,
-                 recalc_ET=False):
+                 recalc_ET=False, use_cache=True):
 
         WeatherDataProvider.__init__(self)
         self.grid_no = int(grid_no)
         self.recalc_ET = recalc_ET
+        self.use_cache = use_cache
 
-        if not self._self_load_cache(self.grid_no):
+        if not self._self_load_cache(self.grid_no) or self.use_cache is False:
             if start_date is None:
                 start_date = dt.date(dt.MINYEAR, 1, 1)
             if end_date is None:
@@ -70,8 +72,9 @@ class GridWeatherDataProvider(WeatherDataProvider):
             self.description = "Weather data derived for grid_no: %i" % self.grid_no
 
             # Save cache file
-            fname = self._get_cache_filename(self.grid_no)
-            self._dump(fname)
+            if self.use_cache:
+                fname = self._get_cache_filename(self.grid_no)
+                self._dump(fname)
 
     def _get_cache_filename(self, grid_no):
         fname = "%s_grid_%i.cache" % (self.__class__.__name__, grid_no)

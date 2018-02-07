@@ -96,15 +96,16 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     angstB = 0.49
 
     def __init__(self, engine, grid_no, start_date=None, end_date=None,
-                 recalc_ET=False, recalc_TEMP=False):
+                 recalc_ET=False, recalc_TEMP=False, use_cache=True):
 
         WeatherDataProvider.__init__(self)
 
         self.grid_no = int(grid_no)
         self.recalc_ET = recalc_ET
         self.recalc_TEMP = recalc_TEMP
+        self.use_cache = use_cache
 
-        if not self._self_load_cache(self.grid_no):
+        if not self._self_load_cache(self.grid_no) or self.use_cache is False:
             try:
                 self.start_date = self.check_keydate(start_date)
             except KeyError:
@@ -132,8 +133,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
             self.description = [line1, line2]
 
         # Save cache file
-        fname = self._get_cache_filename(self.grid_no)
-        self._dump(fname)
+        if self.use_cache:
+            fname = self._get_cache_filename(self.grid_no)
+            self._dump(fname)
 
     def _get_cache_filename(self, grid_no):
         fname = "%s_grid_%i.cache" % (self.__class__.__name__, grid_no)

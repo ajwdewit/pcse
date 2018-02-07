@@ -88,13 +88,14 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     :param recalc_ET: Set to True to force calculation of reference
         ET values. Mostly useful when values have not been calculated
          in the CGMS database.
-    :param table_name: 
+    :param use_cache: Set to False to ignore reading and writing a cache file
+    :param table_name:
     """
     # default values for the Angstrom parameters in the sunshine duration model
     angstA = 0.29
     angstB = 0.49
 
-    def __init__(self, engine, idgrid, start_date=None, end_date=None,
+    def __init__(self, engine, idgrid, start_date=None, end_date=None, use_cache=True,
                  recalc_ET=False, recalc_TEMP=False, table_name='weather_era_grid'):
         # Initialise
         WeatherDataProvider.__init__(self)
@@ -102,8 +103,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
         self.recalc_ET = recalc_ET
         self.recalc_TEMP = recalc_TEMP
         self.table_name = table_name
+        self.use_cache = use_cache
 
-        if not self._self_load_cache(self.idgrid):
+        if not self._self_load_cache(self.idgrid) or self.use_cache is False:
             metadata = MetaData(engine)
 
             # Check the start and end dates and assign when ok
@@ -132,8 +134,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
             self.description = [line1, line2]
 
             # Save cache file
-            fname = self._get_cache_filename(self.idgrid)
-            self._dump(fname)
+            if self.use_cache:
+                fname = self._get_cache_filename(self.idgrid)
+                self._dump(fname)
 
     def _get_cache_filename(self, grid_no):
         fname = "%s_grid_%i.cache" % (self.__class__.__name__, grid_no)

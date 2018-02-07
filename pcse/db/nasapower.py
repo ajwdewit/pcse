@@ -76,8 +76,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                       ("RAIN", "RAIN", mm_to_cm, "cm/day")]
     # other constants
     HTTP_OK = 200
-    angstA = 0.25
-    angstB = 0.5
+    angstA = 0.29
+    angstB = 0.49
 
     def __init__(self, latitude, longitude, force_update=False, ETmodel="PM"):
 

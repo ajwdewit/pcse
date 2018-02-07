@@ -510,33 +510,12 @@ class WaterbalanceFD(SimulationObject):
 
         # First get the actual rooting depth
         RD = self._determine_rooting_depth()
-
-        # Redefine the rootzone when a crop is started or finished. In the former
-        # case the default root zone (10 cm) may not match the initial rooting
-        # depth of the crop (RDI). In the latter case, the crop rooting depth
-        # disappears and the root zone shifts back to its default position as
-        # defined by (self.DEFAULT_RD) In both cases water in the rooted and
-        # non-rooted layer must be redistributed between the layers in order to
-        # keep the balance.
-        # Note that his is a rather artificial solution resulting from the fact
-        # that the rooting depth is used to define the upper layer in the WOFOST
-        # water balance.
-        if self.rooted_layer_needs_reset is True:
-            self._reset_root_zone(self.RDold, RD)
-
-        # calculation of new amount of soil moisture in root zone by root growth
-        if (RD - self.RDold) > 0.001:
-            # water added to root zone by root growth, in cm
-            WDR = s.WLOW * (RD - self.RDold)/(self.RDM - self.RDold)
-            s.WLOW -= WDR
-
-            # total water addition to root zone by root growth
-            s.WDRT += WDR
-            # amount of soil moisture in extended root zone
-            s.W += WDR
+        RDchange = RD - self.RDold
+        self._redistribute_water(RDchange)
 
         # mean soil moisture content in rooted zone
         s.SM = s.W/RD
+
         # save rooting depth
         self.RDold = RD
 
@@ -572,76 +551,44 @@ class WaterbalanceFD(SimulationObject):
         This function includes the logic to determine the depth of the upper (rooted)
         layer of the water balance. See the comment in the code for a detailed description.
         """
-        p = self.params
+        if "RD" in self.kiosk:
+            return self.kiosk["RD"]
+        else:
+            # Hold RD at default value
+            return self.DEFAULT_RD
 
-        if not self.in_crop_cycle:  # We are not in a cropping cycle
-            if "RD" in self.kiosk:
-                # Only happens at the end of a crop cycle when a CROP_FINISH
-                # signal has been sent but the water balance states still have
-                # to be computed in order to finish the simulation cycle.
-                # This also implies that a reset of the root zone layer will be
-                # done in the next cycle.
-                RD = self.kiosk["RD"]
-            else:
-                # Hold RD at default value
-                RD = self.DEFAULT_RD
-
-        else:  # In cropping cycle, return crop rooting depth
-            RD = self.kiosk["RD"]
-            
-        return RD
-    
-    def _reset_root_zone(self, RDold, RDnew):
+    def _redistribute_water(self, RDchange):
         """Redistributes the water between the root zone and the lower zone.
 
-        :param RDold: The previous root zone depth [cm]
-        :param RDnew: The new root zone depth [cm]
+        :param RDchange: Change in root depth [cm] positive for downward growth,
+                         negative for upward growth
 
-        Redistribution of water is needed when the crop is finished and the root
-        zone shifts back from the crop rooted depth to the default depth of the
-        upper (rooted) layer of the water balance. Or when the initial rooting
-        depth of a crop is different from the default one used by the water
-        balance module (10 cm)
+        Redistribution of water is needed when roots grow during the growing season
+        and when the crop is finished and the root zone shifts back from the crop rooted
+        depth to the default depth of the upper (rooted) layer of the water balance.
+        Or when the initial rooting depth of a crop is different from the default one used
+        by the water balance module (10 cm)
         """
         s = self.states
         p = self.params
         
-        self.rooted_layer_needs_reset = False
+        WDR = 0.
+        if RDchange > 0.001:
+            # roots grow down by more than 0.001 cm
+            # move water from previously unrooted zone and add to new rooted zone
+            WDR = s.WLOW * RDchange/(p.RDMSOL - self.RDold)
+        else:
+            # roots disappear upwards by more than 0.001 cm (especially when crop disappears)
+            # move water from previously rooted zone and add to new unrooted zone
+            WDR = s.W * RDchange/self.RDold
 
-        if RDnew == RDold:
-            # Despite a reset, the new root zone has the same depth as the old root zone.
-            # Since most crops have a default initial root zone of 10 cm this will
-            # often be the case. No further action is needed here
-            pass
-        elif RDnew < RDold:
-            # root zone shifts up. This happens often when a crop is finished
-            # and the root zone shifts back to its default value.
-
-            # water added to the subsoil from the root zone
-            WDR = s.W * (RDold - RDnew)/RDold
-            s.WLOW += WDR
-
-            # total water subtracted from, root zone by root zone reset
-            s.WDRT -= WDR
-            # amount of soil moisture in new redefined root zone
-            s.W -= WDR
-        elif RDnew > RDold:
-            # root zone shifts down. This situation is less common but it can happen
-            # when the initial depth of a new crop (RDI) is larger then the default
-            # root zone depth (10 cm)
-
-            # water added from the subsoil to the root zone
-            WDR = s.WLOW * (RDnew - RDold)/(p.RDMSOL - RDold)
-
+        if WDR != 0.:
             # reduce amount of water in subsoil
             s.WLOW -= WDR
             # increase amount of water in root zone
             s.W += WDR
             # total water add to rootzone by root zone reset
             s.WDRT += WDR
-
-        # Update the old root zone to the new value
-        self.RDold = RDnew
 
     def _on_CROP_START(self):
         self.in_crop_cycle = True
