@@ -346,15 +346,15 @@ class AgroManagementDataProvider(list):
                    "CROP_CALENDAR: %s" % row.end_type)
             raise exc.PCSEError(msg)
 
-        # Determine maximum duration of the crop
-
+        # Determine crop_end_date and campaign_end_date
+        # note that campaign_end_date should be at least one day later then crop_end_date
         if self.crop_end_type == "maturity":
             self.crop_end_date = "null"
             self.max_duration = int(row.max_duration)
-            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration)
+            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration + 1)
         else:
             self.crop_end_date = check_date(row.end_date)
-            self.campaign_end_date = self.crop_end_date
+            self.campaign_end_date = self.crop_end_date + dt.timedelta(days=1)
             self.max_duration = (self.crop_end_date - self.crop_start_date).days + 1
 
         input = self._build_yaml_agromanagement()

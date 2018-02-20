@@ -314,7 +314,7 @@ class AgroManagementDataProvider(list):
         self.conditional_datecopy("start_period", "crop_start_date", "emergence", "sowing")
         self.conditional_datecopy("end_period", "crop_end_date", "maturity", "harvesting")
         self.amdict["campaign_start_date"] = check_date(self.amdict["crop_start_date"])
-        self.amdict["campaign_end_date"] = check_date(self.amdict["crop_end_date"])
+        self.amdict["campaign_end_date"] = check_date(self.amdict["crop_end_date"]) + dt.timedelta(days=1)
         self.amdict["crop_name"] = self.crop_name
         # We do not get a variety_name from the CGMS database, so we make one
         # as <crop_name>_<grid>_<year>
