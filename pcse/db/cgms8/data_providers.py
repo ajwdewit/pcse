@@ -215,7 +215,6 @@ class AgroManagementDataProvider(list):
                     max_duration: {duration}
                 TimedEvents: null
                 StateEvents: null
-          - {campaign_end_date}: null
         """
 
     def __init__(self, engine, grid_no, crop_no, campaign_year):
