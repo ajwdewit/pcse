@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-from ..traitlets import Float, Int, Instance, Dict, AfgenTrait
+from ..traitlets import Float, Int, Instance, Dict
 from ..decorators import prepare_rates, prepare_states
 from ..base_classes import ParamTemplate, SimulationObject
+from ..util import AfgenTrait
 
 class WOFOST_Maintenance_Respiration(SimulationObject):
     """Maintenance respiration in WOFOST

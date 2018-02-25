@@ -5,9 +5,9 @@ from math import exp
 from collections import deque
 from array import array
 
-from ..traitlets import Float, Int, Instance, AfgenTrait
+from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
-from ..util import limit
+from ..util import limit, AfgenTrait
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals

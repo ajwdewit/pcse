@@ -6,9 +6,9 @@
 from __future__ import print_function
 from math import sqrt, exp, cos, pi
 
-from ..traitlets import Instance, Float, AfgenTrait
+from ..traitlets import Instance, Float 
 
-from ..util import limit, astro, doy
+from ..util import limit, astro, doy, AfgenTrait
 from ..base_classes import ParamTemplate, SimulationObject
 
 try:

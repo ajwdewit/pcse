@@ -9,10 +9,10 @@ Classes defined here:
 """
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Bool, AfgenTrait
+from ..traitlets import Float, Int, Instance, Enum, Bool
 from ..decorators import prepare_rates, prepare_states
 
-from ..util import limit, daylength
+from ..util import limit, daylength, AfgenTrait
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
 from .. import signals

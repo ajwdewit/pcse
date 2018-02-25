@@ -14,8 +14,10 @@ from collections import namedtuple
 from bisect import bisect_left
 import textwrap
 import sqlite3
+from collections import Iterable
 
 from . import exceptions as exc
+from .traitlets import TraitType
 
 Celsius2Kelvin = lambda x: x + 273.16
 hPa2kPa = lambda x: x/10.
@@ -667,6 +669,19 @@ class Afgen(object):
             v *= self.unit
 
         return v
+
+
+class AfgenTrait(TraitType):
+     """An AFGEN table trait"""
+     default_value = Afgen([0,0,1,1])
+     into_text = "An AFGEN table of XY pairs"
+     
+     def validate(self, obj, value):
+        if isinstance(value, Afgen):
+            return value
+        elif isinstance(value, Iterable):
+            return Afgen(value)
+        self.error(obj, value)
 
 
 def merge_dict(d1, d2, overwrite=False):

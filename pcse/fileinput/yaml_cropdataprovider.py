@@ -62,14 +62,14 @@ class YAMLCropDataProvider(MultiCropDataProvider):
 
     Additionally, it is possible to load YAML parameter files from your local file system::
 
-        >>> p = YAMLCropDataProvider(fpath=r"D:\UserData\sources\WOFOST_crop_parameters")
+        >>> p = YAMLCropDataProvider(fpath=r"D:\\UserData\\sources\\WOFOST_crop_parameters")
         >>> print(p)
         YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
 
     Finally, it is possible to pull data from your fork of my github repository by specifying
     the URL to that repository::
 
-        >>> p = YAMLCropDataProvider(repository="https://raw.githubusercontent.com/<your_account>/WOFOST_crop_parameters/master/")
+        >>> p = YAMLCropDataProvider(repository=\"https://raw.githubusercontent.com/<your_account>/WOFOST_crop_parameters/master/\")
 
     To increase performance of loading parameters, the YAMLCropDataProvider will create a
     cache file that can be restored much quicker compared to loading the YAML files.

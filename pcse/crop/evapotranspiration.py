@@ -5,11 +5,11 @@ from math import exp
 
 import array
 
-from ..traitlets import Float, Int, Instance, AfgenTrait, Bool
+from ..traitlets import Float, Int, Instance, Bool
 from ..decorators import prepare_rates, prepare_states
 from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
                          SimulationObject
-from ..util import limit, merge_dict
+from ..util import limit, merge_dict, AfgenTrait
 
 def SWEAF(ET0, DEPNR):
     """Calculates the Soil Water Easily Available Fraction (SWEAF).

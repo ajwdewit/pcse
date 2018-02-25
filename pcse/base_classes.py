@@ -9,11 +9,12 @@ when creating PCSE simulation units.
 import types
 import logging
 from datetime import date
-import cPickle
+import pickle
 from collections import Counter, MutableMapping
 
 from .traitlets import (HasTraits, Any, Float, Int, Instance, Dict, Bool,
-                        Enum, AfgenTrait)
+                        Enum)
+from .util import AfgenTrait
 from .pydispatch import dispatcher
 from .util import Afgen
 from . import exceptions as exc
@@ -351,9 +352,9 @@ def check_publish(publish):
     
 #-------------------------------------------------------------------------------
 class StatesRatesCommon(HasTraits):
-    _kiosk = Instance(VariableKiosk)
-    _valid_vars = Instance(set)
-    _locked = Bool(False)
+    _kiosk = Instance(VariableKiosk, allow_none=True)
+    _valid_vars = Instance(set, allow_none=True)
+    _locked = Bool(False, allow_none=True)
 
     def __init__(self, kiosk=None, publish=None):
         """Set up the common stuff for the states and rates template
@@ -733,20 +734,21 @@ class SimulationObject(HasTraits, DispatcherObject):
     """
 
     # Placeholders for logger, params, states, rates and variable kiosk
-    logger = Instance(logging.Logger)
-    states = Instance(StatesTemplate)
-    rates  = Instance(RatesTemplate)
-    params = Instance(ParamTemplate)
-    kiosk  = Instance(VariableKiosk)
+    logger = Instance(logging.Logger, allow_none=True)
+    states = Instance(StatesTemplate, allow_none=True)
+    rates  = Instance(RatesTemplate, allow_none=True)
+    params = Instance(ParamTemplate, allow_none=True)
+    kiosk  = Instance(VariableKiosk, allow_none=True)
     
     # Placeholder for a list of sub-SimulationObjects. This is to avoid
     # having to loop through all attributes when doing a variable look-up
-    subSimObjects = Instance(list)
+    subSimObjects = Instance(list, allow_none=True)
 
     # Placeholder for variables that are to be set during finalizing.
     _for_finalize = Dict()
     
     def __init__(self, day, kiosk, *args, **kwargs):
+        HasTraits.__init__(self, *args, **kwargs)
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
 
@@ -904,7 +906,7 @@ class SimulationObject(HasTraits, DispatcherObject):
         
         subSimObjects = []
         defined_traits = self.__dict__["_trait_values"]
-        for attr in defined_traits.itervalues():
+        for attr in defined_traits.values():
             if isinstance(attr, SimulationObject):
                 #print "Found SimObj: %s" % attr.__class__
                 subSimObjects.append(attr)
@@ -1218,23 +1220,23 @@ class WeatherDataProvider(object):
         self.logger = logging.getLogger(loggername)
 
     def _dump(self, cache_fname):
-        """Dumps the contents into cache_fname using cPickle.
+        """Dumps the contents into cache_fname using pickle.
 
         Dumps the values of self.store, longitude, latitude, elevation and description
         """
         with open(cache_fname, "wb") as fp:
             dmp = (self.store, self.elevation, self.longitude, self.latitude, self.description, self.ETmodel)
-            cPickle.dump(dmp, fp, cPickle.HIGHEST_PROTOCOL)
+            pickle.dump(dmp, fp, pickle.HIGHEST_PROTOCOL)
 
     def _load(self, cache_fname):
-        """Loads the contents from cache_fname using cPickle.
+        """Loads the contents from cache_fname using pickle.
 
         Loads the values of self.store, longitude, latitude, elevation and description
         from cache_fname and also sets the self.first_date, self.last_date
         """
 
         with open(cache_fname, "rb") as fp:
-            (store, self.elevation, self.longitude, self.latitude, self.description, ETModel) = cPickle.load(fp)
+            (store, self.elevation, self.longitude, self.latitude, self.description, ETModel) = pickle.load(fp)
 
         # Check if the reference ET from the cache file is calculated with the same model as
         # specified by self.ETmodel
