@@ -78,9 +78,9 @@ class CropCalendar(HasTraits, DispatcherObject):
     # Characteristics of the crop cycle
     crop_name = Unicode()
     variety_name = Unicode()
-    crop_start_date = Instance(date)
+    crop_start_date = Instance(date, allow_none=True)
     crop_start_type = Enum(["sowing", "emergence"])
-    crop_end_date = Instance(date)
+    crop_end_date = Instance(date, allow_none=True)
     crop_end_type = Enum(["maturity", "harvest", "earliest"])
     max_duration = Int()
 
@@ -293,7 +293,7 @@ class TimedEventsDispatcher(HasTraits, DispatcherObject):
         :param next_campaign_start_date: Start date of the next campaign, can be None
         """
         for event in self.events_table:
-            day = event.keys()[0]
+            day = list(event.keys())[0]
             r = check_date_range(day, campaign_start_date, next_campaign_start_date)
             if r is not True:
                 msg = "Timed event at day %s not in campaign interval (%s - %s)" %\
@@ -610,8 +610,8 @@ class AgroManager(AncillaryObject):
     campaign_start_dates = List()
 
     # Overall engine start date and end date
-    _start_date = Instance(date)
-    _end_date = Instance(date)
+    _start_date = Instance(date, allow_none=True)
+    _end_date = Instance(date, allow_none=True)
 
     # campaign definitions
     crop_calendars = List()
@@ -641,7 +641,7 @@ class AgroManager(AncillaryObject):
         # First get and validate the dates of the different campaigns
         for campaign in agromanagement:
             # Check if campaign start dates is in chronological order
-            campaign_start_date = campaign.keys()[0]
+            campaign_start_date = list(campaign.keys())[0]
             self._check_campaign_date(campaign_start_date)
             self.campaign_start_dates.append(campaign_start_date)
 

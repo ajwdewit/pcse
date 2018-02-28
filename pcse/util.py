@@ -672,15 +672,15 @@ class Afgen(object):
 
 
 class AfgenTrait(TraitType):
-     """An AFGEN table trait"""
-     default_value = Afgen([0,0,1,1])
-     into_text = "An AFGEN table of XY pairs"
-     
-     def validate(self, obj, value):
+    """An AFGEN table trait"""
+    default_value = Afgen([0,0,1,1])
+    into_text = "An AFGEN table of XY pairs"
+
+    def validate(self, obj, value):
         if isinstance(value, Afgen):
-            return value
+           return value
         elif isinstance(value, Iterable):
-            return Afgen(value)
+           return Afgen(value)
         self.error(obj, value)
 
 

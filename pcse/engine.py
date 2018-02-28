@@ -21,7 +21,7 @@ import datetime
 import gc
 import pandas
 
-from .traitlets import Instance, Bool
+from .traitlets import Instance, Bool, List, Dict
 from .base_classes import (VariableKiosk, WeatherDataProvider,
                            AncillaryObject, WeatherDataContainer,
                            SimulationObject, BaseEngine,
@@ -88,19 +88,19 @@ class Engine(BaseEngine):
 
     """
     # system configuration
-    mconf = Instance(ConfigurationLoader)
-    parameterprovider = Instance(ParameterProvider)
+    mconf = Instance(ConfigurationLoader, allow_none=True)
+    parameterprovider = Instance(ParameterProvider, allow_none=True)
 
     # sub components for simulation
-    crop = Instance(SimulationObject)
-    soil = Instance(SimulationObject)
-    agromanager = Instance(AncillaryObject)
-    weatherdataprovider = Instance(WeatherDataProvider)
+    crop = Instance(SimulationObject, allow_none=True)
+    soil = Instance(SimulationObject, allow_none=True)
+    agromanager = Instance(AncillaryObject, allow_none=True)
+    weatherdataprovider = Instance(WeatherDataProvider, allow_none=True)
     # drv = Instance(WeatherDataContainer)
     drv = None
-    kiosk = Instance(VariableKiosk)
-    timer = Instance(Timer)
-    day = Instance(datetime.date)
+    kiosk = Instance(VariableKiosk, allow_none=True)
+    timer = Instance(Timer, allow_none=True)
+    day = Instance(datetime.date, allow_none=True)
 
     # flags that are being set by signals
     flag_terminate = Bool(False)
@@ -111,12 +111,12 @@ class Engine(BaseEngine):
     flag_summary_output = Bool(False)
     
     # placeholders for variables saved during model execution
-    _saved_output = Instance(list)
-    _saved_summary_output = Instance(list)
-    _saved_terminal_output = Instance(dict)
+    _saved_output = List()
+    _saved_summary_output = List()
+    _saved_terminal_output = Dict()
 
     # Helper variables
-    TMNSAV = Instance(deque)
+    TMNSAV = Instance(deque, allow_none=True)
     
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config=None):
 

@@ -12,8 +12,8 @@ from datetime import date
 import pickle
 from collections import Counter, MutableMapping
 
-from .traitlets import (HasTraits, Any, Float, Int, Instance, Dict, Bool,
-                        Enum)
+from .traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool,
+                        All)
 from .util import AfgenTrait
 from .pydispatch import dispatcher
 from .util import Afgen
@@ -311,12 +311,6 @@ class ParamTemplate(HasTraits):
                 msg = "Value for parameter %s missing." % parname
                 raise exc.ParameterError(msg)
             value = parvalues[parname]
-            #if isinstance(getattr(self, parname), (Float, Int, Bool, Enum)):
-            #    # Single value parameter
-            #    setattr(self, parname, value)
-            #else:
-            #    # AFGEN table parameter
-            #    setattr(self, parname, afgen(value))
             if isinstance(getattr(self, parname), (Afgen)):
                 # AFGEN table parameter
                 setattr(self, parname, Afgen(value))
@@ -406,15 +400,12 @@ class StatesRatesCommon(HasTraits):
         for attr in self._valid_vars:
             if attr in publish:
                 publish.remove(attr)
-                self._kiosk.register_variable(id(self), attr,
-                                              type=self._vartype,
+                self._kiosk.register_variable(id(self), attr, type=self._vartype,
                                               publish=True)
-                self.on_trait_change(self._update_kiosk, attr)
+                self.observe(handler=self._update_kiosk, names=attr, type=All)
             else:
-                self._kiosk.register_variable(id(self), attr,
-                                              type=self._vartype,
-                                              publish=False)                    
-        
+                self._kiosk.register_variable(id(self), attr, type=self._vartype,
+                                              publish=False)
         # Check if the set of published variables is exhausted, otherwise
         # raise an error.
         if len(publish) > 0:
@@ -422,31 +413,38 @@ class StatesRatesCommon(HasTraits):
                    "keyword: %s") % publish
             raise exc.PCSEError(msg)
 
-    def __setattr__(self, attr, value):
-        # Attributes starting with "_" can be assigned or updated regardless
-        # of whether the object is locked.
-        #
-        # Note that the check on startswith("_") *MUST* be the first otherwise
-        # the assignment of some trait internals will fail
-        if attr.startswith("_"):
-            HasTraits.__setattr__(self, attr, value)
-        elif attr in self._valid_vars:
-            if not self._locked:
-                HasTraits.__setattr__(self, attr, value)
-            else:
-                msg = "Assignment to locked attribute '%s' prevented." % attr
-                raise AttributeError(msg)
-        else:
-            msg = "Assignment to non-existing attribute '%s' prevented." % attr
-            raise AttributeError(msg)
+    # def __setattr__(self, attr, value):
+    #     # Attributes starting with "_" can be assigned or updated regardless
+    #     # of whether the object is locked.
+    #     #
+    #     # Note that the check on startswith("_") *MUST* be the first otherwise
+    #     # the assignment of some trait internals will fail
+    #     if attr.startswith("_"):
+    #         HasTraits.__setattr__(self, attr, value)
+    #     elif attr in self._valid_vars:
+    #         if not self._locked:
+    #             HasTraits.__setattr__(self, attr, value)
+    #         else:
+    #             msg = "Assignment to locked attribute '%s' prevented." % attr
+    #             raise AttributeError(msg)
+    #     else:
+    #         msg = "Assignment to non-existing attribute '%s' prevented." % attr
+    #         raise AttributeError(msg)
 
-    def _update_kiosk(self, trait_name, oldvalue, newvalue):
+    # def _update_kiosk(self, trait_name, oldvalue, newvalue):
+    #     """Update the variable_kiosk through trait notification.
+    #     """
+    #     #print "Updating published variable '%s' from %s to %s" % \
+    #     #      (trait_name, oldvalue, newvalue)
+    #     self._kiosk.set_variable(id(self), trait_name, newvalue)
+    
+    def _update_kiosk(self, change):
         """Update the variable_kiosk through trait notification.
         """
         #print "Updating published variable '%s' from %s to %s" % \
         #      (trait_name, oldvalue, newvalue)
-        self._kiosk.set_variable(id(self), trait_name, newvalue)
-    
+        self._kiosk.set_variable(id(self), change["name"], change["new"])
+
     def unlock(self):
         "Unlocks the attributes of this class."
         self._locked = False
@@ -572,7 +570,7 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
     __initialized = False
 
     def __setattr__(self, name, value):
-        if self.rates.has_key(name):
+        if name in self.rates:
             # known attribute: set value:             
             self.rates[name] = value
         elif not self.__initialized:
@@ -584,7 +582,7 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
             
             
     def __getattr__(self, name):
-        if self.rates.has_key(name):
+        if name in self.rates:
             return self.rates[name]
         else:
             object.__getattribute__(self, name)
@@ -674,7 +672,7 @@ class RatesTemplate(StatesRatesCommon):
         zero_value = {Bool:False, Int:0, Float:0.}
     
         d = {}
-        for name, value in self.traits().iteritems():
+        for name, value in self.traits().items():
             if name not in self._valid_vars:
                 continue
             try:
@@ -973,9 +971,9 @@ class AncillaryObject(HasTraits, DispatcherObject):
     """
     
     # Placeholders for logger, variable kiosk and parameters
-    logger = Instance(logging.Logger)
-    kiosk  = Instance(VariableKiosk)
-    params = Instance(ParamTemplate)
+    logger = Instance(logging.Logger, allow_none=True)
+    kiosk = Instance(VariableKiosk, allow_none=True)
+    params = Instance(ParamTemplate, allow_none=True)
     
     #---------------------------------------------------------------------------
     def __init__(self, kiosk, *args, **kwargs):
@@ -1381,15 +1379,16 @@ class WeatherDataProvider(object):
         msg += "Number of missing days: %i\n" % self.missing
         return msg
 
+
 class BaseEngine(HasTraits, DispatcherObject):
     """Base Class for Engine to inherit from
     """
     # Placeholders for logger, params, states, rates and variable kiosk
-    logger = Instance(logging.Logger)
+    logger = Instance(logging.Logger, allow_none=True)
 
     # Placeholder for a list of sub-SimulationObjects. This is to avoid
     # having to loop through all attributes when doing a variable look-up
-    subSimObjects = Instance(list)
+    subSimObjects = List()
 
     def __init__(self):
         HasTraits.__init__(self)
@@ -1436,7 +1435,7 @@ class BaseEngine(HasTraits, DispatcherObject):
 
         subSimObjects = []
         defined_traits = self.__dict__["_trait_values"]
-        for attr in defined_traits.itervalues():
+        for attr in defined_traits.values():
             if isinstance(attr, SimulationObject):
                 #print "Found SimObj: %s" % attr.__class__
                 subSimObjects.append(attr)

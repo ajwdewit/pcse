@@ -1,3 +1,0 @@
-[submodule "pcse/traitlets"]
-	path = pcse/traitlets
-	url = https://github.com/ajwdewit/traitlets.git
