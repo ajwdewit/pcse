@@ -134,8 +134,8 @@ class NPK_Crop_Dynamics(SimulationObject):
     =======  =================================== ====================  ============
     """
 
-    translocation = Instance(SimulationObject)
-    demand_uptake = Instance(SimulationObject)
+    translocation = Instance(SimulationObject, allow_none=True)
+    demand_uptake = Instance(SimulationObject, allow_none=True)
 
     ANLVI = Float(-99.)  # initial soil N amount in leaves
     ANSTI = Float(-99.)  # initial soil N amount in stems

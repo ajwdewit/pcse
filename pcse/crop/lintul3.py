@@ -209,7 +209,7 @@ class Lintul3(SimulationObject):
 
 
     # sub-model components for crop simulation
-    pheno = Instance(SimulationObject)
+    pheno = Instance(SimulationObject, allow_none=True)
     # placeholder for effective N application rate from the _on_APPLY_N event handler.
     FERTNS = 0.0
     # placeholder for initial leaf area index

@@ -282,8 +282,8 @@ class DVS_Phenology(SimulationObject):
         DVSEND = Float(-99.)  # Final development stage
         DTSMTB = AfgenTrait() # Temperature response function for phenol.
                               # development.
-        CROP_START_TYPE = Enum(["sowing", "emergence"])
-        CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"])
+        CROP_START_TYPE = Enum(["sowing", "emergence"], allow_none=True)
+        CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"], allow_none=True)
 
     #-------------------------------------------------------------------------------
     class RateVariables(RatesTemplate):
@@ -293,16 +293,16 @@ class DVS_Phenology(SimulationObject):
 
     #-------------------------------------------------------------------------------
     class StateVariables(StatesTemplate):
-        DVS   = Float(-99.)  # Development stage
-        TSUM  = Float(-99.)  # Temperature sum state
+        DVS = Float(-99.)  # Development stage
+        TSUM = Float(-99.)  # Temperature sum state
         TSUME = Float(-99.)  # Temperature sum for emergence state
         # States which register phenological events
-        DOS = Instance(datetime.date) # Day of sowing
-        DOE = Instance(datetime.date) # Day of emergence
-        DOA = Instance(datetime.date) # Day of anthesis
-        DOM = Instance(datetime.date) # Day of maturity
-        DOH = Instance(datetime.date) # Day of harvest
-        STAGE  = Enum([None, "emerging", "vegetative", "reproductive", "mature"])
+        DOS = Instance(datetime.date, allow_none=True) # Day of sowing
+        DOE = Instance(datetime.date, allow_none=True) # Day of emergence
+        DOA = Instance(datetime.date, allow_none=True) # Day of anthesis
+        DOM = Instance(datetime.date, allow_none=True) # Day of maturity
+        DOH = Instance(datetime.date, allow_none=True) # Day of harvest
+        STAGE = Enum(["emerging", "vegetative", "reproductive", "mature"], allow_none=True)
 
     #---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues):

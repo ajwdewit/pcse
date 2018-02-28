@@ -28,7 +28,6 @@ def make_test_suite(dsn=None):
                                    test_wofost.suite(dsn),
                                    test_lintul3.suite(),
                                    test_wofost_npk.suite()])
-
     return allsuites
 
 def test_all(dsn=None):

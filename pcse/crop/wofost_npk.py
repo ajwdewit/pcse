@@ -97,18 +97,18 @@ class WofostNPK(SimulationObject):
     """
     
     # sub-model components for crop simulation
-    pheno = Instance(SimulationObject)
-    part = Instance(SimulationObject)
-    assim = Instance(SimulationObject)
-    mres = Instance(SimulationObject)
-    evtra = Instance(SimulationObject)
-    lv_dynamics = Instance(SimulationObject)
-    st_dynamics = Instance(SimulationObject)
-    ro_dynamics = Instance(SimulationObject)
-    so_dynamics = Instance(SimulationObject)
-    npk_crop_dynamics = Instance(SimulationObject)
-    npk_soil_dynamics = Instance(SimulationObject)
-    npk_stress = Instance(SimulationObject)
+    pheno = Instance(SimulationObject, allow_none=True)
+    part = Instance(SimulationObject, allow_none=True)
+    assim = Instance(SimulationObject, allow_none=True)
+    mres = Instance(SimulationObject, allow_none=True)
+    evtra = Instance(SimulationObject, allow_none=True)
+    lv_dynamics = Instance(SimulationObject, allow_none=True)
+    st_dynamics = Instance(SimulationObject, allow_none=True)
+    ro_dynamics = Instance(SimulationObject, allow_none=True)
+    so_dynamics = Instance(SimulationObject, allow_none=True)
+    npk_crop_dynamics = Instance(SimulationObject, allow_none=True)
+    npk_soil_dynamics = Instance(SimulationObject, allow_none=True)
+    npk_stress = Instance(SimulationObject, allow_none=True)
         
     # Parameters, rates and states which are relevant at the main crop
     # simulation level
@@ -124,8 +124,8 @@ class WofostNPK(SimulationObject):
         MREST = Float(-99.)
         CTRAT = Float(-99.) # Crop total transpiration
         HI = Float(-99.)
-        DOF = Instance(datetime.date)
-        FINISH_TYPE = Instance(str)
+        DOF = Instance(datetime.date, allow_none=True)
+        FINISH_TYPE = Unicode("", allow_none=True)
 
     class RateVariables(RatesTemplate):
         GASS = Float(-99.)
