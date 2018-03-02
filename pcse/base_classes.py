@@ -346,9 +346,9 @@ def check_publish(publish):
     
 #-------------------------------------------------------------------------------
 class StatesRatesCommon(HasTraits):
-    _kiosk = Instance(VariableKiosk, allow_none=True)
-    _valid_vars = Instance(set, allow_none=True)
-    _locked = Bool(False, allow_none=True)
+    _kiosk = Instance(VariableKiosk)
+    _valid_vars = Instance(set)
+    _locked = Bool(False)
 
     def __init__(self, kiosk=None, publish=None):
         """Set up the common stuff for the states and rates template
@@ -732,15 +732,15 @@ class SimulationObject(HasTraits, DispatcherObject):
     """
 
     # Placeholders for logger, params, states, rates and variable kiosk
-    logger = Instance(logging.Logger, allow_none=True)
-    states = Instance(StatesTemplate, allow_none=True)
-    rates  = Instance(RatesTemplate, allow_none=True)
-    params = Instance(ParamTemplate, allow_none=True)
-    kiosk  = Instance(VariableKiosk, allow_none=True)
+    logger = Instance(logging.Logger)
+    states = Instance(StatesTemplate)
+    rates  = Instance(RatesTemplate)
+    params = Instance(ParamTemplate)
+    kiosk  = Instance(VariableKiosk)
     
     # Placeholder for a list of sub-SimulationObjects. This is to avoid
     # having to loop through all attributes when doing a variable look-up
-    subSimObjects = Instance(list, allow_none=True)
+    subSimObjects = Instance(list)
 
     # Placeholder for variables that are to be set during finalizing.
     _for_finalize = Dict()
@@ -971,9 +971,9 @@ class AncillaryObject(HasTraits, DispatcherObject):
     """
     
     # Placeholders for logger, variable kiosk and parameters
-    logger = Instance(logging.Logger, allow_none=True)
-    kiosk = Instance(VariableKiosk, allow_none=True)
-    params = Instance(ParamTemplate, allow_none=True)
+    logger = Instance(logging.Logger)
+    kiosk = Instance(VariableKiosk)
+    params = Instance(ParamTemplate)
     
     #---------------------------------------------------------------------------
     def __init__(self, kiosk, *args, **kwargs):
@@ -1384,7 +1384,7 @@ class BaseEngine(HasTraits, DispatcherObject):
     """Base Class for Engine to inherit from
     """
     # Placeholders for logger, params, states, rates and variable kiosk
-    logger = Instance(logging.Logger, allow_none=True)
+    logger = Instance(logging.Logger)
 
     # Placeholder for a list of sub-SimulationObjects. This is to avoid
     # having to loop through all attributes when doing a variable look-up

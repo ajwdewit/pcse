@@ -244,7 +244,7 @@ class FROSTOL(SimulationObject):
     
     http://dx.doi.org/10.1016/j.eja.2007.10.002
     """
-    crown_temperature = Instance(SimulationObject, allow_none=True)
+    crown_temperature = Instance(SimulationObject)
 
     # Helper variable for remaining crop fraction as a result of frost kill
     _CROP_FRACTION_REMAINING = Float(1.0)

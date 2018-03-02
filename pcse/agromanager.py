@@ -78,9 +78,9 @@ class CropCalendar(HasTraits, DispatcherObject):
     # Characteristics of the crop cycle
     crop_name = Unicode()
     variety_name = Unicode()
-    crop_start_date = Instance(date, allow_none=True)
+    crop_start_date = Instance(date)
     crop_start_type = Enum(["sowing", "emergence"])
-    crop_end_date = Instance(date, allow_none=True)
+    crop_end_date = Instance(date)
     crop_end_type = Enum(["maturity", "harvest", "earliest"])
     max_duration = Int()
 
@@ -610,8 +610,8 @@ class AgroManager(AncillaryObject):
     campaign_start_dates = List()
 
     # Overall engine start date and end date
-    _start_date = Instance(date, allow_none=True)
-    _end_date = Instance(date, allow_none=True)
+    _start_date = Instance(date)
+    _end_date = Instance(date)
 
     # campaign definitions
     crop_calendars = List()

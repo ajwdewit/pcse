@@ -32,11 +32,11 @@ class Timer(AncillaryObject):
 
   """
 
-    start_date = Instance(datetime.date, allow_none=True)
-    end_date = Instance(datetime.date, allow_none=True)
-    current_date = Instance(datetime.date, allow_none=True)
-    time_step = Instance(datetime.timedelta, allow_none=True)
-    interval_type = Enum(["daily", "weekly", "dekadal", "monthly"], allow_none=True)
+    start_date = Instance(datetime.date)
+    end_date = Instance(datetime.date)
+    current_date = Instance(datetime.date)
+    time_step = Instance(datetime.timedelta)
+    interval_type = Enum(["daily", "weekly", "dekadal", "monthly"])
     output_weekday = Int()
     interval_days = Int()
     generate_output = Bool(False)

@@ -88,19 +88,19 @@ class Engine(BaseEngine):
 
     """
     # system configuration
-    mconf = Instance(ConfigurationLoader, allow_none=True)
-    parameterprovider = Instance(ParameterProvider, allow_none=True)
+    mconf = Instance(ConfigurationLoader)
+    parameterprovider = Instance(ParameterProvider)
 
     # sub components for simulation
-    crop = Instance(SimulationObject, allow_none=True)
-    soil = Instance(SimulationObject, allow_none=True)
-    agromanager = Instance(AncillaryObject, allow_none=True)
-    weatherdataprovider = Instance(WeatherDataProvider, allow_none=True)
+    crop = Instance(SimulationObject)
+    soil = Instance(SimulationObject)
+    agromanager = Instance(AncillaryObject)
+    weatherdataprovider = Instance(WeatherDataProvider)
     # drv = Instance(WeatherDataContainer)
     drv = None
-    kiosk = Instance(VariableKiosk, allow_none=True)
-    timer = Instance(Timer, allow_none=True)
-    day = Instance(datetime.date, allow_none=True)
+    kiosk = Instance(VariableKiosk)
+    timer = Instance(Timer)
+    day = Instance(datetime.date)
 
     # flags that are being set by signals
     flag_terminate = Bool(False)
@@ -116,7 +116,7 @@ class Engine(BaseEngine):
     _saved_terminal_output = Dict()
 
     # Helper variables
-    TMNSAV = Instance(deque, allow_none=True)
+    TMNSAV = Instance(deque)
     
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config=None):
 

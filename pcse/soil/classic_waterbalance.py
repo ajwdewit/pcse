@@ -242,7 +242,7 @@ class WaterbalanceFD(SimulationObject):
     # Infiltration rate of previous day
     RINold = Float(-99)
     # Fraction of non-infiltrating rainfall as function of storm size
-    NINFTB = Instance(Afgen, allow_none=True)
+    NINFTB = Instance(Afgen)
     # Flag indicating crop present or not
     in_crop_cycle = Bool(False)
     # Flag indicating that a crop was started or finished and therefore the depth
