@@ -12,13 +12,10 @@ from datetime import date
 import pickle
 from collections import Counter, MutableMapping
 
-from .traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool,
-                        All)
-from .util import AfgenTrait
+from .traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
 from .pydispatch import dispatcher
 from .util import Afgen
 from . import exceptions as exc
-from .decorators import prepare_states
 from .settings import settings
 
 
@@ -174,7 +171,7 @@ class VariableKiosk(dict):
         :param varname: Name of the variable to be registered, e.g. "DVS" 
         """
         if varname in self.registered_states:
-            #print "Deregistering '%s'" % varname
+            # print "Deregistering '%s'" % varname
             if oid != self.registered_states[varname]:
                 msg = "Wrong object tried to deregister variable '%s'." \
                       % varname
@@ -184,7 +181,7 @@ class VariableKiosk(dict):
             if varname in self.published_states:
                 self.published_states.pop(varname)
         elif varname in self.registered_rates:
-            #print "Deregistering '%s'" % varname
+            # print "Deregistering '%s'" % varname
             if oid != self.registered_rates[varname]:
                 msg = "Wrong object tried to deregister variable '%s'." \
                       % varname
@@ -229,8 +226,8 @@ class VariableKiosk(dict):
             if self.published_states[varname] == id:
                 dict.__setitem__(self, varname, value)
             else:
-                msg = "Unregistered object tried to set the value of variable "+\
-                "%s: access denied."
+                msg = "Unregistered object tried to set the value of variable " \
+                      "%s: access denied."
                 raise exc.VariableKioskError(msg % varname)
         else:
             msg = "Variable '%s' not published in VariableKiosk."
@@ -328,7 +325,6 @@ class ParamTemplate(HasTraits):
             raise AttributeError(msg)
 
 
-#-------------------------------------------------------------------------------
 def check_publish(publish):
     """ Convert the list of published variables to a set with unique elements.
     """
@@ -344,7 +340,7 @@ def check_publish(publish):
         raise RuntimeError(msg)
     return set(publish)
     
-#-------------------------------------------------------------------------------
+
 class StatesRatesCommon(HasTraits):
     _kiosk = Instance(VariableKiosk)
     _valid_vars = Instance(set)
@@ -431,18 +427,9 @@ class StatesRatesCommon(HasTraits):
     #         msg = "Assignment to non-existing attribute '%s' prevented." % attr
     #         raise AttributeError(msg)
 
-    # def _update_kiosk(self, trait_name, oldvalue, newvalue):
-    #     """Update the variable_kiosk through trait notification.
-    #     """
-    #     #print "Updating published variable '%s' from %s to %s" % \
-    #     #      (trait_name, oldvalue, newvalue)
-    #     self._kiosk.set_variable(id(self), trait_name, newvalue)
-    
     def _update_kiosk(self, change):
         """Update the variable_kiosk through trait notification.
         """
-        #print "Updating published variable '%s' from %s to %s" % \
-        #      (trait_name, oldvalue, newvalue)
         self._kiosk.set_variable(id(self), change["name"], change["new"])
 
     def unlock(self):
@@ -463,8 +450,13 @@ class StatesRatesCommon(HasTraits):
         for attr in self._valid_vars:
             self._kiosk.deregister_variable(id(self), attr)
 
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
 
-#-------------------------------------------------------------------------------
+
 class StatesTemplate(StatesRatesCommon):
     """Takes care of assigning initial values to state variables, registering
     variables in the kiosk and monitoring assignments to variables that are
@@ -541,8 +533,7 @@ class StatesTemplate(StatesRatesCommon):
             
         # Lock the object to prevent further changes at this stage.
         self._locked = True
-        
-        
+
     def touch(self):
         """Re-assigns the value of each state variable, thereby updating its
         value in the variablekiosk if the variable is published."""
@@ -554,7 +545,6 @@ class StatesTemplate(StatesRatesCommon):
         self.lock()
     
 
-#-------------------------------------------------------------------------------
 class StatesWithImplicitRatesTemplate(StatesTemplate):
     """Container class for state variables that have an associated rate.
 
@@ -579,14 +569,12 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
         else:
             # new attribute: disallow according ancestorial ruls:
             super(StatesWithImplicitRatesTemplate, self).__setattr__(name, value)
-            
-            
+
     def __getattr__(self, name):
         if name in self.rates:
             return self.rates[name]
         else:
             object.__getattribute__(self, name)
-
 
     def initialize_rates(self):
         self.rates = {}
@@ -594,7 +582,6 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
         
         for s in self.__class__.listIntegratedStates():
             self.rates['r' + s] = 0.0
-
 
     def integrate(self, delta):
         # integrate all:
@@ -607,24 +594,16 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
         # reset all rates  
         for r in self.rates:
           self.rates[r] = 0.0
-          
-          
-            
+
     @classmethod
     def listIntegratedStates(cls):
         return sorted([a for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_')])
-
-
 
     @classmethod
     def initialValues(cls):
         return dict((a, 0.0) for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_'))
 
 
-
-
-
-#-------------------------------------------------------------------------------
 class RatesTemplate(StatesRatesCommon):
     """Takes care of registering variables in the kiosk and monitoring
     assignments to variables that are published.
@@ -669,7 +648,7 @@ class RatesTemplate(StatesRatesCommon):
         """
 
         # Define the zero value for Float, Int and Bool
-        zero_value = {Bool:False, Int:0, Float:0.}
+        zero_value = {Bool: False, Int: 0, Float: 0.}
     
         d = {}
         for name, value in self.traits().items():
@@ -681,7 +660,7 @@ class RatesTemplate(StatesRatesCommon):
                 msg = ("Rate variable '%s' not of type Float, Bool or Int. "+
                        "Its zero value cannot be determined and it will "+
                        "not be treated by zerofy().") % name
-                logging.warn(msg)
+                self.logger.warning(msg)
         return d
     
     def zerofy(self):
@@ -690,7 +669,7 @@ class RatesTemplate(StatesRatesCommon):
         """
         self._trait_values.update(self._rate_vars_zero)
 
-#-------------------------------------------------------------------------------
+
 class DispatcherObject(object):
     """Class only defines the _send_signal() and _connect_signal() methods.
     
@@ -719,7 +698,7 @@ class DispatcherObject(object):
         dispatcher.connect(handler, signal, sender=self.kiosk)
         self.logger.debug("Connected handler '%s' to signal '%s'." % (handler, signal))
 
-#-------------------------------------------------------------------------------
+
 class SimulationObject(HasTraits, DispatcherObject):
     """Base class for PCSE simulation objects.
     
@@ -732,45 +711,44 @@ class SimulationObject(HasTraits, DispatcherObject):
     """
 
     # Placeholders for logger, params, states, rates and variable kiosk
-    logger = Instance(logging.Logger)
     states = Instance(StatesTemplate)
     rates  = Instance(RatesTemplate)
     params = Instance(ParamTemplate)
-    kiosk  = Instance(VariableKiosk)
+    kiosk = Instance(VariableKiosk)
     
-    # Placeholder for a list of sub-SimulationObjects. This is to avoid
-    # having to loop through all attributes when doing a variable look-up
-    subSimObjects = Instance(list)
-
     # Placeholder for variables that are to be set during finalizing.
     _for_finalize = Dict()
     
     def __init__(self, day, kiosk, *args, **kwargs):
         HasTraits.__init__(self, *args, **kwargs)
-        loggername = "%s.%s" % (self.__class__.__module__,
-                                self.__class__.__name__)
 
         # Check that day variable is specified
         if not isinstance(day, date):
+            this = "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
             msg = ("%s should be instantiated with the simulation start " +
                    "day as first argument!")
-            raise exc.PCSEError(msg % loggername)
+            raise exc.PCSEError(msg % this)
 
         # Check that kiosk variable is specified and assign to self
         if not isinstance(kiosk, VariableKiosk):
+            this = "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
             msg = ("%s should be instantiated with the VariableKiosk " +
                    "as second argument!")
-            raise exc.PCSEError(msg % loggername)
+            raise exc.PCSEError(msg % this)
         self.kiosk = kiosk
 
-        self.logger = logging.getLogger(loggername)
         self.initialize(day, kiosk, *args, **kwargs)
-        self.subSimObjects = self._find_SubSimObjects()
         self.logger.debug("Component successfully initialized on %s!" % day)
 
     def initialize(self, *args, **kwargs):
         msg = "`initialize` method not yet implemented on %s" % self.__class__.__name__
         raise NotImplementedError(msg)
+
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
 
     def integrate(self, *args, **kwargs):
         msg = "`integrate` method not yet implemented on %s" % self.__class__.__name__
@@ -799,18 +777,11 @@ class SimulationObject(HasTraits, DispatcherObject):
         if attr.startswith("_") or type(value) is types.FunctionType:
             HasTraits.__setattr__(self, attr, value)            
         elif hasattr(self, attr):
-            rebuild = False
-            if isinstance(value, SimulationObject) or \
-               isinstance(getattr(self, attr), SimulationObject):
-                rebuild = True
             HasTraits.__setattr__(self, attr, value)
-            if rebuild is True:
-                self.subSimObjects = self._find_SubSimObjects()
         else:
             msg = "Assignment to non-existing attribute '%s' prevented." % attr
             raise AttributeError(msg)
 
-    #---------------------------------------------------------------------------
     def get_variable(self, varname):
         """ Return the value of the specified state or rate variable.
         
@@ -834,7 +805,6 @@ class SimulationObject(HasTraits, DispatcherObject):
                     break
         return value
 
-    #---------------------------------------------------------------------------
     def set_variable(self, varname, value, incr):
         """ Sets the value of the specified state or rate variable.
 
@@ -881,7 +851,6 @@ class SimulationObject(HasTraits, DispatcherObject):
         for simobj in self.subSimObjects:
             simobj.set_variable(varname, value, incr)
 
-    #---------------------------------------------------------------------------
     def _delete(self):
         """ Runs the _delete() methods on the states/rates objects and recurses
         trough the list of subSimObjects.
@@ -892,34 +861,29 @@ class SimulationObject(HasTraits, DispatcherObject):
         if self.rates is not None:
             self.rates._delete()
             self.rates = None
-        if self.subSimObjects is not None:
-            while len(self.subSimObjects) > 0:
-                obj = self.subSimObjects.pop()
-                obj._delete()
+        for obj in self.subSimObjects:
+            obj._delete()
             
-    #---------------------------------------------------------------------------
-    def _find_SubSimObjects(self):
-        """ Find SimulationObjects embedded within self.
+    @property
+    def subSimObjects(self):
+        """ Return SimulationObjects embedded within self.
         """
         
         subSimObjects = []
         defined_traits = self.__dict__["_trait_values"]
         for attr in defined_traits.values():
             if isinstance(attr, SimulationObject):
-                #print "Found SimObj: %s" % attr.__class__
                 subSimObjects.append(attr)
         return subSimObjects
 
-    #---------------------------------------------------------------------------
     def finalize(self, day):
         """ Run the _finalize call on subsimulation objects
         """
-        # Update the states object with the values stored in the _for_finalize
-        # dictionary
+        # Update the states object with the values stored in the _for_finalize dictionary
         if self.states is not None:
             self.states.unlock()
             while len(self._for_finalize) > 0:
-                k,v = self._for_finalize.popitem()
+                k, v = self._for_finalize.popitem()
                 setattr(self.states, k, v)
             self.states.lock()
         # Walk over possible sub-simulation objects.
@@ -927,7 +891,6 @@ class SimulationObject(HasTraits, DispatcherObject):
             for simobj in self.subSimObjects:
                 simobj.finalize(day)
                 
-    #---------------------------------------------------------------------------
     def touch(self):
         """'Touch' all state variables of this and any sub-SimulationObjects.
         
@@ -946,7 +909,6 @@ class SimulationObject(HasTraits, DispatcherObject):
             for simobj in self.subSimObjects:
                 simobj.touch()
 
-    #---------------------------------------------------------------------------
     def zerofy(self):
         """Zerofy the value of all rate variables of this and any sub-SimulationObjects.
         """
@@ -959,7 +921,7 @@ class SimulationObject(HasTraits, DispatcherObject):
             for simobj in self.subSimObjects:
                 simobj.zerofy()
 
-#-------------------------------------------------------------------------------
+
 class AncillaryObject(HasTraits, DispatcherObject):
     """Base class for PCSE ancillary objects.
     
@@ -971,27 +933,29 @@ class AncillaryObject(HasTraits, DispatcherObject):
     """
     
     # Placeholders for logger, variable kiosk and parameters
-    logger = Instance(logging.Logger)
     kiosk = Instance(VariableKiosk)
     params = Instance(ParamTemplate)
     
-    #---------------------------------------------------------------------------
     def __init__(self, kiosk, *args, **kwargs):
-        loggername = "%s.%s" % (self.__class__.__module__,
-                                self.__class__.__name__)
-        self.logger = logging.getLogger(loggername)
+        HasTraits.__init__(self, *args, **kwargs)
 
         # Check that kiosk variable is specified and assign to self
         if not isinstance(kiosk, VariableKiosk):
-            msg = "%s should be instantiated with the VariableKiosk "+\
+            this = "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
+            msg = "%s should be instantiated with the VariableKiosk " \
                   "as second argument!"
-            raise RuntimeError(msg % loggername)
+            raise RuntimeError(msg % this)
 
         self.kiosk = kiosk
         self.initialize(kiosk, *args, **kwargs)
         self.logger.debug("Component successfully initialized!")
 
-    #---------------------------------------------------------------------------
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
+
     def __setattr__(self, attr, value):
         if attr.startswith("_"):
             HasTraits.__setattr__(self, attr, value)            
@@ -1179,7 +1143,7 @@ class WeatherDataContainer(SlotPickleMixin):
             self.units[varname] = unit
         setattr(self, varname, value)
 
-#-------------------------------------------------------------------------------
+
 class WeatherDataProvider(object):
     """Base class for all weather data providers.
     
@@ -1212,10 +1176,12 @@ class WeatherDataProvider(object):
 
     def __init__(self):
         self.store = {}
-        # Define a logger
+
+    @property
+    def logger(self):
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
-        self.logger = logging.getLogger(loggername)
+        return logging.getLogger(loggername)
 
     def _dump(self, cache_fname):
         """Dumps the contents into cache_fname using pickle.
@@ -1250,11 +1216,11 @@ class WeatherDataProvider(object):
         The results from export can be directly converted to a Pandas dataframe
         which is convenient for plotting or analyses.
         """
+        weather_data = []
         if self.supports_ensembles:
             # We have to include the member_id in each dict with weather data
             pass
         else:
-            weather_data = []
             days = sorted([r[0] for r in self.store.keys()])
             for day in days:
                 wdc = self(day)
@@ -1341,21 +1307,18 @@ class WeatherDataProvider(object):
             raise exc.WeatherDataProviderError(msg)
 
         keydate = self.check_keydate(day)
-        
         if self.supports_ensembles is False:
-            if self.logger is not None:
-                msg = "Retrieving weather data for day %s" % keydate
-                self.logger.debug(msg)
+            msg = "Retrieving weather data for day %s" % keydate
+            self.logger.debug(msg)
             try:
                 return self.store[(keydate, 0)]
             except KeyError as e:
                 msg = "No weather data for %s." % keydate
                 raise exc.WeatherDataProviderError(msg)
         else:
-            if self.logger is not None:
-                msg = "Retrieving ensemble weather data for day %s member %i" % \
-                      (keydate, member_id)
-                self.logger.debug(msg)
+            msg = "Retrieving ensemble weather data for day %s member %i" % \
+                  (keydate, member_id)
+            self.logger.debug(msg)
             try:
                 return self.store[(keydate, member_id)]
             except KeyError:
@@ -1383,21 +1346,16 @@ class WeatherDataProvider(object):
 class BaseEngine(HasTraits, DispatcherObject):
     """Base Class for Engine to inherit from
     """
-    # Placeholders for logger, params, states, rates and variable kiosk
-    logger = Instance(logging.Logger)
-
-    # Placeholder for a list of sub-SimulationObjects. This is to avoid
-    # having to loop through all attributes when doing a variable look-up
-    subSimObjects = List()
 
     def __init__(self):
         HasTraits.__init__(self)
         DispatcherObject.__init__(self)
 
-        # Define logger
+    @property
+    def logger(self):
         loggername = "%s.%s" % (self.__class__.__module__,
                                 self.__class__.__name__)
-        self.logger = logging.getLogger(loggername)
+        return logging.getLogger(loggername)
 
     def __setattr__(self, attr, value):
         # __setattr__ has been modified  to enforce that class attributes
@@ -1418,18 +1376,13 @@ class BaseEngine(HasTraits, DispatcherObject):
         if attr.startswith("_") or type(value) is types.FunctionType:
             HasTraits.__setattr__(self, attr, value)
         elif hasattr(self, attr):
-            rebuild = False
-            if isinstance(value, SimulationObject) or \
-               isinstance(getattr(self, attr), SimulationObject):
-                rebuild = True
             HasTraits.__setattr__(self, attr, value)
-            if rebuild is True:
-                self.subSimObjects = self._find_SubSimObjects()
         else:
             msg = "Assignment to non-existing attribute '%s' prevented." % attr
             raise AttributeError(msg)
 
-    def _find_SubSimObjects(self):
+    @property
+    def subSimObjects(self):
         """ Find SimulationObjects embedded within self.
         """
 
@@ -1437,7 +1390,6 @@ class BaseEngine(HasTraits, DispatcherObject):
         defined_traits = self.__dict__["_trait_values"]
         for attr in defined_traits.values():
             if isinstance(attr, SimulationObject):
-                #print "Found SimObj: %s" % attr.__class__
                 subSimObjects.append(attr)
         return subSimObjects
 
@@ -1473,11 +1425,9 @@ class BaseEngine(HasTraits, DispatcherObject):
                 break
         return value
 
-    #---------------------------------------------------------------------------
     def zerofy(self):
         """Zerofy the value of all rate variables of any sub-SimulationObjects.
         """
-
         # Walk over possible sub-simulation objects.
         if self.subSimObjects is not None:
             for simobj in self.subSimObjects:
@@ -1499,7 +1449,7 @@ class ParameterProvider(MutableMapping):
     CROP_START signal. Finally, specific parameter values can be easily changed
     by setting an `override` on that parameter.
 
-    See also the `MultiCropParameterProvider`
+    See also the `MultiCropDataProvider`
     """
     _maps = list()
     _sitedata = dict()
@@ -1574,13 +1524,16 @@ class ParameterProvider(MutableMapping):
                 msg = "A second crop was scheduled: however, the CropDataProvider does not " \
                       "support multiple crop parameter sets. This will only work for crop" \
                       "rotations with the same crop."
-                loggername = "%s.%s" % (self.__class__.__module__,
-                                        self.__class__.__name__)
-                logger = logging.getLogger(loggername)
-                logger.warning(msg)
+                self.logger.warning(msg)
 
         self._ncrops_activated += 1
         self._test_uniqueness()
+
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
 
     def set_override(self, varname, value, check=True):
         """"Override the value of parameter varname in the parameterprovider.
@@ -1680,8 +1633,8 @@ class ParameterProvider(MutableMapping):
         if key in self:
             self._override[key] = value
         else:
-            msg = ("Cannot override parameter '%s', parameter does not exist. "
-                  "to bypass this check use: set_override(parameter, value, check=False)") % key
+            msg = "Cannot override parameter '%s', parameter does not exist. " \
+                  "to bypass this check use: set_override(parameter, value, check=False)" % key
             raise exc.PCSEError(msg)
 
     def __delitem__(self, key):
@@ -1720,6 +1673,7 @@ class ParameterProvider(MutableMapping):
 class MultiCropDataProvider(dict):
 
         def __init__(self):
+            dict.__init__(self)
             self._store = {}
 
         def set_active_crop(self, crop_name, variety_name):

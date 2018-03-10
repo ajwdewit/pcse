@@ -2,6 +2,10 @@
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 import sys, os
+if sys.version_info.major == 2:
+    from urllib import urlopen
+else:
+    from urllib.request import urlopen
 import urllib
 from datetime import date, timedelta
 import numpy as np
@@ -139,6 +143,10 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         """Handles the retrieval and processing of the NASA Power data
         """
         powerdata = self._query_NASAPower_server(latitude, longitude)
+        if not powerdata:
+            msg = "Failure retrieving POWER data from server. This can be a connection problem with " \
+                  "the NASA POWER server, retry again later."
+            raise RuntimeError(msg)
 
         # Store the informational header then parse variables
         self.description = self._parse_header(powerdata)
@@ -216,7 +224,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                            month=d.month, day=d.day)
         msg = "Starting retrieval from NASA Power with URL: %s" % url
         self.logger.debug(msg)
-        req = urllib.urlopen(url)
+        req = urlopen(url)
 
         if req.getcode() != self.HTTP_OK:
             msg = ("Failed retrieving POWER data from %s. Server returned HTTP " +
@@ -363,8 +371,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             for i, name in enumerate(self.power_variables):
                 rec[name] = float(r[i])
             return rec
-        except ValueError:
-            msg = "POWER record for day '%s' failed to parse (probably incomplete)" % rec["day"]
+        except (ValueError, IndexError) as e:
+            msg = "POWER record failed to parse (probably incomplete): %s" % rec
             self.logger.debug(msg)
             return None
 
