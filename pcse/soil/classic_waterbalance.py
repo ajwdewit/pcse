@@ -416,8 +416,7 @@ class WaterbalanceFD(SimulationObject):
                 # Else soil evaporation is a function days-since-last-rain (DSLR)
                 self.DSLR += 1
                 EVSMXT = EVSMX*(sqrt(self.DSLR) - sqrt(self.DSLR-1))
-                EVS = min(EVSMX, EVSMXT + self.RINold)
-                r.EVS = min(EVS, s.W)
+                r.EVS = min(EVSMX, EVSMXT + self.RINold)
         
         # Preliminary infiltration rate (RINPRE)
         if s.SS < 0.1:
@@ -459,6 +458,13 @@ class WaterbalanceFD(SimulationObject):
         r.DW    = r.RIN - r.WTRA - r.EVS - r.PERC
         r.DWLOW = r.PERC - r.LOSS
 
+        # Check if DW creates a negative value of W
+        # If so, reduce EVS to reach W == 0
+        W_NEW = s.W + r.DW
+        if W_NEW < 0.0:
+            r.EVS += W_NEW
+            assert r.EVS >= 0., "Negative soil evaporation rate on day %s: %s" % (day, r.EVS)
+            r.DW = r.RIN - r.WTRA - r.EVS - r.PERC
 
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -487,15 +493,8 @@ class WaterbalanceFD(SimulationObject):
         s.TSR += (SSPRE - s.SS)
 
         # amount of water in rooted zone
-        W_NEW = s.W + r.DW
-        if W_NEW < 0.0:
-            # If negative soil water depth, set W to zero and subtract W_NEW
-            # from total soil evaporation to keep the balance. 
-            # Note: W_NEW is negative here!!
-            s.EVST += W_NEW
-            s.W = 0.0
-        else:
-            s.W = W_NEW
+        s.W += r.DW * delt
+        assert s.W >= 0., "Negative amount of water in root zone on day %s: %s" % (day, s.W)
 
         # total percolation and loss of water by deep leaching
         s.PERCT += r.PERC
