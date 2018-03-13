@@ -215,7 +215,6 @@ class AgroManagementDataProvider(list):
                     max_duration: {duration}
                 TimedEvents: null
                 StateEvents: null
-          - {campaign_end_date}: null
         """
 
     def __init__(self, engine, grid_no, crop_no, campaign_year):
@@ -265,16 +264,18 @@ class AgroManagementDataProvider(list):
                    "CROP_CALENDAR: %s" % row.end_type)
             raise exc.PCSEError(msg)
 
+        # Note that we end one day to the campaign end date in order to avoid that the
+        # crop_end_date and campaign_end_date fall on the same date.
         if self.crop_end_type == "maturity":
             self.crop_end_date = "null"
-            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration)
+            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration+1)
         else:
             month = int(row.end_month)
             day = int(row.end_monthday)
             self.crop_end_date = dt.date(year, month, day)
             if self.crop_end_date <= self.crop_start_date:
                 self.crop_end_date = dt.date(year+1, month, day)
-            self.campaign_end_date = self.crop_end_date
+            self.campaign_end_date = self.crop_end_date + dt.timedelta(days=1)
 
         input = self._build_yaml_agromanagement()
         self._parse_yaml(input)

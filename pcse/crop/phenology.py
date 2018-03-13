@@ -391,12 +391,15 @@ class DVS_Phenology(SimulationObject):
             r.DTSUM = p.DTSMTB(drv.TEMP) * VERNFAC * DVRED
             r.DVR = r.DTSUM/p.TSUM1
 
-        elif s.STAGE in ['reproductive', 'mature']:
+        elif s.STAGE == 'reproductive':
             r.DTSUME = 0.
             r.DTSUM = p.DTSMTB(drv.TEMP)
             r.DVR = r.DTSUM/p.TSUM2
-
-        else: # Problem: no stage defined
+        elif s.STAGE == 'mature':
+            r.DTSUME = 0.
+            r.DTSUM = 0.
+            r.DVR = 0.
+        else:  # Problem: no stage defined
             msg = "Unrecognized STAGE defined in phenology submodule: %s"
             raise exc.PCSEError(msg, self.states.STAGE)
         
@@ -437,6 +440,7 @@ class DVS_Phenology(SimulationObject):
         elif s.STAGE == 'reproductive':
             if s.DVS >= p.DVSEND:
                 self._next_stage(day)
+                s.DVS = p.DVSEND
         elif s.STAGE == 'mature':
             pass
         else: # Problem no stage defined
