@@ -460,11 +460,11 @@ class WaterbalanceFD(SimulationObject):
 
         # Check if DW creates a negative value of W
         # If so, reduce EVS to reach W == 0
-        W_NEW = s.W + r.DW
-        if W_NEW < 0.0:
-            r.EVS += W_NEW
+        Wtmp = s.W + r.DW
+        if Wtmp < 0.0:
+            r.EVS += Wtmp
             assert r.EVS >= 0., "Negative soil evaporation rate on day %s: %s" % (day, r.EVS)
-            r.DW = r.RIN - r.WTRA - r.EVS - r.PERC
+            r.DW = -s.W
 
     @prepare_states
     def integrate(self, day, delt=1.0):
