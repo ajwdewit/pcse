@@ -21,8 +21,9 @@ and underscore to the name.
 """
 
 import os as _os
+from .. import util as _util
 
-PCSE_USER_HOME = _os.path.join(_os.path.expanduser("~"), ".pcse")
+PCSE_USER_HOME = _util.get_user_home()
 
 # Location for meteo cache files
 METEO_CACHE_DIR = _os.path.join(PCSE_USER_HOME, "meteo_cache")

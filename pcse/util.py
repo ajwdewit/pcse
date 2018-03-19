@@ -23,6 +23,7 @@ hPa2kPa = lambda x: x/10.
 # Saturated Vapour pressure [kPa] at temperature temp [C]
 SatVapourPressure = lambda temp: 0.6108 * exp((17.27 * temp) / (237.3 + temp))
 
+
 def reference_ET(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
                  ANGSTA, ANGSTB, ETMODEL="PM", **kwargs):
     """Calculates reference evapotranspiration values E0, ES0 and ET0.
