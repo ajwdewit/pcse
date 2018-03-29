@@ -5,6 +5,7 @@
 """
 from __future__ import print_function
 from math import sqrt, exp, cos, pi
+from collections import deque
 
 from ..traitlets import Instance, Float, AfgenTrait
 
@@ -186,7 +187,9 @@ class WOFOST_Assimilation(SimulationObject):
     LAI      Leaf area index                     Leaf_dynamics       -
     =======  =================================== =================  ============
     """
-    
+
+    _TMNSAV = Instance(deque)
+
     class Parameters(ParamTemplate):
         AMAXTB = AfgenTrait()
         EFFTB  = AfgenTrait()
@@ -205,6 +208,7 @@ class WOFOST_Assimilation(SimulationObject):
 
         self.params = self.Parameters(parvalues)
         self.kiosk = kiosk
+        self._TMNSAV = deque(maxlen=7)
     
     def __call__(self, day, drv):
         # Check if fortran versions can be used otherwise use native python
@@ -224,6 +228,10 @@ class WOFOST_Assimilation(SimulationObject):
         DVS = self.kiosk["DVS"]
         LAI = self.kiosk["LAI"]
 
+        # 7-day running average of TMIN
+        self._TMNSAV.appendleft(drv.TMIN)
+        TMINRA = sum(self._TMNSAV)/len(self._TMNSAV)
+
         # 2.19  photoperiodic daylength
         IDAY = doy(day)
         DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE = \
@@ -242,7 +250,7 @@ class WOFOST_Assimilation(SimulationObject):
 
         # correction for low minimum temperature potential
         # assimilation in kg CH2O per ha
-        DTGA *= params.TMNFTB(drv.TMINRA)
+        DTGA *= params.TMNFTB(TMINRA)
         PGASS = DTGA * 30./44.
 
         return PGASS
@@ -253,7 +261,11 @@ class WOFOST_Assimilation(SimulationObject):
         # published states from the kiosk
         DVS = self.kiosk["DVS"]
         LAI = self.kiosk["LAI"]
-        
+
+        # 7-day running average of TMIN
+        self._TMNSAV.appendleft(drv.TMIN)
+        TMINRA = sum(self._TMNSAV)/len(self._TMNSAV)
+
         # 2.19  photoperiodic daylength
         DAYL,DAYLP,SINLD,COSLD,DIFPP,ATMTR,DSINBE,ANGOT = astro(day, drv.LAT, drv.IRRAD)
 
@@ -270,7 +282,7 @@ class WOFOST_Assimilation(SimulationObject):
 
         # correction for low minimum temperature potential
         # assimilation in kg CH2O per ha
-        DTGA *= params.TMNFTB(drv.TMINRA)
+        DTGA *= params.TMNFTB(TMINRA)
         PGASS = DTGA * 30./44.
         
         return PGASS
@@ -333,6 +345,8 @@ class WOFOST_Assimilation2(SimulationObject):
     =======  =================================== =================  ============
     """
 
+    _TMNSAV = Instance(deque)
+
     class Parameters(ParamTemplate):
         AMAXTB = AfgenTrait()
         EFFTB = AfgenTrait()
@@ -352,7 +366,8 @@ class WOFOST_Assimilation2(SimulationObject):
         """
 
         self.params = self.Parameters(cropdata)
-        self.kiosk  = kiosk
+        self.kiosk = kiosk
+        self._TMNSAV = deque(maxlen=7)
 
     def __call__(self, day, drv):
         params = self.params
@@ -360,6 +375,10 @@ class WOFOST_Assimilation2(SimulationObject):
         # published states from the kiosk
         DVS = self.kiosk["DVS"]
         LAI = self.kiosk["LAI"]
+
+        # 7-day running average of TMIN
+        self._TMNSAV.appendleft(drv.TMIN)
+        TMINRA = sum(self._TMNSAV)/len(self._TMNSAV)
 
         # 2.19  photoperiodic daylength
         DAYL,DAYLP,SINLD,COSLD,DIFPP,ATMTR,DSINBE,ANGOT = astro(day, drv.LAT, drv.IRRAD)
@@ -381,7 +400,7 @@ class WOFOST_Assimilation2(SimulationObject):
 
         # correction for low minimum temperature potential
         # assimilation in kg CH2O per ha
-        DTGA *= params.TMNFTB(drv.TMINRA)
+        DTGA *= params.TMNFTB(TMINRA)
         PGASS = DTGA * 30./44.
 
         return PGASS
