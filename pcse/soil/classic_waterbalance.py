@@ -376,6 +376,7 @@ class WaterbalanceFD(SimulationObject):
         s = self.states
         p = self.params
         r = self.rates
+        k = self.kiosk
 
         # Rate of irrigation (RIRR)
         r.RIRR = self._RIRR
@@ -394,9 +395,9 @@ class WaterbalanceFD(SimulationObject):
             EVWMX = drv.E0
             EVSMX = drv.ES0
         else:
-            r.WTRA = self.kiosk["TRA"]
-            EVWMX = self.kiosk["EVWMX"]
-            EVSMX = self.kiosk["EVSMX"]
+            r.WTRA = k.TRA
+            EVWMX = k.EVWMX
+            EVSMX = k.EVSMX
         
         # Actual evaporation rates
         r.EVW = 0.
@@ -414,14 +415,14 @@ class WaterbalanceFD(SimulationObject):
                 self.DSLR = 1.
             else:
                 # Else soil evaporation is a function days-since-last-rain (DSLR)
-                self.DSLR += 1
-                EVSMXT = EVSMX*(sqrt(self.DSLR) - sqrt(self.DSLR-1))
+                EVSMXT = EVSMX*(sqrt(self.DSLR + 1) - sqrt(self.DSLR))
                 r.EVS = min(EVSMX, EVSMXT + self.RINold)
-        
+                self.DSLR += 1
+
         # Preliminary infiltration rate (RINPRE)
         if s.SS < 0.1:
             # without surface storage
-            if (p.IFUNRN == 0):
+            if p.IFUNRN == 0:
                 RINPRE = (1. - p.NOTINF)*drv.RAIN + r.RIRR + s.SS
 
             else:
@@ -460,11 +461,11 @@ class WaterbalanceFD(SimulationObject):
 
         # Check if DW creates a negative value of W
         # If so, reduce EVS to reach W == 0
-        W_NEW = s.W + r.DW
-        if W_NEW < 0.0:
-            r.EVS += W_NEW
+        Wtmp = s.W + r.DW
+        if Wtmp < 0.0:
+            r.EVS += Wtmp
             assert r.EVS >= 0., "Negative soil evaporation rate on day %s: %s" % (day, r.EVS)
-            r.DW = r.RIN - r.WTRA - r.EVS - r.PERC
+            r.DW = -s.W
 
     @prepare_states
     def integrate(self, day, delt=1.0):

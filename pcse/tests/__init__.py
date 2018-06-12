@@ -19,7 +19,7 @@ def make_test_suite(dsn=None):
     """Assemble test suite and return it
     """
     allsuites = unittest.TestSuite([test_abioticdamage.suite(),
-                                   test_assimilation.suite(),
+                                   # test_assimilation.suite(),
                                    test_partitioning.suite(),
                                    test_evapotranspiration.suite(),
                                    test_respiration.suite(),

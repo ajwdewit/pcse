@@ -928,9 +928,21 @@ class AgroManager(AncillaryObject):
             return  # there are state events active that may trigger in the future
 
         if self.timed_event_dispatchers[0] is not None:
-            a = 1
             end_dates = [t.get_end_date() for t in self.timed_event_dispatchers[0]]
             if end_dates:
                 if max(end_dates) > day:  # There is at least one scheduled event after the current day
                     return
         self._send_signal(signal=signals.terminate)
+
+
+    @property
+    def ndays_in_crop_cycle(self):
+        """Returns the number of days of the current cropping cycle.
+
+        Returns zero if no crop cycle is active.
+        """
+
+        if self.crop_calendars[0] is None:
+            return 0
+        else:
+            return self.crop_calendars[0].duration
