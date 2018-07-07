@@ -361,6 +361,21 @@ def ea_from_tdew(tdew):
     return ea
 
 
+def vap_from_relhum(rh, temp):
+    """Compute the actual vapour pressure from the relative humidity at given temperaure
+
+    :param rh: relative humidity as a percentage
+    :param temp: temperature corresponding to the relative humidity computation
+    :return: vapour pressure in kPa
+    """
+
+    if not 0 <= rh <= 100:
+        msg = "Relative humidity should be between 0 and 100"
+        raise RuntimeError(msg)
+
+    return SatVapourPressure(temp) * rh * 0.01
+
+
 def angstrom(day, latitude, ssd, cA, cB):
     """Compute global radiation using the Angstrom equation.
     
