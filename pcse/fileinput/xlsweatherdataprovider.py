@@ -146,7 +146,9 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
                     if label == "IRRAD" and self.has_sunshine is True:
                         if 0 < value < 24:
-                            d[label] = angstrom(d["DAY"], self.latitude, value, self.angstA, self.angstB)
+                            # Use Angstrom equation to convert sunshine duration to radiation in J/m2/day
+                            value = angstrom(d["DAY"], self.latitude, value, self.angstA, self.angstB)
+                            value /= 1000.  # convert to kJ/m2/day for compatibility with obs_conversion function
                         else:
                             msg = "Sunshine duration not within 0-24 interval for row %i" % (rownum + 1)
                             raise OutOfRange(msg)

@@ -864,8 +864,7 @@ def check_date(indate):
         2. a datetime object
         3. a string of the format YYYYMMDD
         4. a string of the format YYYYDDD
-
-        Formats 2-4 are all converted into a date object internally.
+        5. a string of the format YYYY-MM-DD
         """
 
         import datetime as dt
@@ -883,6 +882,10 @@ def check_date(indate):
             elif l==7:
                 # assume YYYYDDD
                 dkey = dt.datetime.strptime(skey,"%Y%j")
+                return dkey.date()
+            elif l==10:
+                # assume YYYY-MM-DD
+                dkey = dt.datetime.strptime(skey,"%Y-%m-%d")
                 return dkey.date()
             else:
                 msg = "Input value not recognized as date: %s"

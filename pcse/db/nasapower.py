@@ -223,8 +223,8 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         req = requests.get(server, params=payload)
 
         if req.status_code != self.HTTP_OK:
-            msg = ("Failed retrieving POWER data from %s. Server returned HTTP " +
-                   "code: %i") % (server, req.status_code)
+            msg = ("Failed retrieving POWER data, server returned HTTP " +
+                   "code: %i on following URL %s") % (req.status_code, req.url)
             raise PCSEError(msg)
 
         msg = "Successfully retrieved data from NASA Power"
