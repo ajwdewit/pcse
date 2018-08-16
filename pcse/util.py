@@ -363,6 +363,21 @@ def ea_from_tdew(tdew):
     return ea
 
 
+def vap_from_relhum(rh, temp):
+    """Compute the actual vapour pressure from the relative humidity at given temperaure
+
+    :param rh: relative humidity as a percentage
+    :param temp: temperature corresponding to the relative humidity computation
+    :return: vapour pressure in kPa
+    """
+
+    if not 0 <= rh <= 100:
+        msg = "Relative humidity should be between 0 and 100"
+        raise RuntimeError(msg)
+
+    return SatVapourPressure(temp) * rh * 0.01
+
+
 def angstrom(day, latitude, ssd, cA, cB):
     """Compute global radiation using the Angstrom equation.
     
@@ -864,8 +879,7 @@ def check_date(indate):
         2. a datetime object
         3. a string of the format YYYYMMDD
         4. a string of the format YYYYDDD
-
-        Formats 2-4 are all converted into a date object internally.
+        5. a string of the format YYYY-MM-DD
         """
 
         import datetime as dt
@@ -883,6 +897,10 @@ def check_date(indate):
             elif l==7:
                 # assume YYYYDDD
                 dkey = dt.datetime.strptime(skey,"%Y%j")
+                return dkey.date()
+            elif l==10:
+                # assume YYYY-MM-DD
+                dkey = dt.datetime.strptime(skey,"%Y-%m-%d")
                 return dkey.date()
             else:
                 msg = "Input value not recognized as date: %s"
