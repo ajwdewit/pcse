@@ -175,7 +175,7 @@ class WaterbalanceFD(SimulationObject):
     EVST      Total evaporation from the soil surface           N    cm
     EVWT      Total evaporation from a water surface            N    cm
     TSR       Total surface runoff                              N    cm
-    RAINT     Total amount of rainfall                          N    cm
+    RAINT     Total amount of rainfall (eff + non-eff)          N    cm
     WDRT      Amount of water added to root zone by increase    N    cm
               of root growth
     TOTINF    Total amount of infiltration                      N    cm
@@ -193,25 +193,28 @@ class WaterbalanceFD(SimulationObject):
 
     **Rate variables:**
 
-    ======== ================================================= ==== ============
-     Name     Description                                      Pbl      Unit
-    ======== ================================================= ==== ============
-    EVS      Actual evaporation rate from soil                  N    |cmday-1|
-    EVW      Actual evaporation rate from water surface         N    |cmday-1|
-    WTRA     Actual transpiration rate from plant canopy,       N    |cmday-1|
-             is directly derived from the variable "TRA" in
-             the evapotranspiration module 
-    RAIN     Rainfall rate for current day                      N    |cmday-1|
-    RIN      Infiltration rate for current day                  N    |cmday-1|
-    RIRR     Effective irrigation rate for current day,         N    |cmday-1|
-             computed as irrigation amount * efficiency.
-    PERC     Percolation rate to non-rooted zone                N    |cmday-1|
-    LOSS     Rate of water loss to deeper soil                  N    |cmday-1|
-    DW       Change in amount of water in rooted zone as a      N    |cmday-1|
-             result of infiltration, transpiration and
-             evaporation.
-    DWLOW    Change in amount of water in subsoil               N    |cmday-1|
-    ======== ================================================= ==== ============
+    ========  ================================================= ==== ============
+     Name      Description                                      Pbl      Unit
+    ========  ================================================= ==== ============
+    EVS       Actual evaporation rate from soil                  N    |cmday-1|
+    EVW       Actual evaporation rate from water surface         N    |cmday-1|
+    WTRA      Actual transpiration rate from plant canopy,       N    |cmday-1|
+              is directly derived from the variable "TRA" in
+              the evapotranspiration module
+    RAIN_EFF  Effective rainfall rate for current day            N    |cmday-1|
+    RAIN_NEFF Non-Effective rainfall rate for current day        N    |cmday-1|
+    RIN       Infiltration rate for current day                  N    |cmday-1|
+    RIRR      Effective irrigation rate for current day,         N    |cmday-1|
+              computed as irrigation amount * efficiency.
+    PERC      Percolation rate to non-rooted zone                N    |cmday-1|
+    LOSS      Rate of water loss to deeper soil                  N    |cmday-1|
+    DW        Change in amount of water in rooted zone as a      N    |cmday-1|
+              result of infiltration, transpiration and
+              evaporation.
+    DWLOW     Change in amount of water in subsoil               N    |cmday-1|
+    DTSR      Change in surface runoff                           N    |cmday-1|
+    DSS       Change in surface storage                          N    |cmday-1|
+    ========  ================================================= ==== ============
     
     
     **External dependencies:**
@@ -298,13 +301,16 @@ class WaterbalanceFD(SimulationObject):
         EVS   = Float(-99.)
         EVW   = Float(-99.)
         WTRA  = Float(-99.)
-        RAIN  = Float(-99.)
+        RAIN_EFF  = Float(-99.)
+        RAIN_NEFF  = Float(-99.)
         RIN   = Float(-99.)
         RIRR  = Float(-99.)
         PERC  = Float(-99.)
         LOSS  = Float(-99.)
         DW    = Float(-99.)
         DWLOW = Float(-99.)
+        DTSR = Float(-99.)
+        DSS = Float(-99.)
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -382,8 +388,13 @@ class WaterbalanceFD(SimulationObject):
         r.RIRR = self._RIRR
         self._RIRR = 0.
         
-        # Rainfall rate
-        r.RAIN = drv.RAIN
+        # Effective/non-effective rainfall rate
+        if p.IFUNRN == 0:
+            r.RAIN_EFF = (1. - p.NOTINF) * drv.RAIN
+        else:
+            # infiltration is function of storm size (NINFTB)
+            r.RAIN_EFF = (1. - p.NOTINF * self.NINFTB(drv.RAIN)) * drv.RAIN
+        r.RAIN_NEFF = drv.RAIN - r.RAIN_EFF
 
         # Transpiration and maximum soil and surface water evaporation rates
         # are calculated by the crop evapotranspiration module.
@@ -421,16 +432,10 @@ class WaterbalanceFD(SimulationObject):
 
         # Preliminary infiltration rate (RINPRE)
         if s.SS < 0.1:
-            # without surface storage
-            if p.IFUNRN == 0:
-                RINPRE = (1. - p.NOTINF)*drv.RAIN + r.RIRR + s.SS
-
-            else:
-                RINPRE = (1. - p.NOTINF*self.NINFTB(drv.RAIN)) * drv.RAIN + \
-                         r.RIRR + s.SS
+                RINPRE = r.RAIN_EFF + r.RIRR + s.SS
         else:
             # with surface storage, infiltration limited by SOPE
-            AVAIL = s.SS + (drv.RAIN * (1.-p.NOTINF)) + r.RIRR - r.EVW
+            AVAIL = s.SS + r.RAIN_EFF + r.RIRR - r.EVW
             RINPRE = min(p.SOPE, AVAIL)
             
         RD = self._determine_rooting_depth()
@@ -445,18 +450,18 @@ class WaterbalanceFD(SimulationObject):
         # loss of water at the lower end of the maximum root zone
         # equilibrium amount of soil moisture below rooted zone
         WELOW = p.SMFCF * (self.RDM - RD)
-        r.LOSS  = limit(0., p.KSUB, (s.WLOW - WELOW + PERC1))
+        r.LOSS = limit(0., p.KSUB, (s.WLOW - WELOW + PERC1))
 
         # percolation not to exceed uptake capacity of subsoil
-        PERC2 = ((self.RDM -RD) * p.SM0 - s.WLOW) + r.LOSS
-        r.PERC  = min(PERC1,PERC2)
+        PERC2 = ((self.RDM - RD) * p.SM0 - s.WLOW) + r.LOSS
+        r.PERC = min(PERC1, PERC2)
 
         # adjustment of infiltration rate
         r.RIN = min(RINPRE, (p.SM0 - s.SM)*RD + r.WTRA + r.EVS + r.PERC)
         self.RINold = r.RIN
 
         # rates of change in amounts of moisture W and WLOW
-        r.DW    = r.RIN - r.WTRA - r.EVS - r.PERC
+        r.DW = r.RIN - r.WTRA - r.EVS - r.PERC
         r.DWLOW = r.PERC - r.LOSS
 
         # Check if DW creates a negative value of W
@@ -467,6 +472,15 @@ class WaterbalanceFD(SimulationObject):
             assert r.EVS >= 0., "Negative soil evaporation rate on day %s: %s" % (day, r.EVS)
             r.DW = -s.W
 
+        # Computation of rate of change in surface storage and surface runoff
+        # SStmp is the layer of water that cannot infiltrate and that can potentially
+        # be stored on the surface
+        SStmp = r.RAIN_EFF + r.RIRR - r.EVW - r.RIN
+        # rate of change in surface storage is limited by SSMAX - SS
+        r.DSS = min(SStmp, (p.SSMAX - s.SS))
+        # Remaining part of SStmp is send to surface runoff
+        r.DTSR = SStmp - r.DSS
+
     @prepare_states
     def integrate(self, day, delt=1.0):
         s = self.states
@@ -476,35 +490,33 @@ class WaterbalanceFD(SimulationObject):
         # INTEGRALS OF THE WATERBALANCE: SUMMATIONS AND STATE VARIABLES
 
         # total transpiration
-        s.WTRAT += r.WTRA
+        s.WTRAT += r.WTRA * delt
 
         # total evaporation from surface water layer and/or soil
-        s.EVWT += r.EVW
-        s.EVST += r.EVS
+        s.EVWT += r.EVW * delt
+        s.EVST += r.EVS * delt
 
         # totals for rainfall, irrigation and infiltration
-        s.RAINT  += r.RAIN
-        s.TOTINF += r.RIN
-        s.TOTIRR += r.RIRR
+        s.RAINT += r.RAIN_EFF * delt + r.RAIN_NEFF * delt
+        s.TOTINF += r.RIN * delt
+        s.TOTIRR += r.RIRR * delt
 
-        # Update surface storage, any storage > SSMAX goes to total surface
-        # runoff (TSR)
-        SSPRE = s.SS + (r.RAIN + r.RIRR -r.EVW - r.RIN)
-        s.SS  = min(SSPRE, p.SSMAX)
-        s.TSR += (SSPRE - s.SS)
+        # Update surface storage and total surface runoff (TSR)
+        s.SS += r.DSS * delt
+        s.TSR += r.DTSR * delt
 
         # amount of water in rooted zone
         s.W += r.DW * delt
         assert s.W >= 0., "Negative amount of water in root zone on day %s: %s" % (day, s.W)
 
         # total percolation and loss of water by deep leaching
-        s.PERCT += r.PERC
-        s.LOSST += r.LOSS
+        s.PERCT += r.PERC * delt
+        s.LOSST += r.LOSS * delt
 
         # amount of water in unrooted, lower part of rootable zone
-        s.WLOW += r.DWLOW
+        s.WLOW += r.DWLOW * delt
         # total amount of water in the whole rootable zone
-        s.WWLOW = s.W + s.WLOW
+        s.WWLOW = s.W + s.WLOW * delt
 
         # CHANGE OF ROOTZONE SUBSYSTEM BOUNDARY
 
@@ -577,6 +589,8 @@ class WaterbalanceFD(SimulationObject):
             # roots grow down by more than 0.001 cm
             # move water from previously unrooted zone and add to new rooted zone
             WDR = s.WLOW * RDchange/(p.RDMSOL - self.RDold)
+            # Take minimum of WDR and WLOW to avoid negative WLOW due to rounding
+            WDR = min(s.WLOW, WDR)
         else:
             # roots disappear upwards by more than 0.001 cm (especially when crop disappears)
             # move water from previously rooted zone and add to new unrooted zone

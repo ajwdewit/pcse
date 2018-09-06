@@ -17,7 +17,7 @@ from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
     Storage_Organ_Dynamics
 from .assimilation import WOFOST_Assimilation2 as Assimilation
 from .partitioning import DVS_Partitioning_NPK as Partitioning
-from .evapotranspiration import Evapotranspiration2 as Evapotranspiration
+from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
 from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
 from .nutrients.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
