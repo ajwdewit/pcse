@@ -1,0 +1,18 @@
+name: py3_pcse
+- sqlalchemy
+- pyyaml
+- numpy
+- pandas
+- python=3
+- pytz
+- pyyaml
+- setuptools
+- sphinx
+- sphinx_rtd_theme
+- xlrd
+- xlwt
+- requests
+- pip:
+  - traitlets-pcse
+
+
