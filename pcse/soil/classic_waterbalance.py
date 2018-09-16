@@ -161,6 +161,7 @@ class WaterbalanceFD(SimulationObject):
     =======  ================================================= ==== ============
     SM        Volumetric moisture content in root zone          Y    -
     SS        Surface storage (layer of water on surface)       N    cm
+    SSI       Initial urface storage                            N    cm
     W         Amount of water in root zone                      N    cm
     WI        Initial amount of water in the root zone          N    cm
     WLOW      Amount of water in the subsoil (between current   N    cm
@@ -277,6 +278,7 @@ class WaterbalanceFD(SimulationObject):
     class StateVariables(StatesTemplate):
         SM = Float(-99.)
         SS = Float(-99.)
+        SSI = Float(-99.)
         W  = Float(-99.)
         WI = Float(-99.)
         WLOW  = Float(-99.)
@@ -364,8 +366,8 @@ class WaterbalanceFD(SimulationObject):
 
         # Initialize model state variables.       
         self.states = self.StateVariables(kiosk, publish="SM", SM=SM, SS=SS,
-                           W=W, WI=WI, WLOW=WLOW, WLOWI=WLOWI, WWLOW=WWLOW,
-                           WTRAT=0., EVST=0., EVWT=0., TSR=0.,
+                           SSI=p.SSI, W=W, WI=WI, WLOW=WLOW, WLOWI=WLOWI,
+                           WWLOW=WWLOW, WTRAT=0., EVST=0., EVWT=0., TSR=0.,
                            RAINT=0., WDRT=0., TOTINF=0., TOTIRR=0.,
                            PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
         self.rates = self.RateVariables(kiosk, publish="EVS")
@@ -480,6 +482,9 @@ class WaterbalanceFD(SimulationObject):
         r.DSS = min(SStmp, (p.SSMAX - s.SS))
         # Remaining part of SStmp is send to surface runoff
         r.DTSR = SStmp - r.DSS
+        # Further we assume that the non-effective rainfall also attributes to runoff
+        # To keep the balance closed this term has to be added somewhere
+        r.DTSR += r.RAIN_NEFF
 
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -540,7 +545,7 @@ class WaterbalanceFD(SimulationObject):
         # Checksums waterbalance for systems without groundwater
         # for rootzone (WBALRT) and whole system (WBALTT)
         s.WBALRT = s.TOTINF + s.WI + s.WDRT - s.EVST - s.WTRAT - s.PERCT - s.W
-        s.WBALTT = (p.SSI + s.RAINT + s.TOTIRR + s.WI - s.W + s.WLOWI - 
+        s.WBALTT = (s.SSI + s.RAINT + s.TOTIRR + s.WI - s.W + s.WLOWI -
                     s.WLOW - s.WTRAT - s.EVWT - s.EVST - s.TSR - s.LOSST - s.SS)
         if abs(s.WBALRT) > 0.0001:
             msg = "Water balance for root zone does not close."
@@ -548,7 +553,7 @@ class WaterbalanceFD(SimulationObject):
 
         if abs(s.WBALTT) > 0.0001:
             msg = "Water balance for complete soil profile does not close.\n"
-            msg += ("Total INIT + IN:   %f\n" % (s.WI + s.WLOWI + p.SSI+s.TOTIRR +
+            msg += ("Total INIT + IN:   %f\n" % (s.WI + s.WLOWI + s.SSI + s.TOTIRR +
                                                  s.RAINT))
             msg += ("Total FINAL + OUT: %f\n" % (s.W + s.WLOW + s.SS + s.EVWT + s.EVST +
                                                  s.WTRAT + s.TSR + s.LOSST))
