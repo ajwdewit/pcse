@@ -192,13 +192,13 @@ class Evapotranspiration(SimulationObject):
 
             # count days since start oxygen shortage (up to 4 days)
             if k.SM >= SMAIR:
-                self._DSOS = min((self._DSOS+1),4)
+                self._DSOS += 1
             else:
                 self._DSOS = 0
 
             # maximum reduction reached after 4 days
             RFOSMX = limit(0., 1., (p.SM0-k.SM)/p.CRAIRC)
-            r.RFOS = RFOSMX + (1. - self._DSOS/4.)*(1.-RFOSMX)
+            r.RFOS = RFOSMX + (1. - min(self._DSOS, 4)/4.)*(1.-RFOSMX)
 
         # For rice, or non-rice crops grown on well drained land
         elif p.IAIRDU == 1 or p.IOX == 0:
@@ -598,13 +598,13 @@ class EvapotranspirationCO2(SimulationObject):
 
             # count days since start oxygen shortage (up to 4 days)
             if k.SM >= SMAIR:
-                self._DSOS = min((self._DSOS+1), 4)
+                self._DSOS += 1
             else:
                 self._DSOS = 0
 
             # maximum reduction reached after 4 days
             RFOSMX = limit(0., 1., (p.SM0 - k.SM)/(p.SM0 - SMAIR))
-            r.RFOS = RFOSMX + (1. - self._DSOS/4.)*(1. - RFOSMX)
+            r.RFOS = RFOSMX + (1. - min(self._DSOS, 4)/4.)*(1.-RFOSMX)
 
         # For rice, or non-rice crops grown on well drained land
         elif p.IAIRDU == 1 or p.IOX == 0:
