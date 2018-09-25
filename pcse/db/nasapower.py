@@ -71,6 +71,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     HTTP_OK = 200
     angstA = 0.29
     angstB = 0.49
+    NaN = float("NaN")
 
     def __init__(self, latitude, longitude, force_update=False, ETmodel="PM"):
 
@@ -138,7 +139,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             raise RuntimeError(msg)
 
         # Store the informational header then parse variables
-        self.description = powerdata["header"]["title"]
+        self.description = [powerdata["header"]["title"]]
         self.elevation = float(powerdata["features"][0]["geometry"]["coordinates"][2])
         df_power = self._process_POWER_records(powerdata)
 
@@ -290,6 +291,10 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         """
 
         for rec in recs:
+            # Skip record in case of missing values
+            if self.NaN in rec.values():
+                continue
+
             # Reference evapotranspiration in mm/day
             try:
                 E0, ES0, ET0 = reference_ET(rec["DAY"], rec["LAT"], rec["ELEV"], rec["TMIN"], rec["TMAX"], rec["IRRAD"],

@@ -12,7 +12,7 @@ AUTHOR = "Allard de Wit"
 AUTHOR_EMAIL = 'allard.dewit@wur.nl'
 URL = 'http://github.com/ajwdewit/pcse/'
 LICENSE="EUPL"
-VERSION = __import__(PACKAGE).__version__
+VERSION = "5.4.0"
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,10 +39,11 @@ setup(
     install_requires=['numpy>=1.6.0',
                       'SQLAlchemy>=0.8.0',
                       'PyYAML>=3.11',
-                      'tabulate>=0.7.0',
                       'xlrd>=0.9.3',
                       'xlwt>=1.0.0',
-                      'traitlets_pcse==5.0.0.dev'],
+                      'requests>=2.0.0',
+                      'pandas>=0.20',
+                      'traitlets-pcse==5.0.0.dev'],
     author_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
     long_description=long_description,
