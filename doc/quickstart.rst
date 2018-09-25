@@ -202,11 +202,11 @@ a too high temperature sum requirement.
 
 The agromanagement inputs are defined with a special syntax called `YAML`_ which allows
 to easily create more complex structures which is needed for defining the agromanagement.
-The agromanagement file for sugar beet in Wageningen `sugarbeet_calendar.agmt` can be read with
+The agromanagement file for sugar beet in Wageningen `sugarbeet_calendar.agro` can be read with
 the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>`::
 
     >>> from pcse.fileinput import YAMLAgroManagementReader
-    >>> agromanagement_file = os.path.join(data_dir, 'sugarbeet_calendar.amgt')
+    >>> agromanagement_file = os.path.join(data_dir, 'sugarbeet_calendar.agro')
     >>> agromanagement = YAMLAgroManagementReader(agromanagement_file)
     >>> print(agromanagement)
      !!python/object/new:pcse.fileinput.yaml_agmt_loader.YAMLAgroManagementReader

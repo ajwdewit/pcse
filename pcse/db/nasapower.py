@@ -71,7 +71,6 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     HTTP_OK = 200
     angstA = 0.29
     angstB = 0.49
-    NaN = float("NaN")
 
     def __init__(self, latitude, longitude, force_update=False, ETmodel="PM"):
 
@@ -291,10 +290,6 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         """
 
         for rec in recs:
-            # Skip record in case of missing values
-            if self.NaN in rec.values():
-                continue
-
             # Reference evapotranspiration in mm/day
             try:
                 E0, ES0, ET0 = reference_ET(rec["DAY"], rec["LAT"], rec["ELEV"], rec["TMIN"], rec["TMAX"], rec["IRRAD"],
@@ -329,6 +324,11 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             df_power[varname] = s
         df_power = pd.DataFrame(df_power)
         df_power["DAY"] = pd.to_datetime(df_power.index, format="%Y%m%d")
+
+        # find all rows with one or more missing values (NaN)
+        ix = df_power.isnull().any(axis=1)
+        # Get all rows without missing values
+        df_power = df_power[~ix]
 
         return df_power
 

@@ -7,12 +7,9 @@ Requirements and dependencies
 
 PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using Python 2.7.14 and python 3.6.5 .
 As Python is a platform independent language, PCSE works equally well on Linux, Windows or Mac OSX.
-Before installing PCSE, Python itself must be installed on your system. Most Linux systems provide
-Python through the native package manager. For Windows users the most straightforward approach for installing
-Python is through one of the prepackaged Python distributions such as `Enthought Canopy`_,
-`Anaconda`_ or `PythonXY`_. The advantage of the prepackaged distributions is that they provide a working
-version of Numpy out-of-the-box which can be difficult to install on Windows. Mac OSX users can most easily
-install Python and Numpy using `HomeBrew`_, i.e ``brew install Python Numpy``.
+Before installing PCSE, Python itself must be installed on your system. The most convenient way
+for setting up your environment on Windows, Linux and MacOSX is through the anaconda python distribution
+which we will demonstrate below.
 
 The dependencies of PCSE are the following:
 
@@ -38,14 +35,14 @@ Setting up your python environment
 ==================================
 
 A convenient way to set up your python environment for PCSE is through the `Anaconda`_ python distribution.
-In the present PCSE Documentation all examples of installing and using PCSE refer to Windows 7 platform.
+In the present PCSE Documentation all examples of installing and using PCSE refer to the Windows 7 platform.
 
 First, we suggest you download and install the `MiniConda`_ python distribution which provides a minimum
 python environment that we will use to bootstrap a dedicated virtual environment for PCSE. For the rest
 of this guide we will assume that you use Windows 7 and install the
-32bit miniconda for python 3 (``Miniconda3-latest-Windows-x86.exe``). The virtual enviroment that
+32bit miniconda for python 3 (``Miniconda3-latest-Windows-x86.exe``). The virtual environment that
 we will create contains not only the dependencies for PCSE, it also includes many other useful packages
-such as `IPython`_ `Pandas`_ and the `Jupyter notebook`_. These packages will be used in the Getting Started section
+such as `IPython`_, `Pandas`_ and the `Jupyter notebook`_. These packages will be used in the Getting Started section
 as well.
 
 .. _MiniConda: http://conda.pydata.org/miniconda.html
@@ -79,11 +76,11 @@ After installing MiniConda you should open a command box and check that conda is
 Now we will use a Conda environment file to recreate the python environment that we use to develop and run
 PCSE. First you should download the conda environment file which comes in two flavours, an
 environment for running PCSE  on python 3 (:download:`downloads/py3_pcse.yml`) and one for python 2
-(:download:`downloads/py3_pcse.yml`). Both environments include the Jupyter notebook and IPython which are
+(:download:`downloads/py2_pcse.yml`). Both environments include the Jupyter notebook and IPython which are
 needed for running the `getting started` section and the example notebooks. Save the environment file
 on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
-using the command ``conda env create`` and tell conda to use the environment file with the option ``-f p3_pcse.yml``
-as show below:
+using the command ``conda env create`` and tell conda to use the environment file for python3 with the
+option ``-f p3_pcse.yml`` as show below:
 
 .. code-block:: doscon
 
@@ -106,16 +103,14 @@ as show below:
     # * for power-users using bash, you must source
     #
 
-You can then activate your environment (note the addition of ``(py3_pcse)`` on your command prompt) and
-run an upgrade to upgrade all packages to the latest versions:
+You can then activate your environment (note the addition of ``(py3_pcse)`` on your command prompt):
 
 .. code-block:: doscon
 
     D:\temp\make_env>activate py3_pcse
     Deactivating environment "C:\Miniconda3"...
-    Activating environment "C:\Miniconda3\envs\py2_pcse"...
+    Activating environment "C:\Miniconda3\envs\py3_pcse"...
 
-    D:\temp\make_env>activate py3_pcse
     (py3_pcse) D:\temp\make_env>
 
 Installing and testing PCSE
@@ -131,13 +126,36 @@ environment:
 .. code-block:: doscon
 
     (py3_pcse) D:\temp\make_env>pip install pcse
-    Collecting PCSE
-    Requirement already satisfied (use --upgrade to upgrade): numpy>=1.6.0 in c:\miniconda3\envs\py2_pcse\lib\site-packages (from PCSE)
-    Requirement already satisfied (use --upgrade to upgrade): xlrd>0.9.0 in c:\miniconda3\envs\py2_pcse\lib\site-packages (from PCSE)
-    Requirement already satisfied (use --upgrade to upgrade): tabulate>=0.7.0 in c:\miniconda3\envs\py2_pcse\lib\site-packages (from PCSE)
-    Requirement already satisfied (use --upgrade to upgrade): SQLAlchemy>=0.8.0 in c:\miniconda3\envs\py2_pcse\lib\site-packages (from PCSE)
-    Installing collected packages: PCSE
-    Successfully installed PCSE-5.2
+
+    Collecting pcse
+      Downloading https://files.pythonhosted.org/packages/8c/92/d4444cce1c58e5a96f4d6dc9c0e042722f2136df24a2750352e7eb4ab053/PCSE-5.4.0.tar.gz (791kB)
+        100% |¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 798kB 1.6MB/s
+    Requirement already satisfied: numpy>=1.6.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (1.15.1)
+    Requirement already satisfied: SQLAlchemy>=0.8.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (1.2.11)
+    Requirement already satisfied: PyYAML>=3.11 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (3.13)
+    Requirement already satisfied: xlrd>=0.9.3 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (1.1.0)
+    Requirement already satisfied: xlwt>=1.0.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (1.3.0)
+    Requirement already satisfied: requests>=2.0.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (2.19.1)
+    Requirement already satisfied: pandas>=0.20 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (0.23.4)
+    Requirement already satisfied: traitlets-pcse==5.0.0.dev in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (5.0.0.dev0)
+    Requirement already satisfied: chardet<3.1.0,>=3.0.2 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from requests>=2.0.0->pcse) (3.0.4)
+    Requirement already satisfied: idna<2.8,>=2.5 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from requests>=2.0.0->pcse) (2.7)
+    Requirement already satisfied: certifi>=2017.4.17 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from requests>=2.0.0->pcse) (2018.8.24)
+    Requirement already satisfied: urllib3<1.24,>=1.21.1 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from requests>=2.0.0->pcse) (1.23)
+    Requirement already satisfied: python-dateutil>=2.5.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pandas>=0.20->pcse) (2.7.3)
+    Requirement already satisfied: pytz>=2011k in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pandas>=0.20->pcse) (2018.5)
+    Requirement already satisfied: six in c:\miniconda3\envs\py3_pcse\lib\site-packages (from traitlets-pcse==5.0.0.dev->pcse) (1.11.0)
+    Requirement already satisfied: decorator in c:\miniconda3\envs\py3_pcse\lib\site-packages (from traitlets-pcse==5.0.0.dev->pcse) (4.3.0)
+    Requirement already satisfied: ipython-genutils in c:\miniconda3\envs\py3_pcse\lib\site-packages (from traitlets-pcse==5.0.0.dev->pcse) (0.2.0)
+    Building wheels for collected packages: pcse
+      Running setup.py bdist_wheel for pcse ... done
+      Stored in directory: C:\Users\wit015\AppData\Local\pip\Cache\wheels\2f\e6\2c\3952ff951dffea5ab2483892edcb7f9310faa319d050d3be6c
+    Successfully built pcse
+    twisted 18.7.0 requires PyHamcrest>=1.9.0, which is not installed.
+    mkl-random 1.0.1 requires cython, which is not installed.
+    mkl-fft 1.0.4 requires cython, which is not installed.
+    Installing collected packages: pcse
+    Successfully installed pcse-5.4.0
 
 If you are wondering what the difference between `pip` and `conda` are than have a look
 `here <https://stackoverflow.com/questions/20994716/what-is-the-difference-between-pip-and-conda#20994790>`_
@@ -166,7 +184,7 @@ For testing the PCSE package we need to start python and import pcse:
 .. code-block:: doscon
 
     (py3_pcse) D:\temp\make_env>python
-    Python 3.7.0 (default, Aug 14 2018, 19:12:50) [MSC v.1900 32 bit (Intel)] :: Anaconda, Inc. on win32
+    Python 3.6.5 (default, Aug 14 2018, 19:12:50) [MSC v.1900 32 bit (Intel)] :: Anaconda, Inc. on win32
     Type "help", "copyright", "credits" or "license" for more information.
     >>> import pcse
     Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db ... OK
@@ -218,8 +236,7 @@ Next, the tests can be executed by calling the `test()` function at the top of t
 If the model output matches the expected output the test will report 'OK',
 otherwise an error will be produced with a detailed traceback on where the
 problem occurred. Note that the results may deviate from the output above
-because one or more tests may have been temporarily disabled (skipped) often
-due to problems with the test.
+when tests were added or removed.
 
 Moreover, SQLAlchemy may complain with a warning that can be safely ignored::
 
