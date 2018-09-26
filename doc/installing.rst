@@ -5,13 +5,10 @@ Installing PCSE
 Requirements and dependencies
 =============================
 
-PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using Python 2.7.14 and python 3.6.5 .
+PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using Python 2.7.14 and python 3.6.5.
 As Python is a platform independent language, PCSE works equally well on Linux, Windows or Mac OSX.
-Before installing PCSE, Python itself must be installed on your system. The most convenient way
-for setting up your environment on Windows, Linux and MacOSX is through the anaconda python distribution
-which we will demonstrate below.
-
-The dependencies of PCSE are the following:
+Before installing PCSE, Python itself must be installed on your system which we will demonstrate
+below. PCSE has a number of dependencies on other python packages which are the following:
 
 * Numpy >= 1.6
 * SQLalchemy >= 0.8
@@ -75,7 +72,7 @@ After installing MiniConda you should open a command box and check that conda is
 
 Now we will use a Conda environment file to recreate the python environment that we use to develop and run
 PCSE. First you should download the conda environment file which comes in two flavours, an
-environment for running PCSE  on python 3 (:download:`downloads/py3_pcse.yml`) and one for python 2
+environment for running PCSE on python 3 (:download:`downloads/py3_pcse.yml`) and one for python 2
 (:download:`downloads/py2_pcse.yml`). Both environments include the Jupyter notebook and IPython which are
 needed for running the `getting started` section and the example notebooks. Save the environment file
 on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
