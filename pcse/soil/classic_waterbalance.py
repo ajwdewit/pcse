@@ -303,8 +303,6 @@ class WaterbalanceFD(SimulationObject):
         EVS   = Float(-99.)
         EVW   = Float(-99.)
         WTRA  = Float(-99.)
-        RAIN_INF = Float(-99.)
-        RAIN_NOTINF = Float(-99.)
         RIN   = Float(-99.)
         RIRR  = Float(-99.)
         PERC  = Float(-99.)
@@ -313,6 +311,7 @@ class WaterbalanceFD(SimulationObject):
         DWLOW = Float(-99.)
         DTSR = Float(-99.)
         DSS = Float(-99.)
+        DRAINT = Float(-99.)
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -389,14 +388,6 @@ class WaterbalanceFD(SimulationObject):
         # Rate of irrigation (RIRR)
         r.RIRR = self._RIRR
         self._RIRR = 0.
-        
-        # Effective/non-effective rainfall rate
-        if p.IFUNRN == 0:
-            r.RAIN_INF = (1. - p.NOTINF) * drv.RAIN
-        else:
-            # infiltration is function of storm size (NINFTB)
-            r.RAIN_INF = (1. - p.NOTINF * self.NINFTB(drv.RAIN)) * drv.RAIN
-        r.RAIN_NOTINF = drv.RAIN - r.RAIN_INF
 
         # Transpiration and maximum soil and surface water evaporation rates
         # are calculated by the crop evapotranspiration module.
@@ -411,7 +402,7 @@ class WaterbalanceFD(SimulationObject):
             r.WTRA = k.TRA
             EVWMX = k.EVWMX
             EVSMX = k.EVSMX
-        
+
         # Actual evaporation rates
         r.EVW = 0.
         r.EVS = 0.
@@ -428,16 +419,24 @@ class WaterbalanceFD(SimulationObject):
                 self.DSLR = 1.
             else:
                 # Else soil evaporation is a function days-since-last-rain (DSLR)
-                EVSMXT = EVSMX*(sqrt(self.DSLR + 1) - sqrt(self.DSLR))
+                EVSMXT = EVSMX * (sqrt(self.DSLR + 1) - sqrt(self.DSLR))
                 r.EVS = min(EVSMX, EVSMXT + self.RINold)
                 self.DSLR += 1
 
-        # Preliminary infiltration rate (RINPRE)
-        if s.SS < 0.1:
-                RINPRE = r.RAIN_INF + r.RIRR + s.SS
+        # Potentially infiltrating rainfall
+        if p.IFUNRN == 0:
+            RINPRE = (1. - p.NOTINF) * drv.RAIN
         else:
+            # infiltration is function of storm size (NINFTB)
+            RINPRE = (1. - p.NOTINF * self.NINFTB(drv.RAIN)) * drv.RAIN
+
+
+        # Second stage preliminary infiltration rate (RINPRE)
+        # including surface storage and irrigation
+        RINPRE = RINPRE + r.RIRR + s.SS
+        if s.SS > 0.1:
             # with surface storage, infiltration limited by SOPE
-            AVAIL = s.SS + r.RAIN_INF + r.RIRR - r.EVW
+            AVAIL = RINPRE + r.RIRR - r.EVW
             RINPRE = min(p.SOPE, AVAIL)
             
         RD = self._determine_rooting_depth()
@@ -476,15 +475,15 @@ class WaterbalanceFD(SimulationObject):
 
         # Computation of rate of change in surface storage and surface runoff
         # SStmp is the layer of water that cannot infiltrate and that can potentially
-        # be stored on the surface
-        SStmp = r.RAIN_INF + r.RIRR - r.EVW - r.RIN
+        # be stored on the surface. Here we assume that RAIN_NOTINF automatically
+        # ends up in the surface storage (and finally runoff).
+        SStmp = drv.RAIN + r.RIRR - r.EVW - r.RIN
         # rate of change in surface storage is limited by SSMAX - SS
         r.DSS = min(SStmp, (p.SSMAX - s.SS))
         # Remaining part of SStmp is send to surface runoff
         r.DTSR = SStmp - r.DSS
-        # Further we assume that the non-effective rainfall also attributes to runoff
-        # To keep the balance closed this term has to be added somewhere
-        r.DTSR += r.RAIN_NOTINF
+        # incoming rainfall rate
+        r.DRAINT = drv.RAIN
 
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -502,7 +501,7 @@ class WaterbalanceFD(SimulationObject):
         s.EVST += r.EVS * delt
 
         # totals for rainfall, irrigation and infiltration
-        s.RAINT += r.RAIN_INF * delt + r.RAIN_NOTINF * delt
+        s.RAINT += r.DRAINT * delt
         s.TOTINF += r.RIN * delt
         s.TOTIRR += r.RIRR * delt
 
@@ -547,6 +546,7 @@ class WaterbalanceFD(SimulationObject):
         s.WBALRT = s.TOTINF + s.WI + s.WDRT - s.EVST - s.WTRAT - s.PERCT - s.W
         s.WBALTT = (s.SSI + s.RAINT + s.TOTIRR + s.WI - s.W + s.WLOWI -
                     s.WLOW - s.WTRAT - s.EVWT - s.EVST - s.TSR - s.LOSST - s.SS)
+
         if abs(s.WBALRT) > 0.0001:
             msg = "Water balance for root zone does not close."
             raise exc.WaterBalanceError(msg)
