@@ -184,9 +184,9 @@ def store_gridded_weather(engine, fname_HDFstore, args):
                     grid_done = True
                 except sa.exc.SQLAlchemyError as e:  # DB connection failure
                     engine = None
-                    print("DB connection failure: %s" % e.message)
+                    print("DB connection failure: %s" % e)
                 except Exception as e:
-                    print("General exception - aborting: %s" % e.message)
+                    print("General exception - aborting: %s" % e)
                     sys.exit()
 
 
@@ -240,7 +240,7 @@ def connect_to_db(dsn):
                 sys.stdout.flush()
             retries += 1
             if retries > 5:
-                print("\nDB connection failed after 5 retries: %s" % e.message)
+                print("\nDB connection failed after 5 retries: %s" % e)
                 sys.exit()
             time.sleep(5)
     return engine

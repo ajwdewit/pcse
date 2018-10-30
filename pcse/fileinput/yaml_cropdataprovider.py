@@ -163,7 +163,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                 return True
 
         except Exception as e:
-            msg = "%s - Failed to load cache file: %s" % (self.__class__.__name__, e.message)
+            msg = "%s - Failed to load cache file: %s" % (self.__class__.__name__, e)
             print(msg)
 
         return False

@@ -175,7 +175,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                 self.logger.warn(msg)
 
             except OutOfRange as e:
-                self.logger.warn(e.message)
+                self.logger.warn(e)
 
     def _load_cache_file(self, xls_fname):
 
