@@ -645,6 +645,11 @@ class AgroManager(AncillaryObject):
         # Connect CROP_FINISH signal with handler
         self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
 
+        # If there is an "AgroManagement" item defined then we first need to get
+        # the contents defined within that item
+        if "AgroManagement" in agromanagement:
+            agromanagement = agromanagement["AgroManagement"]
+
         # First get and validate the dates of the different campaigns
         for campaign in agromanagement:
             # Check if campaign start dates is in chronological order

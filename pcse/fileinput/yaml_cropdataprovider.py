@@ -141,17 +141,19 @@ class YAMLCropDataProvider(MultiCropDataProvider):
             if os.path.exists(cache_fname_fp):
 
                 # First we check that the cache file reflects the contents of the YAML files.
-                yaml_file_names = self._get_yaml_files(fpath)
-                yaml_file_dates = []
-                # Retrieved YAML file dates
-                for yaml_file in yaml_file_names:
-                    r = os.stat(yaml_file)
-                    yaml_file_dates.append(r.st_mtime)
-                # retrieve modification date of cache file
-                cache_date = os.stat(cache_fname_fp).st_mtime
-                # Ensure cache file is more recent then any of the YAML files
-                if any([d > cache_date for d in yaml_file_dates]):
-                    return False
+                # This only works for files not for github repos
+                if fpath is not None:
+                    yaml_file_names = self._get_yaml_files(fpath)
+                    yaml_file_dates = []
+                    # Retrieved YAML file dates
+                    for yaml_file in yaml_file_names:
+                        r = os.stat(yaml_file)
+                        yaml_file_dates.append(r.st_mtime)
+                    # retrieve modification date of cache file
+                    cache_date = os.stat(cache_fname_fp).st_mtime
+                    # Ensure cache file is more recent then any of the YAML files
+                    if any([d > cache_date for d in yaml_file_dates]):
+                        return False
 
                 # Now start loading the cache file
                 with open(cache_fname_fp, "rb") as fp:

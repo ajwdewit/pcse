@@ -733,7 +733,7 @@ class CropDataProvider(dict):
                "campaign_year=%i derived from %s\n" %
                (self.grid_no, self.crop_no, self.crop_name, self.variety_no,
                 self.campaign_year, self.db_resource))
-        msg += str(self)
+        msg += dict.__str__(self)
         return msg
 
 
