@@ -184,6 +184,8 @@ class WaterbalanceFD(SimulationObject):
     PERCT     Total amount of water percolating from rooted     N    cm
               zone to subsoil
     LOSST     Total amount of water lost to deeper soil         N    cm
+    DSOS      Days since oxygen stress, accumulates the number  Y     -
+              of consecutive days of oxygen stress
     WBALRT    Checksum for root zone waterbalance. Will be      N    cm
               calculated within `finalize()`, abs(WBALRT) >
               0.0001 will raise a WaterBalanceError
@@ -298,6 +300,7 @@ class WaterbalanceFD(SimulationObject):
         # Checksums for rootzone (RT) and total system (TT)
         WBALRT = Float(-99.)
         WBALTT = Float(-99.)
+        DSOS = Int(-99)
 
     class RateVariables(RatesTemplate):
         EVS   = Float(-99.)
@@ -364,10 +367,10 @@ class WaterbalanceFD(SimulationObject):
         self.NINFTB = Afgen([0.0,0.0, 0.5,0.0, 1.5,1.0])
 
         # Initialize model state variables.       
-        self.states = self.StateVariables(kiosk, publish="SM", SM=SM, SS=SS,
+        self.states = self.StateVariables(kiosk, publish=["SM", "DSOS"], SM=SM, SS=SS,
                            SSI=p.SSI, W=W, WI=WI, WLOW=WLOW, WLOWI=WLOWI,
                            WWLOW=WWLOW, WTRAT=0., EVST=0., EVWT=0., TSR=0.,
-                           RAINT=0., WDRT=0., TOTINF=0., TOTIRR=0.,
+                           RAINT=0., WDRT=0., TOTINF=0., TOTIRR=0., DSOS=0,
                            PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
         self.rates = self.RateVariables(kiosk, publish="EVS")
         
@@ -531,6 +534,12 @@ class WaterbalanceFD(SimulationObject):
 
         # mean soil moisture content in rooted zone
         s.SM = s.W/RD
+
+        # Accumulate days since oxygen stress, but only if a crop is present
+        if s.SM > (p.SM0 - p.CRAIRC) and self.in_crop_cycle:
+            s.DSOS += 1
+        else:
+            s.DSOS = 0
 
         # save rooting depth
         self.RDold = RD
