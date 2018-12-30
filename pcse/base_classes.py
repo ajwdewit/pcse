@@ -44,7 +44,7 @@ class VariableKiosk(dict):
     example::
 
         >>> import pcse
-        >>> from pcse.base_classes import VariableKiosk
+        >>> from pcse.base import VariableKiosk
         >>> 
         >>> v = VariableKiosk()
         >>> id0 = 0
@@ -72,7 +72,7 @@ class VariableKiosk(dict):
         >>> v.set_variable(id0, "VAR3", 750.12)
         Traceback (most recent call last):
           File "<stdin>", line 1, in <module>
-          File "pcse/base_classes.py", line 148, in set_variable
+          File "pcse/base.py", line 148, in set_variable
             raise exc.VariableKioskError(msg % varname)
         pcse.exceptions.VariableKioskError: Unregistered object tried to set the value of variable 'VAR3': access denied.
         >>> 
@@ -267,7 +267,7 @@ class ParamTemplate(HasTraits):
     example::
 
         >>> import pcse
-        >>> from pcse.base_classes import ParamTemplate
+        >>> from pcse.base import ParamTemplate
         >>> from pcse.traitlets import Float
         >>> 
         >>> 
@@ -288,7 +288,7 @@ class ParamTemplate(HasTraits):
         >>> params = Parameters(parvalues)
         Traceback (most recent call last):
           File "<stdin>", line 1, in <module>
-          File "pcse/base_classes.py", line 205, in __init__
+          File "pcse/base.py", line 205, in __init__
             raise exc.ParameterError(msg)
         pcse.exceptions.ParameterError: Value for parameter C missing.
     """
@@ -476,7 +476,7 @@ class StatesTemplate(StatesRatesCommon):
     example::
 
         >>> import pcse
-        >>> from pcse.base_classes import VariableKiosk, StatesTemplate
+        >>> from pcse.base import VariableKiosk, StatesTemplate
         >>> from pcse.traitlets import Float, Integer, Instance
         >>> from datetime import date
         >>> 
@@ -502,7 +502,7 @@ class StatesTemplate(StatesRatesCommon):
         >>> s2 = StateVariables(k, StateA=200., StateB=1240)
         Traceback (most recent call last):
           File "<stdin>", line 1, in <module>
-          File "pcse/base_classes.py", line 396, in __init__
+          File "pcse/base.py", line 396, in __init__
             raise exc.PCSEError(msg)
         pcse.exceptions.PCSEError: Initial value for state StateC missing.
 
@@ -1501,7 +1501,7 @@ class ParameterProvider(MutableMapping):
         crop whose parameters are active by default. In this case a call to `set_active_crop()` has no
         effect and the `crop_name` and `variety_name` parameters are ignored.
         CropDataProviders that support crop rotations explicitly have to subclass from
-        `pcse.base_classes.MultiCropDataProvider` in order to be recognized.
+        `pcse.base.MultiCropDataProvider` in order to be recognized.
 
         Besides the crop parameters, this method also sets the `crop_start_type` and `crop_end_type` of the
         crop which is required for all crops by the phenology module.

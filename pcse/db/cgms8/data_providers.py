@@ -17,7 +17,7 @@ from ...util import check_date, wind10to2, reference_ET, safe_float
 from ... import settings
 from ... import exceptions as exc
 from ..cgms12.data_providers import fetch_crop_name
-from ...base_classes import WeatherDataProvider, WeatherDataContainer
+from ...base import WeatherDataProvider, WeatherDataContainer
 
 #----------------------------------------------------------------------------
 class GridWeatherDataProvider(WeatherDataProvider):

@@ -4,7 +4,7 @@
 import unittest
 from datetime import date
 
-from ..base_classes import VariableKiosk
+from ..base import VariableKiosk
 from ..crop.assimilation import WOFOST_Assimilation
 
 #-------------------------------------------------------------------------------

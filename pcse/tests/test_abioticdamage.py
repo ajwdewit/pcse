@@ -5,7 +5,7 @@ import unittest
 from datetime import date
 
 from ..crop.abioticdamage import FROSTOL
-from ..base_classes import VariableKiosk
+from ..base import VariableKiosk
 from .test_data import frostol_testdata
 
 #------------------------------------------------------------------------------

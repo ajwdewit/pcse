@@ -5,7 +5,7 @@ from __future__ import print_function
 import datetime
 
 from .pydispatch import dispatcher
-from .base_classes import AncillaryObject, VariableKiosk
+from .base import AncillaryObject, VariableKiosk
 from .traitlets import HasTraits, Instance, Bool, Int, Enum
 from . import signals
 from .util import is_a_dekad, is_a_month, is_a_week

@@ -6,8 +6,8 @@ LINTUL3
 """
 from math import exp
 
-from ..base_classes import SimulationObject, ParamTemplate, RatesTemplate
-from ..base_classes import StatesWithImplicitRatesTemplate as StateVariables
+from ..base import SimulationObject, ParamTemplate, RatesTemplate
+from ..base import StatesWithImplicitRatesTemplate as StateVariables
 from ..traitlets import Float, Instance, Bool
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit, AfgenTrait

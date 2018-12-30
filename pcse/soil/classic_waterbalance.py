@@ -10,7 +10,7 @@ from math import sqrt
 from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit, Afgen, merge_dict
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc

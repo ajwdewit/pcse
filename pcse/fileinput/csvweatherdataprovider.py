@@ -10,7 +10,7 @@ import datetime as dt
 import csv
 import math
 
-from ..base_classes import WeatherDataContainer, WeatherDataProvider
+from ..base import WeatherDataContainer, WeatherDataProvider
 from ..util import reference_ET, angstrom, check_angstromAB
 from ..exceptions import PCSEError
 from ..settings import settings
@@ -36,9 +36,9 @@ class IRRADFromSunshineDuration:
         self.angstB = angstB
 
     def __call__(self, value, day):
-        """Computes irradiance in J/m2/day either directly from value or by applying the Angstrom equation
+        """Computes irradiance in J/m2/day from sunshine duration by applying the Angstrom equation
 
-        :param value: either irradiance in kJ/m2/day or sunshine duration in hours
+        :param value: sunshine duration in hours
         :param day: the day
         :return: irradiance in J/m2/day
         """
@@ -86,31 +86,31 @@ class CSVWeatherDataProvider(WeatherDataProvider):
         method for reference evapotranspiration. Default is 'PM'.
     :param force_reload: Ignore cache file and reload from the CSV file
 
-    The CSV file should have the following structure (sample), missing values should be added as 'NaN':
+    The CSV file should have the following structure (sample), missing values should be added as 'NaN'::
 
-    ## Site Characteristics
-    Country     = 'Netherlands'
-    Station     = 'Wageningen, Haarweg'
-    Description = 'Observed data from Station Haarweg in Wageningen'
-    Source      = 'Meteorology and Air Quality Group, Wageningen University'
-    Contact     = 'Peter Uithol'
-    Longitude = 5.67; Latitude = 51.97; Elevation = 7; AngstromA = 0.18; AngstromB = 0.55; HasSunshine = False
-    ## Daily weather observations (missing values are NaN)
-    DAY,IRRAD,TMIN,TMAX,VAP,WIND,RAIN,SNOWDEPTH
-    20040101,NaN,-0.7,1.1,0.55,3.6,0.5,NaN
-    20040102,3888,-7.5,0.9,0.44,3.1,0,NaN
-    20040103,2074,-6.8,-0.5,0.45,1.8,0,NaN
-    20040104,1814,-3.6,5.9,0.66,3.2,2.5,NaN
-    20040105,1469,3,5.7,0.78,2.3,1.3,NaN
-    [...]
+        ## Site Characteristics
+        Country     = 'Netherlands'
+        Station     = 'Wageningen, Haarweg'
+        Description = 'Observed data from Station Haarweg in Wageningen'
+        Source      = 'Meteorology and Air Quality Group, Wageningen University'
+        Contact     = 'Peter Uithol'
+        Longitude = 5.67; Latitude = 51.97; Elevation = 7; AngstromA = 0.18; AngstromB = 0.55; HasSunshine = False
+        ## Daily weather observations (missing values are NaN)
+        DAY,IRRAD,TMIN,TMAX,VAP,WIND,RAIN,SNOWDEPTH
+        20040101,NaN,-0.7,1.1,0.55,3.6,0.5,NaN
+        20040102,3888,-7.5,0.9,0.44,3.1,0,NaN
+        20040103,2074,-6.8,-0.5,0.45,1.8,0,NaN
+        20040104,1814,-3.6,5.9,0.66,3.2,2.5,NaN
+        20040105,1469,3,5.7,0.78,2.3,1.3,NaN
+        [...]
 
-    with
-    IRRAD in kJ/m2/day or hours
-    TMIN and TMAX in Celsius (°C)
-    VAP in kPa
-    WIND in m/sec
-    RAIN in mm
-    SNOWDEPTH in cm
+        with
+        IRRAD in kJ/m2/day or hours
+        TMIN and TMAX in Celsius (°C)
+        VAP in kPa
+        WIND in m/sec
+        RAIN in mm
+        SNOWDEPTH in cm
 
     For reading weather data from a file, initially the CABOWeatherDataProvider
     was available which read its data from text in the CABO weather format.
@@ -261,4 +261,3 @@ class CSVWeatherDataProvider(WeatherDataProvider):
         except (IOError, EnvironmentError) as e:
             msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
-

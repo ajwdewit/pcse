@@ -6,7 +6,7 @@ from copy import deepcopy
 from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit, merge_dict, AfgenTrait
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
     
 

@@ -9,7 +9,7 @@ import csv
 import yaml
 
 from ..engine import Engine
-from ..base_classes import ParameterProvider
+from ..base import ParameterProvider
 from ..fileinput import CABOFileReader, CABOWeatherDataProvider
 
 test_data_dir =  os.path.join(os.path.dirname(__file__), "test_data")

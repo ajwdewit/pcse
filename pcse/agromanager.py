@@ -18,7 +18,7 @@ from datetime import date, timedelta
 import logging
 from collections import Counter
 
-from .base_classes import DispatcherObject, VariableKiosk, SimulationObject, ParameterProvider, AncillaryObject
+from .base import DispatcherObject, VariableKiosk, SimulationObject, ParameterProvider, AncillaryObject
 from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Dict, Unicode
 from . import exceptions as exc
 from .util import ConfigurationLoader

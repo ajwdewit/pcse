@@ -8,7 +8,7 @@ import numpy as np
 import datetime as dt
 import warnings
 
-from ..base_classes import WeatherDataContainer, WeatherDataProvider
+from ..base import WeatherDataContainer, WeatherDataProvider
 from ..util import reference_ET, angstrom, check_angstromAB
 from ..exceptions import PCSEError
 

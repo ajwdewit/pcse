@@ -3,7 +3,7 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 from ..traitlets import Float, Int, Instance, Dict
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, SimulationObject
+from ..base import ParamTemplate, SimulationObject
 from ..util import AfgenTrait
 
 class WOFOST_Maintenance_Respiration(SimulationObject):

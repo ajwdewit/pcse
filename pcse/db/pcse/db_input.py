@@ -32,7 +32,7 @@ import yaml
 
 from ...util import wind10to2, Afgen, check_date
 from ... import exceptions as exc
-from ...base_classes import WeatherDataContainer, WeatherDataProvider
+from ...base import WeatherDataContainer, WeatherDataProvider
 
 
 #-------------------------------------------------------------------------------

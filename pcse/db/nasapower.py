@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from ..base_classes import WeatherDataProvider, WeatherDataContainer
+from ..base import WeatherDataProvider, WeatherDataContainer
 from ..util import ea_from_tdew, reference_ET, check_angstromAB
 from ..exceptions import PCSEError
 from ..settings import settings

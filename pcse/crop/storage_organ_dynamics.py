@@ -5,7 +5,7 @@
 from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
 
 class WOFOST_Storage_Organ_Dynamics(SimulationObject):

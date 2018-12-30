@@ -17,7 +17,7 @@ import yaml
 
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import exceptions as exc
-from ...base_classes import WeatherDataContainer, WeatherDataProvider
+from ...base import WeatherDataContainer, WeatherDataProvider
 from ... import settings
 from .. import wofost_parameters
 

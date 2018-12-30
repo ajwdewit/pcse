@@ -19,7 +19,7 @@ import datetime
 import gc
 
 from .traitlets import Instance, Bool, List, Dict
-from .base_classes import (VariableKiosk, WeatherDataProvider,
+from .base import (VariableKiosk, WeatherDataProvider,
                            AncillaryObject, SimulationObject,
                            BaseEngine, ParameterProvider)
 from .util import ConfigurationLoader, check_date

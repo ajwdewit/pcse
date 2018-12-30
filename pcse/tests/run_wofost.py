@@ -8,7 +8,7 @@ import sqlalchemy as sa
 
 from ..db.pcse import fetch_cropdata, fetch_sitedata, fetch_soildata, GridWeatherDataProvider, \
     AgroManagementDataProvider
-from ..base_classes import ParameterProvider
+from ..base import ParameterProvider
 from ..models import Wofost71_WLP_FD, Wofost71_PP
 from .. import exceptions as exc
 from ..util import merge_dict

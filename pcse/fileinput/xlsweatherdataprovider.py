@@ -7,7 +7,7 @@ import os
 import datetime as dt
 import xlrd
 
-from ..base_classes import WeatherDataContainer, WeatherDataProvider
+from ..base import WeatherDataContainer, WeatherDataProvider
 from ..util import reference_ET, angstrom, check_angstromAB
 from ..exceptions import PCSEError
 from ..settings import settings

@@ -17,7 +17,7 @@ else:
 
 import yaml
 
-from ..base_classes import MultiCropDataProvider
+from ..base import MultiCropDataProvider
 from .. import exceptions as exc
 from .. import settings
 from ..util import version_tuple

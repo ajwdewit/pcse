@@ -16,7 +16,7 @@ import yaml
 from sqlalchemy import MetaData, select, Table, and_
 
 from ... import exceptions as exc
-from ...base_classes import WeatherDataContainer, WeatherDataProvider
+from ...base import WeatherDataContainer, WeatherDataProvider
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import settings
 from .. import wofost_parameters

@@ -10,7 +10,7 @@ from collections import deque
 from ..traitlets import Instance, Float 
 
 from ..util import limit, astro, doy, AfgenTrait
-from ..base_classes import ParamTemplate, SimulationObject
+from ..base import ParamTemplate, SimulationObject
 
 try:
     from ..futil import totass as ftotass

@@ -13,7 +13,7 @@ Class to calculate various nutrient relates stress factors:
 
 from ...traitlets import Float
 from ...util import limit, AfgenTrait
-from ...base_classes import ParamTemplate, SimulationObject, RatesTemplate
+from ...base import ParamTemplate, SimulationObject, RatesTemplate
 from ...decorators import prepare_rates
 
 class NPK_Stress(SimulationObject):

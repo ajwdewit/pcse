@@ -6,7 +6,7 @@ import unittest
 from datetime import date
 import yaml
 from ..agromanager import AgroManager
-from ..base_classes import VariableKiosk
+from ..base import VariableKiosk
 from ..exceptions import PCSEError
 
 

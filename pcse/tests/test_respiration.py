@@ -5,7 +5,7 @@
 import unittest
 from datetime import date
 
-from ..base_classes import VariableKiosk
+from ..base import VariableKiosk
 from ..crop.respiration import WOFOST_Maintenance_Respiration
 from .test_data import respiration_testdata
 
