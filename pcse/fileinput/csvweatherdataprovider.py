@@ -149,11 +149,11 @@ class CSVWeatherDataProvider(WeatherDataProvider):
             msg = "Cannot find weather file at: %s" % self.fp_csv_fname
             raise PCSEError(msg)
 
-        if not self._load_cache_file(self.fp_csv_fname) or force_reload:
+        if force_reload or not self._load_cache_file(self.fp_csv_fname):
             with open(csv_fname, 'r') as csv_file:
                 self._read_meta(csv_file)
                 self._read_observations(csv_file, delimiter)
-                self._write_cache_file(self.fp_csv_fname)
+            self._write_cache_file(self.fp_csv_fname)
 
     def _read_meta(self, csv_file):
         header = {}
@@ -196,7 +196,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
                     value = float(d[label])
                     r = func(value, day)
                     if math.isnan(r):
-                        if label != "SNOWDEPTH":
+                        if label == "SNOWDEPTH":
                             continue
                         raise ParseError
                     row[label] = r

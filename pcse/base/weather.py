@@ -316,8 +316,8 @@ class WeatherDataProvider(object):
             return key.date()
         elif isinstance(key, dt.date):
             return key
-        elif isinstance(key, str):
-            skey = key.strip()
+        elif isinstance(key, (str, int)):
+            skey = str(key).strip()
             l = len(skey)
             if l == 8:
                 # assume YYYYMMDD

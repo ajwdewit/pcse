@@ -44,6 +44,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
     :param xls_fname: name of the Excel file to be read
     :param mising_snow_depth: the value that should use for missing SNOW_DEPTH values
+    :param force_reload: bypass the cache file and reload data from the XLS file
 
     For reading weather data from file, initially only the CABOWeatherDataProvider
     was available that reads its data from a text file in the CABO Weather format.
@@ -76,7 +77,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
     label_row = 10
     data_start_row = 12
 
-    def __init__(self, xls_fname, missing_snow_depth=None):
+    def __init__(self, xls_fname, missing_snow_depth=None, force_reload=False):
         WeatherDataProvider.__init__(self)
 
         self.fp_xls_fname = os.path.abspath(xls_fname)
@@ -85,7 +86,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
             msg = "Cannot find weather file at: %s" % self.fp_xls_fname
             raise PCSEError(msg)
 
-        if not self._load_cache_file(self.fp_xls_fname):  # Cache file cannot be loaded
+        if force_reload or not self._load_cache_file(self.fp_xls_fname):
             book = xlrd.open_workbook(self.fp_xls_fname)
             sheet = book.sheet_by_index(0)
 
