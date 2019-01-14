@@ -34,3 +34,6 @@ PCSE.egg-info/*
 dist/*
 build/*
 .pytest_cache/*
+
+# zip files
+*.zip

@@ -131,7 +131,6 @@ class WofostNPK(SimulationObject):
         GASS = Float(-99.)
         PGASS = Float(-99.)
         MRES = Float(-99.)
-        PMRES = Float(-99.)
         ASRC = Float(-99.)
         DMI = Float(-99.)
         ADMI = Float(-99.)
@@ -225,8 +224,8 @@ class WofostNPK(SimulationObject):
         rates.GASS = rates.PGASS * reduction
 
         # Respiration
-        rates.PMRES = self.mres(day, drv)
-        rates.MRES = min(rates.GASS, rates.PMRES)
+        PMRES = self.mres(day, drv)
+        rates.MRES = min(rates.GASS, PMRES)
 
         # Net available assimilates
         rates.ASRC = rates.GASS - rates.MRES
