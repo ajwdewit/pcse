@@ -110,37 +110,36 @@ class Evapotranspiration(SimulationObject):
     =======  =================================== =================  ============
     """
 
-    # helper variable for Counting days since oxygen stress (DSOS)
-    # and total days with water and oxygen stress (IDWST, IDOST)
-    _DSOS = Int(-99)
-    _IDWST = Int(-99)
-    _IDOST = Int(-99)
+    # helper variable for Counting total days with water and oxygen
+    # stress (IDWST, IDOST)
+    _IDWST = Int(0)
+    _IDOST = Int(0)
 
     class Parameters(ParamTemplate):
-        CFET   = Float(-99.)
-        DEPNR  = Float(-99.)
+        CFET = Float(-99.)
+        DEPNR = Float(-99.)
         KDIFTB = AfgenTrait()
         IAIRDU = Float(-99.)
-        IOX    = Float(-99.)
+        IOX = Float(-99.)
         CRAIRC = Float(-99.)
-        SM0    = Float(-99.)
-        SMW    = Float(-99.)
-        SMFCF  = Float(-99.)
+        SM0 = Float(-99.)
+        SMW = Float(-99.)
+        SMFCF = Float(-99.)
 
     class RateVariables(RatesTemplate):
         EVWMX = Float(-99.)
         EVSMX = Float(-99.)
         TRAMX = Float(-99.)
-        TRA   = Float(-99.)
-        IDOS  = Bool(False)
-        IDWS  = Bool(False)
+        TRA = Float(-99.)
+        IDOS = Bool(False)
+        IDWS = Bool(False)
         RFWS = Float(-99.)
         RFOS = Float(-99.)
         RFTRA = Float(-99.)
 
     class StateVariables(StatesTemplate):
-        IDOST  = Int(-99)
-        IDWST  = Int(-99)
+        IDOST = Int(-99)
+        IDWST = Int(-99)
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -154,11 +153,6 @@ class Evapotranspiration(SimulationObject):
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish=["EVWMX", "EVSMX", "TRAMX", "TRA", "RFTRA"])
         self.states = self.StateVariables(kiosk, IDOST=-999, IDWST=-999)
-        
-        # Helper variables
-        self._DSOS = 0
-        self._IDWST = 0
-        self._IDOST = 0
 
     @prepare_rates
     def __call__(self, day, drv):
@@ -186,23 +180,11 @@ class Evapotranspiration(SimulationObject):
 
         # reduction in transpiration in case of oxygen shortage (RFOS)
         # for non-rice crops, and possibly deficient land drainage
+        r.RFOS = 1.
         if p.IAIRDU == 0 and p.IOX == 1:
-            # critical soil moisture content for aeration
-            SMAIR = p.SM0 - p.CRAIRC
-
-            # count days since start oxygen shortage (up to 4 days)
-            if k.SM >= SMAIR:
-                self._DSOS += 1
-            else:
-                self._DSOS = 0
-
+            RFOSMX = limit(0., 1., (p.SM0 - k.SM)/p.CRAIRC)
             # maximum reduction reached after 4 days
-            RFOSMX = limit(0., 1., (p.SM0-k.SM)/p.CRAIRC)
-            r.RFOS = RFOSMX + (1. - min(self._DSOS, 4)/4.)*(1.-RFOSMX)
-
-        # For rice, or non-rice crops grown on well drained land
-        elif p.IAIRDU == 1 or p.IOX == 0:
-            r.RFOS = 1.
+            r.RFOS = RFOSMX + (1. - min(k.DSOS, 4)/4.)*(1.-RFOSMX)
 
         # Transpiration rate multiplied with reduction factors for oxygen and water
         r.RFTRA = r.RFOS * r.RFWS
@@ -510,11 +492,10 @@ class EvapotranspirationCO2(SimulationObject):
     =======  =================================== =================  ============
     """
 
-    # helper variable for Counting days since oxygen stress (DSOS)
-    # and total days with water and oxygen stress (IDWST, IDOST)
-    _DSOS = Int(-99)
-    _IDWST = Int(-99)
-    _IDOST = Int(-99)
+    # helper variable for counting total days with water and oxygen
+    # stress (IDWST, IDOST)
+    _IDWST = Int(0)
+    _IDOST = Int(0)
 
     class Parameters(ParamTemplate):
         CFET    = Float(-99.)
@@ -558,11 +539,6 @@ class EvapotranspirationCO2(SimulationObject):
         self.rates = self.RateVariables(kiosk, publish=["EVWMX","EVSMX", "TRAMX","TRA","TRALY", "RFTRA"])
         self.states = self.StateVariables(kiosk, IDOST=-999, IDWST=-999)
 
-        # Helper variables
-        self._DSOS = 0
-        self._IDWST = 0
-        self._IDOST = 0
-
     @prepare_rates
     def __call__(self, day, drv):
         p = self.params
@@ -592,23 +568,11 @@ class EvapotranspirationCO2(SimulationObject):
 
         # reduction in transpiration in case of oxygen shortage (RFOS)
         # for non-rice crops, and possibly deficient land drainage
+        r.RFOS = 1.
         if p.IAIRDU == 0 and p.IOX == 1:
-            # critical soil moisture content for aeration
-            SMAIR = p.SM0 - p.CRAIRC
-
-            # count days since start oxygen shortage (up to 4 days)
-            if k.SM >= SMAIR:
-                self._DSOS += 1
-            else:
-                self._DSOS = 0
-
+            RFOSMX = limit(0., 1., (p.SM0 - k.SM)/p.CRAIRC)
             # maximum reduction reached after 4 days
-            RFOSMX = limit(0., 1., (p.SM0 - k.SM)/(p.SM0 - SMAIR))
-            r.RFOS = RFOSMX + (1. - min(self._DSOS, 4)/4.)*(1.-RFOSMX)
-
-        # For rice, or non-rice crops grown on well drained land
-        elif p.IAIRDU == 1 or p.IOX == 0:
-            r.RFOS = 1.
+            r.RFOS = RFOSMX + (1. - min(k.DSOS, 4)/4.)*(1.-RFOSMX)
 
         # Transpiration rate multiplied with reduction factors for oxygen and water
         r.RFTRA = r.RFOS * r.RFWS
