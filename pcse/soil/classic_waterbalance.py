@@ -536,7 +536,7 @@ class WaterbalanceFD(SimulationObject):
         s.SM = s.W/RD
 
         # Accumulate days since oxygen stress, but only if a crop is present
-        if s.SM > (p.SM0 - p.CRAIRC) and self.in_crop_cycle:
+        if s.SM >= (p.SM0 - p.CRAIRC):  # and self.in_crop_cycle:
             s.DSOS += 1
         else:
             s.DSOS = 0
