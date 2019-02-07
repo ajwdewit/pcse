@@ -21,11 +21,11 @@ from pcse.crop.wofost import Wofost
 from pcse.soil.classic_waterbalance import WaterbalanceFD
 from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvider, TestSimulationObject
 
-test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
 # This defines the YAML tests, each rows represents:
 # - a pattern for searching the YAML tests within the test_data_dir
 # - the crop simobject to be tested
 # - an optional soil simobject to be tested
+test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
 test_sets = [("test_phenology_wofost71*", DVS_Phenology, None),
              ("test_assimilation_wofost71*", WOFOST_Assimilation, None),
              ("test_partitioning_wofost71*", DVS_Partitioning, None),
@@ -44,13 +44,13 @@ class PCSETestCaseYAML(unittest.TestCase):
     This will be subclassed dynamically (using type()) in order to populate the
     class attributes below.
     """
-    YAML_test_inputs = None
+    YAML_test_input_fname = None
     crop_simobj = None
     soil_simobj = None
 
     def setUp(self):
         # Load YAML inputs
-        inputs = yaml.load(open(self.YAML_test_inputs))
+        inputs = yaml.load(open(self.YAML_test_input_fname))
 
         # Prepare input categories for Engine
         self.reference_results = inputs["ModelResults"]
@@ -90,15 +90,15 @@ class PCSETestCaseYAML(unittest.TestCase):
 def suite():
     suite = unittest.TestSuite()
     for pattern, crop_simobj, soil_simobj in test_sets:
-        wrapped_simobj = type("Wrapped" + crop_simobj.__class__.__name__, (TestSimulationObject,),
+        test_class_name = "Wrapped" + crop_simobj.__class__.__name__
+        wrapped_simobj = type(test_class_name, (TestSimulationObject,),
                               {"test_class": crop_simobj})
         fnames = glob.glob(os.path.join(test_data_dir, pattern))
         for fname in fnames:
-            test_class = type(fname, (PCSETestCaseYAML,), {"YAML_test_inputs": fname,
+            test_class = type(fname, (PCSETestCaseYAML,), {"YAML_test_input_fname": fname,
                                                            "crop_simobj": wrapped_simobj,
                                                            "soil_simobj": soil_simobj})
             suite.addTest(unittest.makeSuite(test_class))
-    # suite.addTest(unittest.makeSuite(PCSETestCaseYAML))
 
     return suite
 
