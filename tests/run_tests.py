@@ -26,16 +26,16 @@ from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvi
 # - the crop simobject to be tested
 # - an optional soil simobject to be tested
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
-test_sets = [("test_phenology_wofost71*", DVS_Phenology, None),
-             ("test_assimilation_wofost71*", WOFOST_Assimilation, None),
-             ("test_partitioning_wofost71*", DVS_Partitioning, None),
-             ("test_leafdynamics_wofost71*", WOFOST_Leaf_Dynamics, None),
-             ("test_rootdynamics_wofost71*", WOFOST_Root_Dynamics, None),
-             ("test_respiration_wofost71*", WOFOST_Maintenance_Respiration, None),
-             ("test_transpiration_wofost71*", Evapotranspiration, None),
-             ("test_potentialproduction_wofost71*", Wofost, None),
-             ("test_waterlimitedproduction_wofost71*", Wofost, WaterbalanceFD),
-             ]
+quick_tests = [("test_potentialproduction_wofost71*", Wofost, None),
+               ("test_waterlimitedproduction_wofost71*", Wofost, WaterbalanceFD)]
+full_tests = [("test_phenology_wofost71*", DVS_Phenology, None),
+              ("test_assimilation_wofost71*", WOFOST_Assimilation, None),
+              ("test_partitioning_wofost71*", DVS_Partitioning, None),
+              ("test_leafdynamics_wofost71*", WOFOST_Leaf_Dynamics, None),
+              ("test_rootdynamics_wofost71*", WOFOST_Root_Dynamics, None),
+              ("test_respiration_wofost71*", WOFOST_Maintenance_Respiration, None),
+              ("test_transpiration_wofost71*", Evapotranspiration, None),
+              ].extend(quick_tests)
 
 
 class PCSETestCaseYAML(unittest.TestCase):
@@ -87,14 +87,17 @@ class PCSETestCaseYAML(unittest.TestCase):
                         raise
 
 
-def suite():
+def suite(quick=True):
     suite = unittest.TestSuite()
+    test_sets = quick_tests if quick else full_tests
     for pattern, crop_simobj, soil_simobj in test_sets:
         test_class_name = "Wrapped" + crop_simobj.__class__.__name__
         wrapped_simobj = type(test_class_name, (TestSimulationObject,),
                               {"test_class": crop_simobj})
         fnames = glob.glob(os.path.join(test_data_dir, pattern))
-        for fname in fnames:
+        for i, fname in enumerate(fnames):
+            if quick and i % 10 != 0:
+                    continue
             test_class = type(fname, (PCSETestCaseYAML,), {"YAML_test_input_fname": fname,
                                                            "crop_simobj": wrapped_simobj,
                                                            "soil_simobj": soil_simobj})

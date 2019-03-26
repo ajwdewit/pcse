@@ -123,32 +123,31 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                     self._check_version(parameters)
                     self._add_crop(crop_name, parameters)
 
-            with open(self._get_cache_fname(), "wb") as fp:
+            with open(self._get_cache_fname(fpath), "wb") as fp:
                 pickle.dump((self.compatible_version, self._store), fp, pickle.HIGHEST_PROTOCOL)
 
-    def _get_cache_fname(self):
+    def _get_cache_fname(self, fpath):
         """Returns the name of the cache file for the CropDataProvider.
         """
         cache_fname = "%s.pkl" % self.__class__.__name__
-        cache_fname_fp = os.path.join(settings.METEO_CACHE_DIR, cache_fname)
+        if fpath is None:
+            cache_fname_fp = os.path.join(settings.METEO_CACHE_DIR, cache_fname)
+        else:
+            cache_fname_fp = os.path.join(fpath, cache_fname)
         return cache_fname_fp
 
     def _load_cache(self, fpath):
         """Loads the cache file if possible and returns True, else False.
         """
         try:
-            cache_fname_fp = self._get_cache_fname()
+            cache_fname_fp = self._get_cache_fname(fpath)
             if os.path.exists(cache_fname_fp):
 
                 # First we check that the cache file reflects the contents of the YAML files.
                 # This only works for files not for github repos
                 if fpath is not None:
                     yaml_file_names = self._get_yaml_files(fpath)
-                    yaml_file_dates = []
-                    # Retrieved YAML file dates
-                    for yaml_file in yaml_file_names:
-                        r = os.stat(yaml_file)
-                        yaml_file_dates.append(r.st_mtime)
+                    yaml_file_dates = [os.stat(fn).st_mtime for fn in yaml_file_names]
                     # retrieve modification date of cache file
                     cache_date = os.stat(cache_fname_fp).st_mtime
                     # Ensure cache file is more recent then any of the YAML files
@@ -191,8 +190,8 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     def _get_yaml_files(self, fpath):
         """Returns all the files ending on *.yaml in the given path.
         """
-        crop_file_pattern = os.path.join(os.path.abspath(fpath), "*.yaml")
-        crop_fnames = list(glob.glob(crop_file_pattern))
+        fnames = os.listdir(fpath)
+        crop_fnames = [os.path.join(fpath, fn) for fn in fnames if fn.endswith("yaml")]
         return crop_fnames
 
     def set_active_crop(self, crop_name, variety_name):
