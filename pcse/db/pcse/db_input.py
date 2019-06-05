@@ -32,7 +32,7 @@ import yaml
 
 from ...util import wind10to2, Afgen, check_date
 from ... import exceptions as exc
-from ...base_classes import WeatherDataContainer, WeatherDataProvider
+from ...base import WeatherDataContainer, WeatherDataProvider
 
 
 #-------------------------------------------------------------------------------
@@ -581,7 +581,7 @@ class AgroManagementDataProvider(list):
 
         # Determine the start date.
         self.crop_start_date = check_date(row.crop_start_date)
-        self.campaign_start_date = self.crop_start_date
+        self.campaign_start_date = row.start_date
 
         # Determine the start date/type. Only sowing|emergence is accepted by PCSE/WOFOST
         self.crop_start_type = str(row.crop_start_type).strip()

@@ -7,6 +7,10 @@ some examples to get you started with modelling. The examples are currently focu
 the WOFOST and LINTUL3 crop simulation models, although other crop simulations may become available within
 PCSE in the future.
 
+Note that an these examples plus demonstrations of advanced topics are also available as Jupyter
+notebooks at https://github.com/ajwdewit/pcse_notebooks
+
+
 An interactive PCSE/WOFOST session
 ==================================
 
@@ -202,14 +206,14 @@ a too high temperature sum requirement.
 
 The agromanagement inputs are defined with a special syntax called `YAML`_ which allows
 to easily create more complex structures which is needed for defining the agromanagement.
-The agromanagement file for sugar beet in Wageningen `sugarbeet_calendar.agmt` can be read with
+The agromanagement file for sugar beet in Wageningen `sugarbeet_calendar.agro` can be read with
 the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>`::
 
     >>> from pcse.fileinput import YAMLAgroManagementReader
-    >>> agromanagement_file = os.path.join(data_dir, 'sugarbeet_calendar.amgt')
+    >>> agromanagement_file = os.path.join(data_dir, 'sugarbeet_calendar.agro')
     >>> agromanagement = YAMLAgroManagementReader(agromanagement_file)
     >>> print(agromanagement)
-     !!python/object/new:pcse.fileinput.yaml_agmt_loader.YAMLAgroManagementReader
+     !!python/object/new:pcse.fileinput.yaml_agro_loader.YAMLAgroManagementReader
      listitems:
      - 2000-01-01:
          CropCalendar:
@@ -231,7 +235,7 @@ data providers in PCSE for reading weather data, see the section on
 :ref:`weather data providers <Weather data providers>` to get an overview.
 
 For this example we will use the weather data from the NASA Power database
-which provides global weather data with a spatial resolution of 1 degree (~100 km).
+which provides global weather data with a spatial resolution of 0.5 degree (~50 km).
 We will retrieve the data from the Power database for the location of Wageningen.
 Note that it can take around 30 seconds
 to retrieve the weather data from the NASA Power server the first time::
@@ -241,20 +245,13 @@ to retrieve the weather data from the NASA Power server the first time::
     >>> print(wdp)
     Weather data provided by: NASAPowerWeatherDataProvider
     --------Description---------
-    NASA/POWER Agroclimatology Daily Averaged Data
-    Dates (month/day/year): 01/01/1984 through 06/26/2016
-    Location: Latitude 52   Longitude 5
-    Location clarification: Integer values may indicate the lower left (south and west) corner of the one degree lat/lon reg
-    ion that includes the requested locations
-    Elevation (meters): Average for one degree lat/lon region = 5
-    Methodology Documentation:
-    *Vegetation type: "Airport": flat rough grass
+    NASA/POWER SRB/FLASHFlux/MERRA2/GEOS 5.12.4 (FP-IT) 0.5 x 0.5 Degree Daily Averaged Data
     ----Site characteristics----
-    Elevation:    5.0
+    Elevation:    4.7
     Latitude:  52.000
     Longitude:  5.000
-    Data available for 1997-01-01 - 2015-10-31
-    Number of missing days: 53
+    Data available for 1983-07-01 - 2018-09-16
+    Number of missing days: 8
 
 Importing, initializing and running a PCSE model
 ------------------------------------------------
@@ -433,7 +430,7 @@ Loading the agromanagement definition must by done with the YAMLAgroManagementRe
     >>> from pcse.fileinput import YAMLAgroManagementReader
     >>> agromanagement = YAMLAgroManagementReader(os.path.join(data_dir, "lintul3_springwheat.amgt"))
     >>> print(agromanagement)
-    !!python/object/new:pcse.fileinput.yaml_agmt_loader.YAMLAgroManagementReader
+    !!python/object/new:pcse.fileinput.yaml_agro_loader.YAMLAgroManagementReader
     listitems:
     - 2006-01-01:
         CropCalendar:

@@ -10,17 +10,16 @@ Data providers are compatible with a CGMS12 database schema.
 
 import os
 import datetime as dt
-import logging
 
 from sqlalchemy import MetaData, select, Table, and_
-from tabulate import tabulate
 import numpy as np
 import yaml
 
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import exceptions as exc
-from ...base_classes import WeatherDataContainer, WeatherDataProvider
+from ...base import WeatherDataContainer, WeatherDataProvider
 from ... import settings
+from .. import wofost_parameters
 
 def fetch_crop_name(engine, crop_no):
     """Retrieves the name of the crop from the CROP table for
@@ -80,6 +79,8 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     :param recalc_ET: Set to True to force calculation of reference
         ET values. Mostly useful when values have not been calculated
         in the CGMS database.
+    :param recalc_TEMP: Set to True to force calculation of daily average
+        temperature (TEMP) from TMIN and TMAX: TEMP = (TMIN+TMAX)/2.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
@@ -89,17 +90,20 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     for the grid is retrieved.
     """
     # default values for the Angstrom parameters in the sunshine duration model
-    angstA = 0.18
-    angstB = 0.55
+    angstA = 0.29
+    angstB = 0.49
+
     def __init__(self, engine, grid_no, start_date=None, end_date=None,
-                 recalc_ET=False):
+                 recalc_ET=False, recalc_TEMP=False, use_cache=True):
 
         WeatherDataProvider.__init__(self)
 
         self.grid_no = int(grid_no)
         self.recalc_ET = recalc_ET
+        self.recalc_TEMP = recalc_TEMP
+        self.use_cache = use_cache
 
-        if not self._self_load_cache(self.grid_no):
+        if not self._self_load_cache(self.grid_no) or self.use_cache is False:
             try:
                 self.start_date = self.check_keydate(start_date)
             except KeyError:
@@ -127,8 +131,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
             self.description = [line1, line2]
 
         # Save cache file
-        fname = self._get_cache_filename(self.grid_no)
-        self._dump(fname)
+        if self.use_cache:
+            fname = self._get_cache_filename(self.grid_no)
+            self._dump(fname)
 
     def _get_cache_filename(self, grid_no):
         fname = "%s_grid_%i.cache" % (self.__class__.__name__, grid_no)
@@ -239,6 +244,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
                       "ES0": es0/10.,
                       "ET0": et0/10.})
 
+        if self.recalc_TEMP:
+            t["TEMP"] = (float(row.temperature_max) + float(row.temperature_min))/2.
+
         wdc = WeatherDataContainer(**t)
         return wdc
 
@@ -276,7 +284,6 @@ class AgroManagementDataProvider(list):
                     max_duration: {max_duration}
                 TimedEvents: null
                 StateEvents: null
-          - {campaign_end_date}: null
         """
 
     def __init__(self, engine, grid_no, crop_no, campaign_year, campaign_start=None):
@@ -336,15 +343,15 @@ class AgroManagementDataProvider(list):
                    "CROP_CALENDAR: %s" % row.end_type)
             raise exc.PCSEError(msg)
 
-        # Determine maximum duration of the crop
-
+        # Determine crop_end_date and campaign_end_date
+        # note that campaign_end_date should be at least one day later then crop_end_date
         if self.crop_end_type == "maturity":
             self.crop_end_date = "null"
             self.max_duration = int(row.max_duration)
-            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration)
+            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration + 1)
         else:
             self.crop_end_date = check_date(row.end_date)
-            self.campaign_end_date = self.crop_end_date
+            self.campaign_end_date = self.crop_end_date + dt.timedelta(days=1)
             self.max_duration = (self.crop_end_date - self.crop_start_date).days + 1
 
         input = self._build_yaml_agromanagement()
@@ -584,21 +591,13 @@ class CropDataProvider(dict):
     """
 
     # Define single and tabular crop parameter values
-    parameter_codes_single = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC",
-                              "DLO", "DVSEND", "EFF", "IAIRDU", "IDSL", "KDIF",
-                              "LAIEM", "PERDL", "Q10", "RDI", "RDMCR", "RGRLAI",
-                              "RML", "RMO", "RMR", "RMS", "RRI", "SPA", "SPAN", "SSA",
-                              "TBASE", "TBASEM", "TDWI", "TEFFMX", "TSUM1", "TSUM2",
-                              "TSUMEM")
-    parameter_codes_tabular = ("AMAXTB", "DTSMTB", "FLTB", "FOTB", "FRTB", "FSTB",
-                               "RDRRTB", "RDRSTB", "RFSETB", "SLATB", "TMNFTB",
-                               "TMPFTB")
+    parameter_codes_single = wofost_parameters.WOFOST_parameter_codes_single
+    parameter_codes_tabular = wofost_parameters.WOFOST_parameter_codes_tabular
     # Some parameters have to be converted from a single to a tabular form
-    single2tabular = {"SSA": ("SSATB", [0., None, 2.0, None]),
-                      "KDIF": ("KDIFTB", [0., None, 2.0, None]),
-                      "EFF": ("EFFTB", [0., None, 40., None])}
+    single2tabular = wofost_parameters.WOFOST_single2tabular
     # Default values for additional parameters not defined in CGMS
-    parameters_additional = {"DVSI": 0.0, "IOX": 0}
+    parameters_additional = wofost_parameters.WOFOST_parameters_additional
+    parameters_optional = wofost_parameters.WOFOST_optional_parameters
 
     def __init__(self, engine, grid_no, crop_no, campaign_year):
         dict.__init__(self)
@@ -644,8 +643,11 @@ class CropDataProvider(dict):
                             table_crop_pv.c.parameter_code == parameter_code)).execute()
             row = r.fetchone()
             if row is None:
-                msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
-                raise exc.PCSEError(msg % (self.crop_no, parameter_code))
+                if parameter_code in self.parameters_optional:
+                    continue
+                else:
+                    msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
+                    raise exc.PCSEError(msg % (self.crop_no, parameter_code))
             if parameter_code not in self.single2tabular:
                 self[parameter_code] = float(row.parameter_xvalue)
             else:
@@ -662,8 +664,9 @@ class CropDataProvider(dict):
                        order_by=[table_crop_pv.c.parameter_code]).execute()
             rows = r.fetchall()
             if not rows:
-                msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
-                raise exc.PCSEError(msg % (self.crop_no, parameter_code))
+                if parameter_code not in self.parameters_optional:
+                    msg = "No parameter value found for crop_no=%s, parameter_code='%s'."
+                    raise exc.PCSEError(msg % (self.crop_no, parameter_code))
             if len(rows) == 1:
                 msg = ("Single parameter value found for crop_no=%s, parameter_code='%s' while "
                        "tabular parameter expected." % (crop_no, parameter_code))
@@ -730,31 +733,7 @@ class CropDataProvider(dict):
                "campaign_year=%i derived from %s\n" %
                (self.grid_no, self.crop_no, self.crop_name, self.variety_no,
                 self.campaign_year, self.db_resource))
-        single_values = []
-        tabular_values = []
-        for pcode in sorted(self.keys()):
-            value = self[pcode]
-            if not isinstance(value, list):
-                single_values.append((pcode, value))
-            else:
-                tabular_values.append((pcode, value))
-
-        # Format the single parameters in a table of 4 columns
-        msg += "Single parameter values:\n"
-        # If not of even length add ["",""]
-        if not len(single_values) % 2 == 0:
-            single_values.append(["", ""])
-        np_single_values = np.array(single_values, dtype=np.string_)
-        shp = np_single_values.shape
-        np_single_values.shape = (shp[0]/2, shp[1]*2)
-        msg += tabulate(np_single_values, headers=["Par_code", "Value", "Par_code", "Value"])
-        msg += "\n"
-
-        # Format the tabular parameters in two columns
-        msg += "Tabular parameters:\n"
-        msg += tabulate(tabular_values, headers=["Par_code", "Value"])
-        msg += "\n"
-
+        msg += dict.__str__(self)
         return msg
 
 
@@ -817,7 +796,7 @@ class SiteDataProvider(dict):
         r = select([table_site]).execute()
         row = r.fetchone()
         self["IFUNRN"] = int(row.ifunrn)
-        self["NOTINF"] = int(row.notinf)
+        self["NOTINF"] = float(row.notinf)
         self["SSMAX"] = float(row.max_surface_storage)
         self["SSI"] = 0.
 

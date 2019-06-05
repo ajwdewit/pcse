@@ -6,7 +6,7 @@ import datetime
 
 from ..traitlets import Float, Int, Instance, Enum, Unicode
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
@@ -79,10 +79,8 @@ class Wofost(SimulationObject):
      Name     Description                                      Pbl      Unit
     =======  ================================================ ==== =============
     GASS     Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
-    PGASS    Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
     MRES     Actual maintenance respiration rate, taking into
              account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
-    PMRES    Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
     ASRC     Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
     DMI      Total dry matter increase, calculated as ASRC
              times a weighted conversion efficiency.            Y  |kg ha-1 d-1|
@@ -117,13 +115,11 @@ class Wofost(SimulationObject):
         CTRAT = Float(-99.) # Crop total transpiration
         HI    = Float(-99.)
         DOF = Instance(datetime.date)
-        FINISH_TYPE = Instance(str)
+        FINISH_TYPE = Unicode(allow_none=True)
 
     class RateVariables(RatesTemplate):
         GASS  = Float(-99.)
-        PGASS = Float(-99.)
         MRES  = Float(-99.)
-        PMRES = Float(-99.)
         ASRC  = Float(-99.)
         DMI   = Float(-99.)
         ADMI  = Float(-99.)
@@ -185,9 +181,9 @@ class Wofost(SimulationObject):
     #---------------------------------------------------------------------------
     @prepare_rates
     def calc_rates(self, day, drv):
-        params = self.params
-        rates  = self.rates
-        states = self.states
+        p = self.params
+        r = self.rates
+        k = self.kiosk
 
         # Phenology
         self.pheno.calc_rates(day, drv)
@@ -199,30 +195,28 @@ class Wofost(SimulationObject):
             return
 
         # Potential assimilation
-        rates.PGASS = self.assim(day, drv)
+        PGASS = self.assim(day, drv)
 
         # (evapo)transpiration rates
         self.evtra(day, drv)
 
         # water stress reduction
-        TRA = self.kiosk["TRA"]
-        TRAMX = self.kiosk["TRAMX"]
-        rates.GASS = rates.PGASS * TRA/TRAMX
+        r.GASS = PGASS * k.RFTRA
 
         # Respiration
-        rates.PMRES = self.mres(day, drv)
-        rates.MRES  = min(rates.GASS, rates.PMRES)
+        PMRES = self.mres(day, drv)
+        r.MRES  = min(r.GASS, PMRES)
 
         # Net available assimilates
-        rates.ASRC  = rates.GASS - rates.MRES
+        r.ASRC  = r.GASS - r.MRES
 
         # DM partitioning factors (pf), conversion factor (CVF),
         # dry matter increase (DMI) and check on carbon balance
         pf = self.part.calc_rates(day, drv)
-        CVF = 1./((pf.FL/params.CVL + pf.FS/params.CVS + pf.FO/params.CVO) *
-                  (1.-pf.FR) + pf.FR/params.CVR)
-        rates.DMI = CVF * rates.ASRC
-        self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES,
+        CVF = 1./((pf.FL/p.CVL + pf.FS/p.CVS + pf.FO/p.CVO) *
+                  (1.-pf.FR) + pf.FR/p.CVR)
+        r.DMI = CVF * r.ASRC
+        self._check_carbon_balance(day, r.DMI, r.GASS, r.MRES,
                                    CVF, pf)
 
         # distribution over plant organ
@@ -231,7 +225,7 @@ class Wofost(SimulationObject):
         self.ro_dynamics.calc_rates(day, drv)
         # Aboveground dry matter increase and distribution over stems,
         # leaves, organs
-        rates.ADMI = (1. - pf.FR) * rates.DMI
+        r.ADMI = (1. - pf.FR) * r.DMI
         self.st_dynamics.calc_rates(day, drv)
         self.so_dynamics.calc_rates(day, drv)
         self.lv_dynamics.calc_rates(day, drv)

@@ -22,7 +22,7 @@ documentation of the PyDispatcher_ package for more information::
     import datetime as dt
     
     import pcse
-    from pcse.base_classes import SimulationObject, VariableKiosk
+    from pcse.base import SimulationObject, VariableKiosk
     
     mysignal = "My first signal"
     

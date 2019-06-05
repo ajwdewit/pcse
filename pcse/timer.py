@@ -5,7 +5,7 @@ from __future__ import print_function
 import datetime
 
 from .pydispatch import dispatcher
-from .base_classes import AncillaryObject, VariableKiosk
+from .base import AncillaryObject, VariableKiosk
 from .traitlets import HasTraits, Instance, Bool, Int, Enum
 from . import signals
 from .util import is_a_dekad, is_a_month, is_a_week
@@ -37,11 +37,11 @@ class Timer(AncillaryObject):
     current_date = Instance(datetime.date)
     time_step = Instance(datetime.timedelta)
     interval_type = Enum(["daily", "weekly", "dekadal", "monthly"])
-    output_weekday = Int
-    interval_days = Int
-    generate_output = Bool()
-    day_counter = Int
-    first_call = Bool()
+    output_weekday = Int()
+    interval_days = Int()
+    generate_output = Bool(False)
+    day_counter = Int(0)
+    first_call = Bool(True)
     _in_crop_cycle = Bool()
 
     def initialize(self, kiosk, start_date, end_date, mconf):
@@ -62,7 +62,7 @@ class Timer(AncillaryObject):
         self.start_date = start_date
         self.end_date = end_date
         self.current_date = start_date
-        self.day_counter = 0
+        # self.day_counter = 0
         # Settings for generating output. Note that if no OUTPUT_VARS are listed
         # in that case no OUTPUT signals will be generated.
         self.generate_output = bool(mconf.OUTPUT_VARS)
@@ -70,7 +70,7 @@ class Timer(AncillaryObject):
         self.output_weekday = mconf.OUTPUT_WEEKDAY
         self.interval_days = mconf.OUTPUT_INTERVAL_DAYS
         self.time_step = datetime.timedelta(days=1)
-        self.first_call = True
+        # self.first_call = True
 
     def __call__(self):
         

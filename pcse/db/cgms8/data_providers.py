@@ -13,11 +13,11 @@ import datetime as dt
 from sqlalchemy import MetaData, select, Table, and_
 import yaml
 
-from ...util import check_date, wind10to2
+from ...util import check_date, wind10to2, reference_ET, safe_float
 from ... import settings
 from ... import exceptions as exc
 from ..cgms12.data_providers import fetch_crop_name
-from ...base_classes import WeatherDataProvider, WeatherDataContainer
+from ...base import WeatherDataProvider, WeatherDataContainer
 
 #----------------------------------------------------------------------------
 class GridWeatherDataProvider(WeatherDataProvider):
@@ -29,18 +29,29 @@ class GridWeatherDataProvider(WeatherDataProvider):
         (datetime.date object)
     :param enddate: Retrieve meteo data up to and including enddate
         (datetime.date object)
+    :param recalc_ET: Set to True to force calculation of reference
+        ET values. Mostly useful when values have not been calculated
+        in the CGMS database.
+    :param use_cache: Set to False to ignore read/writing a cache file.
 
     Note that all meteodata is first retrieved from the DB and stored
     internally. Therefore, no DB connections are stored within the class
     instance. This makes that class instances can be pickled.
 
     """
+    # default values for the Angstrom parameters in the sunshine duration model
+    angstA = 0.29
+    angstB = 0.49
 
-    def __init__(self, engine, grid_no, start_date=None, end_date=None):
+    def __init__(self, engine, grid_no, start_date=None, end_date=None,
+                 recalc_ET=False, use_cache=True):
 
         WeatherDataProvider.__init__(self)
         self.grid_no = int(grid_no)
-        if not self._self_load_cache(self.grid_no):
+        self.recalc_ET = recalc_ET
+        self.use_cache = use_cache
+
+        if not self._self_load_cache(self.grid_no) or self.use_cache is False:
             if start_date is None:
                 start_date = dt.date(dt.MINYEAR, 1, 1)
             if end_date is None:
@@ -61,8 +72,9 @@ class GridWeatherDataProvider(WeatherDataProvider):
             self.description = "Weather data derived for grid_no: %i" % self.grid_no
 
             # Save cache file
-            fname = self._get_cache_filename(self.grid_no)
-            self._dump(fname)
+            if self.use_cache:
+                fname = self._get_cache_filename(self.grid_no)
+                self._dump(fname)
 
     def _get_cache_filename(self, grid_no):
         fname = "%s_grid_%i.cache" % (self.__class__.__name__, grid_no)
@@ -139,7 +151,7 @@ class GridWeatherDataProvider(WeatherDataProvider):
                 wdc = meteopackager(row, t)
                 self._store_WeatherDataContainer(wdc, DAY)
         except Exception as e:
-            errstr = "Failure reading meteodata: " + str(e)
+            errstr = "Failure reading meteodata for day %s: %s" % (row.day, str(e))
             raise exc.PCSEError(errstr)
 
         msg = ("Successfully retrieved weather data from 'grid_weather' table "
@@ -155,10 +167,20 @@ class GridWeatherDataProvider(WeatherDataProvider):
                   "VAP":  float(row.vapour_pressure),
                   "WIND": wind10to2(float(row.windspeed)),
                   "RAIN": float(row.rainfall)/10.,
-                  "E0":  float(row.e0)/10.,
-                  "ES0": float(row.es0)/10.,
-                  "ET0": float(row.et0)/10.,
-                  "IRRAD": float(row.calculated_radiation)*1000.})
+                  "IRRAD": float(row.calculated_radiation)*1000.,
+                  "SNOWDEPTH": safe_float(row.snow_depth)})
+
+        if not self.recalc_ET:
+            t.update({"E0":  float(row.e0)/10.,
+                      "ES0": float(row.es0)/10.,
+                      "ET0": float(row.et0)/10.})
+        else:
+            e0, es0, et0 = reference_ET(ANGSTA=self.angstA,
+                                        ANGSTB=self.angstB, **t)
+            t.update({"E0":  e0/10.,
+                      "ES0": es0/10.,
+                      "ET0": et0/10.})
+
         wdc = WeatherDataContainer(**t)
 
         return wdc
@@ -193,7 +215,6 @@ class AgroManagementDataProvider(list):
                     max_duration: {duration}
                 TimedEvents: null
                 StateEvents: null
-          - {campaign_end_date}: null
         """
 
     def __init__(self, engine, grid_no, crop_no, campaign_year):
@@ -243,16 +264,18 @@ class AgroManagementDataProvider(list):
                    "CROP_CALENDAR: %s" % row.end_type)
             raise exc.PCSEError(msg)
 
+        # Note that we end one day to the campaign end date in order to avoid that the
+        # crop_end_date and campaign_end_date fall on the same date.
         if self.crop_end_type == "maturity":
             self.crop_end_date = "null"
-            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration)
+            self.campaign_end_date = self.crop_start_date + dt.timedelta(days=self.max_duration+1)
         else:
             month = int(row.end_month)
             day = int(row.end_monthday)
             self.crop_end_date = dt.date(year, month, day)
             if self.crop_end_date <= self.crop_start_date:
                 self.crop_end_date = dt.date(year+1, month, day)
-            self.campaign_end_date = self.crop_end_date
+            self.campaign_end_date = self.crop_end_date + dt.timedelta(days=1)
 
         input = self._build_yaml_agromanagement()
         self._parse_yaml(input)

@@ -13,13 +13,13 @@ import os
 
 import numpy as np
 import yaml
-from tabulate import tabulate
 from sqlalchemy import MetaData, select, Table, and_
 
 from ... import exceptions as exc
-from ...base_classes import WeatherDataContainer, WeatherDataProvider
+from ...base import WeatherDataContainer, WeatherDataProvider
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import settings
+from .. import wofost_parameters
 
 
 def fetch_crop_name(engine, idcrop_parametrization):
@@ -87,21 +87,24 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
     :param recalc_ET: Set to True to force calculation of reference
         ET values. Mostly useful when values have not been calculated
          in the CGMS database.
-    :param table_name: 
+    :param use_cache: Set to False to ignore reading and writing a cache file
+    :param table_name:
     """
     # default values for the Angstrom parameters in the sunshine duration model
-    angstA = 0.18
-    angstB = 0.55
+    angstA = 0.29
+    angstB = 0.49
 
-    def __init__(self, engine, idgrid, start_date=None, end_date=None,
-                 recalc_ET=False, table_name='weather_era_grid'):
+    def __init__(self, engine, idgrid, start_date=None, end_date=None, use_cache=True,
+                 recalc_ET=False, recalc_TEMP=False, table_name='weather_era_grid'):
         # Initialise
         WeatherDataProvider.__init__(self)
         self.idgrid = idgrid
         self.recalc_ET = recalc_ET
+        self.recalc_TEMP = recalc_TEMP
         self.table_name = table_name
+        self.use_cache = use_cache
 
-        if not self._self_load_cache(self.idgrid):
+        if not self._self_load_cache(self.idgrid) or self.use_cache is False:
             metadata = MetaData(engine)
 
             # Check the start and end dates and assign when ok
@@ -130,8 +133,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
             self.description = [line1, line2]
 
             # Save cache file
-            fname = self._get_cache_filename(self.idgrid)
-            self._dump(fname)
+            if self.use_cache:
+                fname = self._get_cache_filename(self.idgrid)
+                self._dump(fname)
 
     def _get_cache_filename(self, grid_no):
         fname = "%s_grid_%i.cache" % (self.__class__.__name__, grid_no)
@@ -242,6 +246,9 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
                       "ES0": es0 / 10.,
                       "ET0": et0 / 10.})
 
+        if self.recalc_TEMP:
+            t["TEMP"] = (float(row.temperature_max) + float(row.temperature_min))/2.
+
         result = WeatherDataContainer(**t)
         return result
 
@@ -269,7 +276,6 @@ class AgroManagementDataProvider(list):
                     max_duration: {0[duration]}
                 TimedEvents: null
                 StateEvents: null
-          - {0[campaign_end_date]}: null            
         """
 
     def __init__(self, engine, idgrid, idcrop_parametrization, campaign_year, campaign_start=None):
@@ -306,7 +312,7 @@ class AgroManagementDataProvider(list):
         self.conditional_datecopy("start_period", "crop_start_date", "emergence", "sowing")
         self.conditional_datecopy("end_period", "crop_end_date", "maturity", "harvesting")
         self.amdict["campaign_start_date"] = check_date(self.amdict["crop_start_date"])
-        self.amdict["campaign_end_date"] = check_date(self.amdict["crop_end_date"])
+        self.amdict["campaign_end_date"] = check_date(self.amdict["crop_end_date"]) + dt.timedelta(days=1)
         self.amdict["crop_name"] = self.crop_name
         # We do not get a variety_name from the CGMS database, so we make one
         # as <crop_name>_<grid>_<year>
@@ -523,19 +529,14 @@ class CropDataProvider(dict):
         crossing calendar years, the start_date can be in the previous year.
     """
     # Define single and tabular crop parameter values
-    parameter_codes_single = ("CFET", "CVL", "CVO", "CVR", "CVS", "DEPNR", "DLC",
-                              "DLO", "DVSEND", "EFF", "IAIRDU", "IDSL", "KDIF", "LAIEM", "PERDL",
-                              "Q10", "RDI", "RDMCR", "RGRLAI", "RML", "RMO", "RMR", "RMS", "RRI",
-                              "SPA", "SPAN", "SSA", "TBASE", "TBASEM", "TDWI", "TEFFMX", "TSUM1",
-                              "TSUM2", "TSUMEM")
-    parameter_codes_tabular = ("AMAXTB", "DTSMTB", "FLTB", "FOTB", "FRTB", "FSTB",
-                               "RDRRTB", "RDRSTB", "RFSETB", "SLATB", "TMNFTB", "TMPFTB")
+    parameter_codes_single = wofost_parameters.WOFOST_parameter_codes_single
+    parameter_codes_tabular = wofost_parameters.WOFOST_parameter_codes_tabular
     # Some parameters have to be converted from a single to a tabular form
-    single2tabular = {"SSA": ("SSATB", [0., None, 2.0, None]),
-                      "KDIF": ("KDIFTB", [0., None, 2.0, None]),
-                      "EFF": ("EFFTB", [0., None, 40., None])}
+    single2tabular = wofost_parameters.WOFOST_single2tabular
     # Default values for additional parameters not defined in CGMS
-    parameters_additional = {"DVSI": 0.0, "IOX": 0}
+    parameters_additional = wofost_parameters.WOFOST_parameters_additional
+    # Optional parameters, mainly dealing with vernalisation
+    parameters_optional = wofost_parameters.WOFOST_optional_parameters
 
     def __init__(self, engine, idgrid, idcrop_parametrization):
         dict.__init__(self)
@@ -594,16 +595,16 @@ class CropDataProvider(dict):
 
         # Check that we have had all the single and single2tabular parameters now
         for parameter_code in (self.parameter_codes_single + tuple(self.single2tabular.keys())):
-            if not (parameter_code in self.single2tabular):
-                if parameter_code not in self:
-                    found = False
-                else:
+            found = False
+            if parameter_code not in self.single2tabular:
+                if parameter_code in self:
                     found = True
             else:
-                found = False
                 for key in self:
-                    if key.startswith(parameter_code): found = True; break
-            if not found:
+                    if key.startswith(parameter_code):
+                        found = True
+                        break
+            if not found and parameter_code not in self.parameters_optional:
                 msg = ("No parameter value found for idcrop_parametrization=%s, "
                        "parameter_code='%s'." % (self.idcrop_parametrization, parameter_code))
                 raise exc.PCSEError(msg)
@@ -619,10 +620,10 @@ class CropDataProvider(dict):
                         order_by=[t2.c.crop_parameter]).execute()
             rows = sc.fetchall()
             sc.close()
-            if not rows:
-                msg = ("No parameter value found for "
-                       "idcrop_parametrization=%s, crop_parameter='%s'.")
-                raise exc.PCSEError(msg % (self.idcrop_parameterization, crop_parameter))
+            if not rows and crop_parameter not in self.parameters_optional:
+                msg = "No parameter value found for idcrop_parametrization=%s, crop_parameter='%s'."
+                raise exc.PCSEError(msg % (self.idcrop_parametrization, crop_parameter))
+
             if len(rows) == 1:
                 msg = ("Single parameter value found for idcrop_parametrization=%s, "
                        "crop_parameter='%s' while tabular parameter expected." %
@@ -689,35 +690,12 @@ class CropDataProvider(dict):
         return tabular_crop_parameter, tabular_values
 
     def __str__(self):
-        result = ("Crop parameter values for idgrid=%s, idcrop_parametrization=%s (%s), "
-                  "idvariety=%s derived from %s\n" % (self.idgrid, self.idcrop_parametrization,
+        msg = ("Crop parameter values for idgrid=%s, idcrop_parametrization=%s (%s), "
+               "idvariety=%s derived from %s\n" % (self.idgrid, self.idcrop_parametrization,
                                                       self.crop_name, self.idvariety,
                                                       self.db_resource))
-        single_values = []
-        tabular_values = []
-        for pcode in sorted(self.keys()):
-            value = self[pcode]
-            if not isinstance(value, list):
-                single_values.append((pcode, value))
-            else:
-                tabular_values.append((pcode, value))
-
-        # Format the single parameters in a table of 4 columns
-        result += "Single parameter values:\n"
-        # If not of even length add ["",""]
-        if not len(single_values) % 2 == 0:
-            single_values.append(["", ""])
-        np_single_values = np.array(single_values, dtype=np.string_)
-        shp = np_single_values.shape
-        np_single_values.shape = (shp[0] / 2, shp[1] * 2)
-        result += tabulate(np_single_values, headers=["Par_code", "Value", "Par_code", "Value"])
-        result += "\n"
-
-        # Format the tabular parameters in two columns
-        result += "Tabular parameters:\n"
-        result += tabulate(tabular_values, headers=["Par_code", "Value"])
-        result += "\n"
-        return result
+        msg += str(self)
+        return msg
 
 
 class SiteDataProvider(dict):

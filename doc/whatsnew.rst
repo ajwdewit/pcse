@@ -1,3 +1,13 @@
+What's new in PCSE 5.4
+======================
+
+PCSE 5.4 has the following new features:
+
+- PCSE is now fully compatible with python3 (>3.4) while still remaining compatibility with python 2.7.14
+- The NASAPOWERWeatherDataProvider has been upgraded to take the new API into account
+
+
+
 What's new in PCSE 5.3
 ======================
 

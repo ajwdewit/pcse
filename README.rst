@@ -23,9 +23,9 @@ in pure python code which makes it more flexible, easier to modify and extensibl
 allowing easy interfacing with databases, graphical user interfaces, visualization
 tools and numerical/statistical packages. PCSE has several interesting features:
 
-* Implementation in pure python and the core system has a small number of dependencies outside the python standard
-  library. Most of these can be automatically installed from the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`,
-  `tabulate`, `xlwt`, `xlrd`) although some additional modules rely on `NumPy`.
+* Implementation in pure python with dependencies only on popular packages available from
+  the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `pandas`, `xlwt`, `xlrd`,
+  `requests` and `numpy`)
 
 * Modular design allowing you to add or change components relatively quickly with
   a simple but powerful approach to communicate variables between modules.

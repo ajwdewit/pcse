@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2018 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), April 2018
 """The PCSE Engine provides the environment where SimulationObjects are 'living'.
 The engine takes care of reading the model configuration, initializing model
 components (e.g. groups of SimulationObjects), driving the simulation
@@ -15,22 +15,19 @@ This kind of functionality cannot be implemented in the Engine because
 the model details are not known beforehand.
 """
 import os, sys
-from collections import deque
-import logging
 import datetime
 import gc
 
-from .traitlets import Instance, Bool
-from .base_classes import (VariableKiosk, WeatherDataProvider,
-                           AncillaryObject, WeatherDataContainer,
-                           SimulationObject, BaseEngine,
-                           ParameterProvider)
+from .traitlets import Instance, Bool, List, Dict
+from .base import (VariableKiosk, WeatherDataProvider,
+                           AncillaryObject, SimulationObject,
+                           BaseEngine, ParameterProvider)
 from .util import ConfigurationLoader, check_date
 from .timer import Timer
 from . import signals
 from . import exceptions as exc
 from .settings import settings
-from .agromanager import AgroManager
+
 
 class Engine(BaseEngine):
     """Simulation engine for simulating the combined soil/crop system.
@@ -95,7 +92,7 @@ class Engine(BaseEngine):
     soil = Instance(SimulationObject)
     agromanager = Instance(AncillaryObject)
     weatherdataprovider = Instance(WeatherDataProvider)
-    drv = Instance(WeatherDataContainer)
+    drv = None
     kiosk = Instance(VariableKiosk)
     timer = Instance(Timer)
     day = Instance(datetime.date)
@@ -109,13 +106,10 @@ class Engine(BaseEngine):
     flag_summary_output = Bool(False)
     
     # placeholders for variables saved during model execution
-    _saved_output = Instance(list)
-    _saved_summary_output = Instance(list)
-    _saved_terminal_output = Instance(dict)
+    _saved_output = List()
+    _saved_summary_output = List()
+    _saved_terminal_output = Dict()
 
-    # Helper variables
-    TMNSAV = Instance(deque)
-    
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config=None):
 
         BaseEngine.__init__(self)
@@ -162,7 +156,6 @@ class Engine(BaseEngine):
         # Calculate initial rates
         self.calc_rates(self.day, self.drv)
 
-    #---------------------------------------------------------------------------
     def calc_rates(self, day, drv):
 
         # Start rate calculation on individual components
@@ -180,7 +173,6 @@ class Engine(BaseEngine):
         if self.flag_crop_finish:
             self._finish_cropsimulation(day)
 
-    #---------------------------------------------------------------------------
     def integrate(self, day, delt):
 
         # Flush state variables from the kiosk before state updates
@@ -199,7 +191,6 @@ class Engine(BaseEngine):
         # Flush rate variables from the kiosk after state updates
         self.kiosk.flush_rates()
 
-    #---------------------------------------------------------------------------
     def _run(self):
         """Make one time step of the simulation.
         """
@@ -222,7 +213,6 @@ class Engine(BaseEngine):
         if self.flag_terminate is True:
             self._terminate_simulation(self.day)
 
-    #---------------------------------------------------------------------------
     def run(self, days=1):
         """Advances the system state with given number of days"""
 
@@ -231,15 +221,12 @@ class Engine(BaseEngine):
             days_done += 1
             self._run()
 
-
-    #---------------------------------------------------------------------------
     def run_till_terminate(self):
         """Runs the system until a terminate signal is sent."""
 
         while self.flag_terminate is False:
             self._run()
 
-    # ---------------------------------------------------------------------------
     def run_till(self, rday):
         """Runs the system until rday is reached."""
 
@@ -258,7 +245,6 @@ class Engine(BaseEngine):
         while self.flag_terminate is False and self.day < rday:
             self._run()
 
-    #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, crop_delete=False):
         """Sets the variable 'flag_crop_finish' to True when the signal
         CROP_FINISH is received.
@@ -276,7 +262,6 @@ class Engine(BaseEngine):
         self.flag_crop_finish = True
         self.flag_crop_delete = crop_delete
 
-    #---------------------------------------------------------------------------
     def _on_CROP_START(self, day, crop_name=None, variety_name=None,
                        crop_start_type=None, crop_end_type=None):
         """Starts the crop
@@ -294,21 +279,18 @@ class Engine(BaseEngine):
                                                crop_end_type)
         self.crop = self.mconf.CROP(day, self.kiosk, self.parameterprovider)
 
-    #---------------------------------------------------------------------------
     def _on_TERMINATE(self):
         """Sets the variable 'flag_terminate' to True when the signal TERMINATE
         was received.
         """
         self.flag_terminate = True
         
-    #---------------------------------------------------------------------------
     def _on_OUTPUT(self):
         """Sets the variable 'flag_output to True' when the signal OUTPUT
         was received.
         """
         self.flag_output = True
         
-    #---------------------------------------------------------------------------
     def _finish_cropsimulation(self, day):
         """Finishes the CropSimulation object when variable 'flag_crop_finish'
         has been set to True based on the signal 'CROP_FINISH' being
@@ -338,7 +320,6 @@ class Engine(BaseEngine):
             # objects that were supposed to be garbage collected already.
             gc.collect()
 
-    #---------------------------------------------------------------------------
     def _terminate_simulation(self, day):
         """Terminates the entire simulation.
 
@@ -350,7 +331,6 @@ class Engine(BaseEngine):
             self.soil.finalize(self.day)
         self._save_terminal_output()
 
-    #---------------------------------------------------------------------------
     def _get_driving_variables(self, day):
         """Get driving variables, compute derived properties and return it.
         """
@@ -362,26 +342,8 @@ class Engine(BaseEngine):
         if not hasattr(drv, "DTEMP"):
             drv.add_variable("DTEMP", (drv.TEMP + drv.TMAX)/2., "Celcius")
 
-        #  7 day running average of minimum temperature
-        TMINRA = self._7day_running_avg(drv.TMIN)
-        if not hasattr(drv, "TMINRA"):
-            drv.add_variable("TMINRA", TMINRA, "Celsius")
-        
         return drv
 
-    #---------------------------------------------------------------------------
-    def _7day_running_avg(self, TMIN):
-        """Calculate 7-day running mean of minimum temperature.
-        """
-        # if self.TMNSAV is None, then initialize a deque of size 7
-        if self.TMNSAV is None:
-            self.TMNSAV = deque(maxlen=7)
-        # Append new value
-        self.TMNSAV.appendleft(TMIN)
-
-        return sum(self.TMNSAV)/len(self.TMNSAV)
-    
-    #---------------------------------------------------------------------------
     def _save_output(self, day):
         """Appends selected model variables to self._saved_output for this day.
         """
@@ -394,7 +356,6 @@ class Engine(BaseEngine):
             states[var] = self.get_variable(var)
         self._saved_output.append(states)
 
-    #---------------------------------------------------------------------------
     def _save_summary_output(self):
         """Appends selected model variables to self._saved_summary_output.
         """
@@ -404,7 +365,6 @@ class Engine(BaseEngine):
             states[var] = self.get_variable(var)
         self._saved_summary_output.append(states)
 
-    #---------------------------------------------------------------------------
     def _save_terminal_output(self):
         """Appends selected model variables to self._saved_terminal_output.
         """
@@ -412,7 +372,6 @@ class Engine(BaseEngine):
         for var in self.mconf.TERMINAL_OUTPUT_VARS:
             self._saved_terminal_output[var] = self.get_variable(var)
 
-    #---------------------------------------------------------------------------
     def set_variable(self, varname, value):
         """Sets the value of the specified state or rate variable.
 
@@ -447,7 +406,6 @@ class Engine(BaseEngine):
 
         return increments
 
-    #---------------------------------------------------------------------------
     def get_output(self):
         """Returns the variables have have been stored during the simulation.
 
@@ -457,19 +415,18 @@ class Engine(BaseEngine):
 
         return self._saved_output
 
-    #---------------------------------------------------------------------------
     def get_summary_output(self):
         """Returns the summary variables have have been stored during the simulation.
         """
 
         return self._saved_summary_output
 
-    #---------------------------------------------------------------------------
     def get_terminal_output(self):
         """Returns the terminal output variables have have been stored during the simulation.
         """
 
         return self._saved_terminal_output
+
 
 class CGMSEngine(Engine):
     """Engine to mimic CGMS behaviour.

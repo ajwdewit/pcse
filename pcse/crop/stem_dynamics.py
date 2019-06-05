@@ -2,10 +2,10 @@
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 
-from ..traitlets import Float, Int, Instance, AfgenTrait
+from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
-from ..util import limit
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..util import limit, AfgenTrait
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
 
 class WOFOST_Stem_Dynamics(SimulationObject):

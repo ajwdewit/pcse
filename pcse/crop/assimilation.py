@@ -5,11 +5,12 @@
 """
 from __future__ import print_function
 from math import sqrt, exp, cos, pi
+from collections import deque
 
-from ..traitlets import Instance, Float, AfgenTrait
+from ..traitlets import Instance, Float 
 
-from ..util import limit, astro, doy
-from ..base_classes import ParamTemplate, SimulationObject
+from ..util import limit, astro, doy, AfgenTrait
+from ..base import ParamTemplate, SimulationObject, RatesTemplate
 
 try:
     from ..futil import totass as ftotass
@@ -115,7 +116,7 @@ def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
 
         # absorbed flux in W/m2 for shaded leaves and assimilation
         VISSHD = VISDF+VIST-VISD
-        FGRSH  = AMAX*(1.-exp(-VISSHD*EFF/max(2.0,AMAX)))
+        FGRSH  = AMAX*(1.-exp(-VISSHD*EFF/max(2.0, AMAX)))
 
         # direct light absorbed by leaves perpendicular on direct
         # beam and assimilation of sunlit leaf area
@@ -168,10 +169,17 @@ class WOFOST_Assimilation(SimulationObject):
     
     *State and rate variables*
     
-    `WOFOST_Assimilation` has no state/rate variables, but calculates the
-    rate of assimilation which is returned directly from the `__call__()`
-    method.
-    
+    `WOFOST_Assimilation` returns the potential gross assimilation rate 'PGASS'
+    directly from the `__call__()` method, but also includes it as a rate variable.
+
+     **Rate variables:**
+
+    =======  ================================================ ==== =============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================ ==== =============
+    PGASS    Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
+    =======  ================================================ ==== =============
+
     *Signals sent or handled*
     
     None
@@ -186,13 +194,18 @@ class WOFOST_Assimilation(SimulationObject):
     LAI      Leaf area index                     Leaf_dynamics       -
     =======  =================================== =================  ============
     """
-    
+
+    _TMNSAV = Instance(deque)
+
     class Parameters(ParamTemplate):
         AMAXTB = AfgenTrait()
         EFFTB  = AfgenTrait()
         KDIFTB = AfgenTrait()
         TMPFTB = AfgenTrait()
         TMNFTB = AfgenTrait()
+
+    class RateVariables(RatesTemplate):
+        PGASS = Float(-99.)
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -204,73 +217,71 @@ class WOFOST_Assimilation(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
+        self._TMNSAV = deque(maxlen=7)
     
     def __call__(self, day, drv):
         # Check if fortran versions can be used otherwise use native python
         if ftotass is not None:
-            PGASS = self.___call__fortran(day, drv)
+            self.rates.PGASS = self.___call__fortran(day, drv)
         else:
-            PGASS = self.__call__python(day, drv)
+            self.rates.PGASS = self.__call__python(day, drv)
 
-        return PGASS
+        return self.rates.PGASS
 
     def ___call__fortran(self, day, drv):
         """Calls fortran versions of ASTRO and TOTASS
         """
-        params = self.params
+        p = self.params
+        k = self.kiosk
 
-        # published states from the kiosk
-        DVS = self.kiosk["DVS"]
-        LAI = self.kiosk["LAI"]
+        # 7-day running average of TMIN
+        self._TMNSAV.appendleft(drv.TMIN)
+        TMINRA = sum(self._TMNSAV)/len(self._TMNSAV)
 
-        # 2.19  photoperiodic daylength
+        # photoperiodic daylength
         IDAY = doy(day)
         DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE = \
              fastro(IDAY, drv.LAT, drv.IRRAD)
 
-        # 2.20  daily dry matter production
-
-        # gross assimilation and correction for sub-optimum
-        # average day temperature
-        AMAX = params.AMAXTB(DVS)
-        AMAX *= params.TMPFTB(drv.DTEMP)
-        KDIF = params.KDIFTB(DVS)
-        EFF  = params.EFFTB(drv.DTEMP)
-        DTGA = ftotass(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP,
-                       DSINBE, SINLD, COSLD)
+        # gross assimilation and correction for sub-optimum average day temperature
+        AMAX = p.AMAXTB(k.DVS)
+        AMAX *= p.TMPFTB(drv.DTEMP)
+        KDIF = p.KDIFTB(k.DVS)
+        EFF = p.EFFTB(drv.DTEMP)
+        DTGA = ftotass(DAYL, AMAX, EFF, k.LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
+        DTGA *= p.TMNFTB(TMINRA)
+
         # assimilation in kg CH2O per ha
-        DTGA *= params.TMNFTB(drv.TMINRA)
         PGASS = DTGA * 30./44.
 
         return PGASS
 
     def __call__python(self, day, drv):
-        params = self.params
+        p = self.params
+        k = self.kiosk
 
-        # published states from the kiosk
-        DVS = self.kiosk["DVS"]
-        LAI = self.kiosk["LAI"]
-        
-        # 2.19  photoperiodic daylength
-        DAYL,DAYLP,SINLD,COSLD,DIFPP,ATMTR,DSINBE,ANGOT = astro(day, drv.LAT, drv.IRRAD)
+        # 7-day running average of TMIN
+        self._TMNSAV.appendleft(drv.TMIN)
+        TMINRA = sum(self._TMNSAV)/len(self._TMNSAV)
 
-        # 2.20  daily dry matter production
+        # Photoperiodic daylength
+        DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE, ANGOT = astro(day, drv.LAT, drv.IRRAD)
 
-        # gross assimilation and correction for sub-optimum
-        # average day temperature
-        AMAX = params.AMAXTB(DVS)
-        AMAX *= params.TMPFTB(drv.DTEMP)
-        KDIF = params.KDIFTB(DVS)
-        EFF  = params.EFFTB(drv.DTEMP)        
-        DTGA = totass(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP,
-                      DSINBE, SINLD, COSLD)
+        # gross assimilation and correction for sub-optimum average day temperature
+        AMAX = p.AMAXTB(k.DVS)
+        AMAX *= p.TMPFTB(drv.DTEMP)
+        KDIF = p.KDIFTB(k.DVS)
+        EFF = p.EFFTB(drv.DTEMP)
+        DTGA = totass(DAYL, AMAX, EFF, k.LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
+        DTGA *= p.TMNFTB(TMINRA)
+
         # assimilation in kg CH2O per ha
-        DTGA *= params.TMNFTB(drv.TMINRA)
         PGASS = DTGA * 30./44.
         
         return PGASS
@@ -333,6 +344,8 @@ class WOFOST_Assimilation2(SimulationObject):
     =======  =================================== =================  ============
     """
 
+    _TMNSAV = Instance(deque)
+
     class Parameters(ParamTemplate):
         AMAXTB = AfgenTrait()
         EFFTB = AfgenTrait()
@@ -352,36 +365,39 @@ class WOFOST_Assimilation2(SimulationObject):
         """
 
         self.params = self.Parameters(cropdata)
-        self.kiosk  = kiosk
+        self.kiosk = kiosk
+        self._TMNSAV = deque(maxlen=7)
 
     def __call__(self, day, drv):
-        params = self.params
+        p = self.params
+        k = self.kiosk
 
         # published states from the kiosk
-        DVS = self.kiosk["DVS"]
-        LAI = self.kiosk["LAI"]
+        DVS = k.DVS
+        LAI = k.LAI
+
+        # 7-day running average of TMIN
+        self._TMNSAV.appendleft(drv.TMIN)
+        TMINRA = sum(self._TMNSAV)/len(self._TMNSAV)
 
         # 2.19  photoperiodic daylength
-        DAYL,DAYLP,SINLD,COSLD,DIFPP,ATMTR,DSINBE,ANGOT = astro(day, drv.LAT, drv.IRRAD)
+        DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE, ANGOT = astro(day, drv.LAT, drv.IRRAD)
 
-        # 2.20  daily dry matter production
+        # daily dry matter production
 
-        # gross assimilation and correction for sub-optimum
-        # average day temperature
-        AMAX = params.AMAXTB(DVS)
-
-        # added IS june 2013
-        # correction for changing CO2 concentration
-        AMAX *= params.CO2AMAXTB(params.CO2)
-        AMAX *= params.TMPFTB(drv.DTEMP)
-        KDIF = params.KDIFTB(DVS)
-        EFF  = params.EFFTB(drv.DTEMP)*params.CO2EFFTB(params.CO2)
-        DTGA = totass(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP,
-                      DSINBE, SINLD, COSLD)
+        # gross assimilation and correction for sub-optimum average day
+        # temperature and CO2 concentration
+        AMAX = p.AMAXTB(DVS)
+        AMAX *= p.CO2AMAXTB(p.CO2)
+        AMAX *= p.TMPFTB(drv.DTEMP)
+        KDIF = p.KDIFTB(DVS)
+        EFF  = p.EFFTB(drv.DTEMP) * p.CO2EFFTB(p.CO2)
+        DTGA = totass(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
+        DTGA *= p.TMNFTB(TMINRA)
+
         # assimilation in kg CH2O per ha
-        DTGA *= params.TMNFTB(drv.TMINRA)
         PGASS = DTGA * 30./44.
 
         return PGASS

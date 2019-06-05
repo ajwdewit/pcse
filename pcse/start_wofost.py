@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, MetaData, Table
 
 from .db.pcse import GridWeatherDataProvider, fetch_soildata, fetch_sitedata, fetch_cropdata, \
     AgroManagementDataProvider
-from .base_classes import ParameterProvider
+from .base import ParameterProvider
 from .models import Wofost71_PP, Wofost71_WLP_FD
 from .settings import settings
 

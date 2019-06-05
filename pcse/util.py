@@ -9,19 +9,22 @@ import copy
 import platform
 import tempfile
 import logging
-from math import log10, cos, sin, asin, sqrt, exp
+from math import log10, cos, sin, asin, sqrt, exp, pi, radians
 from collections import namedtuple
 from bisect import bisect_left
 import textwrap
 import sqlite3
+from collections import Iterable
 
 from . import exceptions as exc
+from .traitlets import TraitType
 
 Celsius2Kelvin = lambda x: x + 273.16
 hPa2kPa = lambda x: x/10.
 
 # Saturated Vapour pressure [kPa] at temperature temp [C]
 SatVapourPressure = lambda temp: 0.6108 * exp((17.27 * temp) / (237.3 + temp))
+
 
 def reference_ET(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
                  ANGSTA, ANGSTB, ETMODEL="PM", **kwargs):
@@ -242,8 +245,8 @@ def penman_monteith(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
     # Vapour pressure to kPa
     VAP = hPa2kPa(VAP)
 
-    # atmospheric pressure (kPa)
-    T = Celsius2Kelvin(TMPA)
+    # atmospheric pressure at standard temperature of 293K (kPa)
+    T = 293.0
     PATM = 101.3 * pow((T - (0.0065*ELEV))/T, 5.26)
 
     # psychrometric constant (kPa/Celsius)
@@ -360,6 +363,21 @@ def ea_from_tdew(tdew):
     return ea
 
 
+def vap_from_relhum(rh, temp):
+    """Compute the actual vapour pressure from the relative humidity at given temperaure
+
+    :param rh: relative humidity as a percentage
+    :param temp: temperature corresponding to the relative humidity computation
+    :return: vapour pressure in kPa
+    """
+
+    if not 0 <= rh <= 100:
+        msg = "Relative humidity should be between 0 and 100"
+        raise RuntimeError(msg)
+
+    return SatVapourPressure(temp) * rh * 0.01
+
+
 def angstrom(day, latitude, ssd, cA, cB):
     """Compute global radiation using the Angstrom equation.
     
@@ -435,26 +453,19 @@ def daylength(day, latitude, angle=-4, _cache={}):
         pass
     
     # constants
-    RAD = 0.0174533
-    PI = 3.1415926
-
-    # map python functions to capitals
-    SIN = sin
-    COS = cos
-    ASIN = asin
-    REAL = float
+    RAD = radians(1.)
 
     # calculate daylength
     ANGLE = angle
     LAT = latitude
-    DEC = -ASIN(SIN(23.45*RAD)*COS(2.*PI*(REAL(IDAY)+10.)/365.))
-    SINLD = SIN(RAD*LAT)*SIN(DEC)
-    COSLD = COS(RAD*LAT)*COS(DEC)
-    AOB   = (-SIN(ANGLE*RAD)+SINLD)/COSLD
+    DEC = -asin(sin(23.45*RAD)*cos(2.*pi*(float(IDAY)+10.)/365.))
+    SINLD = sin(RAD*LAT)*sin(DEC)
+    COSLD = cos(RAD*LAT)*cos(DEC)
+    AOB = (-sin(ANGLE*RAD)+SINLD)/COSLD
 
     # daylength
     if abs(AOB) <= 1.0:
-        DAYLP = 12.0*(1.+2.*ASIN((-SIN(ANGLE*RAD)+SINLD)/COSLD)/PI)
+        DAYLP = 12.0*(1.+2.*asin((-sin(ANGLE*RAD)+SINLD)/COSLD)/pi)
     elif AOB > 1.0:
         DAYLP = 24.0
     else:
@@ -517,26 +528,17 @@ def astro(day, latitude, radiation, _cache={}):
         pass
 
     # constants
-    RAD = 0.0174533
-    PI = 3.1415926
+    RAD = radians(1.)
     ANGLE = -4.
 
-    # map python functions to capitals
-    SIN = sin
-    COS = cos
-    ASIN = asin
-    REAL = float
-    SQRT = sqrt
-    ABS = abs
-
     # Declination and solar constant for this day
-    DEC = -ASIN(SIN(23.45*RAD)*COS(2.*PI*(REAL(IDAY)+10.)/365.))
-    SC  = 1370.*(1.+0.033*COS(2.*PI*REAL(IDAY)/365.))
+    DEC = -asin(sin(23.45*RAD)*cos(2.*pi*(float(IDAY)+10.)/365.))
+    SC  = 1370.*(1.+0.033*cos(2.*pi*float(IDAY)/365.))
 
     # calculation of daylength from intermediate variables
     # SINLD, COSLD and AOB
-    SINLD = SIN(RAD*LAT)*SIN(DEC)
-    COSLD = COS(RAD*LAT)*COS(DEC)
+    SINLD = sin(RAD*LAT)*sin(DEC)
+    COSLD = cos(RAD*LAT)*cos(DEC)
     AOB = SINLD/COSLD
 
     # For very high latitudes and days in summer and winter a limit is
@@ -545,11 +547,11 @@ def astro(day, latitude, radiation, _cache={}):
 
     # Calculate solution for base=0 degrees
     if abs(AOB) <= 1.0:
-        DAYL  = 12.0*(1.+2.*ASIN(AOB)/PI)
+        DAYL  = 12.0*(1.+2.*asin(AOB)/pi)
         # integrals of sine of solar height
-        DSINB  = 3600.*(DAYL*SINLD+24.*COSLD*SQRT(1.-AOB**2)/PI)
+        DSINB  = 3600.*(DAYL*SINLD+24.*COSLD*sqrt(1.-AOB**2)/pi)
         DSINBE = 3600.*(DAYL*(SINLD+0.4*(SINLD**2+COSLD**2*0.5))+
-                 12.*COSLD*(2.+3.*0.4*SINLD)*SQRT(1.-AOB**2)/PI)
+                 12.*COSLD*(2.+3.*0.4*SINLD)*sqrt(1.-AOB**2)/pi)
     else:
         if AOB >  1.0: DAYL = 24.0
         if AOB < -1.0: DAYL = 0.0
@@ -558,9 +560,9 @@ def astro(day, latitude, radiation, _cache={}):
         DSINBE = 3600.*(DAYL*(SINLD+0.4*(SINLD**2+COSLD**2*0.5)))
 
     # Calculate solution for base=-4 (ANGLE) degrees
-    AOB_CORR = (-SIN(ANGLE*RAD)+SINLD)/COSLD
+    AOB_CORR = (-sin(ANGLE*RAD)+SINLD)/COSLD
     if abs(AOB_CORR) <= 1.0:
-        DAYLP = 12.0*(1.+2.*ASIN(AOB_CORR)/PI)
+        DAYLP = 12.0*(1.+2.*asin(AOB_CORR)/pi)
     elif AOB_CORR > 1.0:
         DAYLP = 24.0
     elif AOB_CORR < -1.0:
@@ -683,6 +685,19 @@ class Afgen(object):
             v *= self.unit
 
         return v
+
+
+class AfgenTrait(TraitType):
+    """An AFGEN table trait"""
+    default_value = Afgen([0,0,1,1])
+    into_text = "An AFGEN table of XY pairs"
+
+    def validate(self, obj, value):
+        if isinstance(value, Afgen):
+           return value
+        elif isinstance(value, Iterable):
+           return Afgen(value)
+        self.error(obj, value)
 
 
 def merge_dict(d1, d2, overwrite=False):
@@ -864,8 +879,7 @@ def check_date(indate):
         2. a datetime object
         3. a string of the format YYYYMMDD
         4. a string of the format YYYYDDD
-
-        Formats 2-4 are all converted into a date object internally.
+        5. a string of the format YYYY-MM-DD
         """
 
         import datetime as dt
@@ -883,6 +897,10 @@ def check_date(indate):
             elif l==7:
                 # assume YYYYDDD
                 dkey = dt.datetime.strptime(skey,"%Y%j")
+                return dkey.date()
+            elif l==10:
+                # assume YYYY-MM-DD
+                dkey = dt.datetime.strptime(skey,"%Y-%m-%d")
                 return dkey.date()
             else:
                 msg = "Input value not recognized as date: %s"

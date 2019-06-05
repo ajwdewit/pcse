@@ -47,7 +47,7 @@ class PCSEFileReader(dict):
                   20., 25.,
                   30., 25.]
         AMAXTB = np.sin(np.arange(12))
-        cropname = "alfalfa"
+        cropname = 'alfalfa'
         CROP_START_DATE = dt.date(2010,5,14)
 
     Can be read with the following statements::
@@ -59,7 +59,7 @@ class PCSEFileReader(dict):
         2010-05-14
         >>>print fileparameters
         PCSE parameter file contents loaded from:
-        D:\UserData\pcse_examples\parfile.pw
+        D:\\UserData\\pcse_examples\\parfile.pw
         
         This is the header of my parameter file.
 

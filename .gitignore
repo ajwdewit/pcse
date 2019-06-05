@@ -33,3 +33,7 @@ pcse/tests/test_data/*.cache
 PCSE.egg-info/*
 dist/*
 build/*
+.pytest_cache/*
+
+# zip files
+*.zip

@@ -3,13 +3,14 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 from copy import deepcopy
 
-from ..traitlets import Float, Int, Instance, AfgenTrait
+from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
-from ..util import limit, merge_dict
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..util import limit, merge_dict, AfgenTrait
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
+    
 
-#-------------------------------------------------------------------------------
+
 class WOFOST_Root_Dynamics(SimulationObject):
     """Root biomass dynamics and rooting depth.
     
@@ -22,7 +23,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
     multiplied by a relative death rate (`RDRRTB`). The latter as a function
     of the development stage (`DVS`).
     
-    Increase in root depth is a simple linear expansion over time unti the
+    Increase in root depth is a simple linear expansion over time until the
     maximum rooting depth (`RDM`) is reached.
     
     **Simulation parameters**
@@ -81,11 +82,33 @@ class WOFOST_Root_Dynamics(SimulationObject):
     FR       Fraction biomass to roots           DVS_Partitioning    - 
     =======  =================================== =================  ============
     """
+    """
+    IMPORTANT NOTICE
+    Currently root development is linear and depends only on the fraction of assimilates
+    send to the roots (FR) and not on the amount of assimilates itself. This means that
+    roots also grow through the winter when there is no assimilation due to low 
+    temperatures. There has been a discussion to change this behaviour and make root growth 
+    dependent on the assimilates send to the roots: so root growth stops when there are
+    no assimilates available for growth.
+    
+    Finally, we decided not to change the root model and keep the original WOFOST approach 
+    because of the following reasons:
+    - A dry top layer in the soil could create a large drought stress that reduces the 
+      assimilates to zero. In this situation the roots would not grow if dependent on the
+      assimilates, while water is available in the zone just below the root zone. Therefore
+      a dependency on the amount of assimilates could create model instability in dry
+      conditions (e.g. Southern-Mediterranean, etc.).
+    - Other solutions to alleviate the problem above were explored: only put this limitation
+      after a certain development stage, putting a dependency on soil moisture levels in the
+      unrooted soil compartment. All these solutions were found to introduce arbitrary
+      parameters that have no clear explanation. Therefore all proposed solutions were discarded.
+      
+    We conclude that our current knowledge on root development is insufficient to propose a
+    better and more biophysical approach to root development in WOFOST.  
+    """
 
     class Parameters(ParamTemplate):
-        """Traits-based class for storing rooting depth parameters
-        """
-        RDI    = Float(-99.)    
+        RDI    = Float(-99.)
         RRI    = Float(-99.)
         RDMCR  = Float(-99.)
         RDMSOL = Float(-99.)
@@ -125,34 +148,32 @@ class WOFOST_Root_Dynamics(SimulationObject):
         RDM = rdmax
         RD = params.RDI
         # initial root biomass states
-        FR = self.kiosk["FR"]
-        WRT  = params.TDWI * FR
+        WRT  = params.TDWI * self.kiosk.FR
         DWRT = 0.
         TWRT = WRT + DWRT
 
-        self.states = self.StateVariables(kiosk, publish=["RD","WRT","TWRT"],
+        self.states = self.StateVariables(kiosk, publish=["RD","WRT", "TWRT"],
                                           RD=RD, RDM=RDM, WRT=WRT, DWRT=DWRT,
                                           TWRT=TWRT)
+
     @prepare_rates
     def calc_rates(self, day, drv):
-        params = self.params
-        rates = self.rates
-        states = self.states
+        p = self.params
+        r = self.rates
+        s = self.states
+        k = self.kiosk
 
         # Increase in root biomass
-        DMI = self.kiosk["DMI"]
-        DVS = self.kiosk["DVS"]
-        FR = self.kiosk["FR"]
-        rates.GRRT = FR * DMI
-        rates.DRRT = states.WRT * params.RDRRTB(DVS)
-        rates.GWRT = rates.GRRT - rates.DRRT
+        r.GRRT = k.FR * k.DMI
+        r.DRRT = s.WRT * p.RDRRTB(k.DVS)
+        r.GWRT = r.GRRT - r.DRRT
         
         # Increase in root depth
-        rates.RR = min((states.RDM - states.RD), params.RRI)
+        r.RR = min((s.RDM - s.RD), p.RRI)
         # Do not let the roots growth if partioning to the roots
         # (variable FR) is zero.
-        if FR == 0.:
-            rates.RR = 0.
+        if k.FR == 0.:
+            r.RR = 0.
     
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -168,6 +189,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
 
         # New root depth
         states.RD += rates.RR
+
 
 class Simple_Root_Dynamics(SimulationObject):
     """Simple class for linear root growth.

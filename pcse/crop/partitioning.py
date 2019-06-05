@@ -4,12 +4,13 @@
 from collections import namedtuple
 from math import exp
 
-from ..traitlets import Float, Int, Instance, AfgenTrait
+from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, StatesTemplate, SimulationObject,\
+from ..base import ParamTemplate, StatesTemplate, SimulationObject,\
      VariableKiosk
 from .. import exceptions as exc
 from warnings import warn
+from ..util import AfgenTrait
 
 
 # Template for namedtuple containing partitioning factors
@@ -230,11 +231,11 @@ class DVS_Partitioning_NPK(SimulationObject):
     """
 
     class Parameters(ParamTemplate):
-        FRTB   = AfgenTrait()
-        FLTB   = AfgenTrait()
-        FSTB   = AfgenTrait()
-        FOTB   = AfgenTrait()
-        NPART  = Float(-99.) # coefficient for the effect of N stress on leaf allocation
+        FRTB = AfgenTrait()
+        FLTB = AfgenTrait()
+        FSTB = AfgenTrait()
+        FOTB = AfgenTrait()
+        NPART = Float(-99.)  # coefficient for the effect of N stress on leaf allocation
 
     class StateVariables(StatesTemplate):
         FR = Float(-99.)
@@ -243,21 +244,20 @@ class DVS_Partitioning_NPK(SimulationObject):
         FO = Float(-99.)
         PF = Instance(PartioningFactors)
 
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parameters):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        :param parameters: dictionary with WOFOST cropdata key/value pairs
         """
-        self.params = self.Parameters(cropdata)
-        self.kiosk = kiosk
+        self.params = self.Parameters(parameters)
 
         # initial partioning factors (pf)
-        DVS = self.kiosk["DVS"]
-        FR = self.params.FRTB(DVS)
-        FL = self.params.FLTB(DVS)
-        FS = self.params.FSTB(DVS)
-        FO = self.params.FOTB(DVS)
+        k = self.kiosk
+        FR = self.params.FRTB(k.DVS)
+        FL = self.params.FLTB(k.DVS)
+        FS = self.params.FSTB(k.DVS)
+        FO = self.params.FOTB(k.DVS)
 
         # Pack partitioning factors into tuple
         PF = PartioningFactors(FR, FL, FS, FO)
@@ -289,44 +289,35 @@ class DVS_Partitioning_NPK(SimulationObject):
         and the Nitrogen nutrition Index (NNI)
         """
 
-        params = self.params
-        states = self.states
+        p = self.params
+        s = self.states
+        k = self.kiosk
 
-        DVS   = self.kiosk["DVS"]
-        TRA   = self.kiosk["TRA"]
-        TRAMX = self.kiosk["TRAMX"]
-        NNI   = self.kiosk["NNI"]
-
-        TRANRF = TRA/TRAMX
-
-        if TRANRF < NNI:
-#           Water stress is more severe than nitrogen stress and the
-#           partitioning follows the original LINTUL2 assumptions
-#           Note: we use specifically nitrogen stress not nutrient stress!!!
-            FRTMOD = max( 1., 1./(TRANRF+0.5))
-            states.FR = min(0.6, params.FRTB(DVS) * FRTMOD)
-            states.FL = params.FLTB(DVS)
-            states.FS = params.FSTB(DVS)
-            states.FO = params.FOTB(DVS)
+        if k.RFTRA < k.NNI:
+            # Water stress is more severe than nitrogen stress and the
+            # partitioning follows the original LINTUL2 assumptions
+            # Note: we use specifically nitrogen stress not nutrient stress!!!
+            FRTMOD = max(1., 1./(k.RFTRA + 0.5))
+            s.FR = min(0.6, p.FRTB(k.DVS) * FRTMOD)
+            s.FL = p.FLTB(k.DVS)
+            s.FS = p.FSTB(k.DVS)
+            s.FO = p.FOTB(k.DVS)
         else:
-#           Nitrogen stress is more severe than water stress resulting in
-#           less partitioning to leaves and more to stems
-            FLVMOD = exp(-params.NPART * (1.0-NNI))
-            states.FL = params.FLTB(DVS) * FLVMOD
-            states.FS = params.FSTB(DVS) + params.FLTB(DVS) - states.FL
-            states.FR = params.FRTB(DVS)
-            states.FO = params.FOTB(DVS)
-
+            # Nitrogen stress is more severe than water stress resulting in
+            # less partitioning to leaves and more to stems
+            FLVMOD = exp(-p.NPART * (1.0 - k.NNI))
+            s.FL = p.FLTB(k.DVS) * FLVMOD
+            s.FS = p.FSTB(k.DVS) + p.FLTB(k.DVS) - s.FL
+            s.FR = p.FRTB(k.DVS)
+            s.FO = p.FOTB(k.DVS)
 
         # Pack partitioning factors into tuple
-        states.PF = PartioningFactors(states.FR, states.FL,
-                                          states.FS, states.FO)
+        s.PF = PartioningFactors(s.FR, s.FL, s.FS, s.FO)
 
         self._check_partitioning()
 
     def calc_rates(self, day, drv):
         """ Return partitioning factors based on current DVS.
         """
-        # rate calculation does nothing for partioning as it is a derived
-        # state
+        # rate calculation does nothing for partitioning as it is a derived state
         return self.states.PF

@@ -184,29 +184,29 @@ all classes are not to be called directly but should be subclassed instead.
 
 VariableKiosk
 -------------
-.. autoclass:: pcse.base_classes.VariableKiosk
+.. autoclass:: pcse.base.VariableKiosk
     :members:
 
 
 Base classes for parameters, rates and states
 ---------------------------------------------
 
-.. autoclass:: pcse.base_classes.StatesTemplate
+.. autoclass:: pcse.base.StatesTemplate
     :members:
 
-.. autoclass:: pcse.base_classes.RatesTemplate
+.. autoclass:: pcse.base.RatesTemplate
     :members:
 
-.. autoclass:: pcse.base_classes.ParamTemplate
+.. autoclass:: pcse.base.ParamTemplate
     :members:
 
 Base and utility classes for weather data
 -----------------------------------------
 
-.. autoclass:: pcse.base_classes.WeatherDataProvider
+.. autoclass:: pcse.base.WeatherDataProvider
     :members:
 
-.. autoclass:: pcse.base_classes.WeatherDataContainer
+.. autoclass:: pcse.base.WeatherDataContainer
     :members:
 
 .. _Signals:

@@ -5,7 +5,7 @@ import unittest
 from datetime import date
 
 from ..crop.partitioning import DVS_Partitioning
-from ..base_classes import VariableKiosk
+from ..base import VariableKiosk
 
 #----------------------------------------------------------------------------
 class Test_DVS_Partitioning(unittest.TestCase):
