@@ -102,6 +102,8 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
     TRAMX    Maximum transpiration rate     Evapotranspiration              |cm day-1| 
     ADMI     Above-ground dry matter        CropSimulation                  |kg ha-1 d-1|
              increase
+    RFTRA    Reduction factor for           Evapotranspiration
+             transpiration                                                   -
     RF_FROST Reduction factor frost kill    FROSTOL                          -
     ======== ============================== =============================== ===========
     """
