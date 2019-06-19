@@ -14,9 +14,9 @@ class Wofost71_PP(Engine):
     """
     config = "Wofost71_PP.conf"
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, **kwargs):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
+                        config=self.config, **kwargs)
 
 
 class Wofost71_WLP_FD(Engine):
@@ -28,9 +28,9 @@ class Wofost71_WLP_FD(Engine):
     """
     config = "Wofost71_WLP_FD.conf"
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, **kwargs):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
+                        config=self.config, **kwargs)
 
 
 class LINTUL3(Engine):

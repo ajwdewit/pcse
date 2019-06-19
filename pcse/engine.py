@@ -110,12 +110,15 @@ class Engine(BaseEngine):
     _saved_summary_output = List()
     _saved_terminal_output = Dict()
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config=None):
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config=None,
+                 output_vars=None):
 
         BaseEngine.__init__(self)
 
         # Load the model configuration
         self.mconf = ConfigurationLoader(config)
+        if output_vars is not None:
+            self.mconf.OUTPUT_VARS = output_vars
         self.parameterprovider = parameterprovider
 
         # Variable kiosk for registering and publishing variables
