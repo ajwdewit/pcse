@@ -9,94 +9,12 @@ from ..util import limit, Afgen, merge_dict
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 
-
-class pFCurve(Afgen):
-    """Pf curve should check that:
-    - length of array is even
-    - has at least 3 xy pairs
-    - pF should start at pF = -1 and end at pF=6
-    - SM/cond values should decrease with increase pF
-
-    """
-    pass
-
-class MFPCurve(Afgen):
-    """Computes Matrix Flow Potential using a Gaussian integration over the pfCurve
-
-    """
-    elog10 = 2.302585092994
-    Pgauss = (0.0469100770, 0.2307653449, 0.5000000000, 0.7692346551, 0.9530899230)
-    Wgauss = (0.1184634425, 0.2393143352, 0.2844444444, 0.2393143352, 0.1184634425)
-
-    def __init__(self, SMfromPF, CONDfromPF):
-        SMfromPF = np.array(SMfromPF)
-        CONDfromPF = pFCurve(CONDfromPF)
-        MFPfromPF = np.zeros_like(SMfromPF)
-
-        # zero MFP at highest pF
-        MFPfromPF[-1] = 0.
-        MFPfromPF[-2] = SMfromPF[-2]
-
-        for ip in range(len(SMfromPF)-3, 0, -2):
-            # Copy corresponding pF value
-            MFPfromPF[ip-1] = SMfromPF[ip-1]
-            # get integral over PF range
-            add = 0.0
-            DeltaPF = SMfromPF[ip + 1] - SMfromPF[ip - 1]
-            for i in range(len(self.Pgauss)):
-                PFg = SMfromPF[ip - 1] + self.Pgauss[i] * DeltaPF
-                CON = 10.0 ** CONDfromPF(PFg)
-                add += CON * 10.0 ** PFg * self.elog10 * self.Wgauss[i]
-            MFPfromPF[ip] = add * DeltaPF + MFPfromPF[ip + 2]
-        Afgen.__init__(self, MFPfromPF)
-
-
-class SoilLayer(HasTraits):
-    """Contains the intrinsic and derived properties for each soil layers
-    """
-    SMfromPF = Instance(pFCurve)  # soil moisture content as function of pF
-    CONDfromPF = Instance(pFCurve)  # conductivity as function of pF
-    PFfromSM = Instance(Afgen)  # Inverse from SMfromPF
-    MFPfromPF = Instance(MFPCurve)  # Matrix Flux Potential as function of pF
-    CRAIRC = Float()  # Critical air content
-    SMsat = Float()  # Saturation soil moisture content
-    Thickness = Float()
-
-    def __init__(self, layer):
-        self.SMfromPF = pFCurve(layer.SMfromPF)
-        self.CONDfromPF = pFCurve(layer.CONDfromPF)
-        self.PFfromSM = self._invert_pF(layer.SMfromPF)
-        self.CRAIRC = layer.CRAIRC
-        self.SMsat = self.SMfromPF(-1.0)
-        self.MFPfromPF = MFPCurve(layer.SMfromPF, layer.CONDfromPF)
-        self.Thickness = layer.Thickness
-        self.SoilID = layer.SoilID
-        
-        # compute hash value of this layer
-        #self._hash = hash((tuple(layer.SMfromPF), tuple(layer.CONDfromPF)))
-        self._hash = hash(self.SoilID)
-
-    def _invert_pF(self, SMfromPF):
-        """Inverts the SMfromPF table to get pF from SM
-        """
-        l = []
-        for t in zip(reversed(SMfromPF[1::2]), reversed(SMfromPF[0::2])):
-            l.extend(t)
-        return Afgen(l)
-    
-    def __hash__(self):
-        return self._hash
-
-    def __eq__(self, other):
-        return (
-            self.__class__ == other.__class__ and
-            self._hash == other._hash
-        )
+from .soil_profile import SoilProfile
 
 
 class WaterBalanceLayered(SimulationObject):
 
-    _default_RD = 10.  # default rooting depth at 10 cm
+    _default_RD = 15.  # default rooting depth at 10 cm
     RDold = None
     RINold = Float(-99.)
     DSLR = Int(-99)
@@ -110,13 +28,6 @@ class WaterBalanceLayered(SimulationObject):
     ILR = None
     ILM = None
 
-    # Some properties from layers
-    WC0 = None  # TODO: these 5 lines are soil properties: move to soil layer class
-    WCW = None
-    WCFC = None
-    CondFC = None
-    CondK0 = None
-
     # Max number of flow iterations
     MaxFlowIter = 50
     TinyFlow = 0.001
@@ -125,17 +36,22 @@ class WaterBalanceLayered(SimulationObject):
     # see documentatin Kees Rappoldt - page 80
     UpwardFlowLimit = 0.50
 
+    soil_profile = None
+
     class Parameters(ParamTemplate):
-        SMFCF = List()
-        SM0 = List()
-        SMW = List()
-        CRAIRC = List()
-        SOIL_LAYERS = List()
-        SOIL_PROFILE = Instance(DotMap)
+        # SMFCF = List()
+        # SM0 = List()
+        # SMW = List()
+        # CRAIRC = List()
+        # SOIL_LAYERS = List()
+        # SOIL_PROFILE = Instance(DotMap)
         IFUNRN = Int(-99)
         NOTINF = Float(-99.)
         SSI = Float(-99.)
         SSMAX = Float(-99.)
+        SMLIM = Float(-99.)
+        WAV = Float(-99.)
+
 
     class StateVariables(StatesTemplate):
         WTRAT = Float(-99)
@@ -175,42 +91,27 @@ class WaterBalanceLayered(SimulationObject):
 
     def initialize(self, day, kiosk, parvalues):
 
-        soil_profile = DotMap(parvalues["SoilProfileDescription"])
-        SOIL_LAYERS = []
-        for layer_properties in soil_profile.SoilLayers:
-            soil_layer = SoilLayer(layer_properties)
-            SOIL_LAYERS.append(soil_layer)
-
-        SMFCF = [l.SMfromPF(soil_profile.PFFieldCapacity) for l in SOIL_LAYERS]
-        SM0 = [l.SMsat for l in SOIL_LAYERS]
-        SMW = [l.SMfromPF(soil_profile.PFWiltingPoint) for l in SOIL_LAYERS]
-        CRAIRC = [l.CRAIRC for l in SOIL_LAYERS]
-
-        parvalues.set_derived("SOIL_LAYERS", SOIL_LAYERS)
-        parvalues.set_derived("SOIL_PROFILE", soil_profile)
-        parvalues.set_derived("SM0", SM0)
-        parvalues.set_derived("SMW", SMW)
-        parvalues.set_derived("SMFCF", SMFCF)
-        parvalues.set_derived("CRAIRC", CRAIRC)
-        self.params = self.Parameters(parvalues)
-        p = self.params
-
-        self._LayerThickness = [l.Thickness for l in SOIL_LAYERS]
+        self.soil_profile = SoilProfile(parvalues)
+        self._LayerThickness = [l.Thickness for l in self.soil_profile]
         LayerLowerBoundary = list(np.cumsum(self._LayerThickness))
+
 
         # TEMPORARY INPUTS FROM RERUN FILES.
         # Maximum rootable depth, this has to change layer because RDMCR
         # is often not known at this point.
         RDMCR = 125.
         self.RDM = min(RDMCR, max(LayerLowerBoundary))
-        # SMLIM limit on moisture content in top layer
-        SMLIM = 0.36
-        WAV = 22.
+        self.soil_profile.validate_max_rooting_depth(self.RDM)
+
+        self.params = self.Parameters(parvalues)
+        p = self.params
 
         r = self._LayerWeights(RD=self._default_RD, RDM=self.RDM, LayerTHK=self._LayerThickness)
         self.Wtop, self.Wpot, self.Wund, self.ILR, self.ILM = r
+        self.soil_profile.determine_rooting_status(self._default_RD, self.RDM)
+        self.soil_profile.compute_layer_weights(self._default_RD, self.RDM)
 
-        if soil_profile.GroundWater:
+        if self.soil_profile.GroundWater:
             raise NotImplementedError("Groundwater influence not yet implemented.")
         else:
             # AVMAX -  maximum available content of layer(s)
@@ -219,41 +120,42 @@ class WaterBalanceLayered(SimulationObject):
             TOPLIM = 0.0
             LOWLIM = 0.0
             AVMAX = []
-            for il in range(self.ILM+1):
-                # determine maximum content for this layer
-                if il <= self.ILR:
-                    # Check whether SMLIM is within boundaries (TvdW, 24-jul-97)
-                    SML = limit(SMW[il], SM0[il], SMLIM)
+            # for il in range(self.ILM+1):
+            for il, layer in enumerate(self.soil_profile):
+                if layer.rooting_status in ["rooted", "partially rooted"]:
+                    # Check whether SMLIM is within boundaries
+                    SML = limit(layer.SMW, layer.SM0, p.SMLIM)
                     # the IAIRDU mess is disabled here.
                     # if (IAIRDU.EQ.1) SML = SM0(il)
-                    AVMAX.append( (SML - SMW[il]) * self._LayerThickness[il])   # available in cm
+                    AVMAX.append((SML - layer.SMW) * layer.Thickness)   # available in cm
                     # also if partly rooted, the total layer capacity counts in TOPLIM
                     # this means the water content of layer ILR is set as if it would be
                     # completely rooted. This water will become available after a little
                     # root growth and through numerical mixing each time step.
-                    TOPLIM = TOPLIM + AVMAX[il]
-                else:
+                    TOPLIM += AVMAX[il]
+                elif layer.rooting_status == "potentially rooted":
                     # below the rooted zone the maximum is saturation (see code for WLOW in one-layer model)
                     # again the full layer capacity adds to LOWLIM.
-                    SML = SM0[il]
-                    AVMAX.append((SML-SMW[il]) * self._LayerThickness[il])   # available in cm
-                    LOWLIM = LOWLIM + AVMAX[il]
+                    SML = layer.SM0
+                    AVMAX.append((SML - layer.SMW) * layer.Thickness)   # available in cm
+                    LOWLIM += AVMAX[il]
+                else:  # Below the potentially rooted zone
+                    break
 
-
-        if WAV <= 0.0:
+        if p.WAV <= 0.0:
             # no available water
             TOPRED = 0.0
             LOWRED = 0.0
-        elif WAV <= TOPLIM:
+        elif p.WAV <= TOPLIM:
             # available water fits in layer(s) 1..ILR, these layers are rooted or almost rooted
             # reduce amounts with ratio WAV / TOPLIM
-            TOPRED = WAV / TOPLIM
+            TOPRED = p.WAV / TOPLIM
             LOWRED = 0.0
-        elif WAV < TOPLIM + LOWLIM:
+        elif p.WAV < TOPLIM + LOWLIM:
             # available water fits in potentially rooted layer
             # rooted zone is filled at capacity ; the rest reduced
             TOPRED = 1.0
-            LOWRED = (WAV-TOPLIM) / LOWLIM
+            LOWRED = (p.WAV-TOPLIM) / LOWLIM
         else:
             # water does not fit ; all layers "full"
             TOPRED = 1.0
@@ -262,46 +164,33 @@ class WaterBalanceLayered(SimulationObject):
         # within rootzone
         W = 0.0    ; WAVUPP = 0.0
         WLOW = 0.0 ; WAVLOW = 0.0
-        SM = np.zeros(len(self._LayerThickness))
-        for il in range(self.ILR+1):
-            # Part of the water assigned to ILR may not actually be in the rooted zone, but it will
-            # be available shortly through root growth (and through numerical mixing).
-            SM[il] = SMW[il] + AVMAX[il] * TOPRED / self._LayerThickness[il]
-            W      = W    + SM[il] * self._LayerThickness[il] * self.Wtop[il]
-            WLOW   = WLOW + SM[il] * self._LayerThickness[il] * self.Wpot[il]
-            # available water
-            WAVUPP = WAVUPP + (SM[il]-SMW[il]) * self._LayerThickness[il] * self.Wtop[il]
-            WAVLOW = WAVLOW + (SM[il]-SMW[il]) * self._LayerThickness[il] * self.Wpot[il]
-        # between initial and maximum rooting depth. In case RDM is not a layer boundary (it should be!!)
-        # layer ILM contains additional water in unrooted part. Only rooted part contributes to WAV.
-        for il in range(self.ILR+1, self.ILM+1):
-            SM[il] = SMW[il] + AVMAX[il] * LOWRED / self._LayerThickness[il]
-            WLOW = WLOW + SM[il] * self._LayerThickness[il] * self.Wpot[il]
-            # available water
-            WAVLOW = WAVLOW + (SM[il]-SMW[il]) * self._LayerThickness[il] * self.Wpot[il]
-        # below the maximum rooting depth
-        for il in range(self.ILM+1, len(self._LayerThickness)):
-            SM[il] = SMW[il]
-   
+        SM = np.zeros(len(self.soil_profile))
+        WC = np.zeros_like(SM)
+        for il, layer in enumerate(self.soil_profile):
+            if layer.rooting_status in ["rooted", "partially rooted"]:
+                # Part of the water assigned to ILR may not actually be in the rooted zone, but it will
+                # be available shortly through root growth (and through numerical mixing).
+                SM[il] = layer.SMW + AVMAX[il] * TOPRED / layer.Thickness
+                W      += SM[il] * layer.Thickness * layer.Wtop
+                WLOW   += SM[il] * layer.Thickness * layer.Wpot
+                # available water
+                WAVUPP += (SM[il] - layer.SMW) * layer.Thickness * layer.Wtot
+                WAVLOW += (SM[il] - layer.SMW) * layer.Thickness * layer.Wpot
+            elif layer.rooting_status == "potentially rooted":
+                SM[il] = layer.SMW + AVMAX[il] * LOWRED / layer.Thickness
+                WLOW += SM[il] * layer.Thickness * layer.Wpot
+                # available water
+                WAVLOW += (SM[il] - layer.SMW) * layer.Thickness * layer.Wpot
+            else:
+                # below the maximum rooting depth, set SM content to wiltint point
+                SM[il] = layer.SMW
+            WC[il] = SM[il] * layer.Thickness
+
         # set groundwater depth far away for clarity ; this prevents also
         # the root routine to stop root growth when they reach the groundwater
         ZT = 999.0
 
-        WC = np.zeros_like(SM)
-        self.WC0 = np.zeros_like(SM)  #TODO: these 5 lines are soil properties: move to soil layer class
-        self.WCW = np.zeros_like(SM)
-        self.WCFC = np.zeros_like(SM)
-        self.CondFC = np.zeros_like(SM)
-        self.CondK0 = np.zeros_like(SM)
-        for il, layer in enumerate(SOIL_LAYERS):
-            WC[il]     = SM[il] * self._LayerThickness[il]  # State variable!
-            self.WC0[il]    = SM0[il] * self._LayerThickness[il]
-            self.WCW[il]    = SMW[il] * self._LayerThickness[il]
-            self.WCFC[il]   = SMFCF[il] * self._LayerThickness[il]
-            self.CondFC[il] = 10.0**layer.CONDfromPF(soil_profile.PFFieldCapacity)
-            self.CondK0[il] = 10.0**layer.CONDfromPF(-1.0)
-
-        # rootzone and subsoil water
+        # Initial values for rootzone and subsoil water
         self._WI    = W
         self._WLOWI = WLOW
         self._WWLOWI = W + WLOW
@@ -326,6 +215,7 @@ class WaterBalanceLayered(SimulationObject):
         # rate variables
         self.rates = self.RateVariables(kiosk)
 
+    @prepare_rates
     def calc_rates(self, day, drv):
         p = self.params
         s = self.states
@@ -676,7 +566,7 @@ class WaterBalanceLayered(SimulationObject):
         # incoming rainfall rate
         r.DRAINT = drv.RAIN
 
-
+    @prepare_states
     def integrate(self, day, delt):
         p = self.params
         s = self.states
