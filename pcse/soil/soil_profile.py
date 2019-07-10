@@ -158,7 +158,7 @@ class SoilProfile(list):
                 layer.Wpot = 0.0
                 layer.Wund = 0.0
             elif layer.rooting_status == "partially rooted":
-                layer.Wtop = (lower_layer_boundary - RD) / layer.Thickness
+                layer.Wtop = 1.0 - (lower_layer_boundary - RD) / layer.Thickness
                 layer.Wpot = 1.0 - layer.Wtop
                 layer.Wund = 0.0
             elif layer.rooting_status == "potentially rooted":

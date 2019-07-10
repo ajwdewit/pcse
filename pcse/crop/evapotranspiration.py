@@ -4,12 +4,14 @@
 from math import exp
 
 import array
+import numpy as np
 
-from ..traitlets import Float, Int, Instance, Bool
+from ..traitlets import Float, Int, Instance, Bool, Instance
 from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
                          SimulationObject
 from ..util import limit, merge_dict, AfgenTrait
+from ..soil.soil_profile import SoilProfile
 
 
 def SWEAF(ET0, DEPNR):
@@ -587,6 +589,202 @@ class EvapotranspirationCO2(SimulationObject):
             self._IDOST += 1
 
         return r.TRA, r.TRAMX
+
+    @prepare_states
+    def finalize(self, day):
+
+        self.states.IDWST = self._IDWST
+        self.states.IDOST = self._IDOST
+
+        SimulationObject.finalize(self, day)
+
+
+class EvapotranspirationCO2Layered(SimulationObject):
+    """Calculation of evaporation (water and soil) and transpiration rates
+    taking into account the CO2 effect on crop transpiration for a layered soil
+
+    *Simulation parameters* (To be provided in cropdata dictionary):
+
+    ======== ============================================= =======  ============
+     Name     Description                                   Type     Unit
+    ======== ============================================= =======  ============
+    CFET     Correction factor for potential transpiration   S       -
+             rate.
+    DEPNR    Dependency number for crop sensitivity to       S       -
+             soil moisture stress.
+    KDIFTB   Extinction coefficient for diffuse visible      T       -
+             as function of DVS.
+    IOX      Switch oxygen stress on (1) or off (0)          S       -
+    IAIRDU   Switch airducts on (1) or off (0)               S       -
+    CRAIRC   Critical air content for root aeration          S       -
+    SM0      Soil porosity                                   S       -
+    SMW      Volumetric soil moisture content at wilting     S       -
+             point
+    SMCFC    Volumetric soil moisture content at field       S       -
+             capacity
+    SM0      Soil porosity                                   S       -
+    CO2      Atmospheric CO2 concentration                   S       ppm
+    CO2TRATB Reduction factor for TRAMX as function of
+             atmospheric CO2 concentration                   T       -
+    ======== ============================================= =======  ============
+
+
+    *State variables*
+
+    Note that these state variables are only assigned after finalize() has been
+    run.
+
+    =======  ================================================= ==== ============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================= ==== ============
+    IDWST     Nr of days with water stress.                      N    -
+    IDOST     Nr of days with oxygen stress.                     N    -
+    =======  ================================================= ==== ============
+
+
+    *Rate variables*
+
+    =======  ================================================= ==== ============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================= ==== ============
+    EVWMX    Maximum evaporation rate from an open water        Y    |cm day-1|
+             surface.
+    EVSMX    Maximum evaporation rate from a wet soil surface.  Y    |cm day-1|
+    TRAMX    Maximum transpiration rate from the plant canopy   Y    |cm day-1|
+    TRA      Actual transpiration rate from the plant canopy    Y    |cm day-1|
+    IDOS     Indicates water stress on this day (True|False)    N    -
+    IDWS     Indicates oxygen stress on this day (True|False)   N    -
+    RFWS     Reducation factor for water stress                 Y     -
+    RFOS     Reducation factor for oxygen stress                Y     -
+    RFTRA    Reduction factor for transpiration (wat & ox)      Y     -
+    =======  ================================================= ==== ============
+
+    *Signals send or handled*
+
+    None
+
+    *External dependencies:*
+
+    =======  =================================== =================  ============
+     Name     Description                         Provided by         Unit
+    =======  =================================== =================  ============
+    DVS      Crop development stage              DVS_Phenology       -
+    LAI      Leaf area index                     Leaf_dynamics       -
+    SM       Volumetric soil moisture content    Waterbalance        -
+    =======  =================================== =================  ============
+    """
+
+    # helper variable for counting total days with water and oxygen
+    # stress (IDWST, IDOST)
+    _IDWST = Int(0)
+    _IDOST = Int(0)
+
+    soil_profile = None
+
+    class Parameters(ParamTemplate):
+        CFET    = Float(-99.)
+        DEPNR   = Float(-99.)
+        KDIFTB  = AfgenTrait()
+        IAIRDU  = Float(-99.)
+        IOX     = Float(-99.)
+        CO2     = Float(-99.)
+        CO2TRATB = AfgenTrait()
+
+    class RateVariables(RatesTemplate):
+        EVWMX = Float(-99.)
+        EVSMX = Float(-99.)
+        TRAMX = Float(-99.)
+        TRA   = Float(-99.)
+        TRALY = Instance(np.ndarray)
+        IDOS  = Bool(False)
+        IDWS  = Bool(False)
+        RFWS = Instance(np.ndarray)
+        RFOS = Instance(np.ndarray)
+        RFTRALY = Instance(np.ndarray)
+        RFTRA = Float(-99.)
+
+    class StateVariables(StatesTemplate):
+        IDOST  = Int(-99)
+        IDWST  = Int(-99)
+
+    def initialize(self, day, kiosk, parvalues):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        :param soildata: dictionary with WOFOST soildata key/value pairs
+        """
+
+        self.soil_profile = SoilProfile(parvalues)
+        self.kiosk = kiosk
+        self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(kiosk, publish=["EVWMX","EVSMX", "TRAMX","TRA","TRALY", "RFTRA"])
+        self.states = self.StateVariables(kiosk, IDOST=-999, IDWST=-999)
+
+    @prepare_rates
+    def __call__(self, day, drv):
+        p = self.params
+        r = self.rates
+        k = self.kiosk
+
+        # reduction factor for CO2 on TRAMX
+        RF_TRAMX_CO2 = p.CO2TRATB(p.CO2)
+
+        # crop specific correction on potential transpiration rate
+        ET0_CROP = max(0., p.CFET * drv.ET0)
+
+        # maximum evaporation and transpiration rates
+        KGLOB = 0.75*p.KDIFTB(k.DVS)
+        EKL = exp(-KGLOB * k.LAI)
+        r.EVWMX = drv.E0 * EKL
+        r.EVSMX = max(0., drv.ES0 * EKL)
+        r.TRAMX = ET0_CROP * (1.-EKL) * RF_TRAMX_CO2
+
+        # Critical soil moisture
+        SWDEP = SWEAF(ET0_CROP, p.DEPNR)
+        depth = 0.0
+
+        RFWS = np.zeros(len(self.soil_profile), dtype=np.float64)
+        RFOS = np.zeros_like(RFWS)
+        TRALY = np.zeros_like(RFWS)
+
+        layercnt = range(len(self.soil_profile))
+        for i, SM, layer in zip(layercnt, k.SM, self.soil_profile):
+            SMCR = (1.-SWDEP)*(layer.SMFCF - layer.SMW) + layer.SMW
+
+            # Reduction factor for transpiration in case of water shortage (RFWS)
+            RFWS[i] = limit(0., 1., (SM - layer.SMW)/(SMCR - layer.SMW))
+
+            # reduction in transpiration in case of oxygen shortage (RFOS)
+            # for non-rice crops, and possibly deficient land drainage
+            RFOS[i] = 1.
+            if p.IAIRDU == 0 and p.IOX == 1:
+                RFOSMX = limit(0., 1., (p.SM0 - k.SM)/p.CRAIRC)
+                # maximum reduction reached after 4 days
+                RFOS[i] = RFOSMX + (1. - min(k.DSOS, 4)/4.)*(1.-RFOSMX)
+
+            root_fraction = max(0.0, (min(k.RD, depth + layer.Thickness) - depth)) / k.RD
+
+            # Max transpiration rate multiplied with reduction factors for oxygen and water,
+            # multiplied by the root fraction
+            RFTRA_layer = RFOS[i] * RFWS[i]
+            TRALY[i] = r.TRAMX * RFTRA_layer * root_fraction
+
+            depth += layer.Thickness
+
+        r.TRA = TRALY.sum()
+        r.TRALY = TRALY
+        r.RFTRA = r.TRA/r.TRAMX if r.TRAMX > 0. else 1.
+        r.RFOS = RFOS
+        r.RFWS = RFWS
+
+        # Counting stress days
+        if any(r.RFWS < 1.):
+            r.IDWS = True
+            self._IDWST += 1
+        if any(r.RFOS < 1.):
+            r.IDOS = True
+            self._IDOST += 1
 
     @prepare_states
     def finalize(self, day):
