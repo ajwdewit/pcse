@@ -16,44 +16,30 @@ from .soil_profile import SoilProfile
 class WaterBalanceLayered(SimulationObject):
 
     _default_RD = 10.  # default rooting depth at 10 cm
-    RDold = None
-    RINold = Float(-99.)
-    DSLR = Int(-99)
-    RDM = None
+    _RDold = None
+    _RINold = Float(-99.)
+    _DSLR = Int(-99)
+    _RDM = None
     _RIRR = Float(-99)
     _RAIN = Float(-99)
-
-    # output from layer weights function
-    Wtop = None
-    Wpot = None
-    Wund = None
-    ILR = None
-    ILM = None
 
     # Max number of flow iterations
     MaxFlowIter = 50
     TinyFlow = 0.001
 
     # Maximum upward flow is 50% of amount needed to reach equilibrium between layers
-    # see documentatin Kees Rappoldt - page 80
+    # see documentation Kees Rappoldt - page 80
     UpwardFlowLimit = 0.50
 
     soil_profile = None
 
     class Parameters(ParamTemplate):
-        # SMFCF = List()
-        # SM0 = List()
-        # SMW = List()
-        # CRAIRC = List()
-        # SOIL_LAYERS = List()
-        # SOIL_PROFILE = Instance(DotMap)
         IFUNRN = Int(-99)
         NOTINF = Float(-99.)
         SSI = Float(-99.)
         SSMAX = Float(-99.)
         SMLIM = Float(-99.)
         WAV = Float(-99.)
-
 
     class StateVariables(StatesTemplate):
         WTRAT = Float(-99)
@@ -64,11 +50,9 @@ class WaterBalanceLayered(SimulationObject):
         WDRT = Float(-99)
         TOTINF = Float(-99)
         TOTIRR = Float(-99)
-        SUMSM = Float(-99)
         PERCT = Float(-99)
         LOSST = Float(-99)
         CRT = Float(-99)
-        # DSLR = Int(-1)
         SM = Instance(np.ndarray)
         SM_MEAN = Float(-99.)
         WC = Instance(np.ndarray)
@@ -98,22 +82,18 @@ class WaterBalanceLayered(SimulationObject):
     def initialize(self, day, kiosk, parvalues):
 
         self.soil_profile = SoilProfile(parvalues)
-        self._LayerThickness = [l.Thickness for l in self.soil_profile]
-        LayerLowerBoundary = list(np.cumsum(self._LayerThickness))
 
-        # Maximum rootable depth, this has to change layer because RDMCR
+        # Maximum rootable depth, this has to change later because RDMCR
         # is often not known at this point.
-        RDMCR = 125.
-        self.RDM = min(RDMCR, max(LayerLowerBoundary))
-        self.soil_profile.validate_max_rooting_depth(self.RDM)
+        RDMsoil = self.soil_profile.get_max_rootable_depth()
+        self._RDM = min(parvalues["RDMCR"], RDMsoil)
+        self.soil_profile.validate_max_rooting_depth(self._RDM)
 
         self.params = self.Parameters(parvalues)
         p = self.params
 
-        r = self._LayerWeights(RD=self._default_RD, RDM=self.RDM)
-        self.Wtop, self.Wpot, self.Wund, self.ILR, self.ILM = r
-        self.soil_profile.determine_rooting_status(self._default_RD, self.RDM)
-        self.soil_profile.compute_layer_weights(self._default_RD, self.RDM)
+        self.soil_profile.determine_rooting_status(self._default_RD, self._RDM)
+        self.soil_profile.compute_layer_weights(self._default_RD, self._RDM)
 
         if self.soil_profile.GroundWater:
             raise NotImplementedError("Groundwater influence not yet implemented.")
@@ -194,30 +174,29 @@ class WaterBalanceLayered(SimulationObject):
         ZT = 999.0
 
         # Initial values for rootzone and subsoil water
-        self._WI    = W
+        self._WI = W
         self._WLOWI = WLOW
         self._WWLOWI = W + WLOW
 
         # soil evaporation, days since last rain
         layer1_half_wet = self.soil_profile[0].SMW + 0.5 * \
                                    (self.soil_profile[0].SMFCF - self.soil_profile[0].SMW)
-        self.DSLR = 5 if SM[0] <= layer1_half_wet else 1
+        self._DSLR = 5 if SM[0] <= layer1_half_wet else 1
 
         # all summation variables of the water balance are set at zero.
         states = {
             "WTRAT": 0., "EVST": 0., "EVWT": 0., "TSR": 0.,
             "RAINT": 0., "WDRT": 0., "TOTINF": 0., "TOTIRR": 0.,
-            "SUMSM": 0., "PERCT": 0., "LOSST": 0., "SS":0.,
+            "PERCT": 0., "LOSST": 0., "SS":0.,
             "CRT": 0., "RAINT": 0., "WLOW": WLOW, "W": W, "WC": WC, "SM":SM,
             "SS": p.SSI, "WWLOW": W+WLOW, "WBOT":0., "SM_MEAN": W/self._default_RD,
             "WAVUPP":WAVUPP, "WAVLOW": WAVLOW, "WAVBOT":0.
         }
         self.states = self.StateVariables(kiosk, publish=["WC", "SM"], **states)
-        s = self.states
 
-        self.RINold = 0.
+        self._RINold = 0.
         self._RIRR = 0.
-        self.RDold = self._default_RD
+        self._RDold = self._default_RD
 
         # rate variables
         self.rates = self.RateVariables(kiosk)
@@ -262,16 +241,16 @@ class WaterBalanceLayered(SimulationObject):
             r.EVW = EVWMX
         else:
             # else assume evaporation from soil surface
-            if self.RINold >= 1:
+            if self._RINold >= 1:
                 # If infiltration >= 1cm on previous day assume maximum soil
                 # evaporation
                 r.EVS = EVSMX
-                self.DSLR = 1
+                self._DSLR = 1
             else:
                 # Else soil evaporation is a function days-since-last-rain (DSLR)
-                EVSMXT = EVSMX * (sqrt(self.DSLR + 1) - sqrt(self.DSLR))
-                r.EVS = min(EVSMX, EVSMXT + self.RINold)
-                self.DSLR += 1
+                EVSMXT = EVSMX * (sqrt(self._DSLR + 1) - sqrt(self._DSLR))
+                r.EVS = min(EVSMX, EVSMXT + self._RINold)
+                self._DSLR += 1
 
         # conductivities and Matric Flux Potentials for all layers
         pF = np.zeros_like(s.SM)
@@ -538,29 +517,31 @@ class WaterBalanceLayered(SimulationObject):
         # RD (or RDM) may require a negative percolation (or loss) for keeping the layer uniform.
         # This is in fact a numerical dispersion. After reaching RDM, this negative (LOSS) can be
         # prevented by choosing a layer boundary at RDM.
-        if self.ILR < self.ILM:
+        RD = self._determine_rooting_depth()
+        ILR, ILM = self.soil_profile.find_layer_indices_for_rooting(RD, self._RDM)
+        if ILR < ILM:
             # layer ILR is divided into rooted part (where the sink is) and a below-roots part
             # The flow in between is PERC
-            f1 = self.Wtop[self.ILR]
-            r.PERC = (1.0-f1) * (Flow[self.ILR] - WTRALY[self.ILR]) + f1 * Flow[self.ILR+1]
+            f1 = self.soil_profile[ILR].Wtop
+            r.PERC = (1.0-f1) * (Flow[ILR] - WTRALY[ILR]) + f1 * Flow[ILR+1]
 
             # layer ILM is divided as well ; the flow in between is LOSS
-            f1 = self.Wpot[self.ILM]
-            r.LOSS = (1.0-f1) * Flow[self.ILM] + f1 * Flow[self.ILM+1]
-        elif self.ILR == self.ILM:
+            f1 = self.soil_profile[ILR].Wpot
+            r.LOSS = (1.0-f1) * Flow[ILM] + f1 * Flow[ILM+1]
+        elif ILR == ILM:
             # depths RD and RDM in the same soil layer: there are three "sublayers":
             # - the rooted sublayer with fraction f1
             # - between RD and RDM with fraction f2
             # - below RDM with fraction f3
             # PERC goes from 1->2, LOSS from 2->3
             # PERC and LOSS are calculated in such a way that the three sublayers have equal SM
-            f1 = self.Wtop[self.ILR]
-            f2 = self.Wpot[self.ILM]
+            f1 = self.soil_profile[ILR].Wtop
+            f2 = self.soil_profile[ILM].Wpot
             f3 = 1.0 - f1 - f2
-            r.LOSS = f3 * (Flow[self.ILR] - WTRALY[self.ILR]) + (1.0-f3) * Flow[self.ILR+1]
-            r.PERC = (1.0-f1) * (Flow[self.ILR] - WTRALY[self.ILR]) + f1 * Flow[self.ILR+1]
+            r.LOSS = f3 * (Flow[ILR] - WTRALY[ILR]) + (1.0-f3) * Flow[ILR+1]
+            r.PERC = (1.0-f1) * (Flow[ILR] - WTRALY[ILR]) + f1 * Flow[ILR+1]
         else:
-            raise RuntimeError("Failure calculating LOSS/PERC")
+            raise exc.PCSEError("Failure calculating LOSS/PERC")
 
         # rates of change in amounts of moisture W and WLOWI
         r.DW = -sum(WTRALY) - r.EVS - r.PERC + r.RIN
@@ -584,7 +565,7 @@ class WaterBalanceLayered(SimulationObject):
         # incoming rainfall rate
         r.DRAINT = drv.RAIN
 
-        self.RINold = r.RIN
+        self._RINold = r.RIN
 
     @prepare_states
     def integrate(self, day, delt):
@@ -606,75 +587,53 @@ class WaterBalanceLayered(SimulationObject):
         s.WC = WC
 
         # total transpiration
-        s.WTRAT = s.WTRAT + r.WTRA * delt
+        s.WTRAT += r.WTRA * delt
 
         # total evaporation from surface water layer and/or soil
-        s.EVWT = s.EVWT + r.EVW * delt
-        s.EVST = s.EVST + r.EVS * delt
+        s.EVWT += r.EVW * delt
+        s.EVST += r.EVS * delt
 
         # totals for rainfall, irrigation and infiltration
-        s.TOTINF = s.TOTINF + r.RIN * delt
-        s.TOTIRR = s.TOTIRR + r.RIRR * delt
+        s.TOTINF += r.RIN * delt
+        s.TOTIRR += r.RIRR * delt
 
         # surface storage and runoff
-        s.SS    += r.DSS * delt
-        s.TSR   += r.DTSR * delt
-
-        # amount of water in rooted zone
-        s.W      = s.W + r.DW * delt
-        # WAVUPP = s.WAVUPP + r.DW * delt
-
-        # amount of water in unrooted, lower part of rootable zone
-        s.WLOW   = s.WLOW   + r.DWLOW*delt
-        #s.WAVLOW = s.WAVLOW + r.DWLOW*delt
-
-        # total amount of water in the whole rootable zone
-        s.WWLOW = s.W + s.WLOW
-
-        # and in layered soil below RDM
-        # s.WBOT = s.WBOT + r.DWBOT * delt
+        s.SS += r.DSS * delt
+        s.TSR += r.DTSR * delt
 
         # percolation from rootzone ; interpretation depends on mode
         if self.soil_profile.GroundWater:
-            # with groundwater this flow is either percolation or capillairy rise
+            # with groundwater this flow is either percolation or capillary rise
             if r.PERC > 0.0:
                 s.PERCT = s.PERCT + r.PERC * delt
             else:
                 s.CRT = s.CRT - r.PERC * delt
         else:
             # without groundwater this flow is always called percolation
-            s.PERCT = s.PERCT + r.PERC * delt
+            s.PERCT += r.PERC * delt
             s.CRT   = 0.0
 
         # loss of water by flow from the potential rootzone
-        s.LOSST = s.LOSST + r.LOSS * delt
+        s.LOSST += r.LOSS * delt
 
         s.RAINT += self._RAIN
 
-
-        #----------------------------------------------
         # change of rootzone subsystem boundary
-        #----------------------------------------------
-        # calculation of amount of soil moisture in new rootzone
         RD = self._determine_rooting_depth()
-        RDchange = RD - self.RDold
-
+        RDchange = RD - self._RDold
         if abs(RDchange) > 0.001:
-            self.soil_profile.determine_rooting_status(RD, self.RDM)
-            self.soil_profile.compute_layer_weights(RD, self.RDM)
-            # roots have grown find new values ; overwrite W, WLOW, WAVUPP, WAVLOW, WBOT, WAVBOT
-            r = self._LayerWeights(RD=RD, RDM=self.RDM)
-            self.Wtop, self.Wpot, self.Wund, self.ILR, self.ILM = r
+            self.soil_profile.determine_rooting_status(RD, self._RDM)
+            self.soil_profile.compute_layer_weights(RD, self._RDM)
 
-        W    = 0.0 ; WAVUPP = 0.0
+        # compute summary values for rooted, potentially rooted and unrooted soil compartments
+        W = 0.0 ; WAVUPP = 0.0
         WLOW = 0.0 ; WAVLOW = 0.0
         WBOT = 0.0 ; WAVBOT = 0.0
         # get W and WLOW and available water amounts
         for il, layer in enumerate(self.soil_profile):
-            W    += s.WC[il] * layer.Wtop
+            W += s.WC[il] * layer.Wtop
             WLOW += s.WC[il] * layer.Wpot
             WBOT += s.WC[il] * layer.Wund
-            #
             WAVUPP += (s.WC[il] - layer.WCW) * layer.Wtop
             WAVLOW += (s.WC[il] - layer.WCW) * layer.Wpot
             WAVBOT += (s.WC[il] - layer.WCW) * layer.Wund
@@ -689,7 +648,7 @@ class WaterBalanceLayered(SimulationObject):
         s.WAVBOT = WAVBOT
 
         # save rooting depth for which layer contents have been determined
-        self.RDold = RD
+        self._RDold = RD
 
         s.SM_MEAN = s.W/RD
 
@@ -704,61 +663,3 @@ class WaterBalanceLayered(SimulationObject):
         else:
             # Hold RD at default value
             return self._default_RD
-
-    def _LayerWeights(self,RD, RDM):
-        # !-----------------------------------------------------------------------
-        # !
-        # ! weight factors for rooted- and sub-layer calculations
-        # ! RD       - the rooting depth
-        # ! RDM      - max rooting depth
-        # ! LayerTHK - the layerthickness
-        # ! LayerLB  - the Lower Boundaries of the NL soil layers
-        # ! NL       - number of layers
-        # ! LRD      - deepest layer containing roots
-        # ! LRM      - deepest layer that will contain roots
-        Wtop = []  # weights for contribution to rootzone
-        Wpot = []  # weights for contribution to potentially rooted zone
-        Wund = []  # weights for contribution to never rooted layers
-        # find deepest layer with roots
-        LayerTHK = [l.Thickness for l in self.soil_profile]
-        NL = len(self.soil_profile)
-        LayerLB = list(np.cumsum(LayerTHK))
-        LRD = NL
-        LRM = NL
-        for il in reversed(range(NL)):
-            if LayerLB[il] >= RD: LRD = il
-            if LayerLB[il] >= RDM: LRM = il
-
-        for il in range(NL):
-            if il < LRD:
-                # rooted layer
-                Wtop.append(1.0)
-                Wpot.append(0.0)
-                Wund.append(0.0)
-            elif il == LRD and il < LRM:
-                # partly rooted, at the end fully rooted
-                Wtop.append(1.0 - (LayerLB[il]-RD) / LayerTHK[il])
-                Wpot.append(1.0 - Wtop[il])
-                Wund.append(0.0)
-            elif il == LRD and il == LRM:
-                # partly rooted, at the end partly rooted
-                Wtop.append(1.0 - (LayerLB[il]-RD ) / LayerTHK[il])
-                Wund.append((LayerLB[il]-RDM) / LayerTHK[il])
-                Wpot.append(1.0 - Wund[il] - Wtop[il])
-            elif il < LRM:
-                # not rooted, at the end fully rooted
-                Wtop.append(0.0)
-                Wpot.append(1.0)
-                Wund.append(0.0)
-            elif il == LRM:
-                # not rooted, at the end partly rooted
-                Wtop.append(0.0)
-                Wund.append((LayerLB[il]-RDM) / LayerTHK[il])
-                Wpot.append(1.0 - Wund[il])
-            else:
-                # never rooted
-                Wtop.append(0.0)
-                Wpot.append(0.0)
-                Wund.append(1.0)
-
-        return Wtop, Wpot, Wund, LRD, LRM

@@ -188,3 +188,29 @@ class SoilProfile(list):
         else:  # no break
             msg = "Current maximum rooting depth (%f)does not coincide with a layer boundary!" % RDM
             raise exc.PCSEError(msg)
+
+    def find_layer_indices_for_rooting(self, RD, RDM):
+        """Returns the index position for the deepest layer which is currently rooted (ILR) and
+        the index position for the deepest layer which can be potentially rooted (ILM)
+        """
+        LayerTHK = [l.Thickness for l in self]
+        NL = len(self)
+        LayerLB = list(np.cumsum(LayerTHK))
+        ILR = NL
+        ILM = NL
+        for il in reversed(range(NL)):
+            if LayerLB[il] >= RD: ILR = il
+            if LayerLB[il] >= RDM: ILM = il
+
+        return ILR, ILM
+
+    def get_max_rootable_depth(self):
+        """Returns the maximum soil rootable depth.
+
+        here we assume that the max rootable depth is equal to the lower boundary of the last layer.
+
+        :return: the max rootable depth in cm
+        """
+        LayerThickness = [l.Thickness for l in self]
+        LayerLowerBoundary = list(np.cumsum(LayerThickness))
+        return max(LayerLowerBoundary)
