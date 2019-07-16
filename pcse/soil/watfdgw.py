@@ -9,6 +9,7 @@ from ..util import limit, Afgen, merge_dict, doy
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import exceptions as exc
+from .. import signals
 
 from .soil_profile import SoilProfile
 
@@ -22,6 +23,7 @@ class WaterBalanceLayered(SimulationObject):
     _RDM = None
     _RIRR = Float(-99)
     _RAIN = Float(-99)
+    _WCI = Float(-99)
 
     # Max number of flow iterations
     MaxFlowIter = 50
@@ -30,6 +32,8 @@ class WaterBalanceLayered(SimulationObject):
     # Maximum upward flow is 50% of amount needed to reach equilibrium between layers
     # see documentation Kees Rappoldt - page 80
     UpwardFlowLimit = 0.50
+
+    crop_start = Bool(False)
 
     soil_profile = None
 
@@ -50,8 +54,8 @@ class WaterBalanceLayered(SimulationObject):
         WDRT = Float(-99)
         TOTINF = Float(-99)
         TOTIRR = Float(-99)
-        PERCT = Float(-99)
-        LOSST = Float(-99)
+        # PERCT = Float(-99)
+        # LOSST = Float(-99)
         CRT = Float(-99)
         SM = Instance(np.ndarray)
         SM_MEAN = Float(-99.)
@@ -64,6 +68,8 @@ class WaterBalanceLayered(SimulationObject):
         WAVLOW = Float(-99)
         WAVBOT = Float(-99)
         SS = Float(-99)
+        BOTTOMFLOWT = Float(-99.)
+
 
     class RateVariables(RatesTemplate):
         RIN = Float(-99)
@@ -73,15 +79,17 @@ class WaterBalanceLayered(SimulationObject):
         EVW = Float(-99)
         RIRR = Float(-99)
         DWC = Instance(np.ndarray)
-        PERC = Float(-99)
-        LOSS = Float(-99)
+        # PERC = Float(-99)
+        # LOSS = Float(-99)
         DRAINT = Float(-99)
         DSS = Float(-99)
         DTSR = Float(-99)
+        BOTTOMFLOW = Float(-99.)
 
     def initialize(self, day, kiosk, parvalues):
 
         self.soil_profile = SoilProfile(parvalues)
+        parvalues._soildata["soil_profile"] = self.soil_profile
 
         # Maximum rootable depth, this has to change later because RDMCR
         # is often not known at this point.
@@ -174,9 +182,7 @@ class WaterBalanceLayered(SimulationObject):
         ZT = 999.0
 
         # Initial values for rootzone and subsoil water
-        self._WI = W
-        self._WLOWI = WLOW
-        self._WWLOWI = W + WLOW
+        self._WCI = WC.sum()
 
         # soil evaporation, days since last rain
         layer1_half_wet = self.soil_profile[0].SMW + 0.5 * \
@@ -187,7 +193,7 @@ class WaterBalanceLayered(SimulationObject):
         states = {
             "WTRAT": 0., "EVST": 0., "EVWT": 0., "TSR": 0.,
             "RAINT": 0., "WDRT": 0., "TOTINF": 0., "TOTIRR": 0.,
-            "PERCT": 0., "LOSST": 0., "SS":0.,
+            "PERCT": 0., "LOSST": 0., "SS":0., "BOTTOMFLOWT": 0.,
             "CRT": 0., "RAINT": 0., "WLOW": WLOW, "W": W, "WC": WC, "SM":SM,
             "SS": p.SSI, "WWLOW": W+WLOW, "WBOT":0., "SM_MEAN": W/self._default_RD,
             "WAVUPP":WAVUPP, "WAVLOW": WAVLOW, "WAVBOT":0.
@@ -200,6 +206,14 @@ class WaterBalanceLayered(SimulationObject):
 
         # rate variables
         self.rates = self.RateVariables(kiosk)
+
+        # Connect to CROP_START/CROP_FINISH signals for water balance to
+        # search for crop transpiration values
+        self._connect_signal(self._on_CROP_START, signals.crop_start)
+        self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
+        # signal for irrigation
+        self._connect_signal(self._on_IRRIGATE, signals.irrigate)
+
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -511,41 +525,46 @@ class WaterBalanceLayered(SimulationObject):
             # rate of change
             r.DWC[il] = Flow[il] - Flow[il+1] - WTRALY[il]
 
-        # Percolation and Loss.
-        # Equations were derived from the requirement that in the same layer, above and below
-        # depth RD (or RDM), the water content is uniform. Note that transpiration above depth
-        # RD (or RDM) may require a negative percolation (or loss) for keeping the layer uniform.
-        # This is in fact a numerical dispersion. After reaching RDM, this negative (LOSS) can be
-        # prevented by choosing a layer boundary at RDM.
-        RD = self._determine_rooting_depth()
-        ILR, ILM = self.soil_profile.find_layer_indices_for_rooting(RD, self._RDM)
-        if ILR < ILM:
-            # layer ILR is divided into rooted part (where the sink is) and a below-roots part
-            # The flow in between is PERC
-            f1 = self.soil_profile[ILR].Wtop
-            r.PERC = (1.0-f1) * (Flow[ILR] - WTRALY[ILR]) + f1 * Flow[ILR+1]
+        # Flow at the bottom of the profile
+        r.BOTTOMFLOW = Flow[-1]
 
-            # layer ILM is divided as well ; the flow in between is LOSS
-            f1 = self.soil_profile[ILR].Wpot
-            r.LOSS = (1.0-f1) * Flow[ILM] + f1 * Flow[ILM+1]
-        elif ILR == ILM:
-            # depths RD and RDM in the same soil layer: there are three "sublayers":
-            # - the rooted sublayer with fraction f1
-            # - between RD and RDM with fraction f2
-            # - below RDM with fraction f3
-            # PERC goes from 1->2, LOSS from 2->3
-            # PERC and LOSS are calculated in such a way that the three sublayers have equal SM
-            f1 = self.soil_profile[ILR].Wtop
-            f2 = self.soil_profile[ILM].Wpot
-            f3 = 1.0 - f1 - f2
-            r.LOSS = f3 * (Flow[ILR] - WTRALY[ILR]) + (1.0-f3) * Flow[ILR+1]
-            r.PERC = (1.0-f1) * (Flow[ILR] - WTRALY[ILR]) + f1 * Flow[ILR+1]
-        else:
-            raise exc.PCSEError("Failure calculating LOSS/PERC")
+        # # Percolation and Loss.
+        # # Equations were derived from the requirement that in the same layer, above and below
+        # # depth RD (or RDM), the water content is uniform. Note that transpiration above depth
+        # # RD (or RDM) may require a negative percolation (or loss) for keeping the layer uniform.
+        # # This is in fact a numerical dispersion. After reaching RDM, this negative (LOSS) can be
+        # # prevented by choosing a layer boundary at RDM.
+        # RD = self._determine_rooting_depth()
+        # ILR, ILM = self.soil_profile.find_layer_indices_for_rooting(RD, self._RDM)
+        # if ILR < ILM:
+        #     # layer ILR is divided into rooted part (where the sink is) and a below-roots part
+        #     # The flow in between is PERC
+        #     f1 = self.soil_profile[ILR].Wtop
+        #     r.PERC = (1.0-f1) * (Flow[ILR] - WTRALY[ILR]) + f1 * Flow[ILR+1]
+        #
+        #     # layer ILM is divided as well ; the flow in between is LOSS
+        #     f1 = self.soil_profile[ILR].Wpot
+        #     r.LOSS = (1.0-f1) * Flow[ILM] + f1 * Flow[ILM+1]
+        # elif ILR == ILM:
+        #     # depths RD and RDM in the same soil layer: there are three "sublayers":
+        #     # - the rooted sublayer with fraction f1
+        #     # - between RD and RDM with fraction f2
+        #     # - below RDM with fraction f3
+        #     # PERC goes from 1->2, LOSS from 2->3
+        #     # PERC and LOSS are calculated in such a way that the three sublayers have equal SM
+        #     f1 = self.soil_profile[ILR].Wtop
+        #     f2 = self.soil_profile[ILM].Wpot
+        #     f3 = 1.0 - f1 - f2
+        #     r.LOSS = f3 * (Flow[ILR] - WTRALY[ILR]) + (1.0-f3) * Flow[ILR+1]
+        #     r.PERC = (1.0-f1) * (Flow[ILR] - WTRALY[ILR]) + f1 * Flow[ILR+1]
+        # else:
+        #     raise exc.PCSEError("Failure calculating LOSS/PERC")
+        #
+        # # rates of change in amounts of moisture W and WLOWI
+        # r.DW = -sum(WTRALY) - r.EVS - r.PERC + r.RIN
+        # r.DWLOW = r.PERC - r.LOSS
 
-        # rates of change in amounts of moisture W and WLOWI
-        r.DW = -sum(WTRALY) - r.EVS - r.PERC + r.RIN
-        r.DWLOW = r.PERC - r.LOSS
+
 
         if self.soil_profile.GroundWater:
             # groundwater influence
@@ -601,6 +620,9 @@ class WaterBalanceLayered(SimulationObject):
         s.SS += r.DSS * delt
         s.TSR += r.DTSR * delt
 
+        # loss of water by outflow through bottom of profile
+        s.BOTTOMFLOWT += r.BOTTOMFLOW * delt
+
         # percolation from rootzone ; interpretation depends on mode
         if self.soil_profile.GroundWater:
             # with groundwater this flow is either percolation or capillary rise
@@ -610,11 +632,11 @@ class WaterBalanceLayered(SimulationObject):
                 s.CRT = s.CRT - r.PERC * delt
         else:
             # without groundwater this flow is always called percolation
-            s.PERCT += r.PERC * delt
+            # s.PERCT += r.PERC * delt
             s.CRT   = 0.0
 
         # loss of water by flow from the potential rootzone
-        s.LOSST += r.LOSS * delt
+        # s.LOSST += r.LOSS * delt
 
         s.RAINT += self._RAIN
 
@@ -652,6 +674,23 @@ class WaterBalanceLayered(SimulationObject):
 
         s.SM_MEAN = s.W/RD
 
+    @prepare_states
+    def finalize(self, day):
+        s = self.states
+        p = self.params
+        if self.soil_profile.GroundWater:
+            # checksums waterbalance for system Groundwater version
+            # WBALRT_GW = TOTINF + CRT + WI - W + WDRT - EVST - TRAT - PERCT
+            # WBALTT_GW = SSI + RAINT + TOTIRR + WI - W + WZI - WZ - TRAT - EVWT - EVST - TSR - DRAINT - SS
+            pass
+        else:
+            # checksums waterbalance for system Free Drainage version
+            checksum = (p.SSI + s.RAINT + s.TOTIRR + self._WCI - s.WC.sum() -
+                        s.WTRAT - s.EVWT - s.EVST - s.TSR - s.BOTTOMFLOWT - s.SS)
+            if abs(checksum) > 0.0001:
+                msg = "Waterbalance not closing on %s with checksum: %f" % (day, checksum)
+                raise exc.WaterBalanceError(msg)
+
     def _determine_rooting_depth(self):
         """Determines appropriate use of the rooting depth (RD)
 
@@ -663,3 +702,26 @@ class WaterBalanceLayered(SimulationObject):
         else:
             # Hold RD at default value
             return self._default_RD
+
+    def _on_CROP_START(self):
+        pass
+        self.crop_start = True
+        # self.rooted_layer_needs_reset = True
+
+    def _on_CROP_FINISH(self):
+        pass
+        # self.in_crop_cycle = False
+        # self.rooted_layer_needs_reset = True
+
+    def _on_IRRIGATE(self, amount, efficiency):
+        self._RIRR = amount * efficiency
+
+    def _setup_new_crop(self, day):
+        """Retrieves the crop maximum rootable depth, validates it and updates the layer weights
+        in order to have a correct calculation of summary waterbalance states.
+
+        """
+        self._RDM = self.parameter_provider["RDMCR"]
+        self.soil_profile.validate_max_rooting_depth(self._RDM)
+        self.soil_profile.determine_rooting_status(self._default_RD, self._RDM)
+        self.soil_profile.compute_layer_weights(self._default_RD, self._RDM)

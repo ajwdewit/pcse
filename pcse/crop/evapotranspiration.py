@@ -507,7 +507,7 @@ class EvapotranspirationCO2Layered(SimulationObject):
         :param soildata: dictionary with WOFOST soildata key/value pairs
         """
 
-        self.soil_profile = SoilProfile(parvalues)
+        self.soil_profile = parvalues["soil_profile"]
         self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish=["EVWMX","EVSMX", "TRAMX","TRA","TRALY", "RFTRA"])
