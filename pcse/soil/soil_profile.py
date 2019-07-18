@@ -86,11 +86,8 @@ class SoilLayer(HasTraits):
         self.CondK0 = 10.0 ** self.CONDfromPF(-1.0)
         self.rooting_status = None
 
-        self.SoilID = layer.SoilID
-
         # compute hash value of this layer
-        # self._hash = hash((tuple(layer.SMfromPF), tuple(layer.CONDfromPF)))
-        self._hash = hash(self.SoilID)
+        self._hash = hash((tuple(layer.SMfromPF), tuple(layer.CONDfromPF)))
 
     def _invert_pF(self, SMfromPF):
         """Inverts the SMfromPF table to get pF from SM
@@ -127,10 +124,13 @@ class SoilProfile(list):
             setattr(self, attr, value)
 
     def determine_rooting_status(self, RD, RDM):
-        """Determines the rooting status of the soil layers.
+        """Determines the rooting status of the soil layers and update layer weights.
 
         Soil layers can be rooted, partially rooted, potentially rooted or never rooted.
         This is stored in layer.rooting_status
+
+        Note that this routine expected that the maximum rooting depth coincides
+        with a layer boundary.
 
         :param RD:the current rooting depth
         :param RDM: the maximum rooting depth
@@ -149,7 +149,13 @@ class SoilProfile(list):
                 layer.rooting_status = "never rooted"
             upper_layer_boundary = lower_layer_boundary
 
-    def compute_layer_weights(self, RD, RDM):
+        self._compute_layer_weights(RD)
+
+    def _compute_layer_weights(self, RD):
+        """computes the layer weights given the current rooting depth.
+
+        :param RD: The current rooting depth
+        """
         lower_layer_boundary = 0
         for layer in self:
             lower_layer_boundary += layer.Thickness
@@ -186,23 +192,8 @@ class SoilProfile(list):
             if abs(RDM - lower_layer_boundary) < tiny:
                 break
         else:  # no break
-            msg = "Current maximum rooting depth (%f)does not coincide with a layer boundary!" % RDM
+            msg = "Current maximum rooting depth (%f) does not coincide with a layer boundary!" % RDM
             raise exc.PCSEError(msg)
-
-    def find_layer_indices_for_rooting(self, RD, RDM):
-        """Returns the index position for the deepest layer which is currently rooted (ILR) and
-        the index position for the deepest layer which can be potentially rooted (ILM)
-        """
-        LayerTHK = [l.Thickness for l in self]
-        NL = len(self)
-        LayerLB = list(np.cumsum(LayerTHK))
-        ILR = NL
-        ILM = NL
-        for il in reversed(range(NL)):
-            if LayerLB[il] >= RD: ILR = il
-            if LayerLB[il] >= RDM: ILM = il
-
-        return ILR, ILM
 
     def get_max_rootable_depth(self):
         """Returns the maximum soil rootable depth.
