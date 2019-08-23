@@ -18,7 +18,7 @@ from pcse.crop.partitioning import DVS_Partitioning
 from pcse.crop.root_dynamics import WOFOST_Root_Dynamics
 from pcse.crop.evapotranspiration import Evapotranspiration
 from pcse.crop.wofost import Wofost
-from pcse.soil.classic_waterbalance import WaterbalanceFD
+from pcse.soil.classic_waterbalance import WaterbalanceFD, WaterbalancePP
 from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvider, TestSimulationObject
 
 # This defines the YAML tests, each rows represents:
@@ -26,7 +26,7 @@ from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvi
 # - the crop simobject to be tested
 # - an optional soil simobject to be tested
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
-quick_tests = [("test_potentialproduction_wofost71*", Wofost, None),
+quick_tests = [("test_potentialproduction_wofost71*", Wofost, WaterbalancePP),
                ("test_waterlimitedproduction_wofost71*", Wofost, WaterbalanceFD)]
 full_tests = [("test_phenology_wofost71*", DVS_Phenology, None),
               ("test_assimilation_wofost71*", WOFOST_Assimilation, None),
