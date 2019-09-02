@@ -105,9 +105,9 @@ class NPK_Soil_Dynamics(SimulationObject):
                increase
     TRAMX      Potential crop transpiration        Evapotranspiration     |cm|
                increase
-    RNUPTAKE   Rate of N uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
-    RPUPTAKE   Rate of P uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
-    RKUPTAKE   Rate of K uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
+    RNuptake   Rate of N uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
+    RPuptake   Rate of P uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
+    RKuptake   Rate of K uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
     =========  =================================== ===================  ==============
     """
 
@@ -195,9 +195,9 @@ class NPK_Soil_Dynamics(SimulationObject):
         r.RPSOIL = -max(0., min(p.PSOILBASE_FR * self.PSOILI * NutrientLIMIT, s.PSOIL))
         r.RKSOIL = -max(0., min(p.KSOILBASE_FR * self.KSOILI * NutrientLIMIT, s.KSOIL))
                
-        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - k.RNUPTAKE - r.RNSOIL
-        r.RPAVAIL = r.FERT_P_SUPPLY + p.BG_P_SUPPLY - k.RPUPTAKE - r.RPSOIL
-        r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - k.RKUPTAKE - r.RKSOIL
+        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - k.RNuptake - r.RNSOIL
+        r.RPAVAIL = r.FERT_P_SUPPLY + p.BG_P_SUPPLY - k.RPuptake - r.RPSOIL
+        r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - k.RKuptake - r.RKSOIL
         
     @prepare_states
     def integrate(self, day, delt=1.0):

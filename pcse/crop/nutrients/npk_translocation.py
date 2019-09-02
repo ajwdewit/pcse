@@ -18,7 +18,7 @@ class NPK_Translocation(SimulationObject):
     living biomass. The residual amount is locked into the plant structural biomass
     and cannot be mobilized anymore. The translocatable amount is calculated for
     stems, roots and leaves and published as the state variables
-    NTRANSLOCATABLE, PTRANSLOCATABLE and KTRANSLOCATABLE.
+    Ntranslocatable, Ptranslocatable and Ktranslocatable.
 
     The overal translocation rate is calculated as the minimum of supply (the
     translocatable amount) and demand from the storage organs as calculated in
@@ -48,42 +48,41 @@ class NPK_Translocation(SimulationObject):
 
     **State variables**
 
-    ================  ================================================= ===== ============
-     Name               Description                                      Pbl      Unit
-    ================  ================================================= ===== ============
-    ATNLV              Translocatable N amount in living leaves           N    |kg N ha-1|
-    ATPLV              Translocatable P amount in living leaves           N    |kg P ha-1|
-    ATKLV              Translocatable K amount in living leaves           N    |kg K ha-1|
-    ATNST              Translocatable N amount in living stems            N    |kg N ha-1|
-    ATPST              Translocatable P amount in living stems            N    |kg P ha-1|
-    ATKST              Translocatable K amount in living stems            N    |kg K ha-1|
-    ATNRT              Translocatable N amount in living roots            N    |kg N ha-1|
-    ATPRT              Translocatable P amount in living roots            N    |kg P ha-1|
-    ATKRT              Translocatable K amount in living roots            N    |kg K ha-1|
-    NTRANSLOCATABLE    Total N amount that can be translocated to the     Y    [kg N ha-1]
-                       storage organs
-    PTRANSLOCATABLE    Total P amount that can be translocated to the     Y    [kg P ha-1]
-                       storage organs
-    KTRANSLOCATABLE    Total K amount that can be translocated to the     Y    [kg K ha-1]
-                       storage organs
-    ================  ================================================= ===== ============
+    ===================  ================================================= ===== ============
+     Name                  Description                                      Pbl      Unit
+    ===================  ================================================= ===== ============
+    NtranslocatableLV     Translocatable N amount in living leaves           N    |kg N ha-1|
+    PtranslocatableLV     Translocatable P amount in living leaves           N    |kg P ha-1|
+    KtranslocatableLV     Translocatable K amount in living leaves           N    |kg K ha-1|
+    NtranslocatableST     Translocatable N amount in living stems            N    |kg N ha-1|
+    PtranslocatableST     Translocatable P amount in living stems            N    |kg P ha-1|
+    KtranslocatableST     Translocatable K amount in living stems            N    |kg K ha-1|
+    NtranslocatableRT     Translocatable N amount in living roots            N    |kg N ha-1|
+    PtranslocatableRT     Translocatable P amount in living roots            N    |kg P ha-1|
+    KtranslocatableRT     Translocatable K amount in living roots            N    |kg K ha-1|
+    Ntranslocatable       Total N amount that can be translocated to the     Y    [kg N ha-1]
+                          storage organs
+    Ptranslocatable       Total P amount that can be translocated to the     Y    [kg P ha-1]
+                          storage organs
+    Ktranslocatable       Total K amount that can be translocated to the     Y    [kg K ha-1]
+                          storage organs
+    ===================  ================================================= ===== ============
 
 
     **Rate variables**
-
-    =======  ================================================= ==== ==============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================= ==== ==============
-    RNTLV     Weight increase (N) in leaves                     Y    |kg ha-1 d-1|
-    RPTLV     Weight increase (P) in leaves                     Y    |kg ha-1 d-1|
-    RKTLV     Weight increase (K) in leaves                     Y    |kg ha-1 d-1|
-    RNTST     Weight increase (N) in stems                      Y    |kg ha-1 d-1|
-    RPTST     Weight increase (P) in stems                      Y    |kg ha-1 d-1|
-    RKTST     Weight increase (K) in stems                      Y    |kg ha-1 d-1|
-    RNTRT     Weight increase (N) in roots                      Y    |kg ha-1 d-1|
-    RPTRT     Weight increase (P) in roots                      Y    |kg ha-1 d-1|
-    RKTRT     Weight increase (K) in roots                      Y    |kg ha-1 d-1|
-    =======  ================================================= ==== ==============
+    ===================  ================================================= ==== ==============
+     Name                 Description                                      Pbl      Unit
+    ===================  ================================================= ==== ==============
+    RNtranslocationLV     Weight increase (N) in leaves                     Y    |kg ha-1 d-1|
+    RPtranslocationLV     Weight increase (P) in leaves                     Y    |kg ha-1 d-1|
+    RKtranslocationLV     Weight increase (K) in leaves                     Y    |kg ha-1 d-1|
+    RNtranslocationST     Weight increase (N) in stems                      Y    |kg ha-1 d-1|
+    RPtranslocationST     Weight increase (P) in stems                      Y    |kg ha-1 d-1|
+    RKtranslocationST     Weight increase (K) in stems                      Y    |kg ha-1 d-1|
+    RNtranslocationRT     Weight increase (N) in roots                      Y    |kg ha-1 d-1|
+    RPtranslocationRT     Weight increase (P) in roots                      Y    |kg ha-1 d-1|
+    RKtranslocationRT     Weight increase (K) in roots                      Y    |kg ha-1 d-1|
+    ===================  ================================================= ==== ==============
 
     **Signals send or handled**
 
@@ -91,24 +90,23 @@ class NPK_Translocation(SimulationObject):
 
 
     **External dependencies:**
-
-    =========  =================================== =====================  ===========
-     Name       Description                         Provided by            Unit
-    =========  =================================== =====================  ===========
+    ===========  ================================ ======================  ===========
+     Name         Description                      Provided by             Unit
+    ===========  ================================ ======================  ===========
     DVS         Crop development stage              DVS_Phenology           -
     WST         Dry weight of living stems          WOFOST_Stem_Dynamics   |kg ha-1|
     WLV         Dry weight of living leaves         WOFOST_Leaf_Dynamics   |kg ha-1|
     WRT         Dry weight of living roots          WOFOST_Root_Dynamics   |kg ha-1|
-    ANLV        Amount of N in leaves               NPK_Crop_Dynamics      |kg ha-1|
-    ANST        Amount of N in stems                NPK_Crop_Dynamics      |kg ha-1|
-    ANRT        Amount of N in roots                NPK_Crop_Dynamics      |kg ha-1|
-    APLV        Amount of P in leaves               NPK_Crop_Dynamics      |kg ha-1|
-    APST        Amount of P in stems                NPK_Crop_Dynamics      |kg ha-1|
-    APRT        Amount of P in roots                NPK_Crop_Dynamics      |kg ha-1|
-    AKLV        Amount of K in leaves               NPK_Crop_Dynamics      |kg ha-1|
-    AKST        Amount of K in stems                NPK_Crop_Dynamics      |kg ha-1|
-    AKRT        Amount of K in roots                NPK_Crop_Dynamics      |kg ha-1|
-    =========  =================================== =====================  ===========
+    NamountLV   Amount of N in leaves               NPK_Crop_Dynamics      |kg ha-1|
+    NamountST   Amount of N in stems                NPK_Crop_Dynamics      |kg ha-1|
+    NamountRT   Amount of N in roots                NPK_Crop_Dynamics      |kg ha-1|
+    PamountLV   Amount of P in leaves               NPK_Crop_Dynamics      |kg ha-1|
+    PamountST   Amount of P in stems                NPK_Crop_Dynamics      |kg ha-1|
+    PamountRT   Amount of P in roots                NPK_Crop_Dynamics      |kg ha-1|
+    KamountLV   Amount of K in leaves               NPK_Crop_Dynamics      |kg ha-1|
+    KamountST   Amount of K in stems                NPK_Crop_Dynamics      |kg ha-1|
+    KamountRT   Amount of K in roots                NPK_Crop_Dynamics      |kg ha-1|
+    ===========  ================================ ======================  ===========
     """
 
     class Parameters(ParamTemplate):
@@ -129,34 +127,34 @@ class NPK_Translocation(SimulationObject):
                                        # and stems
 
     class RateVariables(RatesTemplate):
-        RNTLV = Float(-99.)  # N translocation rate from leaves [kg ha-1 d-1]
-        RNTST = Float(-99.)  # N translocation rate from stems [kg ha-1 d-1]
-        RNTRT = Float(-99.)  # N translocation rate from roots [kg ha-1 d-1]
+        RNtranslocationLV = Float(-99.)  # N translocation rate from leaves [kg ha-1 d-1]
+        RNtranslocationST = Float(-99.)  # N translocation rate from stems [kg ha-1 d-1]
+        RNtranslocationRT = Float(-99.)  # N translocation rate from roots [kg ha-1 d-1]
 
-        RPTLV = Float(-99.)  # P translocation rate from leaves [kg ha-1 d-1]
-        RPTST = Float(-99.)  # P translocation rate from stems [kg ha-1 d-1]
-        RPTRT = Float(-99.)  # P translocation rate from roots [kg ha-1 d-1]
+        RPtranslocationLV = Float(-99.)  # P translocation rate from leaves [kg ha-1 d-1]
+        RPtranslocationST = Float(-99.)  # P translocation rate from stems [kg ha-1 d-1]
+        RPtranslocationRT = Float(-99.)  # P translocation rate from roots [kg ha-1 d-1]
 
-        RKTLV = Float(-99.)  # K translocation rate from leaves [kg ha-1 d-1]
-        RKTST = Float(-99.)  # K translocation rate from stems [kg ha-1 d-1]
-        RKTRT = Float(-99.)  # K translocation rate from roots [kg ha-1 d-1]
+        RKtranslocationLV = Float(-99.)  # K translocation rate from leaves [kg ha-1 d-1]
+        RKtranslocationST = Float(-99.)  # K translocation rate from stems [kg ha-1 d-1]
+        RKtranslocationRT = Float(-99.)  # K translocation rate from roots [kg ha-1 d-1]
 
     class StateVariables(StatesTemplate):
-        ATNLV = Float(-99.)  # translocatable N amount in leaves [kg N ha-1]
-        ATNST = Float(-99.)  # translocatable N amount in stems [kg N ha-1]
-        ATNRT = Float(-99.)  # translocatable N amount in roots [kg N ha-1]
+        NtranslocatableLV = Float(-99.)  # translocatable N amount in leaves [kg N ha-1]
+        NtranslocatableST = Float(-99.)  # translocatable N amount in stems [kg N ha-1]
+        NtranslocatableRT = Float(-99.)  # translocatable N amount in roots [kg N ha-1]
         
-        ATPLV = Float(-99.)  # translocatable P amount in leaves [kg N ha-1]
-        ATPST = Float(-99.)  # translocatable P amount in stems [kg N ha-1]
-        ATPRT = Float(-99.)  # translocatable P amount in roots [kg N ha-1]
+        PtranslocatableLV = Float(-99.)  # translocatable P amount in leaves [kg N ha-1]
+        PtranslocatableST = Float(-99.)  # translocatable P amount in stems [kg N ha-1]
+        PtranslocatableRT = Float(-99.)  # translocatable P amount in roots [kg N ha-1]
         
-        ATKLV = Float(-99.)  # translocatable K amount in leaves [kg N ha-1
-        ATKST = Float(-99.)  # translocatable K amount in stems [kg N ha-1]
-        ATKRT = Float(-99.)  # translocatable K amount in roots [kg N ha-1]
+        KtranslocatableLV = Float(-99.)  # translocatable K amount in leaves [kg N ha-1
+        KtranslocatableST = Float(-99.)  # translocatable K amount in stems [kg N ha-1]
+        KtranslocatableRT = Float(-99.)  # translocatable K amount in roots [kg N ha-1]
 
-        NTRANSLOCATABLE = Float(-99.)  # Total N amount that can be translocated to the storage organs [kg N ha-1]
-        PTRANSLOCATABLE = Float(-99.)  # Total P amount that can be translocated to the storage organs [kg P ha-1]
-        KTRANSLOCATABLE = Float(-99.)  # Total K amount that can be translocated to the storage organs [kg K ha-1]
+        Ntranslocatable = Float(-99.)  # Total N amount that can be translocated to the storage organs [kg N ha-1]
+        Ptranslocatable = Float(-99.)  # Total P amount that can be translocated to the storage organs [kg P ha-1]
+        Ktranslocatable = Float(-99.)  # Total K amount that can be translocated to the storage organs [kg K ha-1]
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -166,90 +164,71 @@ class NPK_Translocation(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["RNTLV", "RNTST", "RNTRT",
-                                                        "RPTLV", "RPTST", "RPTRT",
-                                                        "RKTLV", "RKTST", "RKTRT"])
+        self.rates = self.RateVariables(kiosk, publish=["RNtranslocationLV", "RNtranslocationST", "RNtranslocationRT",
+                                                        "RPtranslocationLV", "RPtranslocationST", "RPtranslocationRT",
+                                                        "RKtranslocationLV", "RKtranslocationST", "RKtranslocationRT"])
 
         self.states = self.StateVariables(kiosk,
-            ATNLV=0., ATNST=0., ATNRT=0., ATPLV=0., ATPST=0., ATPRT=0., ATKLV=0., ATKST=0. ,ATKRT=0.,
-            NTRANSLOCATABLE=0., PTRANSLOCATABLE=0., KTRANSLOCATABLE=0.,
-            publish=["NTRANSLOCATABLE", "PTRANSLOCATABLE", "KTRANSLOCATABLE"])
+            NtranslocatableLV=0., NtranslocatableST=0., NtranslocatableRT=0., PtranslocatableLV=0., PtranslocatableST=0., PtranslocatableRT=0., KtranslocatableLV=0., KtranslocatableST=0. ,KtranslocatableRT=0.,
+            Ntranslocatable=0., Ptranslocatable=0., Ktranslocatable=0.,
+            publish=["Ntranslocatable", "Ptranslocatable", "Ktranslocatable"])
         self.kiosk = kiosk
         
     @prepare_rates
     def calc_rates(self, day, drv):
         r = self.rates
         s = self.states
+        k = self.kiosk
 
-        RNUSO = self.kiosk["RNUSO"]  # N uptake storage organs
-        RPUSO = self.kiosk["RPUSO"]  # P uptake storage organs
-        RKUSO = self.kiosk["RKUSO"]  # K uptake storage organs
-
-#       partionioning of the uptake
-        # if max amount of translocatable N = 0 then
-        # N translocation rate is 0
-        if s.NTRANSLOCATABLE > 0.:
-            r.RNTLV = RNUSO * s.ATNLV / s.NTRANSLOCATABLE
-            r.RNTST = RNUSO * s.ATNST / s.NTRANSLOCATABLE
-            r.RNTRT = RNUSO * s.ATNRT / s.NTRANSLOCATABLE
+        # partionioning of the uptake for storage organs from the leaves, stems, roots
+        # assuming equal distribution of N/P/K from each organ.
+        # If amount of translocatable N/P/K = 0 then translocation rate is 0
+        if s.Ntranslocatable > 0.:
+            r.RNtranslocationLV = k.RNuptakeSO * s.NtranslocatableLV / s.Ntranslocatable
+            r.RNtranslocationST = k.RNuptakeSO * s.NtranslocatableST / s.Ntranslocatable
+            r.RNtranslocationRT = k.RNuptakeSO * s.NtranslocatableRT / s.Ntranslocatable
         else:
-            r.RNTLV = r.RNTST = r.RNTRT = 0.
+            r.RNtranslocationLV = r.RNtranslocationST = r.RNtranslocationRT = 0.
 
-        # if max amount of translocatable P = 0 then
-        # P translocation rate is 0
-        if s.PTRANSLOCATABLE > 0:
-            r.RPTLV = RPUSO * s.ATPLV / s.PTRANSLOCATABLE
-            r.RPTST = RPUSO * s.ATPST / s.PTRANSLOCATABLE
-            r.RPTRT = RPUSO * s.ATPRT / s.PTRANSLOCATABLE
+        if s.Ptranslocatable > 0:
+            r.RPtranslocationLV = k.RPuptakeSO * s.PtranslocatableLV / s.Ptranslocatable
+            r.RPtranslocationST = k.RPuptakeSO * s.PtranslocatableST / s.Ptranslocatable
+            r.RPtranslocationRT = k.RPuptakeSO * s.PtranslocatableRT / s.Ptranslocatable
         else:
-            r.RPTLV = r.RPTST = r.RPTRT = 0.
+            r.RPtranslocationLV = r.RPtranslocationST = r.RPtranslocationRT = 0.
 
-        # if max amount of translocatable K = 0 then
-        # K translocation rate is 0
-        if s.KTRANSLOCATABLE > 0:
-            r.RKTLV = RKUSO * s.ATKLV / s.KTRANSLOCATABLE
-            r.RKTST = RKUSO * s.ATKST / s.KTRANSLOCATABLE
-            r.RKTRT = RKUSO * s.ATKRT / s.KTRANSLOCATABLE
+        if s.Ktranslocatable > 0:
+            r.RKtranslocationLV = k.RKuptakeSO * s.KtranslocatableLV / s.Ktranslocatable
+            r.RKtranslocationST = k.RKuptakeSO * s.KtranslocatableST / s.Ktranslocatable
+            r.RKtranslocationRT = k.RKuptakeSO * s.KtranslocatableRT / s.Ktranslocatable
         else:
-            r.RKTLV = r.RKTST = r.RKTRT = 0.
+            r.RKtranslocationLV = r.RKtranslocationST = r.RKtranslocationRT = 0.
 
     @prepare_states
     def integrate(self, day, delt=1.0):
         p = self.params
         s = self.states
+        k = self.kiosk
         
-        WLV = self.kiosk["WLV"]
-        WST = self.kiosk["WST"]
-        WRT = self.kiosk["WRT"]
-        
-        ANLV = self.kiosk["ANLV"]
-        ANST = self.kiosk["ANST"]
-        ANRT = self.kiosk["ANRT"]
-        
-        APLV = self.kiosk["APLV"]
-        APST = self.kiosk["APST"]
-        APRT = self.kiosk["APRT"]
-        
-        AKLV = self.kiosk["AKLV"]
-        AKST = self.kiosk["AKST"]
-        AKRT = self.kiosk["AKRT"]
-
 #       translocatable N amount in the organs [kg N ha-1]
-        s.ATNLV = max(0., ANLV - WLV * p.NRESIDLV)
-        s.ATNST = max(0., ANST - WST * p.NRESIDST)
-        s.ATNRT = max((s.ATNLV + s.ATNST) * p.NPK_TRANSLRT_FR, ANRT - WRT * p.NRESIDRT)
+        s.NtranslocatableLV = max(0., k.NamountLV - k.WLV * p.NRESIDLV)
+        s.NtranslocatableST = max(0., k.NamountST - k.WST * p.NRESIDST)
+        s.NtranslocatableRT = max((s.NtranslocatableLV + s.NtranslocatableST) *
+                                  p.NPK_TRANSLRT_FR, k.NamountRT - k.WRT * p.NRESIDRT)
 
 #       translocatable P amount in the organs [kg P ha-1]
-        s.ATPLV = max(0., APLV - WLV * p.PRESIDLV)
-        s.ATPST = max(0., APST - WST * p.PRESIDST)
-        s.ATPRT = max((s.ATPLV + s.ATPST) * p.NPK_TRANSLRT_FR, APRT - WRT * p.PRESIDRT)
+        s.PtranslocatableLV = max(0., k.PamountLV - k.WLV * p.PRESIDLV)
+        s.PtranslocatableST = max(0., k.PamountST - k.WST * p.PRESIDST)
+        s.PtranslocatableRT = max((s.PtranslocatableLV + s.PtranslocatableST) *
+                                  p.NPK_TRANSLRT_FR, k.PamountRT - k.WRT * p.PRESIDRT)
 
 #       translocatable K amount in the organs [kg K ha-1]
-        s.ATKLV = max(0., AKLV - WLV * p.KRESIDLV)
-        s.ATKST = max(0., AKST - WST * p.KRESIDST)
-        s.ATKRT = max((s.ATKLV + s.ATKST) * p.NPK_TRANSLRT_FR, AKRT - WRT * p.KRESIDRT)
+        s.KtranslocatableLV = max(0., k.KamountLV - k.WLV * p.KRESIDLV)
+        s.KtranslocatableST = max(0., k.KamountST - k.WST * p.KRESIDST)
+        s.KtranslocatableRT = max((s.KtranslocatableLV + s.KtranslocatableST) *
+                                  p.NPK_TRANSLRT_FR, k.KamountRT - k.WRT * p.KRESIDRT)
 
 #       total translocatable NPK amount in the organs [kg N ha-1]
-        s.NTRANSLOCATABLE = s.ATNLV + s.ATNST + s.ATNRT
-        s.PTRANSLOCATABLE = s.ATPLV + s.ATPST + s.ATPRT
-        s.KTRANSLOCATABLE = s.ATKLV + s.ATKST + s.ATKRT
+        s.Ntranslocatable = s.NtranslocatableLV + s.NtranslocatableST + s.NtranslocatableRT
+        s.Ptranslocatable = s.PtranslocatableLV + s.PtranslocatableST + s.PtranslocatableRT
+        s.Ktranslocatable = s.KtranslocatableLV + s.KtranslocatableST + s.KtranslocatableRT

@@ -73,51 +73,51 @@ class NPK_Demand_Uptake(SimulationObject):
 
     **State variables**
 
-    =======  ================================================= ==== ============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================= ==== ============
-    NDEMLV     N Demand in living leaves                         N   |kg N ha-1|
-    NDEMST     N Demand in living stems                          N   |kg N ha-1|
-    NDEMRT     N Demand in living roots                          N   |kg N ha-1|
-    NDEMSO     N Demand in storage organs                        N   |kg N ha-1|
+    ==========  ================================================= ==== ============
+     Name        Description                                      Pbl      Unit
+    ==========  ================================================= ==== ============
+    NdemandLV     N Demand in living leaves                         N   |kg N ha-1|
+    NdemandST     N Demand in living stems                          N   |kg N ha-1|
+    NdemandRT     N Demand in living roots                          N   |kg N ha-1|
+    NdemandSO     N Demand in storage organs                        N   |kg N ha-1|
 
-    PDEMLV     P Demand in living leaves                         N   |kg P ha-1|
-    PDEMST     P Demand in living stems                          N   |kg P ha-1|
-    PDEMRT     P Demand in living roots                          N   |kg P ha-1|
-    PDEMSO     P Demand in storage organs                        N   |kg P ha-1|
+    PdemandLV     P Demand in living leaves                         N   |kg P ha-1|
+    PdemandST     P Demand in living stems                          N   |kg P ha-1|
+    PdemandRT     P Demand in living roots                          N   |kg P ha-1|
+    PdemandSO     P Demand in storage organs                        N   |kg P ha-1|
 
-    KDEMLV     K Demand in living leaves                         N   |kg K ha-1|
-    KDEMST     K Demand in living stems                          N   |kg K ha-1|
-    KDEMRT     K Demand in living roots                          N   |kg K ha-1|
-    KDEMSO     K Demand in storage organs                        N   |kg K ha-1|
-    =======  ================================================= ==== ============
+    KdemandLV     K Demand in living leaves                         N   |kg K ha-1|
+    KdemandST     K Demand in living stems                          N   |kg K ha-1|
+    KdemandRT     K Demand in living roots                          N   |kg K ha-1|
+    KdemandSO     K Demand in storage organs                        N   |kg K ha-1|
+    ==========  ================================================= ==== ============
 
 
     **Rate variables**
 
-    =======  ================================================= ==== ================
-     Name     Description                                      Pbl      Unit
-    =======  ================================================= ==== ================
-    RNULV     Rate of N uptake in leaves                         Y   |kg N ha-1 d-1|
-    RNUST     Rate of N uptake in stems                          Y   |kg N ha-1 d-1|
-    RNURT     Rate of N uptake in roots                          Y   |kg N ha-1 d-1|
-    RNUSO     Rate of N uptake in storage organs                 Y   |kg N ha-1 d-1|
+    ===========  ================================================= ==== ================
+     Name         Description                                      Pbl      Unit
+    ===========  ================================================= ==== ================
+    RNuptakeLV     Rate of N uptake in leaves                         Y   |kg N ha-1 d-1|
+    RNuptakeST     Rate of N uptake in stems                          Y   |kg N ha-1 d-1|
+    RNuptakeRT     Rate of N uptake in roots                          Y   |kg N ha-1 d-1|
+    RNuptakeSO     Rate of N uptake in storage organs                 Y   |kg N ha-1 d-1|
 
-    RPULV     Rate of P uptake in leaves                         Y   |kg P ha-1 d-1|
-    RPUST     Rate of P uptake in stems                          Y   |kg P ha-1 d-1|
-    RPURT     Rate of P uptake in roots                          Y   |kg P ha-1 d-1|
-    RPUSO     Rate of P uptake in storage organs                 Y   |kg P ha-1 d-1|
+    RPuptakeLV     Rate of P uptake in leaves                         Y   |kg P ha-1 d-1|
+    RPuptakeST     Rate of P uptake in stems                          Y   |kg P ha-1 d-1|
+    RPuptakeRT     Rate of P uptake in roots                          Y   |kg P ha-1 d-1|
+    RPuptakeSO     Rate of P uptake in storage organs                 Y   |kg P ha-1 d-1|
 
-    RKULV     Rate of K uptake in leaves                         Y   |kg K ha-1 d-1|
-    RKUST     Rate of K uptake in stems                          Y   |kg K ha-1 d-1|
-    RKURT     Rate of K uptake in roots                          Y   |kg K ha-1 d-1|
-    RKUSO     Rate of K uptake in storage organs                 Y   |kg K ha-1 d-1|
+    RKuptakeLV     Rate of K uptake in leaves                         Y   |kg K ha-1 d-1|
+    RKuptakeST     Rate of K uptake in stems                          Y   |kg K ha-1 d-1|
+    RKuptakeRT     Rate of K uptake in roots                          Y   |kg K ha-1 d-1|
+    RKuptakeSO     Rate of K uptake in storage organs                 Y   |kg K ha-1 d-1|
 
-    RNUPTAKE  Total rate of N uptake                             Y   |kg N ha-1 d-1|
-    RPUPTAKE  Total rate of P uptake                             Y   |kg P ha-1 d-1|
-    RKUPTAKE  Total rate of K uptake                             Y   |kg K ha-1 d-1|
-    RNFIX     Rate of N fixation                                 Y   |kg K ha-1 d-1|
-    =======  ================================================= ==== ================
+    RNuptake       Total rate of N uptake                             Y   |kg N ha-1 d-1|
+    RPuptake       Total rate of P uptake                             Y   |kg P ha-1 d-1|
+    RKuptake       Total rate of K uptake                             Y   |kg K ha-1 d-1|
+    RNfixation     Rate of N fixation                                 Y   |kg K ha-1 d-1|
+    ===========  ================================================= ==== ================
 
     **Signals send or handled**
 
@@ -134,10 +134,10 @@ class NPK_Demand_Uptake(SimulationObject):
     NAVAIL            Total available N from soil         NPK_Soil_Dynamics      |kg ha-1|
     PAVAIL            Total available P from soil         NPK_Soil_Dynamics      |kg ha-1|
     KAVAIL            Total available K from soil         NPK_Soil_Dynamics      |kg ha-1|
-    NTRANSLOCATABLE   Translocatable amount of N from     NPK_Translocation      |kg ha-1|
+    Ntranslocatable   Translocatable amount of N from     NPK_Translocation      |kg ha-1|
                       stems, Leaves and roots
-    PTRANSLOCATABLE   As for P                            NPK_Translocation      |kg ha-1|
-    KTRANSLOCATABLE   As for K                            NPK_Translocation      |kg ha-1|
+    Ptranslocatable   As for P                            NPK_Translocation      |kg ha-1|
+    Ktranslocatable   As for K                            NPK_Translocation      |kg ha-1|
     ================  =================================== ====================  ===========
 
     """
@@ -167,41 +167,41 @@ class NPK_Demand_Uptake(SimulationObject):
         DVS_NPK_STOP = Float(-99.)  # development stage above which no crop N-P-K uptake does occur
 
     class StateVariables(StatesTemplate):
-        NDEMLV = Float(-99.)
-        NDEMST = Float(-99.)
-        NDEMRT = Float(-99.)
-        NDEMSO = Float(-99.)
+        NdemandLV = Float(-99.)
+        NdemandST = Float(-99.)
+        NdemandRT = Float(-99.)
+        NdemandSO = Float(-99.)
 
-        PDEMLV = Float(-99.)
-        PDEMST = Float(-99.)
-        PDEMRT = Float(-99.)
-        PDEMSO = Float(-99.)
+        PdemandLV = Float(-99.)
+        PdemandST = Float(-99.)
+        PdemandRT = Float(-99.)
+        PdemandSO = Float(-99.)
         
-        KDEMLV = Float(-99.)
-        KDEMST = Float(-99.)
-        KDEMRT = Float(-99.)
-        KDEMSO = Float(-99.)
+        KdemandLV = Float(-99.)
+        KdemandST = Float(-99.)
+        KdemandRT = Float(-99.)
+        KdemandSO = Float(-99.)
 
     class RateVariables(RatesTemplate):
-        RNULV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
-        RNUST = Float(-99.)
-        RNURT = Float(-99.)
-        RNUSO = Float(-99.)
+        RNuptakeLV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
+        RNuptakeST = Float(-99.)
+        RNuptakeRT = Float(-99.)
+        RNuptakeSO = Float(-99.)
 
-        RPULV = Float(-99.)  # P uptake rate [kg ha-1 d -1]
-        RPUST = Float(-99.)
-        RPURT = Float(-99.)
-        RPUSO = Float(-99.)
+        RPuptakeLV = Float(-99.)  # P uptake rate [kg ha-1 d -1]
+        RPuptakeST = Float(-99.)
+        RPuptakeRT = Float(-99.)
+        RPuptakeSO = Float(-99.)
 
-        RKULV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
-        RKUST = Float(-99.)
-        RKURT = Float(-99.)
-        RKUSO = Float(-99.)
+        RKuptakeLV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
+        RKuptakeST = Float(-99.)
+        RKuptakeRT = Float(-99.)
+        RKuptakeSO = Float(-99.)
 
-        RNUPTAKE = Float(-99.)  # Total N uptake rate [kg ha-1 d -1]
-        RPUPTAKE = Float(-99.)
-        RKUPTAKE = Float(-99.)
-        RNFIX = Float(-99.)
+        RNuptake = Float(-99.)  # Total N uptake rate [kg ha-1 d -1]
+        RPuptake = Float(-99.)
+        RKuptake = Float(-99.)
+        RNfixation = Float(-99.)
 
     
     def initialize(self, day, kiosk, parvalues):
@@ -215,15 +215,15 @@ class NPK_Demand_Uptake(SimulationObject):
         self.kiosk = kiosk
 
         self.rates = self.RateVariables(kiosk,
-            publish=["RNULV", "RNUST", "RNURT", "RNUSO",
-                     "RPULV", "RPUST", "RPURT", "RPUSO",
-                     "RKULV", "RKUST", "RKURT", "RKUSO",
-                     "RNUPTAKE", "RPUPTAKE", "RKUPTAKE", "RNFIX"])
+            publish=["RNuptakeLV", "RNuptakeST", "RNuptakeRT", "RNuptakeSO",
+                     "RPuptakeLV", "RPuptakeST", "RPuptakeRT", "RPuptakeSO",
+                     "RKuptakeLV", "RKuptakeST", "RKuptakeRT", "RKuptakeSO",
+                     "RNuptake", "RPuptake", "RKuptake", "RNfixation"])
 
         self.states = self.StateVariables(kiosk,
-            NDEMLV=0., NDEMST=0., NDEMRT=0., NDEMSO=0.,
-            PDEMLV=0., PDEMST=0., PDEMRT=0., PDEMSO=0.,
-            KDEMLV=0., KDEMST=0., KDEMRT=0., KDEMSO=0.)
+            NdemandLV=0., NdemandST=0., NdemandRT=0., NdemandSO=0.,
+            PdemandLV=0., PdemandST=0., PdemandRT=0., PdemandSO=0.,
+            KdemandLV=0., KdemandST=0., KdemandRT=0., KdemandSO=0.)
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -232,55 +232,54 @@ class NPK_Demand_Uptake(SimulationObject):
         p = self.params
         k = self.kiosk
 
-#       total NPK demand of leaves, stems and roots
-        NDEMTO = s.NDEMLV + s.NDEMST + s.NDEMRT
-        PDEMTO = s.PDEMLV + s.PDEMST + s.PDEMRT
-        KDEMTO = s.KDEMLV + s.KDEMST + s.KDEMRT
+        # total NPK demand of leaves, stems and roots
+        Ndemand = s.NdemandLV + s.NdemandST + s.NdemandRT
+        Pdemand = s.PdemandLV + s.PdemandST + s.PdemandRT
+        Kdemand = s.KdemandLV + s.KdemandST + s.KdemandRT
 
-#       NPK uptake rate in storage organs (kg N ha-1 d-1)
-#       is the mimimum of supply and demand divided by the
-#       time coefficient for N/P/K translocation
-        r.RNUSO = min(s.NDEMSO, k.NTRANSLOCATABLE)/p.TCNT
-        r.RPUSO = min(s.PDEMSO, k.PTRANSLOCATABLE)/p.TCPT
-        r.RKUSO = min(s.KDEMSO, k.KTRANSLOCATABLE)/p.TCKT
+        # NPK uptake rate in storage organs (kg N ha-1 d-1) is the mimimum of supply and
+        # demand divided by the time coefficient for N/P/K translocation
+        r.RNuptakeSO = min(s.NdemandSO, k.Ntranslocatable)/p.TCNT
+        r.RPuptakeSO = min(s.PdemandSO, k.Ptranslocatable)/p.TCPT
+        r.RKuptakeSO = min(s.KdemandSO, k.Ktranslocatable)/p.TCKT
 
-#       No nutrients are absorbed after development stage DVS_NPK_STOP or
-#       when severe water shortage occurs i.e. RFTRA <= 0.01
+        # No nutrients are absorbed after development stage DVS_NPK_STOP or
+        # when severe water shortage occurs i.e. RFTRA <= 0.01
         if k.DVS < p.DVS_NPK_STOP and k.RFTRA > 0.01:
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.
 
         # biological nitrogen fixation
-        r.RNFIX = (max(0., p.NFIX_FR * NDEMTO) * NutrientLIMIT)
+        r.RNfixation = (max(0., p.NFIX_FR * Ndemand) * NutrientLIMIT)
 
         # NPK uptake rate from soil
-        r.RNUPTAKE = (max(0., min(NDEMTO - r.RNFIX, k.NAVAIL)) * NutrientLIMIT)
-        r.RPUPTAKE = (max(0., min(PDEMTO, k.PAVAIL)) * NutrientLIMIT)
-        r.RKUPTAKE = (max(0., min(KDEMTO, k.KAVAIL)) * NutrientLIMIT)
+        r.RNuptake = (max(0., min(Ndemand - r.RNfixation, k.NAVAIL)) * NutrientLIMIT)
+        r.RPuptake = (max(0., min(Pdemand, k.PAVAIL)) * NutrientLIMIT)
+        r.RKuptake = (max(0., min(Kdemand, k.KAVAIL)) * NutrientLIMIT)
 
         # NPK uptake rate
         # if no demand then uptake rate = 0.
-        if NDEMTO == 0.:
-            r.RNULV = r.RNUST = r.RNURT = 0.
+        if Ndemand == 0.:
+            r.RNuptakeLV = r.RNuptakeST = r.RNuptakeRT = 0.
         else:
-            r.RNULV = (s.NDEMLV / NDEMTO) * (r.RNUPTAKE + r.RNFIX)
-            r.RNUST = (s.NDEMST / NDEMTO) * (r.RNUPTAKE + r.RNFIX)
-            r.RNURT = (s.NDEMRT / NDEMTO) * (r.RNUPTAKE + r.RNFIX)
+            r.RNuptakeLV = (s.NdemandLV / Ndemand) * (r.RNuptake + r.RNfixation)
+            r.RNuptakeST = (s.NdemandST / Ndemand) * (r.RNuptake + r.RNfixation)
+            r.RNuptakeRT = (s.NdemandRT / Ndemand) * (r.RNuptake + r.RNfixation)
 
-        if PDEMTO == 0.:
-            r.RPULV = r.RPUST = r.RPURT = 0.
+        if Pdemand == 0.:
+            r.RPuptakeLV = r.RPuptakeST = r.RPuptakeRT = 0.
         else:
-            r.RPULV = (s.PDEMLV / PDEMTO) * r.RPUPTAKE
-            r.RPUST = (s.PDEMST / PDEMTO) * r.RPUPTAKE
-            r.RPURT = (s.PDEMRT / PDEMTO) * r.RPUPTAKE
+            r.RPuptakeLV = (s.PdemandLV / Pdemand) * r.RPuptake
+            r.RPuptakeST = (s.PdemandST / Pdemand) * r.RPuptake
+            r.RPuptakeRT = (s.PdemandRT / Pdemand) * r.RPuptake
 
-        if KDEMTO == 0.:
-            r.RKULV = r.RKUST = r.RKURT = 0.
+        if Kdemand == 0.:
+            r.RKuptakeLV = r.RKuptakeST = r.RKuptakeRT = 0.
         else:
-            r.RKULV = (s.KDEMLV / KDEMTO) * r.RKUPTAKE
-            r.RKUST = (s.KDEMST / KDEMTO) * r.RKUPTAKE
-            r.RKURT = (s.KDEMRT / KDEMTO) * r.RKUPTAKE
+            r.RKuptakeLV = (s.KdemandLV / Kdemand) * r.RKuptake
+            r.RKuptakeST = (s.KdemandST / Kdemand) * r.RKuptake
+            r.RKuptakeRT = (s.KdemandRT / Kdemand) * r.RKuptake
 
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -307,19 +306,19 @@ class NPK_Demand_Uptake(SimulationObject):
         KMAXSO = p.KMAXSO
 
 #       N demand [kg ha-1]
-        s.NDEMLV = max(NMAXLV * k.WLV - k.ANLV, 0.)  # maybe should be divided by one day, see equation 5 Shibu etal 2010
-        s.NDEMST = max(NMAXST * k.WST - k.ANST, 0.)
-        s.NDEMRT = max(NMAXRT * k.WRT - k.ANRT, 0.)
-        s.NDEMSO = max(NMAXSO * k.WSO - k.ANSO, 0.)
+        s.NdemandLV = max(NMAXLV * k.WLV - k.NamountLV, 0.)  # maybe should be divided by one day, see equation 5 Shibu etal 2010
+        s.NdemandST = max(NMAXST * k.WST - k.NamountST, 0.)
+        s.NdemandRT = max(NMAXRT * k.WRT - k.NamountRT, 0.)
+        s.NdemandSO = max(NMAXSO * k.WSO - k.NamountSO, 0.)
 
 #       P demand [kg ha-1]
-        s.PDEMLV = max(PMAXLV * k.WLV - k.APLV, 0.)
-        s.PDEMST = max(PMAXST * k.WST - k.APST, 0.)
-        s.PDEMRT = max(PMAXRT * k.WRT - k.APRT, 0.)
-        s.PDEMSO = max(PMAXSO * k.WSO - k.APSO, 0.)
+        s.PdemandLV = max(PMAXLV * k.WLV - k.PamountLV, 0.)
+        s.PdemandST = max(PMAXST * k.WST - k.PamountST, 0.)
+        s.PdemandRT = max(PMAXRT * k.WRT - k.PamountRT, 0.)
+        s.PdemandSO = max(PMAXSO * k.WSO - k.PamountSO, 0.)
 
 #       K demand [kg ha-1]
-        s.KDEMLV = max(KMAXLV * k.WLV - k.AKLV, 0.)
-        s.KDEMST = max(KMAXST * k.WST - k.AKST, 0.)
-        s.KDEMRT = max(KMAXRT * k.WRT - k.AKRT, 0.)
-        s.KDEMSO = max(KMAXSO * k.WSO - k.AKSO, 0.)
+        s.KdemandLV = max(KMAXLV * k.WLV - k.KamountLV, 0.)
+        s.KdemandST = max(KMAXST * k.WST - k.KamountST, 0.)
+        s.KdemandRT = max(KMAXRT * k.WRT - k.KamountRT, 0.)
+        s.KdemandSO = max(KMAXSO * k.WSO - k.KamountSO, 0.)
