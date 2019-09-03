@@ -129,6 +129,7 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
         TWLV   = Float(-99.)
 
     class RateVariables(RatesTemplate):
+        GWLV  = Float(-99.)
         GRLV  = Float(-99.)
         DSLV1 = Float(-99.)
         DSLV2 = Float(-99.)
@@ -151,7 +152,7 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
 
         self.kiosk  = kiosk
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk)
+        self.rates  = self.RateVariables(kiosk, publish="GWLV")
 
         # CALCULATE INITIAL STATE VARIABLES
         params = self.params
@@ -230,6 +231,9 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
 
         # Total death rate leaves
         r.DRLV = max(r.DSLV, r.DALV)
+
+        # net growth rate
+        r.GWLV = r.GRLV - r.DRLV
 
         # physiologic ageing of leaves per time step
         r.FYSAGE = max(0., (drv.TEMP - p.TBASE)/(35. - p.TBASE))
@@ -564,6 +568,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         TWLV = Float(-99.)
 
     class RateVariables(RatesTemplate):
+        GWLV = Float(-99.)
         GRLV = Float(-99.)
         DSLV1 = Float(-99.)
         DSLV2 = Float(-99.)
@@ -586,7 +591,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         self.kiosk = kiosk
         self.params = self.Parameters(cropdata)
-        self.rates = self.RateVariables(kiosk,publish=["DRLV"])
+        self.rates = self.RateVariables(kiosk,publish=["DRLV", "GRLV"])
 
         # CALCULATE INITIAL STATE VARIABLES
         p = self.params
@@ -664,6 +669,9 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         # Total death rate leaves
         r.DRLV = max(r.DSLV, r.DALV)
+
+        # Net growth leaves
+        r.GWLV = r.GRLV - r.DRLV
 
         # physiologic ageing of leaves per time step
         r.FYSAGE = max(0., (drv.TEMP - p.TBASE)/(35. - p.TBASE))

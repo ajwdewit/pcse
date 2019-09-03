@@ -169,7 +169,8 @@ class NPK_Translocation(SimulationObject):
                                                         "RKtranslocationLV", "RKtranslocationST", "RKtranslocationRT"])
 
         self.states = self.StateVariables(kiosk,
-            NtranslocatableLV=0., NtranslocatableST=0., NtranslocatableRT=0., PtranslocatableLV=0., PtranslocatableST=0., PtranslocatableRT=0., KtranslocatableLV=0., KtranslocatableST=0. ,KtranslocatableRT=0.,
+            NtranslocatableLV=0., NtranslocatableST=0., NtranslocatableRT=0., PtranslocatableLV=0., PtranslocatableST=0.,
+            PtranslocatableRT=0., KtranslocatableLV=0., KtranslocatableST=0. ,KtranslocatableRT=0.,
             Ntranslocatable=0., Ptranslocatable=0., Ktranslocatable=0.,
             publish=["Ntranslocatable", "Ptranslocatable", "Ktranslocatable"])
         self.kiosk = kiosk
@@ -180,7 +181,7 @@ class NPK_Translocation(SimulationObject):
         s = self.states
         k = self.kiosk
 
-        # partionioning of the uptake for storage organs from the leaves, stems, roots
+        # partitioning of the uptake for storage organs from the leaves, stems, roots
         # assuming equal distribution of N/P/K from each organ.
         # If amount of translocatable N/P/K = 0 then translocation rate is 0
         if s.Ntranslocatable > 0.:

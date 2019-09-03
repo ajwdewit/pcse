@@ -368,14 +368,14 @@ class NPK_Crop_Dynamics(SimulationObject):
                        (self.NamountLVI + self.NamountSTI + self.NamountRTI + self.NamountSOI) -
                        (s.NamountLV + s.NamountST + s.NamountRT + s.NamountSO + s.Nlosses_T))
 
-        if abs(checksum) >= 1.:
+        if abs(checksum) >= 1.0:
             msg = "N flows not balanced on day %s\n" % day
             msg += "Checksum: %f, Nuptake_T: %f, Nfix_T: %f\n" % (checksum, s.Nuptake_T, s.Nfix_T)
             msg += "NamountLVI: %f, NamountSTI: %f, NamountRTI: %f, NamountSOI: %f\n"  % \
                    (self.NamountLVI, self.NamountSTI, self.NamountRTI, self.NamountSOI)
             msg += "NamountLV: %f, NamountST: %f, NamountRT: %f, NamountSO: %f\n" % \
                    (s.NamountLV, s.NamountST, s.NamountRT, s.NamountSO)
-            msg += "NLOSST: %f\n" % (s.NLOSST)
+            msg += "NLOSST: %f\n" % (s.Nlosses_T)
             raise exc.NutrientBalanceError(msg)
 
     def _check_P_balance(self, day):

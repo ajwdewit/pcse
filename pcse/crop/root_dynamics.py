@@ -138,7 +138,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish="DRRT")
+        self.rates = self.RateVariables(kiosk, publish=["DRRT", "GRRT"])
         self.kiosk = kiosk
         
         # INITIAL STATES

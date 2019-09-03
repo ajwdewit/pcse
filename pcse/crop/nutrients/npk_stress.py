@@ -184,59 +184,59 @@ class NPK_Stress(SimulationObject):
         KMAXST = p.KMAXST_FR * KMAXLV
         
         # Total vegetative living above-ground biomass (kg DM ha-1)
-        TBGMR = k.WLV + k.WST
+        VBM = k.WLV + k.WST
       
         # Critical (Optimal) NPK amount in vegetative above-ground living biomass
         # and its NPK concentration
-        NCRITLV  = p.NCRIT_FR * NMAXLV * k.WLV
-        NCRITST  = p.NCRIT_FR * NMAXST * k.WST
+        NcriticalLV  = p.NCRIT_FR * NMAXLV * k.WLV
+        NcriticalST  = p.NCRIT_FR * NMAXST * k.WST
         
-        PCRITLV = p.PCRIT_FR * PMAXLV * k.WLV
-        PCRITST = p.PCRIT_FR * PMAXST * k.WST
+        PcriticalLV = p.PCRIT_FR * PMAXLV * k.WLV
+        PcriticalST = p.PCRIT_FR * PMAXST * k.WST
 
-        KCRITLV = p.KCRIT_FR * KMAXLV * k.WLV
-        KCRITST = p.KCRIT_FR * KMAXST * k.WST
+        KcriticalLV = p.KCRIT_FR * KMAXLV * k.WLV
+        KcriticalST = p.KCRIT_FR * KMAXST * k.WST
         
         # if above-ground living biomass = 0 then optimum = 0
-        if TBGMR > 0.:
-            NCRITMR = (NCRITLV + NCRITST)/TBGMR
-            PCRITMR = (PCRITLV + PCRITST)/TBGMR
-            KCRITMR = (KCRITLV + KCRITST)/TBGMR
+        if VBM > 0.:
+            NcriticalVBM = (NcriticalLV + NcriticalST)/VBM
+            PcriticalVBM = (PcriticalLV + PcriticalST)/VBM
+            KcriticalVBM = (KcriticalLV + KcriticalST)/VBM
         else:
-            NCRITMR = PCRITMR = KCRITMR = 0.
+            NcriticalVBM = PcriticalVBM = KcriticalVBM = 0.
 
         # NPK concentration in total vegetative living per kg above-ground
         # biomass  (kg N/P/K kg-1 DM)
         # if above-ground living biomass = 0 then concentration = 0
-        if TBGMR > 0.:
-            NFGMR  = (k.NamountLV + k.NamountST)/TBGMR
-            PFGMR  = (k.PamountLV + k.PamountST)/TBGMR
-            KFGMR  = (k.KamountLV + k.KamountST)/TBGMR
+        if VBM > 0.:
+            NconcentrationVBM  = (k.NamountLV + k.NamountST)/VBM
+            PconcentrationVBM  = (k.PamountLV + k.PamountST)/VBM
+            KconcentrationVBM  = (k.KamountLV + k.KamountST)/VBM
         else:
-            NFGMR = PFGMR = KFGMR = 0.
+            NconcentrationVBM = PconcentrationVBM = KconcentrationVBM = 0.
 
         # Residual NPK concentration in total vegetative living above-ground
         # biomass  (kg N/P/K kg-1 DM)
         # if above-ground living biomass = 0 then residual concentration = 0
-        if TBGMR > 0.:
-            NRMR = (k.WLV * p.NRESIDLV + k.WST * p.NRESIDST)/TBGMR
-            PRMR = (k.WLV * p.PRESIDLV + k.WST * p.PRESIDST)/TBGMR
-            KRMR = (k.WLV * p.KRESIDLV + k.WST * p.KRESIDST)/TBGMR
+        if VBM > 0.:
+            NresidualVBM = (k.WLV * p.NRESIDLV + k.WST * p.NRESIDST)/VBM
+            PresidualVBM = (k.WLV * p.PRESIDLV + k.WST * p.PRESIDST)/VBM
+            KresidualVBM = (k.WLV * p.KRESIDLV + k.WST * p.KRESIDST)/VBM
         else:
-            NRMR = PRMR = KRMR = 0.
+            NresidualVBM = PresidualVBM = KresidualVBM = 0.
             
-        if (NCRITMR - NRMR) > 0.:
-            r.NNI = limit(0.001, 1.0, (NFGMR-NRMR)/(NCRITMR-NRMR))
+        if (NcriticalVBM - NresidualVBM) > 0.:
+            r.NNI = limit(0.001, 1.0, (NconcentrationVBM - NresidualVBM)/(NcriticalVBM - NresidualVBM))
         else:
             r.NNI = 0.001
             
-        if (PCRITMR - PRMR) > 0.:
-            r.PNI = limit(0.001, 1.0, (PFGMR-PRMR)/(PCRITMR-PRMR))
+        if (PcriticalVBM - PresidualVBM) > 0.:
+            r.PNI = limit(0.001, 1.0, (PconcentrationVBM - PresidualVBM)/(PcriticalVBM - PresidualVBM))
         else:
            r.PNI = 0.001
             
-        if (KCRITMR-KRMR) > 0:
-            r.KNI = limit(0.001, 1.0, (KFGMR-KRMR)/(KCRITMR-KRMR))
+        if (KcriticalVBM-KresidualVBM) > 0:
+            r.KNI = limit(0.001, 1.0, (KconcentrationVBM - KresidualVBM)/(KcriticalVBM - KresidualVBM))
         else:
             r.KNI = 0.001
       

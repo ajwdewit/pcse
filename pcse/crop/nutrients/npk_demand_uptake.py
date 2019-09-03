@@ -2,11 +2,18 @@
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
+from collections import namedtuple
 
 from ...base import StatesTemplate, ParamTemplate, SimulationObject, RatesTemplate
 from ...decorators import prepare_rates, prepare_states
 from ...traitlets import HasTraits, Float, Int, Instance
 from ...util import AfgenTrait
+
+MaxNutrientConcentrations = namedtuple("MaxNutrientConcentrations",
+                                       ["NMAXLV", "PMAXLV", "KMAXLV",
+                                        "NMAXST", "PMAXST", "KMAXST",
+                                        "NMAXRT", "PMAXRT", "KMAXRT",
+                                        "NMAXSO", "PMAXSO", "KMAXSO"])
 
 class NPK_Demand_Uptake(SimulationObject):
     """Calculates the crop N/P/K demand and its uptake from the soil.
@@ -167,20 +174,7 @@ class NPK_Demand_Uptake(SimulationObject):
         DVS_NPK_STOP = Float(-99.)  # development stage above which no crop N-P-K uptake does occur
 
     class StateVariables(StatesTemplate):
-        NdemandLV = Float(-99.)
-        NdemandST = Float(-99.)
-        NdemandRT = Float(-99.)
-        NdemandSO = Float(-99.)
-
-        PdemandLV = Float(-99.)
-        PdemandST = Float(-99.)
-        PdemandRT = Float(-99.)
-        PdemandSO = Float(-99.)
-        
-        KdemandLV = Float(-99.)
-        KdemandST = Float(-99.)
-        KdemandRT = Float(-99.)
-        KdemandSO = Float(-99.)
+        pass
 
     class RateVariables(RatesTemplate):
         RNuptakeLV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
@@ -203,7 +197,21 @@ class NPK_Demand_Uptake(SimulationObject):
         RKuptake = Float(-99.)
         RNfixation = Float(-99.)
 
-    
+        NdemandLV = Float(-99.)
+        NdemandST = Float(-99.)
+        NdemandRT = Float(-99.)
+        NdemandSO = Float(-99.)
+
+        PdemandLV = Float(-99.)
+        PdemandST = Float(-99.)
+        PdemandRT = Float(-99.)
+        PdemandSO = Float(-99.)
+
+        KdemandLV = Float(-99.)
+        KdemandST = Float(-99.)
+        KdemandRT = Float(-99.)
+        KdemandSO = Float(-99.)
+
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -220,10 +228,10 @@ class NPK_Demand_Uptake(SimulationObject):
                      "RKuptakeLV", "RKuptakeST", "RKuptakeRT", "RKuptakeSO",
                      "RNuptake", "RPuptake", "RKuptake", "RNfixation"])
 
-        self.states = self.StateVariables(kiosk,
-            NdemandLV=0., NdemandST=0., NdemandRT=0., NdemandSO=0.,
-            PdemandLV=0., PdemandST=0., PdemandRT=0., PdemandSO=0.,
-            KdemandLV=0., KdemandST=0., KdemandRT=0., KdemandSO=0.)
+        # self.states = self.StateVariables(kiosk,
+        #     NdemandLV=0., NdemandST=0., NdemandRT=0., NdemandSO=0.,
+        #     PdemandLV=0., PdemandST=0., PdemandRT=0., PdemandSO=0.,
+        #     KdemandLV=0., KdemandST=0., KdemandRT=0., KdemandSO=0.)
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -232,16 +240,39 @@ class NPK_Demand_Uptake(SimulationObject):
         p = self.params
         k = self.kiosk
 
-        # total NPK demand of leaves, stems and roots
-        Ndemand = s.NdemandLV + s.NdemandST + s.NdemandRT
-        Pdemand = s.PdemandLV + s.PdemandST + s.PdemandRT
-        Kdemand = s.KdemandLV + s.KdemandST + s.KdemandRT
+        delt = 1.0
+        mc = self._compute_NPK_max_concentrations()
+
+        # Total NPK demand of leaves, stems, roots and storage organs
+        # Demand consists of a demand carried over from previous timesteps plus a demand from new growth
+
+        # N demand [kg ha-1]
+        r.NdemandLV = max(mc.NMAXLV * k.WLV - k.NamountLV, 0.) + max(k.GRLV * mc.NMAXLV, 0)
+        r.NdemandST = max(mc.NMAXST * k.WST - k.NamountST, 0.) + max(k.GRST * mc.NMAXST, 0) * delt
+        r.NdemandRT = max(mc.NMAXRT * k.WRT - k.NamountRT, 0.) + max(k.GRRT * mc.NMAXRT, 0)
+        r.NdemandSO = max(mc.NMAXSO * k.WSO - k.NamountSO, 0.)
+
+        # P demand [kg ha-1]
+        r.PdemandLV = max(mc.PMAXLV * k.WLV - k.PamountLV, 0.) + max(k.GRLV * mc.PMAXLV, 0)
+        r.PdemandST = max(mc.PMAXST * k.WST - k.PamountST, 0.) + max(k.GRST * mc.PMAXST, 0)
+        r.PdemandRT = max(mc.PMAXRT * k.WRT - k.PamountRT, 0.) + max(k.GRRT * mc.PMAXRT, 0)
+        r.PdemandSO = max(mc.PMAXSO * k.WSO - k.PamountSO, 0.)
+
+        # K demand [kg ha-1]
+        r.KdemandLV = max(mc.KMAXLV * k.WLV - k.KamountLV, 0.) + max(k.GRLV * mc.KMAXLV, 0) * delt
+        r.KdemandST = max(mc.KMAXST * k.WST - k.KamountST, 0.) + max(k.GRST * mc.KMAXST, 0)
+        r.KdemandRT = max(mc.KMAXRT * k.WRT - k.KamountRT, 0.) + max(k.GRRT * mc.KMAXRT, 0)
+        r.KdemandSO = max(mc.KMAXSO * k.WSO - k.KamountSO, 0.)
+
+        Ndemand = r.NdemandLV + r.NdemandST + r.NdemandRT
+        Pdemand = r.PdemandLV + r.PdemandST + r.PdemandRT
+        Kdemand = r.KdemandLV + r.KdemandST + r.KdemandRT
 
         # NPK uptake rate in storage organs (kg N ha-1 d-1) is the mimimum of supply and
         # demand divided by the time coefficient for N/P/K translocation
-        r.RNuptakeSO = min(s.NdemandSO, k.Ntranslocatable)/p.TCNT
-        r.RPuptakeSO = min(s.PdemandSO, k.Ptranslocatable)/p.TCPT
-        r.RKuptakeSO = min(s.KdemandSO, k.Ktranslocatable)/p.TCKT
+        r.RNuptakeSO = min(r.NdemandSO, k.Ntranslocatable)/p.TCNT
+        r.RPuptakeSO = min(r.PdemandSO, k.Ptranslocatable)/p.TCPT
+        r.RKuptakeSO = min(r.KdemandSO, k.Ktranslocatable)/p.TCKT
 
         # No nutrients are absorbed after development stage DVS_NPK_STOP or
         # when severe water shortage occurs i.e. RFTRA <= 0.01
@@ -263,62 +294,57 @@ class NPK_Demand_Uptake(SimulationObject):
         if Ndemand == 0.:
             r.RNuptakeLV = r.RNuptakeST = r.RNuptakeRT = 0.
         else:
-            r.RNuptakeLV = (s.NdemandLV / Ndemand) * (r.RNuptake + r.RNfixation)
-            r.RNuptakeST = (s.NdemandST / Ndemand) * (r.RNuptake + r.RNfixation)
-            r.RNuptakeRT = (s.NdemandRT / Ndemand) * (r.RNuptake + r.RNfixation)
+            r.RNuptakeLV = (r.NdemandLV / Ndemand) * (r.RNuptake + r.RNfixation)
+            r.RNuptakeST = (r.NdemandST / Ndemand) * (r.RNuptake + r.RNfixation)
+            r.RNuptakeRT = (r.NdemandRT / Ndemand) * (r.RNuptake + r.RNfixation)
 
         if Pdemand == 0.:
             r.RPuptakeLV = r.RPuptakeST = r.RPuptakeRT = 0.
         else:
-            r.RPuptakeLV = (s.PdemandLV / Pdemand) * r.RPuptake
-            r.RPuptakeST = (s.PdemandST / Pdemand) * r.RPuptake
-            r.RPuptakeRT = (s.PdemandRT / Pdemand) * r.RPuptake
+            r.RPuptakeLV = (r.PdemandLV / Pdemand) * r.RPuptake
+            r.RPuptakeST = (r.PdemandST / Pdemand) * r.RPuptake
+            r.RPuptakeRT = (r.PdemandRT / Pdemand) * r.RPuptake
 
         if Kdemand == 0.:
             r.RKuptakeLV = r.RKuptakeST = r.RKuptakeRT = 0.
         else:
-            r.RKuptakeLV = (s.KdemandLV / Kdemand) * r.RKuptake
-            r.RKuptakeST = (s.KdemandST / Kdemand) * r.RKuptake
-            r.RKuptakeRT = (s.KdemandRT / Kdemand) * r.RKuptake
+            r.RKuptakeLV = (r.KdemandLV / Kdemand) * r.RKuptake
+            r.RKuptakeST = (r.KdemandST / Kdemand) * r.RKuptake
+            r.RKuptakeRT = (r.KdemandRT / Kdemand) * r.RKuptake
 
     @prepare_states
     def integrate(self, day, delt=1.0):
         s = self.states
-        p = self.params
         k = self.kiosk
 
-#       Maximum NPK concentrations in leaves [kg N kg-1 DM]
+#       Maximum NPK concentrations in plant organs [kg N/P/K kg-1 DM]
+        mc = self._compute_NPK_max_concentrations()
+
+
+    def _compute_NPK_max_concentrations(self):
+
+        p = self.params
+        k = self.kiosk
         NMAXLV = p.NMAXLV_TB(k.DVS)
         PMAXLV = p.PMAXLV_TB(k.DVS)
         KMAXLV = p.KMAXLV_TB(k.DVS)
-        
-#       Maximum NPK concentrations in stems and roots [kg N kg-1 DM]
-        NMAXST = p.NMAXST_FR * NMAXLV
-        NMAXRT = p.NMAXRT_FR * NMAXLV
-        NMAXSO = p.NMAXSO
-      
-        PMAXST = p.PMAXST_FR * PMAXLV
-        PMAXRT = p.PMAXRT_FR * PMAXLV
-        PMAXSO = p.PMAXSO
-      
-        KMAXST = p.KMAXST_FR * KMAXLV
-        KMAXRT = p.KMAXRT_FR * KMAXLV
-        KMAXSO = p.KMAXSO
+        max_NPK_conc = MaxNutrientConcentrations(
+            # Maximum NPK concentrations in leaves [kg N kg-1 DM]
+            NMAXLV=NMAXLV,
+            PMAXLV=PMAXLV,
+            KMAXLV=KMAXLV,
+            # Maximum NPK concentrations in stems and roots [kg N kg-1 DM]
+            NMAXST=(p.NMAXST_FR * NMAXLV),
+            NMAXRT=p.NMAXRT_FR * NMAXLV,
+            NMAXSO=p.NMAXSO,
 
-#       N demand [kg ha-1]
-        s.NdemandLV = max(NMAXLV * k.WLV - k.NamountLV, 0.)  # maybe should be divided by one day, see equation 5 Shibu etal 2010
-        s.NdemandST = max(NMAXST * k.WST - k.NamountST, 0.)
-        s.NdemandRT = max(NMAXRT * k.WRT - k.NamountRT, 0.)
-        s.NdemandSO = max(NMAXSO * k.WSO - k.NamountSO, 0.)
+            PMAXST=p.PMAXST_FR * PMAXLV,
+            PMAXRT=p.PMAXRT_FR * PMAXLV,
+            PMAXSO=p.PMAXSO,
 
-#       P demand [kg ha-1]
-        s.PdemandLV = max(PMAXLV * k.WLV - k.PamountLV, 0.)
-        s.PdemandST = max(PMAXST * k.WST - k.PamountST, 0.)
-        s.PdemandRT = max(PMAXRT * k.WRT - k.PamountRT, 0.)
-        s.PdemandSO = max(PMAXSO * k.WSO - k.PamountSO, 0.)
+            KMAXST=p.KMAXST_FR * KMAXLV,
+            KMAXRT=p.KMAXRT_FR * KMAXLV,
+            KMAXSO=p.KMAXSO
+        )
 
-#       K demand [kg ha-1]
-        s.KdemandLV = max(KMAXLV * k.WLV - k.KamountLV, 0.)
-        s.KdemandST = max(KMAXST * k.WST - k.KamountST, 0.)
-        s.KdemandRT = max(KMAXRT * k.WRT - k.KamountRT, 0.)
-        s.KdemandSO = max(KMAXSO * k.WSO - k.KamountSO, 0.)
+        return max_NPK_conc
