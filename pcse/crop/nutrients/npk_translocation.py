@@ -93,19 +93,19 @@ class NPK_Translocation(SimulationObject):
     ===========  ================================ ======================  ===========
      Name         Description                      Provided by             Unit
     ===========  ================================ ======================  ===========
-    DVS         Crop development stage              DVS_Phenology           -
-    WST         Dry weight of living stems          WOFOST_Stem_Dynamics   |kg ha-1|
-    WLV         Dry weight of living leaves         WOFOST_Leaf_Dynamics   |kg ha-1|
-    WRT         Dry weight of living roots          WOFOST_Root_Dynamics   |kg ha-1|
-    NamountLV   Amount of N in leaves               NPK_Crop_Dynamics      |kg ha-1|
-    NamountST   Amount of N in stems                NPK_Crop_Dynamics      |kg ha-1|
-    NamountRT   Amount of N in roots                NPK_Crop_Dynamics      |kg ha-1|
-    PamountLV   Amount of P in leaves               NPK_Crop_Dynamics      |kg ha-1|
-    PamountST   Amount of P in stems                NPK_Crop_Dynamics      |kg ha-1|
-    PamountRT   Amount of P in roots                NPK_Crop_Dynamics      |kg ha-1|
-    KamountLV   Amount of K in leaves               NPK_Crop_Dynamics      |kg ha-1|
-    KamountST   Amount of K in stems                NPK_Crop_Dynamics      |kg ha-1|
-    KamountRT   Amount of K in roots                NPK_Crop_Dynamics      |kg ha-1|
+    DVS           Crop development stage           DVS_Phenology           -
+    WST           Dry weight of living stems       WOFOST_Stem_Dynamics   |kg ha-1|
+    WLV           Dry weight of living leaves      WOFOST_Leaf_Dynamics   |kg ha-1|
+    WRT           Dry weight of living roots       WOFOST_Root_Dynamics   |kg ha-1|
+    NamountLV     Amount of N in leaves            NPK_Crop_Dynamics      |kg ha-1|
+    NamountST     Amount of N in stems             NPK_Crop_Dynamics      |kg ha-1|
+    NamountRT     Amount of N in roots             NPK_Crop_Dynamics      |kg ha-1|
+    PamountLV     Amount of P in leaves            NPK_Crop_Dynamics      |kg ha-1|
+    PamountST     Amount of P in stems             NPK_Crop_Dynamics      |kg ha-1|
+    PamountRT     Amount of P in roots             NPK_Crop_Dynamics      |kg ha-1|
+    KamountLV     Amount of K in leaves            NPK_Crop_Dynamics      |kg ha-1|
+    KamountST     Amount of K in stems             NPK_Crop_Dynamics      |kg ha-1|
+    KamountRT     Amount of K in roots             NPK_Crop_Dynamics      |kg ha-1|
     ===========  ================================ ======================  ===========
     """
 
@@ -211,25 +211,25 @@ class NPK_Translocation(SimulationObject):
         s = self.states
         k = self.kiosk
         
-#       translocatable N amount in the organs [kg N ha-1]
+        # translocatable N amount in the organs [kg N ha-1]
         s.NtranslocatableLV = max(0., k.NamountLV - k.WLV * p.NRESIDLV)
         s.NtranslocatableST = max(0., k.NamountST - k.WST * p.NRESIDST)
         s.NtranslocatableRT = max((s.NtranslocatableLV + s.NtranslocatableST) *
                                   p.NPK_TRANSLRT_FR, k.NamountRT - k.WRT * p.NRESIDRT)
 
-#       translocatable P amount in the organs [kg P ha-1]
+        # translocatable P amount in the organs [kg P ha-1]
         s.PtranslocatableLV = max(0., k.PamountLV - k.WLV * p.PRESIDLV)
         s.PtranslocatableST = max(0., k.PamountST - k.WST * p.PRESIDST)
         s.PtranslocatableRT = max((s.PtranslocatableLV + s.PtranslocatableST) *
                                   p.NPK_TRANSLRT_FR, k.PamountRT - k.WRT * p.PRESIDRT)
 
-#       translocatable K amount in the organs [kg K ha-1]
+        # translocatable K amount in the organs [kg K ha-1]
         s.KtranslocatableLV = max(0., k.KamountLV - k.WLV * p.KRESIDLV)
         s.KtranslocatableST = max(0., k.KamountST - k.WST * p.KRESIDST)
         s.KtranslocatableRT = max((s.KtranslocatableLV + s.KtranslocatableST) *
                                   p.NPK_TRANSLRT_FR, k.KamountRT - k.WRT * p.KRESIDRT)
 
-#       total translocatable NPK amount in the organs [kg N ha-1]
+        # total translocatable NPK amount in the organs [kg N ha-1]
         s.Ntranslocatable = s.NtranslocatableLV + s.NtranslocatableST + s.NtranslocatableRT
         s.Ptranslocatable = s.PtranslocatableLV + s.PtranslocatableST + s.PtranslocatableRT
         s.Ktranslocatable = s.KtranslocatableLV + s.KtranslocatableST + s.KtranslocatableRT

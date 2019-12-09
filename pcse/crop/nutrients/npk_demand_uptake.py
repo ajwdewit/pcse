@@ -105,25 +105,25 @@ class NPK_Demand_Uptake(SimulationObject):
     ===========  ================================================= ==== ================
      Name         Description                                      Pbl      Unit
     ===========  ================================================= ==== ================
-    RNuptakeLV     Rate of N uptake in leaves                         Y   |kg N ha-1 d-1|
-    RNuptakeST     Rate of N uptake in stems                          Y   |kg N ha-1 d-1|
-    RNuptakeRT     Rate of N uptake in roots                          Y   |kg N ha-1 d-1|
-    RNuptakeSO     Rate of N uptake in storage organs                 Y   |kg N ha-1 d-1|
+    RNuptakeLV     Rate of N uptake in leaves                        Y   |kg N ha-1 d-1|
+    RNuptakeST     Rate of N uptake in stems                         Y   |kg N ha-1 d-1|
+    RNuptakeRT     Rate of N uptake in roots                         Y   |kg N ha-1 d-1|
+    RNuptakeSO     Rate of N uptake in storage organs                Y   |kg N ha-1 d-1|
 
-    RPuptakeLV     Rate of P uptake in leaves                         Y   |kg P ha-1 d-1|
-    RPuptakeST     Rate of P uptake in stems                          Y   |kg P ha-1 d-1|
-    RPuptakeRT     Rate of P uptake in roots                          Y   |kg P ha-1 d-1|
-    RPuptakeSO     Rate of P uptake in storage organs                 Y   |kg P ha-1 d-1|
+    RPuptakeLV     Rate of P uptake in leaves                        Y   |kg P ha-1 d-1|
+    RPuptakeST     Rate of P uptake in stems                         Y   |kg P ha-1 d-1|
+    RPuptakeRT     Rate of P uptake in roots                         Y   |kg P ha-1 d-1|
+    RPuptakeSO     Rate of P uptake in storage organs                Y   |kg P ha-1 d-1|
 
-    RKuptakeLV     Rate of K uptake in leaves                         Y   |kg K ha-1 d-1|
-    RKuptakeST     Rate of K uptake in stems                          Y   |kg K ha-1 d-1|
-    RKuptakeRT     Rate of K uptake in roots                          Y   |kg K ha-1 d-1|
-    RKuptakeSO     Rate of K uptake in storage organs                 Y   |kg K ha-1 d-1|
+    RKuptakeLV     Rate of K uptake in leaves                        Y   |kg K ha-1 d-1|
+    RKuptakeST     Rate of K uptake in stems                         Y   |kg K ha-1 d-1|
+    RKuptakeRT     Rate of K uptake in roots                         Y   |kg K ha-1 d-1|
+    RKuptakeSO     Rate of K uptake in storage organs                Y   |kg K ha-1 d-1|
 
-    RNuptake       Total rate of N uptake                             Y   |kg N ha-1 d-1|
-    RPuptake       Total rate of P uptake                             Y   |kg P ha-1 d-1|
-    RKuptake       Total rate of K uptake                             Y   |kg K ha-1 d-1|
-    RNfixation     Rate of N fixation                                 Y   |kg K ha-1 d-1|
+    RNuptake       Total rate of N uptake                            Y   |kg N ha-1 d-1|
+    RPuptake       Total rate of P uptake                            Y   |kg P ha-1 d-1|
+    RKuptake       Total rate of K uptake                            Y   |kg K ha-1 d-1|
+    RNfixation     Rate of N fixation                                Y   |kg K ha-1 d-1|
     ===========  ================================================= ==== ================
 
     **Signals send or handled**
@@ -172,9 +172,6 @@ class NPK_Demand_Uptake(SimulationObject):
 
         NFIX_FR = Float(-99.)  # fraction of crop nitrogen uptake by biological fixation
         DVS_NPK_STOP = Float(-99.)  # development stage above which no crop N-P-K uptake does occur
-
-    class StateVariables(StatesTemplate):
-        pass
 
     class RateVariables(RatesTemplate):
         RNuptakeLV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
@@ -228,11 +225,6 @@ class NPK_Demand_Uptake(SimulationObject):
                      "RKuptakeLV", "RKuptakeST", "RKuptakeRT", "RKuptakeSO",
                      "RNuptake", "RPuptake", "RKuptake", "RNfixation"])
 
-        # self.states = self.StateVariables(kiosk,
-        #     NdemandLV=0., NdemandST=0., NdemandRT=0., NdemandSO=0.,
-        #     PdemandLV=0., PdemandST=0., PdemandRT=0., PdemandSO=0.,
-        #     KdemandLV=0., KdemandST=0., KdemandRT=0., KdemandSO=0.)
-
     @prepare_rates
     def calc_rates(self, day, drv):
         r = self.rates
@@ -247,21 +239,21 @@ class NPK_Demand_Uptake(SimulationObject):
         # Demand consists of a demand carried over from previous timesteps plus a demand from new growth
 
         # N demand [kg ha-1]
-        r.NdemandLV = max(mc.NMAXLV * k.WLV - k.NamountLV, 0.) + max(k.GRLV * mc.NMAXLV, 0)
+        r.NdemandLV = max(mc.NMAXLV * k.WLV - k.NamountLV, 0.) + max(k.GRLV * mc.NMAXLV, 0) * delt
         r.NdemandST = max(mc.NMAXST * k.WST - k.NamountST, 0.) + max(k.GRST * mc.NMAXST, 0) * delt
-        r.NdemandRT = max(mc.NMAXRT * k.WRT - k.NamountRT, 0.) + max(k.GRRT * mc.NMAXRT, 0)
+        r.NdemandRT = max(mc.NMAXRT * k.WRT - k.NamountRT, 0.) + max(k.GRRT * mc.NMAXRT, 0) * delt
         r.NdemandSO = max(mc.NMAXSO * k.WSO - k.NamountSO, 0.)
 
         # P demand [kg ha-1]
-        r.PdemandLV = max(mc.PMAXLV * k.WLV - k.PamountLV, 0.) + max(k.GRLV * mc.PMAXLV, 0)
-        r.PdemandST = max(mc.PMAXST * k.WST - k.PamountST, 0.) + max(k.GRST * mc.PMAXST, 0)
-        r.PdemandRT = max(mc.PMAXRT * k.WRT - k.PamountRT, 0.) + max(k.GRRT * mc.PMAXRT, 0)
+        r.PdemandLV = max(mc.PMAXLV * k.WLV - k.PamountLV, 0.) + max(k.GRLV * mc.PMAXLV, 0) * delt
+        r.PdemandST = max(mc.PMAXST * k.WST - k.PamountST, 0.) + max(k.GRST * mc.PMAXST, 0) * delt
+        r.PdemandRT = max(mc.PMAXRT * k.WRT - k.PamountRT, 0.) + max(k.GRRT * mc.PMAXRT, 0) * delt
         r.PdemandSO = max(mc.PMAXSO * k.WSO - k.PamountSO, 0.)
 
         # K demand [kg ha-1]
         r.KdemandLV = max(mc.KMAXLV * k.WLV - k.KamountLV, 0.) + max(k.GRLV * mc.KMAXLV, 0) * delt
-        r.KdemandST = max(mc.KMAXST * k.WST - k.KamountST, 0.) + max(k.GRST * mc.KMAXST, 0)
-        r.KdemandRT = max(mc.KMAXRT * k.WRT - k.KamountRT, 0.) + max(k.GRRT * mc.KMAXRT, 0)
+        r.KdemandST = max(mc.KMAXST * k.WST - k.KamountST, 0.) + max(k.GRST * mc.KMAXST, 0) * delt
+        r.KdemandRT = max(mc.KMAXRT * k.WRT - k.KamountRT, 0.) + max(k.GRRT * mc.KMAXRT, 0) * delt
         r.KdemandSO = max(mc.KMAXSO * k.WSO - k.KamountSO, 0.)
 
         Ndemand = r.NdemandLV + r.NdemandST + r.NdemandRT
@@ -314,14 +306,16 @@ class NPK_Demand_Uptake(SimulationObject):
 
     @prepare_states
     def integrate(self, day, delt=1.0):
-        s = self.states
-        k = self.kiosk
-
-#       Maximum NPK concentrations in plant organs [kg N/P/K kg-1 DM]
-        mc = self._compute_NPK_max_concentrations()
-
+        pass
 
     def _compute_NPK_max_concentrations(self):
+        """Computes the maximum N/P/K concentrations in leaves, stems, roots and storage organs.
+        
+        Note that max concentrations are first derived from the dilution curve for leaves. 
+        Maximum concentrations for stems and roots are computed as a fraction of the 
+        concentration for leaves. Maximum concentration for storage organs is directly taken from
+        the parameters N/P/KMAXSO.
+        """
 
         p = self.params
         k = self.kiosk
