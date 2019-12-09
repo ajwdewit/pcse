@@ -237,6 +237,7 @@ class NPK_Demand_Uptake(SimulationObject):
 
         # Total NPK demand of leaves, stems, roots and storage organs
         # Demand consists of a demand carried over from previous timesteps plus a demand from new growth
+        # Note that we are pre-integrating here, so a multiplication with time-step delt is required
 
         # N demand [kg ha-1]
         r.NdemandLV = max(mc.NMAXLV * k.WLV - k.NamountLV, 0.) + max(k.GRLV * mc.NMAXLV, 0) * delt
