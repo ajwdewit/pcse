@@ -25,6 +25,10 @@ hPa2kPa = lambda x: x/10.
 # Saturated Vapour pressure [kPa] at temperature temp [C]
 SatVapourPressure = lambda temp: 0.6108 * exp((17.27 * temp) / (237.3 + temp))
 
+# Named tuple for returning results of ASTRO
+astro_nt = namedtuple("AstroResults", "DAYL, DAYLP, SINLD, COSLD, DIFPP, "
+                                      "ATMTR, DSINBE, ANGOT")
+
 
 def reference_ET(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
                  ANGSTA, ANGSTB, ETMODEL="PM", **kwargs):
@@ -587,10 +591,7 @@ def astro(day, latitude, radiation, _cache={}):
         FRDIF = 1.
 
     DIFPP = FRDIF*ATMTR*0.5*SC
-    
-    # Pack return values in namedtuple, add to cache and return
-    astro_nt = namedtuple("AstroResults","DAYL, DAYLP, SINLD, COSLD, DIFPP, "
-                                         "ATMTR, DSINBE, ANGOT")
+
     retvalue = astro_nt(DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE, ANGOT)
     _cache[(IDAY, LAT, AVRAD)] = retvalue
 
