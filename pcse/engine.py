@@ -400,7 +400,8 @@ class Engine(BaseEngine):
         with the value '5.0' as input.
         """
         increments = {}
-        self.soil.set_variable(varname, value, increments)
+        if self.soil is not None:
+            self.soil.set_variable(varname, value, increments)
         if self.crop is not None:
             self.crop.set_variable(varname, value, increments)
 
