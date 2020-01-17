@@ -211,7 +211,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
                 wdc = self._make_WeatherDataContainer(row, t)
                 self._store_WeatherDataContainer(wdc, DAY)
 
-        except Exception:
+        except Exception as e:
             msg = "Failure reading meteodata for grid %s "
             self.logger.exception(msg, self.idgrid)
             raise exc.PCSEError(msg, self.idgrid)
@@ -265,15 +265,15 @@ class AgroManagementDataProvider(list):
         crossing calendar years, the start_date can be in the previous year.
     """
     agro_management_template = """
-          - {0[campaign_start_date]}:
+          - {campaign_start_date}:
                 CropCalendar:
-                    crop_name: '{0[crop_name]}'
-                    variety_name: '{0[variety_name]}'
-                    crop_start_date: {0[crop_start_date]}
-                    crop_start_type: {0[start_period]}
-                    crop_end_date: {0[crop_end_date]}
-                    crop_end_type: {0[end_period]}
-                    max_duration: {0[duration]}
+                    crop_name: 'crop_name}'
+                    variety_name: 'variety_name}'
+                    crop_start_date: {crop_start_date}
+                    crop_start_type: {start_period}
+                    crop_end_date: {crop_end_date}
+                    crop_end_type: {end_period}
+                    max_duration: {duration}
                 TimedEvents: null
                 StateEvents: null
         """
@@ -285,7 +285,6 @@ class AgroManagementDataProvider(list):
         self.idcrop_parametrization = idcrop_parametrization
         self.crop_name = fetch_crop_name(engine, idcrop_parametrization)
         self.campaign_year = campaign_year
-        self.amdict = {}
 
         # Use the idcrop_parametrization to search in the table crop_calendars 
         metadata = MetaData(engine)
@@ -293,9 +292,7 @@ class AgroManagementDataProvider(list):
         sm = select([t], and_(t.c.idgrid == self.idgrid,
                               t.c.idcrop_parametrization == self.idcrop_parametrization,
                               t.c.year == self.campaign_year))
-        sc = sm.execute()
-        row = sc.fetchone()
-        sc.close()
+        row = sm.execute().fetchone()
 
         # Process the query result - dates should be in the format 'yyyy-mm-dd'!
         if row is None:
@@ -305,7 +302,7 @@ class AgroManagementDataProvider(list):
         for key, value in row.items():
             if value in ["EMERGENCE", "SOWING", "HARVEST", "MATURITY"]:
                 value = value.lower()
-            if key == "duration":
+            if key == "window_duration":
                 value = int(value)
             self.amdict[key] = value
 
@@ -341,7 +338,8 @@ class AgroManagementDataProvider(list):
         self._parse_yaml(input)
 
     def conditional_datecopy(self, testkey, targetkey, value1, value2):
-        if self.amdict == None: return
+        if self.amdict == None:
+            return
         try:
             if self.amdict[testkey].lower() == value1.lower():
                 self.amdict[targetkey] = check_date(self.amdict[value1])
@@ -389,62 +387,38 @@ class SoilDataProviderSingleLayer(dict):
     moisture content in initial rooting depth zone) is set
     to field capacity (SMFCF)
     """
-    soil_hydraulic_parameters = [("CRAIRC", "CRITICAL_AIR_CONTENT"),
-                                 ("K0", "HYDR_CONDUCT_SATUR"),
-                                 ("SOPE", "MAX_PERCOL_ROOT_ZONE"),
-                                 ("KSUB", "MAX_PERCOL_SUBSOIL")]
-    soil_moisture_content_parameters = [("SMFCF", "soil_moisture_fc"),
-                                        ("SM0", "soil_moisture_sat"),
-                                        ("SMW", "soil_moisture_wp"),
-                                        ("RDMSOL", "depth")]  # CALCULATED_ROOTING_?
+    soil_parameters = [("SMFCF", "soil_moisture_fc"),
+                       ("SM0", "soil_moisture_sat"),
+                       ("SMW", "soil_moisture_wp"),
+                       ("RDMSOL", "depth"),
+                       ("CRAIRC", "swcres"),
+                       ("K0", "sat_hydro_conductivity"),
+                       ("SOPE", "max_percol_root_zone"),
+                       ("KSUB", "max_percol_subsoil")
+                       ]
 
     def __init__(self, engine, idstu):
-        # Initialise
-        dict.__init__(self)
-        metadata = MetaData(engine)
+        """Gets the soil moisture content parameters from the table
+         link_stu_weighted_parameters and them stores into self[] directly.
 
-        # Get the actual rooting depth [cm]
-        self._soil_moisture_content_parameters(metadata, idstu)
-        # Get the actual soil hydrological parameters.
-        self._get_soil_hydraulic_parameters(metadata, idstu)
-
-        # define SMLIM
-        self["SMLIM"] = self["SMFCF"]
-
-    def _soil_moisture_content_parameters(self, metadata, idstu):
-        """Gets the soil moisture content parameters from the table 
-         link_weighted_parameters and them stores into self[] directly.
-
-        :param metadata: An SQLAlchemy Metadata object
+        :param engine: An SQLAlchemy Engine object
         :param idstu: the id for the soil typologic unit(integer)
         """
+
+        dict.__init__(self)
+        metadata = MetaData(engine)
         t = Table("link_stu_weighted_parameters", metadata, autoload=True)
-        sc = select([t], t.c.idstu == idstu).execute()
-        row = sc.fetchone()
-        sc.close()
+        row = select([t], t.c.idstu == idstu).execute().fetchone()
         if row is None:
             msg = "No soil moisture content parameters found in table " \
                   "link_stu_weighted_parameters for idstu=%s" % idstu
             raise exc.PCSEError(msg)
 
-        for (wofost_soil_par, db_soil_par) in self.soil_moisture_content_parameters:
+        for (wofost_soil_par, db_soil_par) in self.soil_parameters:
             self[wofost_soil_par] = float(getattr(row, db_soil_par))
 
-    def _get_soil_hydraulic_parameters(self, metadata, idstu):
-        """Defineds the soil hydraulic parameters and stores into self[] directly.
-
-        :param metadata: An SQLAlchemy Metadata object
-        :param idstu: the soil physical group number (integer)
-        :return: None
-
-        NOTE: soil hydraulic parameters are not defined in BioMA database yet.
-              therefore, default values are used.
-        """
-        for (wofost_soil_par, db_soil_par) in self.soil_hydraulic_parameters:
-            if wofost_soil_par == "CRAIRC":
-                self[wofost_soil_par] = 0.06
-            else:
-                self[wofost_soil_par] = 10.0
+        # define SMLIM
+        self["SMLIM"] = self["SMFCF"]
 
 
 class SoilDataIterator(list):
@@ -468,6 +442,7 @@ class SoilDataIterator(list):
     (9050131, 625000000, 9000282, 50)
     (9050131, 625000000, 9000283, 50)
     """
+    tbl_link_sm_grid_cover = "link_smu_grid_cover"
 
     def __init__(self, engine, idgrid, idcover=1000):
         # Initialise
@@ -487,7 +462,7 @@ class SoilDataIterator(list):
     def _get_SMU_from_EMU(self, metadata, idgrid, idcover):
         """Retrieves the relevant SMU for given idgrid from table link_smu_grid_cover."""
         result = None
-        t = Table("link_smu_grid_cover", metadata, autoload=True)
+        t = Table(self.tbl_link_sm_grid_cover, metadata, autoload=True)
         sm = select([t.c.idsmu, t.c.area], and_(t.c.idgrid == self.idgrid, t.c.idcover == idcover))
         sc = sm.execute()
         result = sc.fetchall()
@@ -594,7 +569,7 @@ class CropDataProvider(dict):
                 self[code] = value
 
         # Check that we have had all the single and single2tabular parameters now
-        for parameter_code in (self.parameter_codes_single + tuple(self.single2tabular.keys())):
+        for parameter_code in (self.parameter_codes_single + list(self.single2tabular.keys())):
             found = False
             if parameter_code not in self.single2tabular:
                 if parameter_code in self:
