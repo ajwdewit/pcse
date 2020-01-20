@@ -139,7 +139,6 @@ class WaterbalanceFD(SimulationObject):
     CRAIRC    Soil critical air content (waterlogging)         SSo     -
     SOPE      maximum percolation rate root zone               SSo    |cmday-1|
     KSUB      maximum percolation rate subsoil                 SSo    |cmday-1|
-    K0        hydraulic conductivity of saturated soil         SSo    |cmday-1|
     RDMSOL    Soil rootable depth                              SSo     cm
     IFUNRN    Indicates whether non-infiltrating fraction of   SSi    -
               rain is a function of storm size (1)
@@ -268,7 +267,6 @@ class WaterbalanceFD(SimulationObject):
         CRAIRC = Float(-99.)
         SOPE   = Float(-99.)
         KSUB   = Float(-99.)
-        K0     = Float(-99.)
         RDMSOL = Float(-99.)
         # Site parameters
         IFUNRN = Float(-99.)
