@@ -3,10 +3,10 @@
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
 
-from ...base_classes import StatesTemplate, ParamTemplate, SimulationObject, \
-       AfgenTrait, RatesTemplate
+from ...base import StatesTemplate, ParamTemplate, SimulationObject, RatesTemplate
 from ...decorators import prepare_rates, prepare_states
 from ...traitlets import HasTraits, Float, Int, Instance
+from ...util import AfgenTrait
 
 class NPK_Demand_Uptake(SimulationObject):
     """Calculates the crop N/P/K demand and its uptake from the soil.

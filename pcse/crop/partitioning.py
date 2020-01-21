@@ -4,12 +4,13 @@
 from collections import namedtuple
 from math import exp
 
-from ..traitlets import Float, Int, Instance, AfgenTrait
+from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, StatesTemplate, SimulationObject,\
+from ..base import ParamTemplate, StatesTemplate, SimulationObject,\
      VariableKiosk
 from .. import exceptions as exc
 from warnings import warn
+from ..util import AfgenTrait
 
 
 # Template for namedtuple containing partitioning factors

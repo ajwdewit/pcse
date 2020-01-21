@@ -10,7 +10,7 @@ import csv
 import yaml
 
 from ..engine import Engine
-from ..base_classes import ParameterProvider
+from ..base import ParameterProvider
 from ..fileinput import PCSEFileReader, CABOWeatherDataProvider
 
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
@@ -55,7 +55,7 @@ class TestLINTUL3_SpringWheat(unittest.TestCase):
     def runTest(self):
         refdata_file = os.path.join(test_data_dir, "LINTUL3_reference_results.csv")
         ref_results = []
-        with open(refdata_file, "rb") as fp:
+        with open(refdata_file, "r") as fp:
             reader = csv.DictReader(fp)
             ref_results = [row for row in reader]
         msg = "Different number of rows in model output and reference results"

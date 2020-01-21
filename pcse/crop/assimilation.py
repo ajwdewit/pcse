@@ -7,10 +7,10 @@ from __future__ import print_function
 from math import sqrt, exp, cos, pi
 from collections import deque
 
-from ..traitlets import Instance, Float, AfgenTrait
+from ..traitlets import Instance, Float 
 
-from ..util import limit, astro, doy
-from ..base_classes import ParamTemplate, SimulationObject
+from ..util import limit, astro, doy, AfgenTrait
+from ..base import ParamTemplate, SimulationObject, RatesTemplate
 
 try:
     from ..futil import totass as ftotass
@@ -169,10 +169,17 @@ class WOFOST_Assimilation(SimulationObject):
     
     *State and rate variables*
     
-    `WOFOST_Assimilation` has no state/rate variables, but calculates the
-    rate of assimilation which is returned directly from the `__call__()`
-    method.
-    
+    `WOFOST_Assimilation` returns the potential gross assimilation rate 'PGASS'
+    directly from the `__call__()` method, but also includes it as a rate variable.
+
+     **Rate variables:**
+
+    =======  ================================================ ==== =============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================ ==== =============
+    PGASS    Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
+    =======  ================================================ ==== =============
+
     *Signals sent or handled*
     
     None
@@ -197,6 +204,9 @@ class WOFOST_Assimilation(SimulationObject):
         TMPFTB = AfgenTrait()
         TMNFTB = AfgenTrait()
 
+    class RateVariables(RatesTemplate):
+        PGASS = Float(-99.)
+
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -207,17 +217,18 @@ class WOFOST_Assimilation(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
         self._TMNSAV = deque(maxlen=7)
     
     def __call__(self, day, drv):
         # Check if fortran versions can be used otherwise use native python
         if ftotass is not None:
-            PGASS = self.___call__fortran(day, drv)
+            self.rates.PGASS = self.___call__fortran(day, drv)
         else:
-            PGASS = self.__call__python(day, drv)
+            self.rates.PGASS = self.__call__python(day, drv)
 
-        return PGASS
+        return self.rates.PGASS
 
     def ___call__fortran(self, day, drv):
         """Calls fortran versions of ASTRO and TOTASS

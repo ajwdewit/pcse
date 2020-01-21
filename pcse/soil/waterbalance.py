@@ -8,11 +8,11 @@ from copy import deepcopy
 import numpy as np
 
 from ..pydispatch import dispatcher
-from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool, AfgenTrait
+from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool
 from ..decorators import prepare_rates, prepare_states
 from math import log10, sqrt, exp
-from ..util import limit, Afgen, merge_dict
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..util import limit, Afgen, merge_dict, AfgenTrait
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 from .. import signals
 from .. import exceptions as exc

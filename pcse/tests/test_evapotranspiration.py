@@ -5,7 +5,7 @@ import unittest
 from datetime import date
 
 from ..crop.evapotranspiration import Evapotranspiration
-from ..base_classes import VariableKiosk, ParameterProvider
+from ..base import VariableKiosk, ParameterProvider
 from .test_data import pot_evtra_testdata, wl_evtra_testdata1,\
     wl_parvalue_dict1, wl_evtra_testdata2, wl_parvalue_dict2
 

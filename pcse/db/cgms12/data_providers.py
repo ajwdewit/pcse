@@ -10,16 +10,14 @@ Data providers are compatible with a CGMS12 database schema.
 
 import os
 import datetime as dt
-import logging
 
 from sqlalchemy import MetaData, select, Table, and_
-from tabulate import tabulate
 import numpy as np
 import yaml
 
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import exceptions as exc
-from ...base_classes import WeatherDataContainer, WeatherDataProvider
+from ...base import WeatherDataContainer, WeatherDataProvider
 from ... import settings
 from .. import wofost_parameters
 
@@ -735,31 +733,7 @@ class CropDataProvider(dict):
                "campaign_year=%i derived from %s\n" %
                (self.grid_no, self.crop_no, self.crop_name, self.variety_no,
                 self.campaign_year, self.db_resource))
-        single_values = []
-        tabular_values = []
-        for pcode in sorted(self.keys()):
-            value = self[pcode]
-            if not isinstance(value, list):
-                single_values.append((pcode, value))
-            else:
-                tabular_values.append((pcode, value))
-
-        # Format the single parameters in a table of 4 columns
-        msg += "Single parameter values:\n"
-        # If not of even length add ["",""]
-        if not len(single_values) % 2 == 0:
-            single_values.append(["", ""])
-        np_single_values = np.array(single_values, dtype=np.string_)
-        shp = np_single_values.shape
-        np_single_values.shape = (shp[0]/2, shp[1]*2)
-        msg += tabulate(np_single_values, headers=["Par_code", "Value", "Par_code", "Value"])
-        msg += "\n"
-
-        # Format the tabular parameters in two columns
-        msg += "Tabular parameters:\n"
-        msg += tabulate(tabular_values, headers=["Par_code", "Value"])
-        msg += "\n"
-
+        msg += dict.__str__(self)
         return msg
 
 

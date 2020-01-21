@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from ..base_classes import ParamTemplate, SimulationObject
-from ..base_classes import StatesWithImplicitRatesTemplate as StateVariables
+from ..base import ParamTemplate, SimulationObject
+from ..base import StatesWithImplicitRatesTemplate as StateVariables
 from ..decorators import prepare_rates, prepare_states
 from ..traitlets import Float, Bool
 from ..util import limit

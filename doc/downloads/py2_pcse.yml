@@ -1,30 +1,19 @@
 name: py2_pcse
 dependencies:
-- alabaster
-- babel
-- colorama
-- docutils
-- imagesize
-- jinja2
-- markupsafe
-- mkl
+- sqlalchemy
+- pyyaml
 - numpy
-- pip
-- pygments
+- pandas
 - python=2.7
 - pytz
 - pyyaml
 - setuptools
-- six
-- snowballstemmer
 - sphinx
 - sphinx_rtd_theme
-- sqlalchemy
-- vs2008_runtime
-- wheel
 - xlrd
 - xlwt
+- requests
+- ipython
+- jupyter
 - pip:
-  - sphinx-rtd-theme==0.1.9
-  - tabulate==0.7.5
-
+  - traitlets-pcse

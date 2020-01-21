@@ -6,7 +6,7 @@ import datetime
 
 from ..traitlets import Float, Int, Instance, Enum, Unicode
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
@@ -120,7 +120,7 @@ class Wofost_winterkill(SimulationObject):
         CTRAT = Float(-99.) # Crop total transpiration
         HI    = Float(-99.)
         DOF = Instance(datetime.date)
-        FINISH_TYPE = Instance(str)
+        FINISH_TYPE = Unicode()
 
     class RateVariables(RatesTemplate):
         GASS  = Float(-99.)

@@ -9,11 +9,11 @@ Classes defined here:
 """
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Bool, AfgenTrait
+from ..traitlets import Float, Int, Instance, Enum, Bool
 from ..decorators import prepare_rates, prepare_states
 
-from ..util import limit, daylength
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..util import limit, daylength, AfgenTrait
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
 from .. import signals
 from .. import exceptions as exc
@@ -293,8 +293,8 @@ class DVS_Phenology(SimulationObject):
 
     #-------------------------------------------------------------------------------
     class StateVariables(StatesTemplate):
-        DVS   = Float(-99.)  # Development stage
-        TSUM  = Float(-99.)  # Temperature sum state
+        DVS = Float(-99.)  # Development stage
+        TSUM = Float(-99.)  # Temperature sum state
         TSUME = Float(-99.)  # Temperature sum for emergence state
         # States which register phenological events
         DOS = Instance(datetime.date) # Day of sowing
@@ -302,7 +302,7 @@ class DVS_Phenology(SimulationObject):
         DOA = Instance(datetime.date) # Day of anthesis
         DOM = Instance(datetime.date) # Day of maturity
         DOH = Instance(datetime.date) # Day of harvest
-        STAGE = Enum([None, "emerging", "vegetative", "reproductive", "mature"])
+        STAGE = Enum(["emerging", "vegetative", "reproductive", "mature"])
 
     #---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues):

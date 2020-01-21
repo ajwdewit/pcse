@@ -18,8 +18,8 @@ import os, sys
 import datetime
 import gc
 
-from .traitlets import Instance, Bool
-from .base_classes import (VariableKiosk, WeatherDataProvider,
+from .traitlets import Instance, Bool, List, Dict
+from .base import (VariableKiosk, WeatherDataProvider,
                            AncillaryObject, SimulationObject,
                            BaseEngine, ParameterProvider)
 from .util import ConfigurationLoader, check_date
@@ -106,9 +106,9 @@ class Engine(BaseEngine):
     flag_summary_output = Bool(False)
     
     # placeholders for variables saved during model execution
-    _saved_output = Instance(list)
-    _saved_summary_output = Instance(list)
-    _saved_terminal_output = Instance(dict)
+    _saved_output = List()
+    _saved_summary_output = List()
+    _saved_terminal_output = Dict()
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement, config=None):
 

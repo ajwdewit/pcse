@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-from ..traitlets import Float, Int, Instance, Dict, AfgenTrait
+from ..traitlets import Float, Int, Instance, Dict
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, SimulationObject
+from ..base import ParamTemplate, SimulationObject, RatesTemplate
+from ..util import AfgenTrait
 
 class WOFOST_Maintenance_Respiration(SimulationObject):
     """Maintenance respiration in WOFOST
@@ -38,10 +39,18 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
 
     **State and rate variables:**
     
-    `WOFOSTMaintenanceRespiration` has no state/rate variables, but calculates
-    the rate of respiration which is returned directly from the `__call__()`
-    method.
-    
+    `WOFOSTMaintenanceRespiration` returns the potential maintenance respiration PMRES
+     directly from the `__call__()` method, but also includes it as a rate variable
+     within the object.
+
+     **Rate variables:**
+
+    =======  ================================================ ==== =============
+     Name     Description                                      Pbl      Unit
+    =======  ================================================ ==== =============
+    PMRES    Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
+    =======  ================================================ ==== =============
+
     **Signals send or handled**
     
     None
@@ -69,6 +78,9 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
         RMO = Float(-99.)
         RFSETB = AfgenTrait()
 
+    class RateVariables(RatesTemplate):
+        PMRES = Float(-99.)
+
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -78,16 +90,18 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
         
     def __call__(self, day, drv):
         p = self.params
         kk = self.kiosk
         
-        RMRES = (p.RMR * kk["WRT"] + \
-                 p.RML * kk["WLV"] + \
-                 p.RMS * kk["WST"] + \
+        RMRES = (p.RMR * kk["WRT"] +
+                 p.RML * kk["WLV"] +
+                 p.RMS * kk["WST"] +
                  p.RMO * kk["WSO"])
         RMRES *= p.RFSETB(kk["DVS"])
-        TEFF   = p.Q10**((drv.TEMP-25.)/10.)
-        return RMRES*TEFF
+        TEFF = p.Q10**((drv.TEMP-25.)/10.)
+        self.rates.PMRES = RMRES * TEFF
+        return self.rates.PMRES

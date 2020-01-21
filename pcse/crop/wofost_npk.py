@@ -4,7 +4,7 @@ import datetime
 
 from ..traitlets import Float, Int, Instance, Enum, Unicode
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
@@ -17,7 +17,7 @@ from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
     Storage_Organ_Dynamics
 from .assimilation import WOFOST_Assimilation2 as Assimilation
 from .partitioning import DVS_Partitioning_NPK as Partitioning
-from .evapotranspiration import Evapotranspiration2 as Evapotranspiration
+from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
 from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
 from .nutrients.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
@@ -125,13 +125,12 @@ class WofostNPK(SimulationObject):
         CTRAT = Float(-99.) # Crop total transpiration
         HI = Float(-99.)
         DOF = Instance(datetime.date)
-        FINISH_TYPE = Instance(str)
+        FINISH_TYPE = Unicode("")
 
     class RateVariables(RatesTemplate):
         GASS = Float(-99.)
         PGASS = Float(-99.)
         MRES = Float(-99.)
-        PMRES = Float(-99.)
         ASRC = Float(-99.)
         DMI = Float(-99.)
         ADMI = Float(-99.)
@@ -225,8 +224,8 @@ class WofostNPK(SimulationObject):
         rates.GASS = rates.PGASS * reduction
 
         # Respiration
-        rates.PMRES = self.mres(day, drv)
-        rates.MRES = min(rates.GASS, rates.PMRES)
+        PMRES = self.mres(day, drv)
+        rates.MRES = min(rates.GASS, PMRES)
 
         # Net available assimilates
         rates.ASRC = rates.GASS - rates.MRES

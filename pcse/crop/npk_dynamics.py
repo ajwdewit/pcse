@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 from .. import exceptions as exc
-from ..traitlets import Float, Int, Instance, AfgenTrait
+from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
-
+from ..util import AfgenTrait
 from .nutrients import NPK_Translocation
 from .nutrients import NPK_Demand_Uptake
 

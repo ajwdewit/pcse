@@ -5,7 +5,7 @@
 
 from ...traitlets import Float, Instance
 from ...decorators import prepare_rates, prepare_states
-from ...base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ...base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 
 class NPK_Translocation(SimulationObject):

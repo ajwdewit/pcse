@@ -6,11 +6,11 @@ LINTUL3
 """
 from math import exp
 
-from ..base_classes import SimulationObject, ParamTemplate, RatesTemplate
-from ..base_classes import StatesWithImplicitRatesTemplate as StateVariables
-from ..traitlets import Float, AfgenTrait, Instance, Bool
+from ..base import SimulationObject, ParamTemplate, RatesTemplate
+from ..base import StatesWithImplicitRatesTemplate as StateVariables
+from ..traitlets import Float, Instance, Bool
 from ..decorators import prepare_rates, prepare_states
-from ..util import limit
+from ..util import limit, AfgenTrait
 from ..crop.phenology import DVS_Phenology as Phenology
 from ..exceptions import CarbonBalanceError, NitrogenBalanceError
 from .. import signals
@@ -250,11 +250,11 @@ class Lintul3(SimulationObject):
         TCNT   = Float(-99)    # Time coefficient(days) for N translocation.
         TRANCO = Float(-99)    # Transpiration constant (mm/day) indicating the level of drought tolerance of the wheat crop.
         TSUMAG = Float(-99)    # Temperature sum for ageing of leaves
-        WCFC   = Float(-99)    # Water content at field capacity (0.03 MPa) m3/ m3
+        WCFC   = Float(-99)    # Water content at field capacity (0.03 MPa) m3/ m3
         WCI    = Float(-99)    # Initial water content in cm3 of water/(cm3 of soil).
-        WCST   = Float(-99)    # Water content at full saturation m3/ m3
+        WCST   = Float(-99)    # Water content at full saturation m3/ m3
         WCWET  = Float(-99)    # Critical Water conten for oxygen stress [m3/m3]
-        WCWP   = Float(-99)    # Water content at wilting point (1.5 MPa) m3/ m3
+        WCWP   = Float(-99)    # Water content at wilting point (1.5 MPa) m3/ m3
         WMFAC  = Bool(False)    # water management (0 = irrigated up to the field capacity, 1= irrigated up to saturation)
         RDRNS  = Float(-99)    # Relative deathOfLeaves rate of leaves due to N stress.
         RDRRT  = Float(-99)    # Relative deathOfLeaves rate of roots.

@@ -1,4 +1,4 @@
-from pcse.base_classes import SimulationObject, ParamTemplate, AncillaryObject
+from pcse.base import SimulationObject, ParamTemplate, AncillaryObject
 from pcse.decorators import prepare_rates, prepare_states
 
 

@@ -7,7 +7,7 @@ import os
 import datetime as dt
 import xlrd
 
-from ..base_classes import WeatherDataContainer, WeatherDataProvider
+from ..base import WeatherDataContainer, WeatherDataProvider
 from ..util import reference_ET, angstrom, check_angstromAB
 from ..exceptions import PCSEError
 from ..settings import settings
@@ -44,6 +44,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
     :param xls_fname: name of the Excel file to be read
     :param mising_snow_depth: the value that should use for missing SNOW_DEPTH values
+    :param force_reload: bypass the cache file and reload data from the XLS file
 
     For reading weather data from file, initially only the CABOWeatherDataProvider
     was available that reads its data from a text file in the CABO Weather format.
@@ -76,7 +77,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
     label_row = 10
     data_start_row = 12
 
-    def __init__(self, xls_fname, missing_snow_depth=None):
+    def __init__(self, xls_fname, missing_snow_depth=None, force_reload=False):
         WeatherDataProvider.__init__(self)
 
         self.fp_xls_fname = os.path.abspath(xls_fname)
@@ -85,7 +86,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
             msg = "Cannot find weather file at: %s" % self.fp_xls_fname
             raise PCSEError(msg)
 
-        if not self._load_cache_file(self.fp_xls_fname):  # Cache file cannot be loaded
+        if force_reload or not self._load_cache_file(self.fp_xls_fname):
             book = xlrd.open_workbook(self.fp_xls_fname)
             sheet = book.sheet_by_index(0)
 
@@ -146,7 +147,9 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
                     if label == "IRRAD" and self.has_sunshine is True:
                         if 0 < value < 24:
-                            d[label] = angstrom(d["DAY"], self.latitude, value, self.angstA, self.angstB)
+                            # Use Angstrom equation to convert sunshine duration to radiation in J/m2/day
+                            value = angstrom(d["DAY"], self.latitude, value, self.angstA, self.angstB)
+                            value /= 1000.  # convert to kJ/m2/day for compatibility with obs_conversion function
                         else:
                             msg = "Sunshine duration not within 0-24 interval for row %i" % (rownum + 1)
                             raise OutOfRange(msg)
@@ -173,7 +176,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                 self.logger.warn(msg)
 
             except OutOfRange as e:
-                self.logger.warn(e.message)
+                self.logger.warn(e)
 
     def _load_cache_file(self, xls_fname):
 

@@ -18,7 +18,7 @@ from datetime import date, timedelta
 import logging
 from collections import Counter
 
-from .base_classes import DispatcherObject, VariableKiosk, SimulationObject, ParameterProvider, AncillaryObject
+from .base import DispatcherObject, VariableKiosk, SimulationObject, ParameterProvider, AncillaryObject
 from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Dict, Unicode
 from . import exceptions as exc
 from .util import ConfigurationLoader
@@ -48,6 +48,13 @@ def check_date_range(day, start, end):
         return start <= day
     else:
         return start <= day < end
+        
+
+def take_first(iterator):
+    """Return the first item of the given iterator.
+    """
+    for item in iterator:
+        return item
 
 
 class CropCalendar(HasTraits, DispatcherObject):
@@ -293,7 +300,7 @@ class TimedEventsDispatcher(HasTraits, DispatcherObject):
         :param next_campaign_start_date: Start date of the next campaign, can be None
         """
         for event in self.events_table:
-            day = event.keys()[0]
+            day = list(event.keys())[0]
             r = check_date_range(day, campaign_start_date, next_campaign_start_date)
             if r is not True:
                 msg = "Timed event at day %s not in campaign interval (%s - %s)" %\
@@ -467,7 +474,7 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
         current_state = self.kiosk[self.event_state]
         zero_condition_signs = []
         for event, zero_condition_sign in zip(self.events_table, self.previous_signs):
-            state, keywords = event.items()[0]
+            state, keywords = take_first(event.items())
             zcs = self._evaluate_state(current_state, state, keywords, zero_condition_sign)
             zero_condition_signs.append(zcs)
         self.previous_signs = zero_condition_signs
@@ -638,10 +645,15 @@ class AgroManager(AncillaryObject):
         # Connect CROP_FINISH signal with handler
         self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
 
+        # If there is an "AgroManagement" item defined then we first need to get
+        # the contents defined within that item
+        if "AgroManagement" in agromanagement:
+            agromanagement = agromanagement["AgroManagement"]
+
         # First get and validate the dates of the different campaigns
         for campaign in agromanagement:
             # Check if campaign start dates is in chronological order
-            campaign_start_date = campaign.keys()[0]
+            campaign_start_date = take_first(campaign.keys())
             self._check_campaign_date(campaign_start_date)
             self.campaign_start_dates.append(campaign_start_date)
 
@@ -716,7 +728,7 @@ class AgroManager(AncillaryObject):
         :return: a date object
         """
         if self._start_date is None:
-            self._start_date = self.campaign_start_dates[0]
+            self._start_date = take_first(self.campaign_start_dates)
 
         return self._start_date
 

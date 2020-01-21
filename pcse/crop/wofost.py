@@ -6,7 +6,7 @@ import datetime
 
 from ..traitlets import Float, Int, Instance, Enum, Unicode
 from ..decorators import prepare_rates, prepare_states
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
@@ -79,10 +79,8 @@ class Wofost(SimulationObject):
      Name     Description                                      Pbl      Unit
     =======  ================================================ ==== =============
     GASS     Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
-    PGASS    Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
     MRES     Actual maintenance respiration rate, taking into
              account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
-    PMRES    Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
     ASRC     Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
     DMI      Total dry matter increase, calculated as ASRC
              times a weighted conversion efficiency.            Y  |kg ha-1 d-1|
@@ -117,13 +115,11 @@ class Wofost(SimulationObject):
         CTRAT = Float(-99.) # Crop total transpiration
         HI    = Float(-99.)
         DOF = Instance(datetime.date)
-        FINISH_TYPE = Instance(str)
+        FINISH_TYPE = Unicode(allow_none=True)
 
     class RateVariables(RatesTemplate):
         GASS  = Float(-99.)
-        PGASS = Float(-99.)
         MRES  = Float(-99.)
-        PMRES = Float(-99.)
         ASRC  = Float(-99.)
         DMI   = Float(-99.)
         ADMI  = Float(-99.)
@@ -199,17 +195,17 @@ class Wofost(SimulationObject):
             return
 
         # Potential assimilation
-        r.PGASS = self.assim(day, drv)
+        PGASS = self.assim(day, drv)
 
         # (evapo)transpiration rates
         self.evtra(day, drv)
 
         # water stress reduction
-        r.GASS = r.PGASS * k.RFTRA
+        r.GASS = PGASS * k.RFTRA
 
         # Respiration
-        r.PMRES = self.mres(day, drv)
-        r.MRES  = min(r.GASS, r.PMRES)
+        PMRES = self.mres(day, drv)
+        r.MRES  = min(r.GASS, PMRES)
 
         # Net available assimilates
         r.ASRC  = r.GASS - r.MRES

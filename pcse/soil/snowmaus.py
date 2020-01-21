@@ -5,7 +5,7 @@
 from ..traitlets import Float
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit, merge_dict
-from ..base_classes import ParamTemplate, StatesTemplate, RatesTemplate, \
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc

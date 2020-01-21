@@ -13,11 +13,10 @@ import os
 
 import numpy as np
 import yaml
-from tabulate import tabulate
 from sqlalchemy import MetaData, select, Table, and_
 
 from ... import exceptions as exc
-from ...base_classes import WeatherDataContainer, WeatherDataProvider
+from ...base import WeatherDataContainer, WeatherDataProvider
 from ...util import wind10to2, safe_float, check_date, reference_ET
 from ... import settings
 from .. import wofost_parameters
@@ -691,35 +690,12 @@ class CropDataProvider(dict):
         return tabular_crop_parameter, tabular_values
 
     def __str__(self):
-        result = ("Crop parameter values for idgrid=%s, idcrop_parametrization=%s (%s), "
-                  "idvariety=%s derived from %s\n" % (self.idgrid, self.idcrop_parametrization,
+        msg = ("Crop parameter values for idgrid=%s, idcrop_parametrization=%s (%s), "
+               "idvariety=%s derived from %s\n" % (self.idgrid, self.idcrop_parametrization,
                                                       self.crop_name, self.idvariety,
                                                       self.db_resource))
-        single_values = []
-        tabular_values = []
-        for pcode in sorted(self.keys()):
-            value = self[pcode]
-            if not isinstance(value, list):
-                single_values.append((pcode, value))
-            else:
-                tabular_values.append((pcode, value))
-
-        # Format the single parameters in a table of 4 columns
-        result += "Single parameter values:\n"
-        # If not of even length add ["",""]
-        if not len(single_values) % 2 == 0:
-            single_values.append(["", ""])
-        np_single_values = np.array(single_values, dtype=np.string_)
-        shp = np_single_values.shape
-        np_single_values.shape = (shp[0] / 2, shp[1] * 2)
-        result += tabulate(np_single_values, headers=["Par_code", "Value", "Par_code", "Value"])
-        result += "\n"
-
-        # Format the tabular parameters in two columns
-        result += "Tabular parameters:\n"
-        result += tabulate(tabular_values, headers=["Par_code", "Value"])
-        result += "\n"
-        return result
+        msg += str(self)
+        return msg
 
 
 class SiteDataProvider(dict):

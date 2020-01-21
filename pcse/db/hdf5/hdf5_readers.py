@@ -16,7 +16,7 @@ import pandas as pd
 import numpy as np
 import yaml
 
-from ...base_classes import WeatherDataProvider
+from ...base import WeatherDataProvider
 from ... import exceptions as exc
 from ...util import check_date
 from ..wofost_parameters import WOFOST_optional_parameters, WOFOST_parameter_codes_single, \
