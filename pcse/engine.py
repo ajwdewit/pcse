@@ -506,8 +506,10 @@ class CGMSEngine(Engine):
 
         elif self.flag_crop_finish is True:
             # Run the finalize section of the crop and soil simulation and sub-components
-            self.crop.finalize(self.day)
-            self.soil.finalize(self.day)
+            if self.crop is not None:
+                self.crop.finalize(self.day)
+            if self.soil is not None:
+                self.soil.finalize(self.day)
 
             # Generate summary output after finalize() has been run.
             self._save_summary_output()

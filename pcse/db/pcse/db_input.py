@@ -627,7 +627,7 @@ class AgroManagementDataProvider(list):
     def _parse_yaml(self, input):
         """Parses the input YAML string and assigns to self"""
         try:
-            items = yaml.load(input)
+            items = yaml.safe_load(input)
         except yaml.YAMLError as e:
             msg = "Failed parsing agromanagement string %s: %s" % (input, e)
             raise exc.PCSEError(msg)

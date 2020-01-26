@@ -343,10 +343,12 @@ class AgroManagementDataProvider(list):
             self.agro["crop_end_date"] = ""
             self.agro["end_type"] = "maturity"
             self.agro["max_duration"] = (check_date(row.maturity) - self.agro["crop_start_date"]).days
+            self.end_date = check_date(row.maturity)
         elif row.end_event == 4:
             self.agro["crop_end_date"] = check_date(row.harvesting)
             self.agro["end_type"] = "harvest"
             self.agro["max_duration"] = ""
+            self.end_date = check_date(row.harvesting)
         else:
             msg = f"Cannot find crop calendar for idcrop_parametrization: {self.idcrop} and grid {self.idgrid}"
             raise exc.PCSEError(msg)
@@ -400,6 +402,8 @@ class AgroManagementDataProvider(list):
         else:
             msg = f"Unrecognized value for campaign start: {campaign_start}"
             raise exc.PCSEError(msg)
+
+        self.start_date = self.agro["campaign_start_date"]
 
     @property
     def logger(self):
@@ -712,13 +716,13 @@ class CropDataProvider(dict):
         tabular_values = [pvalue if v is None else v for v in template]
         return tabular_crop_parameter, tabular_values
 
-    def __str__(self):
-        msg = ("Crop parameter values for idgrid=%s, idcrop_parametrization=%s (%s), "
-               "idvariety=%s derived from %s\n" % (self.idgrid, self.idcrop_parametrization,
-                                                      self.crop_name, self.idvariety,
-                                                      self.db_resource))
-        msg += str(self)
-        return msg
+    # def __str__(self):
+    #     msg = ("Crop parameter values for idgrid=%s, idcrop_parametrization=%s (%s), "
+    #            "idvariety=%s derived from %s\n" % (self.idgrid, self.idcrop_parametrization,
+    #                                                   self.crop_name, self.idvariety,
+    #                                                   self.db_resource))
+    #     msg += str(self)
+    #     return msg
 
 
 class SiteDataProvider(dict):

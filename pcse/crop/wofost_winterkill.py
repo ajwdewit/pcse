@@ -17,6 +17,7 @@ from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .evapotranspiration import Evapotranspiration
 from .abioticdamage import FROSTOL
+from .abioticdamage import CrownTemperature
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
 from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
@@ -100,6 +101,7 @@ class Wofost_winterkill(SimulationObject):
     mres  = Instance(SimulationObject)
     evtra = Instance(SimulationObject)
     frostol = Instance(SimulationObject)
+    crowntemp = Instance(SimulationObject)
     lv_dynamics = Instance(SimulationObject)
     st_dynamics = Instance(SimulationObject)
     ro_dynamics = Instance(SimulationObject)
@@ -149,6 +151,7 @@ class Wofost_winterkill(SimulationObject):
         self.assim = Assimilation(day, kiosk, parvalues)
         self.mres  = MaintenanceRespiration(day, kiosk, parvalues)
         self.evtra = Evapotranspiration(day, kiosk, parvalues)
+        self.crowntemp = CrownTemperature(day, kiosk, parvalues)
         self.frostol = FROSTOL(day, kiosk, parvalues)
         self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
         self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
@@ -230,6 +233,7 @@ class Wofost_winterkill(SimulationObject):
                                    CVF, pf)
 
         # Frost tolerance
+        self.crowntemp(day, drv)
         self.frostol.calc_rates(day, drv)
 
         # -- distribution over plant organ --

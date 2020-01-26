@@ -100,7 +100,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                 yaml_file_names = self._get_yaml_files(fpath)
                 for fname_fp in yaml_file_names:
                     with open(fname_fp) as fp:
-                        parameters = yaml.load(fp)
+                        parameters = yaml.safe_load(fp)
                     self._check_version(parameters)
                     # Add crop parameters to internal store. Assume that the name of the file
                     # is the name of the crop (crop_name).
@@ -119,7 +119,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                     except URLError as e:
                         msg = "Unable to open '%s' due to: %s" % (url, e)
                         raise exc.PCSEError(msg)
-                    parameters = yaml.load(response)
+                    parameters = yaml.safe_load(response)
                     self._check_version(parameters)
                     self._add_crop(crop_name, parameters)
 

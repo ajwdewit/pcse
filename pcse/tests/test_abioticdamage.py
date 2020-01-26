@@ -4,7 +4,7 @@
 import unittest
 from datetime import date
 
-from ..crop.abioticdamage import FROSTOL
+from ..crop.abioticdamage import FROSTOL, CrownTemperature
 from ..base import VariableKiosk
 from .test_data import frostol_testdata
 
@@ -38,7 +38,8 @@ class Test_FROSTOL(unittest.TestCase):
         self.kiosk.register_variable(0, "SNOWDEPTH", type="S", publish=True)
         # Initialize FROSTOL
         dummyday = date(2000,1,1)
-        self.frostol = FROSTOL(dummyday, self.kiosk, parvalues, testing=True)
+        self.frostol = FROSTOL(dummyday, self.kiosk, parvalues)
+        self.crowntemp = CrownTemperature(dummyday, self.kiosk, parvalues, testing=True)
 
     #@unittest.skip("FROSTOL test failing because of problem with test")
     def runTest(self):
@@ -52,8 +53,9 @@ class Test_FROSTOL(unittest.TestCase):
             self.kiosk.set_variable(0, "SNOWDEPTH", drvref.snow_depth)
 
             # calculated rates
+            self.crowntemp(day, drvref)
             self.frostol.calc_rates(day, drvref)
-            
+
             # Assert simulation results almost equal to reference values
             for var in self.test_vars:
                 refvalue = getattr(drvref, var)

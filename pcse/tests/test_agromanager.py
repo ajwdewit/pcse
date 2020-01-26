@@ -18,7 +18,7 @@ class TestAgroManagerSimpleTestTemplate(unittest.TestCase):
     end_date = None
 
     def runTest(self):
-        d = yaml.load(self.agmt_input)
+        d = yaml.safe_load(self.agmt_input)
         kiosk = VariableKiosk()
         amgt = AgroManager(kiosk, d['AgroManagement'])
         self.assertEqual(amgt.start_date, self.start_date)
@@ -203,7 +203,7 @@ class TestAgroManager6(unittest.TestCase):
                 """
 
     def runTest(self):
-        d = yaml.load(self.agmt_input)
+        d = yaml.safe_load(self.agmt_input)
         kiosk = VariableKiosk()
         self.amgt = AgroManager(kiosk, d['AgroManagement'])
         self.assertRaises(PCSEError, self._get_end_date)
@@ -237,7 +237,7 @@ class TestAgroManager7(unittest.TestCase):
         self.assertRaises(PCSEError, self._start_agromanager)
 
     def _start_agromanager(self):
-        d = yaml.load(self.agmt_input)
+        d = yaml.safe_load(self.agmt_input)
         kiosk = VariableKiosk()
         amgt = AgroManager(kiosk, d['AgroManagement'])
 
@@ -266,7 +266,7 @@ class TestAgroManager8(unittest.TestCase):
         self.assertRaises(PCSEError, self._start_agromanager)
 
     def _start_agromanager(self):
-        d = yaml.load(self.agmt_input)
+        d = yaml.safe_load(self.agmt_input)
         kiosk = VariableKiosk()
         amgt = AgroManager(kiosk, d['AgroManagement'])
 

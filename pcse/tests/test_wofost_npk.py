@@ -18,7 +18,7 @@ test_data_dir =  os.path.join(os.path.dirname(__file__), "test_data")
 class TestWOFOSTNPK_WinterWheat(unittest.TestCase):
 
     def setUp(self):
-        agro = yaml.load(open(os.path.join(test_data_dir, "wofost_npk.agro")))['AgroManagement']
+        agro = yaml.safe_load(open(os.path.join(test_data_dir, "wofost_npk.agro")))['AgroManagement']
         soil = CABOFileReader(os.path.join(test_data_dir, "wofost_npk.soil"))
         site = CABOFileReader(os.path.join(test_data_dir, "wofost_npk.site"))
         crop = CABOFileReader(os.path.join(test_data_dir, "wofost_npk.crop"))
