@@ -251,9 +251,8 @@ class CrownTemperatureJRC(SimulationObject):
     def initialize(self, day, kiosk, parvalues, testing=False):
         self.kiosk = kiosk
         self._testing_ = testing
-        if not self._testing_:
-            self.params = self.Parameters(parvalues)
-            self.rates = self.RateVariables(self.kiosk, publish=["TEMP_CROWN", "TMIN_CROWN", "TMAX_CROWN"])
+        self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(self.kiosk, publish=["TEMP_CROWN", "TMIN_CROWN", "TMAX_CROWN"])
 
     @prepare_rates
     def __call__(self, day, drv):
