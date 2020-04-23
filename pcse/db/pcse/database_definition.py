@@ -194,7 +194,7 @@ def _create_PCSE_tables(metadata):
     table_egw = Table('ensemble_grid_weather',metadata,
         Column('grid_no',Integer,primary_key=True),
         Column('day',Date,primary_key=True),
-        Column('ensemble_id',Integer,primary_key=True),
+        Column('member_id',Integer,primary_key=True),
         Column('rainfall',NewFloat(),nullable=False),
         schema=None)
     table_egw.create()
