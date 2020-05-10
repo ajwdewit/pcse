@@ -192,7 +192,7 @@ variable that contains all parameter values. Using this approach has the
 additional advantage that parameters value can be easily overridden in case
 of running multiple simulations with slightly different parameter values::
 
-     >>> from pcse.base_classes import ParameterProvider
+     >>> from pcse.base import ParameterProvider
      >>> parameters = ParameterProvider(cropdata=cropdata, soildata=soildata, sitedata=sitedata)
 
 AgroManagement
@@ -355,7 +355,7 @@ in the previous example::
 However, PCSE models expect a single set of parameters and therefore they need to be combined using the
 `ParameterProvider`::
 
-    >>> from pcse.base_classes import ParameterProvider
+    >>> from pcse.base import ParameterProvider
     >>> parameterprovider = ParameterProvider(soildata=soil, cropdata=crop, sitedata=site)
 
 Reading weather data
