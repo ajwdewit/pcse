@@ -602,7 +602,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         self.kiosk = kiosk
         self.params = self.Parameters(cropdata)
-        self.rates = self.RateVariables(kiosk,publish=["DRLV"])
+        self.rates = self.RateVariables(kiosk,publish=["DRLV", "GRLV"])
 
         # CALCULATE INITIAL STATE VARIABLES
         p = self.params
