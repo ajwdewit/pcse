@@ -12,7 +12,7 @@ from ..traitlets import Float, Instance, Bool
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit, AfgenTrait
 from ..crop.phenology import DVS_Phenology as Phenology
-from ..exceptions import CarbonBalanceError, NitrogenBalanceError
+from ..exceptions import CarbonBalanceError, NutrientBalanceError
 from .. import signals
 
 # some lambdas to make unit conversion explicit.
@@ -682,7 +682,7 @@ class Lintul3(SimulationObject):
         s.rTNSOIL = RNSOIL
 
         if abs(NBALAN) > 0.0001:
-            raise NitrogenBalanceError("Nitrogen un-balance in crop model at day %s" % day)
+            raise NutrientBalanceError("Nitrogen un-balance in crop model at day %s" % day)
         
         if abs(CBALAN) > 0.0001:
             raise CarbonBalanceError("Carbon un-balance in crop model at day %s" % day)

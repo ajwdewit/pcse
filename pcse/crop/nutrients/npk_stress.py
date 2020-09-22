@@ -107,19 +107,19 @@ class NPK_Stress(SimulationObject):
 
     **External dependencies:**
 
-    =========  =================================== =====================  ==============
-     Name       Description                         Provided by            Unit
-    =========  =================================== =====================  ==============
-    DVS         Crop development stage              DVS_Phenology           -
-    WST         Dry weight of living stems          WOFOST_Stem_Dynamics  |kg ha-1|
-    WLV         Dry weight of living leaves         WOFOST_Leaf_Dynamics  |kg ha-1|
-    ANLV        Amount of N in leaves               NPK_Crop_Dynamics     |kg ha-1|
-    ANST        Amount of N in stems                NPK_Crop_Dynamics     |kg ha-1|
-    APLV        Amount of P in leaves               NPK_Crop_Dynamics     |kg ha-1|
-    APST        Amount of P in stems                NPK_Crop_Dynamics     |kg ha-1|
-    AKLV        Amount of K in leaves               NPK_Crop_Dynamics     |kg ha-1|
-    AKST        Amount of K in stems                NPK_Crop_Dynamics     |kg ha-1|
-    =========  =================================== =====================  ==============
+    ==========  =================================== =====================  ==============
+     Name        Description                         Provided by            Unit
+    ==========  =================================== =====================  ==============
+    DVS          Crop development stage              DVS_Phenology           -
+    WST          Dry weight of living stems          WOFOST_Stem_Dynamics  |kg ha-1|
+    WLV          Dry weight of living leaves         WOFOST_Leaf_Dynamics  |kg ha-1|
+    NamountLV    Amount of N in leaves               NPK_Crop_Dynamics     |kg ha-1|
+    NamountST    Amount of N in stems                NPK_Crop_Dynamics     |kg ha-1|
+    PamountLV    Amount of P in leaves               NPK_Crop_Dynamics     |kg ha-1|
+    PamountST    Amount of P in stems                NPK_Crop_Dynamics     |kg ha-1|
+    KamountLV    Amount of K in leaves               NPK_Crop_Dynamics     |kg ha-1|
+    KamountST    Amount of K in stems                NPK_Crop_Dynamics     |kg ha-1|
+    ==========  =================================== =====================  ==============
     """
 
     class Parameters(ParamTemplate):
@@ -171,25 +171,12 @@ class NPK_Stress(SimulationObject):
         """
         p = self.params
         r = self.rates
+        k = self.kiosk
 
-        # published states from the kiosk
-        WLV = self.kiosk["WLV"]
-        WST = self.kiosk["WST"]
-        DVS = self.kiosk["DVS"]
-        
-        ANLV = self.kiosk["ANLV"]  # N amount in leaves [kg ha-1]
-        ANST = self.kiosk["ANST"]  # N amount in stems [kg ha-1
-        
-        APLV = self.kiosk["APLV"]  # P amount in leaves [kg ha-1]
-        APST = self.kiosk["APST"]  # P amount in stems [kg ha-1]
-        
-        AKLV = self.kiosk["AKLV"]  # K amount in leaves [kg ha-1]
-        AKST = self.kiosk["AKST"]  # K amount in stems [kg ha-1]
-       
         # Maximum NPK concentrations in leaves (kg N kg-1 DM)
-        NMAXLV = p.NMAXLV_TB(DVS)
-        PMAXLV = p.PMAXLV_TB(DVS)
-        KMAXLV = p.KMAXLV_TB(DVS)
+        NMAXLV = p.NMAXLV_TB(k.DVS)
+        PMAXLV = p.PMAXLV_TB(k.DVS)
+        KMAXLV = p.KMAXLV_TB(k.DVS)
 
         # Maximum NPK concentrations in stems (kg N kg-1 DM)
         NMAXST = p.NMAXST_FR * NMAXLV
@@ -197,59 +184,59 @@ class NPK_Stress(SimulationObject):
         KMAXST = p.KMAXST_FR * KMAXLV
         
         # Total vegetative living above-ground biomass (kg DM ha-1)
-        TBGMR = WLV + WST 
+        VBM = k.WLV + k.WST
       
         # Critical (Optimal) NPK amount in vegetative above-ground living biomass
         # and its NPK concentration
-        NCRITLV  = p.NCRIT_FR * NMAXLV * WLV
-        NCRITST  = p.NCRIT_FR * NMAXST * WST
+        NcriticalLV  = p.NCRIT_FR * NMAXLV * k.WLV
+        NcriticalST  = p.NCRIT_FR * NMAXST * k.WST
         
-        PCRITLV = p.PCRIT_FR * PMAXLV * WLV
-        PCRITST = p.PCRIT_FR * PMAXST * WST
+        PcriticalLV = p.PCRIT_FR * PMAXLV * k.WLV
+        PcriticalST = p.PCRIT_FR * PMAXST * k.WST
 
-        KCRITLV = p.KCRIT_FR * KMAXLV * WLV
-        KCRITST = p.KCRIT_FR * KMAXST * WST
+        KcriticalLV = p.KCRIT_FR * KMAXLV * k.WLV
+        KcriticalST = p.KCRIT_FR * KMAXST * k.WST
         
         # if above-ground living biomass = 0 then optimum = 0
-        if TBGMR > 0.:
-            NCRITMR = (NCRITLV + NCRITST)/TBGMR
-            PCRITMR = (PCRITLV + PCRITST)/TBGMR
-            KCRITMR = (KCRITLV + KCRITST)/TBGMR
+        if VBM > 0.:
+            NcriticalVBM = (NcriticalLV + NcriticalST)/VBM
+            PcriticalVBM = (PcriticalLV + PcriticalST)/VBM
+            KcriticalVBM = (KcriticalLV + KcriticalST)/VBM
         else:
-            NCRITMR = PCRITMR = KCRITMR = 0.
+            NcriticalVBM = PcriticalVBM = KcriticalVBM = 0.
 
         # NPK concentration in total vegetative living per kg above-ground
         # biomass  (kg N/P/K kg-1 DM)
         # if above-ground living biomass = 0 then concentration = 0
-        if TBGMR > 0.:
-            NFGMR  = (ANLV + ANST)/TBGMR
-            PFGMR  = (APLV + APST)/TBGMR
-            KFGMR  = (AKLV + AKST)/TBGMR
+        if VBM > 0.:
+            NconcentrationVBM  = (k.NamountLV + k.NamountST)/VBM
+            PconcentrationVBM  = (k.PamountLV + k.PamountST)/VBM
+            KconcentrationVBM  = (k.KamountLV + k.KamountST)/VBM
         else:
-            NFGMR = PFGMR = KFGMR = 0.
+            NconcentrationVBM = PconcentrationVBM = KconcentrationVBM = 0.
 
         # Residual NPK concentration in total vegetative living above-ground
         # biomass  (kg N/P/K kg-1 DM)
         # if above-ground living biomass = 0 then residual concentration = 0
-        if TBGMR > 0.:
-            NRMR = (WLV * p.NRESIDLV + WST * p.NRESIDST)/TBGMR
-            PRMR = (WLV * p.PRESIDLV + WST * p.PRESIDST)/TBGMR
-            KRMR = (WLV * p.KRESIDLV + WST * p.KRESIDST)/TBGMR
+        if VBM > 0.:
+            NresidualVBM = (k.WLV * p.NRESIDLV + k.WST * p.NRESIDST)/VBM
+            PresidualVBM = (k.WLV * p.PRESIDLV + k.WST * p.PRESIDST)/VBM
+            KresidualVBM = (k.WLV * p.KRESIDLV + k.WST * p.KRESIDST)/VBM
         else:
-            NRMR = PRMR = KRMR = 0.
+            NresidualVBM = PresidualVBM = KresidualVBM = 0.
             
-        if (NCRITMR - NRMR) > 0.:
-            r.NNI = limit(0.001, 1.0, (NFGMR-NRMR)/(NCRITMR-NRMR))
+        if (NcriticalVBM - NresidualVBM) > 0.:
+            r.NNI = limit(0.001, 1.0, (NconcentrationVBM - NresidualVBM)/(NcriticalVBM - NresidualVBM))
         else:
             r.NNI = 0.001
             
-        if (PCRITMR - PRMR) > 0.:
-            r.PNI = limit(0.001, 1.0, (PFGMR-PRMR)/(PCRITMR-PRMR))
+        if (PcriticalVBM - PresidualVBM) > 0.:
+            r.PNI = limit(0.001, 1.0, (PconcentrationVBM - PresidualVBM)/(PcriticalVBM - PresidualVBM))
         else:
            r.PNI = 0.001
             
-        if (KCRITMR-KRMR) > 0:
-            r.KNI = limit(0.001, 1.0, (KFGMR-KRMR)/(KCRITMR-KRMR))
+        if (KcriticalVBM-KresidualVBM) > 0:
+            r.KNI = limit(0.001, 1.0, (KconcentrationVBM - KresidualVBM)/(KcriticalVBM - KresidualVBM))
         else:
             r.KNI = 0.001
       
