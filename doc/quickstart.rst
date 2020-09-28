@@ -4,7 +4,7 @@ Getting started
 
 This guide will help you install PCSE as well as provide
 some examples to get you started with modelling. The examples are currently focused on applying
-the WOFOST and LINTUL3 crop simulation models, although other crop simulations may become available within
+the WOFOST and LINTUL3 crop simulation models, although other crop simulation models may become available within
 PCSE in the future.
 
 Note that an these examples plus demonstrations of advanced topics are also available as Jupyter
@@ -27,7 +27,7 @@ conditions for a freely draining soil (mode='wlp')::
 
     >>> wofost_object = pcse.start_wofost(grid=31031, crop=1, year=2000, mode='wlp')
     >>> type(wofost_object)
-    <class 'pcse.models.Wofost71_WLP_FD'>
+    <class 'pcse.models.Wofost72_WLP_FD'>
 
 You have just successfully initialized a PCSE/WOFOST object in the Python
 interpreter, which is in its initial state and waiting to do some simulation. We
@@ -192,7 +192,7 @@ variable that contains all parameter values. Using this approach has the
 additional advantage that parameters value can be easily overridden in case
 of running multiple simulations with slightly different parameter values::
 
-     >>> from pcse.base_classes import ParameterProvider
+     >>> from pcse.base import ParameterProvider
      >>> parameters = ParameterProvider(cropdata=cropdata, soildata=soildata, sitedata=sitedata)
 
 AgroManagement
@@ -355,7 +355,7 @@ in the previous example::
 However, PCSE models expect a single set of parameters and therefore they need to be combined using the
 `ParameterProvider`::
 
-    >>> from pcse.base_classes import ParameterProvider
+    >>> from pcse.base import ParameterProvider
     >>> parameterprovider = ParameterProvider(soildata=soil, cropdata=crop, sitedata=site)
 
 Reading weather data

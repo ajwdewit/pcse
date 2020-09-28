@@ -25,7 +25,7 @@ class TestWOFOSTNPK_WinterWheat(unittest.TestCase):
         weather = CABOWeatherDataProvider("NL1", test_data_dir)
 
         parvalues = ParameterProvider(sitedata=site, soildata=soil, cropdata=crop)
-        wofost = Engine(parvalues,  weather, agromanagement=agro, config="Wofost71_NPK.conf")
+        wofost = Engine(parvalues,  weather, agromanagement=agro, config="Wofost72_NPK.conf")
         wofost.run(days=300)
         self.output = wofost.get_output()
 

@@ -5,5 +5,4 @@ from .classic_waterbalance import WaterbalancePP
 from .classic_waterbalance import WaterbalanceFD
 from .classic_waterbalance import WaterbalanceFDSnow
 from .snowmaus import SnowMAUS
-from .waterbalance import WaterbalanceLayered
 from .lintul3soil import Lintul3Soil

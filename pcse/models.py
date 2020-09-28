@@ -5,28 +5,28 @@
 from .engine import Engine
 
 
-class Wofost71_PP(Engine):
-    """Convenience class for running WOFOST7.1 Potential Production.
+class Wofost72_PP(Engine):
+    """Convenience class for running WOFOST7.2 Potential Production.
 
     :param parameterprovider: A ParameterProvider instance providing all parameter values
     :param weatherdataprovider: A WeatherDataProvider object
     :param agromanagement: Agromanagement data
     """
-    config = "Wofost71_PP.conf"
+    config = "Wofost72_PP.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
 
 
-class Wofost71_WLP_FD(Engine):
-    """Convenience class for running WOFOST7.1 water-limited production.
+class Wofost72_WLP_FD(Engine):
+    """Convenience class for running WOFOST7.2 water-limited production.
 
     :param parameterprovider: A ParameterProvider instance providing all parameter values
     :param weatherdataprovider: A WeatherDataProvider object
     :param agromanagement: Agromanagement data
     """
-    config = "Wofost71_WLP_FD.conf"
+    config = "Wofost72_WLP_FD.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
@@ -55,23 +55,8 @@ class LINTUL3(Engine):
                         config=self.config)
 
 
-class FAO_WRSI_Potential(Engine):
-    """Convenience function for computing potential crop water requirements with a (modified) FAO WRSI approach.
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-
-    config = "GreenLayerCrop_PP.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-
-class FAO_WRSI_WaterLimited(Engine):
-    """Convenience function for computing actual crop water use including the Water Requirements
+class FAO_WRSI(Engine):
+    """Convenience class for computing actual crop water use using the Water Requirements
     Satisfaction Index with a (modified) FAO WRSI approach.
 
     :param parameterprovider: A ParameterProvider instance providing all parameter values
@@ -79,8 +64,13 @@ class FAO_WRSI_WaterLimited(Engine):
     :param agromanagement: Agromanagement data
     """
 
-    config = "GreenLayerCrop_WLP.conf"
+    config = "FAO_WRSI.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
+
+
+# This is to ensure that old code keeps working
+Wofost71_PP = Wofost72_PP
+Wofost71_WLP_FD = Wofost72_WLP_FD
