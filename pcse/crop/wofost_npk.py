@@ -2,7 +2,7 @@
 
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Unicode
+from ..traitlets import Float, Instance, Unicode
 from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
@@ -20,7 +20,7 @@ from .partitioning import DVS_Partitioning_NPK as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
 from .npk_dynamics import NPK_Crop_Dynamics as NPK_crop
-from .nutrients.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
+from pcse.soil.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
 from .nutrients.npk_stress import NPK_Stress as NPK_Stress
 
 
@@ -44,7 +44,6 @@ class WofostNPK(SimulationObject):
         8. Root dynamics (self.ro_dynamics)
         9. Storage organ dynamics (self.so_dynamics)
         10. N/P/K crop dynamics (self.npk_crop_dynamics)
-        11. N/P/K soil dynamics (self.npk_soil_dynamics)
         12. N/P/K stress (self.npk_stress)
 
     **Simulation parameters:**
@@ -107,7 +106,6 @@ class WofostNPK(SimulationObject):
     ro_dynamics = Instance(SimulationObject)
     so_dynamics = Instance(SimulationObject)
     npk_crop_dynamics = Instance(SimulationObject)
-    npk_soil_dynamics = Instance(SimulationObject)
     npk_stress = Instance(SimulationObject)
         
     # Parameters, rates and states which are relevant at the main crop
@@ -158,15 +156,12 @@ class WofostNPK(SimulationObject):
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
         # Added for book keeping of N/P/K in crop and soil
         self.npk_crop_dynamics = NPK_crop(day, kiosk, parvalues)
-        self.npk_soil_dynamics = NPK_soil(day, kiosk, parvalues)
         self.npk_stress = NPK_Stress(day, kiosk, parvalues)
         
 
         # Initial total (living+dead) above-ground biomass of the crop
-        TAGP = self.kiosk["TWLV"] + \
-               self.kiosk["TWST"] + \
-               self.kiosk["TWSO"]
-        
+        TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
+
         self.states = self.StateVariables(kiosk,
                                           publish=["TAGP","GASST","MREST","HI"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0,
@@ -174,7 +169,7 @@ class WofostNPK(SimulationObject):
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
-        checksum = parvalues["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
+        checksum = parvalues["TDWI"] - self.states.TAGP - self.kiosk.TWRT
         if abs(checksum) > 0.0001:
             msg = "Error in partitioning of initial biomass (TDWI)!"
             raise exc.PartitioningError(msg)
@@ -252,8 +247,7 @@ class WofostNPK(SimulationObject):
         
         # Update nutrient rates in crop and soil
         self.npk_crop_dynamics.calc_rates(day, drv)
-        self.npk_soil_dynamics.calc_rates(day, drv)
-        
+
     @prepare_states
     def integrate(self, day, delt=1.0):
         rates = self.rates
@@ -284,27 +278,25 @@ class WofostNPK(SimulationObject):
 
         # Update nutrient states in crop and soil
         self.npk_crop_dynamics.integrate(day, delt)
-        self.npk_soil_dynamics.integrate(day, delt)
-        
 
         # Integrate total (living+dead) above-ground biomass of the crop
-        states.TAGP = self.kiosk["TWLV"] + \
-                      self.kiosk["TWST"] + \
-                      self.kiosk["TWSO"]
+        states.TAGP = self.kiosk.TWLV + \
+                      self.kiosk.TWST + \
+                      self.kiosk.TWSO
 
         # total gross assimilation and maintenance respiration 
         states.GASST += rates.GASS
         states.MREST += rates.MRES
         
         # total crop transpiration (CTRAT)
-        states.CTRAT += self.kiosk["TRA"]
+        states.CTRAT += self.kiosk.TRA
         
     @prepare_states
     def finalize(self, day):
 
         # Calculate Harvest Index
         if self.states.TAGP > 0:
-            self.states.HI = self.kiosk["TWSO"]/self.states.TAGP
+            self.states.HI = self.kiosk.TWSO/self.states.TAGP
         else:
             msg = "Cannot calculate Harvest Index because TAGP=0"
             self.logger.warning(msg)

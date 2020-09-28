@@ -3,11 +3,40 @@
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
 
-from ...traitlets import Float
-from ...decorators import prepare_rates, prepare_states
-from ...base import ParamTemplate, StatesTemplate, RatesTemplate, \
+from pcse.traitlets import Float
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
-from ... import signals
+from pcse import signals
+
+
+class NPK_PotentialProduction(SimulationObject):
+    """Provides unlimited soil N/P/K for potential production simulations.
+
+    NAVAIL, KAVAIL and PAVAIL just remain 100 kg/ha whatever the crop takes.
+    """
+
+    class StateVariables(StatesTemplate):
+        NAVAIL = Float(-99.)  # total mineral N from soil and fertiliser  kg N ha-1
+        PAVAIL = Float(-99.)  # total mineral P from soil and fertiliser  kg N ha-1
+        KAVAIL = Float(-99.)  # total mineral K from soil and fertiliser  kg N ha-1
+
+    def initialize(self, day, kiosk, parvalues):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        """
+        self.states = self.StateVariables(kiosk, publish=["NAVAIL", "PAVAIL", "KAVAIL"],
+                                          NAVAIL=100., PAVAIL=100., KAVAIL=100.)
+
+    def calc_rates(self, day, drv):
+        pass
+
+    @prepare_states
+    def integrate(self, day, delt=1.0):
+        self.touch()
+
 
 class NPK_Soil_Dynamics(SimulationObject):
     """A simple module for soil N/P/K dynamics.
