@@ -1,5 +1,8 @@
+An overview of new features and fixes
+=====================================
+
 What's new in PCSE 5.4
-======================
+----------------------
 
 PCSE 5.4 has the following new features:
 
@@ -9,7 +12,7 @@ PCSE 5.4 has the following new features:
 
 
 What's new in PCSE 5.3
-======================
+----------------------
 
 PCSE 5.3 has the following new features:
 
@@ -33,7 +36,7 @@ Some bugs have been fixed:
 .. _github: https://github.com/ajwdewit/WOFOST_crop_parameters
 
 What's new in PCSE 5.2
-======================
+----------------------
 
 PCSE version 5.2 brings the following new features:
 
@@ -58,7 +61,7 @@ Changes in 5.2.5:
   are kept available and can be queried and stored in OUTPUT.
 
 What's new in PCSE 5.1
-======================
+----------------------
 
 PCSE version 5.1 brings the following new features:
 

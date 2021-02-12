@@ -36,8 +36,9 @@ test coverage of the implementation of the biophysical processes.
 
 What's new
 ----------
+
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    whatsnew.rst
 

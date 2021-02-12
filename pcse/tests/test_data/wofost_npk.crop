@@ -74,9 +74,7 @@ TMPFTB   =   0.00,    0.01,     ! reduction factor of AMAX
 TMNFTB   =   0.00,    0.00,     ! red. factor of gross assim. rate
              3.00,    1.00      ! as function of low min. temp. [cel; -]
 			 
-CO2 = 720.			 
-
-CO2AMAXTB       =  40., 0.00,      ! multiplication factor for AMAX 
+CO2AMAXTB       =  40., 0.00,      ! multiplication factor for AMAX
              360.,  1.00,       ! to account for an increasing CO2 concentration
              720.,  1.35, 
             1000.,  1.50,

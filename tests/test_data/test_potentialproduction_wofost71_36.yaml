@@ -137,7 +137,7 @@ ModelParameters:
   CFET: 1.0
   CO2: 360.0
   CRAIRC: 0.06
-  CRPNAM: !!python/unicode 'Spring barley'
+  CRPNAM: 'Spring barley'
   CVL: 0.72
   CVO: 0.74
   CVR: 0.72

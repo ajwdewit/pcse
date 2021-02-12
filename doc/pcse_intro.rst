@@ -1,6 +1,8 @@
-******************
 Background of PCSE
-******************
+==================
+
+Crop models in Wageningen
+-------------------------
 
 The `Python Crop Simulation Environment` was developed because of a need to re-implement crop simulation
 models that were developed in Wageningen. Many of the Wageningen crop simulation models were originally developed in
@@ -41,7 +43,7 @@ several interesting features:
 * Built-in testing of program modules ensuring integrity of the system
 
 Why Python
-==========
+----------
 PCSE was first and foremost developed from a scientific need, to be able to quickly adapt models and test ideas.
 In science, Python is quickly becoming a tool for implementing algorithms, visualization and explorative analysis
 due to its clear syntax and ease of use. An additional advantage is that the C implementation of Python
@@ -60,7 +62,7 @@ Given the above considerations, it was quickly recognized that Python was a good
 developed for scientific purposes, it has already been implemented for some tasks in a production environment.
 
 History of PCSE
-===============
+---------------
 
 Up until version 4.1, PCSE was called "PyWOFOST" as its primary goal was to provide a Python
 implementation of the WOFOST crop simulation model.
@@ -70,7 +72,7 @@ Simulation Environment was selected in analog with the FORTRAN Simulation Enviro
 
 
 Limitations of PCSE
-===================
+-------------------
 
 PCSE also has its limitations, in fact there are several:
 
@@ -86,7 +88,7 @@ PCSE also has its limitations, in fact there are several:
   notebook.
 
 License
-=======
+-------
 
 The source code of PCSE is made available under the European Union
 Public License (EUPL), Version 1.1 or as soon they will be approved by the

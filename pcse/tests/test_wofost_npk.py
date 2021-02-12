@@ -8,14 +8,16 @@ import unittest
 import csv
 import yaml
 
-from ..engine import Engine
+from ..models import Wofost72_NPK_PP, Wofost72_NPK_WLP_FD
 from ..base import ParameterProvider
 from ..fileinput import CABOFileReader, CABOWeatherDataProvider
 
 test_data_dir =  os.path.join(os.path.dirname(__file__), "test_data")
 
 
-class TestWOFOSTNPK_WinterWheat(unittest.TestCase):
+class TestWOFOSTNPK_Potential_WinterWheat(unittest.TestCase):
+    reference_results = "wofost_npk_potential.csv"
+    model = Wofost72_NPK_PP
 
     def setUp(self):
         agro = yaml.safe_load(open(os.path.join(test_data_dir, "wofost_npk.agro")))['AgroManagement']
@@ -25,7 +27,7 @@ class TestWOFOSTNPK_WinterWheat(unittest.TestCase):
         weather = CABOWeatherDataProvider("NL1", test_data_dir)
 
         parvalues = ParameterProvider(sitedata=site, soildata=soil, cropdata=crop)
-        wofost = Engine(parvalues,  weather, agromanagement=agro, config="Wofost72_NPK_potential.conf")
+        wofost = self.model(parvalues,  weather, agromanagement=agro)
         wofost.run(days=300)
         self.output = wofost.get_output()
 
@@ -39,8 +41,7 @@ class TestWOFOSTNPK_WinterWheat(unittest.TestCase):
             return None
 
     def runTest(self):
-        refdata_file = os.path.join(test_data_dir, "wofost_npk_reference_results.csv")
-        ref_results = []
+        refdata_file = os.path.join(test_data_dir, self.reference_results)
         with open(refdata_file, "r") as fp:
             reader = csv.DictReader(fp)
             ref_results = [row for row in reader]
@@ -63,11 +64,16 @@ class TestWOFOSTNPK_WinterWheat(unittest.TestCase):
         self.assertEqual(ntests, 216, msg)
 
 
+class TestWOFOSTNPK_WaterLimited_WinterWheat(TestWOFOSTNPK_Potential_WinterWheat):
+    reference_results = "wofost_npk_waterlimited.csv"
+    model = Wofost72_NPK_WLP_FD
+
 
 def suite():
     """ This defines all the tests of a module"""
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TestWOFOSTNPK_WinterWheat))
+    suite.addTest(unittest.makeSuite(TestWOFOSTNPK_Potential_WinterWheat))
+    suite.addTest(unittest.makeSuite(TestWOFOSTNPK_WaterLimited_WinterWheat))
     return suite
 
 if __name__ == '__main__':

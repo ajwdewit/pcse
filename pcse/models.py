@@ -19,6 +19,20 @@ class Wofost72_PP(Engine):
                         config=self.config)
 
 
+class Wofost72_NPK_PP(Engine):
+    """Convenience class for running WOFOST7.2 Potential Production with NPK dynamics.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost72_NPK_PP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
 class Wofost72_WLP_FD(Engine):
     """Convenience class for running WOFOST7.2 water-limited production.
 
@@ -27,6 +41,21 @@ class Wofost72_WLP_FD(Engine):
     :param agromanagement: Agromanagement data
     """
     config = "Wofost72_WLP_FD.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class Wofost72_NPK_WLP_FD(Engine):
+    """Convenience class for running WOFOST7.2 with water and NPK limitations for freely
+    draining soils.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost72_NPK_WLP_FD.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,

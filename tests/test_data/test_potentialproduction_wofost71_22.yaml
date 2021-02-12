@@ -325,7 +325,7 @@ ModelParameters:
   CFET: 1.0
   CO2: 360.0
   CRAIRC: 0.06
-  CRPNAM: !!python/unicode 'Winter wheat vernalisation'
+  CRPNAM: 'Winter wheat vernalisation'
   CVL: 0.685
   CVO: 0.709
   CVR: 0.694

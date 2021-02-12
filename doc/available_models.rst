@@ -1,14 +1,15 @@
-************************
 Models available in PCSE
-************************
+========================
 
 The following table lists the models that are available in PCSE and can be imported from `pcse.models` package.
 
 ================ =======================================================================================================
 Model name       Description
 ================ =======================================================================================================
-Wofost71_PP       An implementation of WOFOST 7.1 for potential production scenarios.
-Wofost71_WLP_FD   An implementation of WOFOST 7.1 for water-limited production scenarios with freely draining soils.
+Wofost72_PP       An implementation of WOFOST 7.2 for potential production scenarios.
+Wofost72_WLP_FD   An implementation of WOFOST 7.2 for water-limited production scenarios with freely draining soils.
 LINTUL3           An implementation of the LINTUL3 model for production scenarios under water-limited and nitrogen-
                   limited production scenarios.
+FAO_WRSI          An implementation of the Water Requirement Satisfaction Index model. This re-uses components
+                  from WOFOST to create a simpler approach which computes water requirements and water availability.
 ================ =======================================================================================================

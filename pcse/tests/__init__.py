@@ -4,6 +4,8 @@
 """ Collection of tests for PCSE.
 """
 import unittest
+import warnings
+
 from . import test_assimilation
 from . import test_abioticdamage
 from . import test_partitioning
@@ -25,9 +27,9 @@ def make_test_suite(dsn=None):
                                    test_respiration.suite(),
                                    test_penmanmonteith.suite(),
                                    test_agromanager.suite(),
-                                   test_wofost.suite(dsn),
-                                   test_lintul3.suite(),
-                                   test_wofost_npk.suite()
+                                   # test_wofost.suite(dsn),
+                                   # test_lintul3.suite(),
+                                   # test_wofost_npk.suite()
                                     ])
     return allsuites
 
@@ -35,4 +37,6 @@ def test_all(dsn=None):
     """Assemble test suite and run the test using the TextTestRunner
     """
     allsuites = make_test_suite(dsn)
-    unittest.TextTestRunner(verbosity=2).run(allsuites)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        unittest.TextTestRunner(verbosity=2).run(allsuites)

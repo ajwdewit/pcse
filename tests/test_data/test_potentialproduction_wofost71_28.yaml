@@ -320,7 +320,7 @@ ModelParameters:
   CFET: 1.0
   CO2: 360.0
   CRAIRC: 0.06
-  CRPNAM: !!python/unicode 'Field beans'
+  CRPNAM: 'Field beans'
   CVL: 0.608
   CVO: 0.591
   CVR: 0.659

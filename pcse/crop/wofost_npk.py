@@ -184,7 +184,7 @@ class WofostNPK(SimulationObject):
                     1./(max(0.0001,GASS))
         if abs(checksum) >= 0.0001:
             msg = "Carbon flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, GASS: %f, MRES: %f\n"  (checksum, GASS, MRES)
+            msg += "Checksum: %f, GASS: %f, MRES: %f\n" % (checksum, GASS, MRES)
             msg += "FR,L,S,O: %5.3f,%5.3f,%5.3f,%5.3f, DMI: %f, CVF: %f\n" % \
                    (FR,FL,FS,FO,DMI,CVF)
             raise exc.CarbonBalanceError(msg)

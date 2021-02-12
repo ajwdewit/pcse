@@ -11,7 +11,7 @@ from ..traitlets import Instance
 from ..decorators import prepare_states
 
 
-class SoilWaterNPKPotenialProduction(SimulationObject):
+class SoilWaterNPKPotentialProduction(SimulationObject):
     """This wraps the soil water balance and NPK balance for potential production.
     """
     WaterbalancePP = Instance(SimulationObject)

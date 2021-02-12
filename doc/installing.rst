@@ -1,9 +1,8 @@
-***************
 Installing PCSE
-***************
+===============
 
 Requirements and dependencies
-=============================
+-----------------------------
 
 PCSE is being developed on Ubuntu Linux 14.04 and Windows 7 using Python 2.7.14 and python 3.6.5.
 As Python is a platform independent language, PCSE works equally well on Linux, Windows or Mac OSX.
@@ -29,7 +28,7 @@ additional functionality used by PCSE.
 .. _traitlets: https://traitlets.readthedocs.io/en/stable/
 
 Setting up your python environment
-==================================
+----------------------------------
 
 A convenient way to set up your python environment for PCSE is through the `Anaconda`_ python distribution.
 In the present PCSE Documentation all examples of installing and using PCSE refer to the Windows 7 platform.
@@ -111,7 +110,7 @@ You can then activate your environment (note the addition of ``(py3_pcse)`` on y
     (py3_pcse) D:\temp\make_env>
 
 Installing and testing PCSE
-===========================
+---------------------------
 
 The easiest way to install PCSE is through the python package index (`PyPI`_).
 Installing from PyPI is mostly useful if you are interested in using the functionality

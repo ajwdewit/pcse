@@ -50,7 +50,7 @@ class PCSETestCaseYAML(unittest.TestCase):
 
     def setUp(self):
         # Load YAML inputs
-        inputs = yaml.load(open(self.YAML_test_input_fname))
+        inputs = yaml.safe_load(open(self.YAML_test_input_fname))
 
         # Prepare input categories for Engine
         self.reference_results = inputs["ModelResults"]
