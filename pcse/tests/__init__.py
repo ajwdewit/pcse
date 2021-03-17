@@ -14,22 +14,22 @@ from . import test_respiration
 from . import test_wofost
 from . import test_penmanmonteith
 from . import test_agromanager
-from . import test_wofost_npk
+from . import test_wofost80
 from . import test_lintul3
 
 def make_test_suite(dsn=None):
     """Assemble test suite and return it
     """
     allsuites = unittest.TestSuite([test_abioticdamage.suite(),
-                                   # test_assimilation.suite(),  # skip test because test inputs do not include TMIN
-                                   test_partitioning.suite(),
-                                   test_evapotranspiration.suite(),
-                                   test_respiration.suite(),
-                                   test_penmanmonteith.suite(),
-                                   test_agromanager.suite(),
-                                   # test_wofost.suite(dsn),
-                                   # test_lintul3.suite(),
-                                   # test_wofost_npk.suite()
+                                    # test_assimilation.suite(),  # skip test because test inputs do not include TMIN
+                                    test_partitioning.suite(),
+                                    test_evapotranspiration.suite(),
+                                    test_respiration.suite(),
+                                    test_penmanmonteith.suite(),
+                                    test_agromanager.suite(),
+                                    test_wofost.suite(dsn),
+                                    # test_lintul3.suite(),
+                                    test_wofost80.suite()
                                     ])
     return allsuites
 

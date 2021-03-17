@@ -35,7 +35,8 @@ full_tests = [("test_phenology_wofost71*", DVS_Phenology, None),
               ("test_rootdynamics_wofost71*", WOFOST_Root_Dynamics, None),
               ("test_respiration_wofost71*", WOFOST_Maintenance_Respiration, None),
               ("test_transpiration_wofost71*", Evapotranspiration, None),
-              ].extend(quick_tests)
+              ]
+full_tests.extend(quick_tests)
 
 
 class PCSETestCaseYAML(unittest.TestCase):

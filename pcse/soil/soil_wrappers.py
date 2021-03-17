@@ -11,8 +11,8 @@ from ..traitlets import Instance
 from ..decorators import prepare_states
 
 
-class SoilWaterNPKPotentialProduction(SimulationObject):
-    """This wraps the soil water balance and NPK balance for potential production.
+class SoilModuleWrapper_PP(SimulationObject):
+    """This wraps the soil water balance and soil NPK balance for potential production.
     """
     WaterbalancePP = Instance(SimulationObject)
     NPK_PotentialProduction = Instance(SimulationObject)
@@ -35,9 +35,34 @@ class SoilWaterNPKPotentialProduction(SimulationObject):
         self.NPK_PotentialProduction.integrate(day, delt)
 
 
-class SoilWaterNPKLimitedProduction(SimulationObject):
+class SoilModuleWrapper_WLP_FD(SimulationObject):
     """This wraps the soil water balance for free drainage conditions and NPK balance
-    for limited production conditions.
+    for production conditions limited by both soil water only.
+    """
+    WaterbalanceFD = Instance(SimulationObject)
+    NPK_Soil_Dynamics = Instance(SimulationObject)
+
+    def initialize(self, day, kiosk, parvalues):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param parvalues: dictionary with parameter key/value pairs
+        """
+        self.WaterbalanceFD = WaterbalanceFD(day, kiosk, parvalues)
+        self.NPK_Soil_Dynamics = NPK_Soil_Dynamics(day, kiosk, parvalues)
+
+    def calc_rates(self, day, drv):
+        self.WaterbalanceFD.calc_rates(day, drv)
+        self.NPK_Soil_Dynamics.calc_rates(day, drv)
+
+    def integrate(self, day, delt=1.0):
+        self.WaterbalanceFD.integrate(day, delt)
+        self.NPK_Soil_Dynamics.integrate(day, delt)
+
+
+class SoilModuleWrapper_NWLP_FD(SimulationObject):
+    """This wraps the soil water balance for free drainage conditions and NPK balance
+    for production conditions limited by both soil water and NPK.
     """
     WaterbalanceFD = Instance(SimulationObject)
     NPK_Soil_Dynamics = Instance(SimulationObject)

@@ -8,16 +8,16 @@ import unittest
 import csv
 import yaml
 
-from ..models import Wofost72_NPK_PP, Wofost72_NPK_WLP_FD
+from ..models import Wofost80_PP_beta, Wofost80_WLP_FD_beta
 from ..base import ParameterProvider
 from ..fileinput import CABOFileReader, CABOWeatherDataProvider
 
 test_data_dir =  os.path.join(os.path.dirname(__file__), "test_data")
 
 
-class TestWOFOSTNPK_Potential_WinterWheat(unittest.TestCase):
+class TestWOFOST80_Potential_WinterWheat(unittest.TestCase):
     reference_results = "wofost_npk_potential.csv"
-    model = Wofost72_NPK_PP
+    model = Wofost80_PP_beta
 
     def setUp(self):
         agro = yaml.safe_load(open(os.path.join(test_data_dir, "wofost_npk.agro")))['AgroManagement']
@@ -64,16 +64,16 @@ class TestWOFOSTNPK_Potential_WinterWheat(unittest.TestCase):
         self.assertEqual(ntests, 216, msg)
 
 
-class TestWOFOSTNPK_WaterLimited_WinterWheat(TestWOFOSTNPK_Potential_WinterWheat):
+class TestWOFOST80_WaterLimited_WinterWheat(TestWOFOST80_Potential_WinterWheat):
     reference_results = "wofost_npk_waterlimited.csv"
-    model = Wofost72_NPK_WLP_FD
+    model = Wofost80_WLP_FD_beta
 
 
 def suite():
     """ This defines all the tests of a module"""
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TestWOFOSTNPK_Potential_WinterWheat))
-    suite.addTest(unittest.makeSuite(TestWOFOSTNPK_WaterLimited_WinterWheat))
+    suite.addTest(unittest.makeSuite(TestWOFOST80_Potential_WinterWheat))
+    suite.addTest(unittest.makeSuite(TestWOFOST80_WaterLimited_WinterWheat))
     return suite
 
 if __name__ == '__main__':

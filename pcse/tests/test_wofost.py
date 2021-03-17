@@ -26,7 +26,6 @@ from .run_wofost import run_wofost
 from ..settings import settings
 
 
-#-------------------------------------------------------------------------------
 class WofostBenchmarkRetriever:
     """Retrieves benchmark results for PCSE WOFOST.
     
@@ -64,7 +63,7 @@ class WofostBenchmarkRetriever:
         else:
             raise KeyError("Variable not present in sim_results_timeseries table.")
 
-#-------------------------------------------------------------------------------
+
 class WofostOutputRetriever:
     """Retrieves results from a Wofost simulation.
     
@@ -102,7 +101,7 @@ class WofostOutputRetriever:
         row = s.execute().fetchone()
         return row[variable]
 
-#-------------------------------------------------------------------------------
+
 class WofostTestingTemplate(unittest.TestCase):
     """Template for executing WOFOST unit tests.
     
@@ -163,12 +162,14 @@ class WofostTestingTemplate(unittest.TestCase):
         for eachvar, precision in self.benchmark_vars:
             self.run_benchmark(eachvar, precision)
 
+
 class TestWaterlimitedSpringBarley1965(WofostTestingTemplate):
     crop = 3
     year = 1965     # CAMPAIGNYEAR
     grid = 1        # iso 35042
     mode = "wlp"
     multi_layer = True
+
 
 class TestPotentialWinterWheat(WofostTestingTemplate):
     crop = 1
@@ -182,18 +183,21 @@ class TestWaterlimitedWinterWheat(WofostTestingTemplate):
     year = 2000
     grid = 31031
     mode = "wlp"
-        
+
+
 class TestPotentialGrainMaize(WofostTestingTemplate):
     crop = 2
     year = 2000
     grid = 31031
     mode = "pp"
-        
+
+
 class TestWaterlimitedGrainMaize(WofostTestingTemplate):
     crop = 2
     year = 2000
     grid = 31031
     mode = "wlp"
+
 
 class TestPotentialSpringBarley(WofostTestingTemplate):
     crop = 3
@@ -201,11 +205,13 @@ class TestPotentialSpringBarley(WofostTestingTemplate):
     grid = 31031
     mode = "pp"
 
+
 class TestWaterlimitedSpringBarley(WofostTestingTemplate):
     crop = 3
     year = 2000
     grid = 31031
     mode = "wlp"
+
 
 class TestPotentialPotato(WofostTestingTemplate):
     crop = 7
@@ -220,17 +226,20 @@ class TestWaterlimitedPotato(WofostTestingTemplate):
     grid = 31031
     mode = "wlp"
 
+
 class TestPotentialWinterRapeseed(WofostTestingTemplate):
     crop = 10
     year = 2000
     grid = 31031
     mode = "pp"
-        
+
+
 class TestWaterlimitedWinterRapeseed(WofostTestingTemplate):
     crop = 10
     year = 2000
     grid = 31031
     mode = "wlp"
+
 
 class TestPotentialSunflower(WofostTestingTemplate):
     crop = 11
@@ -244,6 +253,7 @@ class TestWaterlimitedSunflower(WofostTestingTemplate):
     year = 2000
     grid = 31031
     mode = "wlp"
+
 
 def suite(dsn=None):
     """returns the unit tests for the PCSE/WOFOST model.
