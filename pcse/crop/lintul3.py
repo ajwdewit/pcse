@@ -20,6 +20,8 @@ cm2mm = lambda x: x*10.
 joule2megajoule = lambda x: x/1e6
 m2mm = lambda x: x*1000
 
+EPSILON = 10e-10
+
 class Lintul3(SimulationObject):
     """
         * ORIGINAL COPYRGIGHT NOTICE:    
@@ -518,7 +520,7 @@ class Lintul3(SimulationObject):
         SLA = p.SLAC * p.SLACF(DVS) * exp(-p.NSLA * (1.-NNI))
 
         # Growth reduction function for water stress(actual trans/potential)
-        r.TRANRF = r.TRAN / r.PTRAN
+        r.TRANRF = r.TRAN / (r.PTRAN + EPSILON)
 
         # relative modification for root and shoot allocation.
         FRT, FLV, FST, FSO = self.dryMatterPartitioningFractions(p.NPART, r.TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT)
