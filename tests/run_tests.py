@@ -26,15 +26,15 @@ from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvi
 # - the crop simobject to be tested
 # - an optional soil simobject to be tested
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
-quick_tests = [("test_potentialproduction_wofost71*", Wofost, WaterbalancePP),
-               ("test_waterlimitedproduction_wofost71*", Wofost, WaterbalanceFD)]
-full_tests = [("test_phenology_wofost71*", DVS_Phenology, None),
-              ("test_assimilation_wofost71*", WOFOST_Assimilation, None),
-              ("test_partitioning_wofost71*", DVS_Partitioning, None),
-              ("test_leafdynamics_wofost71*", WOFOST_Leaf_Dynamics, None),
-              ("test_rootdynamics_wofost71*", WOFOST_Root_Dynamics, None),
-              ("test_respiration_wofost71*", WOFOST_Maintenance_Respiration, None),
-              ("test_transpiration_wofost71*", Evapotranspiration, None),
+quick_tests = [("test_potentialproduction_wofost72*", Wofost, WaterbalancePP),
+               ("test_waterlimitedproduction_wofost72*", Wofost, WaterbalanceFD)]
+full_tests = [("test_phenology_wofost72*", DVS_Phenology, None),
+              ("test_assimilation_wofost72*", WOFOST_Assimilation, None),
+              ("test_partitioning_wofost72*", DVS_Partitioning, None),
+              ("test_leafdynamics_wofost72*", WOFOST_Leaf_Dynamics, None),
+              ("test_rootdynamics_wofost72*", WOFOST_Root_Dynamics, None),
+              ("test_respiration_wofost72*", WOFOST_Maintenance_Respiration, None),
+              ("test_transpiration_wofost72*", Evapotranspiration, None),
               ]
 full_tests.extend(quick_tests)
 
@@ -88,14 +88,14 @@ class PCSETestCaseYAML(unittest.TestCase):
                         raise
 
 
-def suite(quick=True):
+def make_test_suite(quick=True):
     suite = unittest.TestSuite()
     test_sets = quick_tests if quick else full_tests
     for pattern, crop_simobj, soil_simobj in test_sets:
         test_class_name = "Wrapped" + crop_simobj.__class__.__name__
         wrapped_simobj = type(test_class_name, (TestSimulationObject,),
                               {"test_class": crop_simobj})
-        fnames = glob.glob(os.path.join(test_data_dir, pattern))
+        fnames = sorted(glob.glob(os.path.join(test_data_dir, pattern)))
         for i, fname in enumerate(fnames):
             if quick and i % 10 != 0:
                     continue
@@ -105,8 +105,4 @@ def suite(quick=True):
             suite.addTest(unittest.makeSuite(test_class))
 
     return suite
-
-
-if __name__ == "__main__":
-    unittest.TextTestRunner(verbosity=2).run(suite())
 
