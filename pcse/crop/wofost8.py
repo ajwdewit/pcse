@@ -24,7 +24,7 @@ from pcse.soil.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
 from .nutrients.npk_stress import NPK_Stress as NPK_Stress
 
 
-class WofostNPK(SimulationObject):
+class Wofost80(SimulationObject):
     
     """Top level object organizing the different components of the WOFOST crop
     simulation including the implementation of N/P/K dynamics.
