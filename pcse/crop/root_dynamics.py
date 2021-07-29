@@ -191,6 +191,29 @@ class WOFOST_Root_Dynamics(SimulationObject):
         states.RD += rates.RR
 
 
+    @prepare_states
+    def _set_variable_WRT(self, nWRT):
+        """Updates the value of WRT to to the new value provided as input.
+
+        Related state variables will be updated as well and the increments
+        to all adjusted state variables will be returned as a dict.
+        """
+        states = self.states
+
+        # Store old values of states
+        oWRT = states.WRT
+        oTWRT = states.TWRT
+
+        # Apply new root weight and adjust total (dead + live) root weight
+        states.WRT = nWRT
+        states.TWRT = states.WRT + states.DWRT
+
+        increments = {"WRT": states.WRT - oWRT,
+                      "TWLRT": states.TWRT - oTWRT}
+        return increments
+
+
+
 class Simple_Root_Dynamics(SimulationObject):
     """Simple class for linear root growth.
     
