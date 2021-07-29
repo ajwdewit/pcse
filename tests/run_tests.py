@@ -17,7 +17,7 @@ from pcse.crop.respiration import WOFOST_Maintenance_Respiration
 from pcse.crop.partitioning import DVS_Partitioning
 from pcse.crop.root_dynamics import WOFOST_Root_Dynamics
 from pcse.crop.evapotranspiration import Evapotranspiration
-from pcse.crop.wofost import Wofost
+from pcse.crop.wofost7 import Wofost
 from pcse.soil.classic_waterbalance import WaterbalanceFD, WaterbalancePP
 from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvider, TestSimulationObject
 
