@@ -34,6 +34,10 @@ PCSE.egg-info/*
 dist/*
 build/*
 .pytest_cache/*
+runfiles
 
 # zip files
 *.zip
+
+# Cache files from YAML experiments
+*.cache
