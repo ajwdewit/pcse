@@ -118,3 +118,28 @@ class FAO_WRSI(Engine):
                         config=self.config)
 
 
+class LINGRA_PP(Engine):
+    config = "Lingra_PP.conf"
+    __version__ = "1.0.0"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class LINGRA_WLP_FD(Engine):
+    config = "Lingra_WLP_FD.conf"
+    __version__ = "1.0.0"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class LINGRA_NWLP_FD(Engine):
+    config = "Lingra_NWLP_FD.conf"
+    __version__ = "1.0.0"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)

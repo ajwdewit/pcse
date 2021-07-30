@@ -8,7 +8,7 @@ import unittest
 import csv
 import yaml
 
-from ..models import Wofost80_PP_beta, Wofost80_WLP_FD_beta
+from ..models import Wofost80_PP_beta, Wofost80_NWLP_FD_beta
 from ..base import ParameterProvider
 from ..fileinput import CABOFileReader, CABOWeatherDataProvider
 
@@ -66,7 +66,7 @@ class TestWOFOST80_Potential_WinterWheat(unittest.TestCase):
 
 class TestWOFOST80_WaterLimited_WinterWheat(TestWOFOST80_Potential_WinterWheat):
     reference_results = "wofost_npk_waterlimited.csv"
-    model = Wofost80_WLP_FD_beta
+    model = Wofost80_NWLP_FD_beta
 
 
 def suite():

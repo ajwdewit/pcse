@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Wageningen Environmental Sciences, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), January 2018
-"""This runs the YAML unittests by processing the various YAML test file in the `test_data_dir`
+# Copyright (c) 2004-2021 Wageningen Environmental Sciences, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), July 2021
+"""This runs the YAML unittests by processing the various YAML test file in the folder `test_data`
 """
 import unittest
 import os
@@ -18,7 +18,10 @@ from pcse.crop.partitioning import DVS_Partitioning
 from pcse.crop.root_dynamics import WOFOST_Root_Dynamics
 from pcse.crop.evapotranspiration import Evapotranspiration
 from pcse.crop.wofost7 import Wofost
+from pcse.crop.lingra import LINGRA
+from pcse.crop.lingraN import LINGRA_N
 from pcse.soil.classic_waterbalance import WaterbalanceFD, WaterbalancePP
+from pcse.soil.soil_wrappers import SoilModuleWrapper_N_WLP_FD
 from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvider, TestSimulationObject
 
 # This defines the YAML tests, each rows represents:
@@ -26,8 +29,13 @@ from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvi
 # - the crop simobject to be tested
 # - an optional soil simobject to be tested
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
-quick_tests = [("test_potentialproduction_wofost72*", Wofost, WaterbalancePP),
-               ("test_waterlimitedproduction_wofost72*", Wofost, WaterbalanceFD)]
+quick_tests = [
+               ("test_potentialproduction_wofost72*", Wofost, WaterbalancePP),
+               ("test_waterlimitedproduction_wofost72*", Wofost, WaterbalanceFD),
+               ("test_LINGRA*_PP.yaml", LINGRA, WaterbalancePP),
+               ("test_LINGRA*_WLP.yaml", LINGRA, WaterbalanceFD),
+               ("test_LINGRA*_NWLP.yaml", LINGRA_N, SoilModuleWrapper_N_WLP_FD),
+               ]
 full_tests = [("test_phenology_wofost72*", DVS_Phenology, None),
               ("test_assimilation_wofost72*", WOFOST_Assimilation, None),
               ("test_partitioning_wofost72*", DVS_Partitioning, None),
@@ -105,4 +113,3 @@ def make_test_suite(quick=True):
             suite.addTest(unittest.makeSuite(test_class))
 
     return suite
-
