@@ -210,7 +210,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         start_date = dt.date(1983,7,1)
         end_date = dt.date.today()
 
-        # build URL for retrieving data
+        # build URL for retrieving data, using new NASA POWER api
         server = "https://power.larc.nasa.gov/api/temporal/daily/point"
         payload = {"request": "execute",
                    "parameters": ",".join(self.power_variables),
