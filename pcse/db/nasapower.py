@@ -315,7 +315,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         msg = "Start parsing of POWER records from URL retrieval."
         self.logger.debug(msg)
 
-        fill_value = float(powerdata["header"]["fillValue"])
+        fill_value = float(powerdata["header"]["fill_value"])
 
         df_power = {}
         for varname in self.power_variables:
