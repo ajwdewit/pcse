@@ -1,4 +1,7 @@
 .. include:: abbreviations.txt
+###############
+Reference Guide
+###############
 
 An overview of PCSE
 ===================
@@ -129,21 +132,20 @@ Engine configuration files
 
 The engine needs a configuration file that specifies which components should
 be used for simulation and additional information. This is most easily
-explained by an example such as the configuration file for the WOFOST model
+explained by an example such as the configuration file for the WOFOST 7.2 model
 for potential crop production::
 
     # -*- coding: utf-8 -*-
-    # Copyright (c) 2004-2014 Alterra, Wageningen-UR
-    # Allard de Wit (allard.dewit@wur.nl), April 2014
-    """PCSE configuration file for WOFOST Potential Production simulation
-    in PCSE identical to the FORTRAN WOFOST 7.1
+    # Copyright (c) 2004-2021 Wageningen Environmental Research
+    # Allard de Wit (allard.dewit@wur.nl), August 2021
+    """PCSE configuration file for WOFOST 7.2 Potential Production simulation
 
     This configuration file defines the soil and crop components that
     should be used for potential production simulation.
     """
 
     from pcse.soil.classic_waterbalance import WaterbalancePP
-    from pcse.crop.wofost import Wofost
+    from pcse.crop.wofost7 import Wofost
     from pcse.agromanager import AgroManager
 
     # Module to be used for water balance
@@ -172,12 +174,11 @@ for potential crop production::
     # Set to an empty list if you do not want any SUMMARY_OUTPUT
     SUMMARY_OUTPUT_VARS = ["DVS","LAIMAX","TAGP", "TWSO", "TWLV", "TWST",
                            "TWRT", "CTRAT", "RD", "DOS", "DOE", "DOA",
-                           "DOM", "DOH", "DOV"]
+                           "DOM", "DOH", "DOV", "CEVST"]
 
     # Summary variables to save at TERMINATE signals
     # Set to an empty list if you do not want any TERMINAL_OUTPUT
     TERMINAL_OUTPUT_VARS = []
-
 
 As you can see, the configuration file is written in plain python code.
 First of all, it defines the placeholders *SOIL*, *CROP* and
@@ -185,8 +186,9 @@ First of all, it defines the placeholders *SOIL*, *CROP* and
 the simulation of these processes. These placeholders simply point to
 the modules that were imported at the start of the configuration file.
 
-.. note: Modules must be imported using fully qualified names and relative
-         imports cannot be used.
+.. note::
+    Modules in configuration files must be imported using fully qualified
+    names and relative imports cannot be used.
 
 The second part is for defining the
 variables (*OUTPUT_VARS*) that should be stored during the model run
@@ -200,7 +202,7 @@ entire simulation (*TERMINAL_OUTPUT_VARS*).
     reside in the 'conf/' folder inside the package. When the Engine is started
     with the name of a configuration file, it searches this folder to locate the file.
     This implies that if you want the start the Engine with your own (modified)
-    configuration file, you *must* specify it as an absolute or relative path
+    configuration file, you *must* specify it as an absolute path
     otherwise the Engine will not find it.
 
 The relationship between models and the engine
@@ -972,7 +974,7 @@ https://github.com/ajwdewit/WOFOST_crop_parameters::
     >>> print(p)
     YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
 
-All crops and varieties have been loaded from the YAML file, however no activate
+All crops and varieties have been loaded from the YAML file, however no active
 crop has been set. Therefore, we need to activate a a particular crop and variety:
 
     >>> p.set_active_crop('wheat', 'Winter_wheat_101')
@@ -1034,9 +1036,8 @@ This also implies that all the python syntax features can be used in PCSE parame
 
 Finally, several data providers exist for retrieving crop, soil and site parameter values from the database
 of the Crop Growth Monitoring System including data providers for a
-:ref:`CGMS8 <CGMS8tools>` database,
-a :ref:`CGMS12 <CGMS12tools>` database and a :ref:`CGMS14 <CGMS14tools>`
-database.
+:ref:`CGMS8 <CGMS8tools>`, :ref:`CGMS12 <CGMS12tools>` and :ref:`CGMS14/CGMS18 <CGMS14tools>` databases.
+
 
 As described earlier, PCSE needs parameters to define the soil, the crop and and additional
 ancillary class of parameters called 'site'. Nevertheless, the different modules in PCSE have
@@ -1096,11 +1097,9 @@ described in the section above on  :ref:`defining agromanagement <refguide_agrom
 this datastructure the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>` module is available
 which can be provided directly as input into the Engine.
 
-For reading Agromanagement input from a CGMS database see the sections on the database tools for
-a :ref:`CGMS8 <CGMS8tools>` database, a :ref:`CGMS12 <CGMS12tools>` database and
-a :ref:`CGMS14 <CGMS14tools>` database. Note that the support for defining agromanagement
-in CGMS databases is limited to crop calendars only. The CGMS database has no support for defining state and
-timed events yet.
+For reading Agromanagement input from a CGMS database see the sections on the database tools CGMS.
+Note that the support for defining agromanagement in CGMS databases is limited to crop calendars only.
+The CGMS database has no support for defining state and timed events yet.
 
 
 Global PCSE settings

@@ -51,13 +51,12 @@ class SourceLimitedGrowth(SimulationObject):
                               as a function of soil temperature.
     LUEreductionRadiationTB   Reduction function for light use efficiency      MJ, -
                               as a function of radiation level.
-    NamountLV                 Actual concentration of Nitrogen in leaves     kg N/ Kg DM
-    NmaxLV                    Maximum concentration of Nitrogen in leaves    kg N/ Kg DM
     LUEmax                    Maximum light use efficiency.
     =======================  =============================================  ==============
 
 
     *Rate variables*
+
     ===================  =============================================  ===============
      Name                 Description                                     Unit
     ===================  =============================================  ===============
@@ -174,6 +173,7 @@ class SinkLimitedGrowth(SimulationObject):
 
 
     *Rate variables*
+
     ===================  =============================================  ===============
      Name                 Description                                     Unit
     ===================  =============================================  ===============
@@ -208,7 +208,7 @@ class SinkLimitedGrowth(SimulationObject):
                       (indicates that a harvest took
                       place today)
     ===============  =================================== ==============================
-    """
+"""
 
     class Parameters(ParamTemplate):
         TempBase = Float()
@@ -382,8 +382,6 @@ class LINGRA(SimulationObject):
                               self-shading
      RDRdrought               Max relative death rate of leaves due to
                               drought stress                                 d-1
-     RDRnitrogen              Max relative death rates of laves due to
-                              nitrogen stress                                d-1
      SLA                      Specific leaf area                             ha/kg
      TempBase                 Base temperature for photosynthesis and        C
                               development
@@ -395,6 +393,7 @@ class LINGRA(SimulationObject):
 
 
     *Rate variables*
+
     ===================  =============================================  ===============
      Name                 Description                                     Unit
     ===================  =============================================  ===============
@@ -414,6 +413,7 @@ class LINGRA(SimulationObject):
     ===================  =============================================  ===============
 
     *State variables*
+
     ===================  =============================================  ===============
      Name                 Description                                     Unit
     ===================  =============================================  ===============
@@ -434,22 +434,22 @@ class LINGRA(SimulationObject):
      DVS                  Development stage                                -
     ===================  =============================================  ===============
 
-    *Signals send or handled*
+    *Signals sent or handled*
 
-    Mowing of grass will take place when a `pcse.signals.mowing` is broadcasted.
+    Mowing of grass will take place when a `pcse.signals.mowing` event is broadcasted.
     This will reduce the amount of living leaf weight assuming that a certain
     amount of biomass will remain on the field (this is a parameter on the MOWING
     event).
 
     *External dependencies:*
 
-    ===============  =================================== ==============================
+    ===============  =================================== ====================================
      Name             Description                         Provided by
-    ===============  =================================== ==============================
+    ===============  =================================== ====================================
     RFTRA             Reduction factor for transpiration  pcse.crop.Evapotranspiration
-    dLeafLengthPot    Potential growth in leaf length     pylingra.SinkLimitedGrowth
-    dTillerNumber     Change in tiller number             pylingra.SinkLimitedGrowth
-    ===============  =================================== ==============================
+    dLeafLengthPot    Potential growth in leaf length     pcse.crop.lingra.SinkLimitedGrowth
+    dTillerNumber     Change in tiller number             pcse.crop.lingra.SinkLimitedGrowth
+    ===============  =================================== ====================================
     """
 
     WeightLV_remaining = Float()
@@ -530,9 +530,9 @@ class LINGRA(SimulationObject):
              "WeightABG": p.LAIinit / p.SLA,
              "SLAINT": p.SLA,
              "DVS": 0.0}
-        p = ["LAI", "WeightRE", "LeafLength", "TillerNumber", "TSUM",
-             "DaysAfterHarvest", "DVS"]
-        self.states = self.StateVariables(kiosk, **s, publish=p)
+        pub = ["LAI", "WeightRE", "LeafLength", "TillerNumber", "TSUM",
+               "DaysAfterHarvest", "DVS"]
+        self.states = self.StateVariables(kiosk, **s, publish=pub)
         self.rates = self.RateVariables(kiosk, publish=["dWeightHARV", "LVfraction", "RTfraction"])
         self._connect_signal(self._on_MOWING, signal=pcse.signals.mowing)
 
@@ -666,5 +666,3 @@ class LINGRA(SimulationObject):
         """
         self.WeightLV_remaining = biomass_remaining
         self._flag_MOWING = True
-
-0

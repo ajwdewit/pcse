@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2021 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2021
-"""Implementation of the LINGRA grassland simulation model
+"""Implementation of the LINGRA-N grassland simulation model
 
-This module provides an implementation of the LINGRA (LINtul GRAssland)
-simulation model for grasslands as described by Schapendonk et al. 1998
-(https://doi.org/10.1016/S1161-0301(98)00027-6) for use within the
-Python Crop Simulation Environment.
+This module provides an implementation of the LINGRA-N (LINtul GRAssland)
+simulation model for grasslands as described byvSchapendonk et al. 1998
+(https://doi.org/10.1016/S1161-0301(98)00027-6) including N limitation.
+Nitrogen limitation is implemented in a similar fashion as the LINTUL
+models.
 """
 from math import exp, log
 
@@ -53,8 +54,6 @@ class SourceLimitedGrowth(SimulationObject):
                               as a function of soil temperature.
     LUEreductionRadiationTB   Reduction function for light use efficiency      MJ, -
                               as a function of radiation level.
-    NamountLV                 Actual concentration of Nitrogen in leaves     kg N/ Kg DM
-    NmaxLV                    Maximum concentration of Nitrogen in leaves    kg N/ Kg DM
     LUEmax                    Maximum light use efficiency.
     =======================  =============================================  ==============
 
@@ -355,12 +354,12 @@ class SoilTemperature(SimulationObject):
 
 
 class LINGRA_N(SimulationObject):
-    """Top level implementation of LINGRA, integrating all components
+    """Top level implementation of LINGRA-N, integrating all components
 
-    This class integrates all components from the LINGRA model and includes the
-    main state variables related to weights of the different biomass pools, the
-    leaf area, tiller number and leaf length. The integrated components include the
-    implementations for source/sink limited growth, soil temperature,
+    This class integrates all components from the LINGRA-N model and includes the
+    main state variables related to weights of the different biomass and nitrogen pools,
+    the leaf area, tiller number and leaf length. The integrated components include the
+    implementations for source/sink limited growth, soil temperature, N dynamics,
     evapotranspiration and root dynamics. The latter two are taken from WOFOST in
     order to avoid duplication of code.
 
@@ -451,13 +450,14 @@ class LINGRA_N(SimulationObject):
 
     *External dependencies:*
 
-    ===============  =================================== ==============================
+    ===============  =================================== =====================================
      Name             Description                         Provided by
-    ===============  =================================== ==============================
+    ===============  =================================== =====================================
     RFTRA             Reduction factor for transpiration  pcse.crop.Evapotranspiration
-    dLeafLengthPot    Potential growth in leaf length     pylingra.SinkLimitedGrowth
-    dTillerNumber     Change in tiller number             pylingra.SinkLimitedGrowth
-    ===============  =================================== ==============================
+    dLeafLengthPot    Potential growth in leaf length     pcse.crop.lingra.SinkLimitedGrowth
+    dTillerNumber     Change in tiller number             pcse.crop.lingra.SinkLimitedGrowth
+    NNI               Nitrogen Nutrition Index            pcse.crop.lingra_ndynamics.N_Stress
+    ===============  =================================== =====================================
     """
 
     WeightLV_remaining = Float()
@@ -542,9 +542,9 @@ class LINGRA_N(SimulationObject):
              "WeightABG": p.LAIinit / p.SLA,
              "SLAINT": p.SLA,
              "DVS": 0.0}
-        p = ["LAI", "WeightRE", "LeafLength", "TillerNumber", "TSUM",
-             "DaysAfterHarvest", "DVS", "WeightLVgreen", "WeightRT"]
-        self.states = self.StateVariables(kiosk, **s, publish=p)
+        pub = ["LAI", "WeightRE", "LeafLength", "TillerNumber", "TSUM",
+               "DaysAfterHarvest", "DVS", "WeightLVgreen", "WeightRT"]
+        self.states = self.StateVariables(kiosk, **s, publish=pub)
         self.rates = self.RateVariables(kiosk, publish=["dWeightHARV", "LVfraction", "RTfraction",
                                                         "LVgrowth", "dWeightRT", "LVdeath"])
         self.n_dynamics = N_Crop_Dynamics(day, kiosk, parvalues)

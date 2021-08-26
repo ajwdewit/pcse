@@ -33,6 +33,20 @@ class Wofost72_WLP_FD(Engine):
                         config=self.config)
 
 
+class Wofost72_Phenology(Engine):
+    """Convenience class for running WOFOST7.2 phenology only.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost72_Pheno.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
 # This is to ensure that old code keeps working
 Wofost71_PP = Wofost72_PP
 Wofost71_WLP_FD = Wofost72_WLP_FD

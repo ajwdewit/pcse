@@ -39,44 +39,44 @@ class NPK_Demand_Uptake(SimulationObject):
 
     **Simulation parameters**
 
-    ============  ============================================= =======  ======================
-     Name          Description                                   Type     Unit
-    ============  ============================================= =======  ======================
-    NMAXLV_TB      Maximum N concentration in leaves as          TCr     kg N kg-1 dry biomass
+    ============  =============================================  ======================
+     Name          Description                                    Unit
+    ============  =============================================  ======================
+    NMAXLV_TB      Maximum N concentration in leaves as          kg N kg-1 dry biomass
                    function of DVS
-    PMAXLV_TB      As for P                                      TCr     kg P kg-1 dry biomass
-    KMAXLV_TB      As for K                                      TCr     kg K kg-1 dry biomass
+    PMAXLV_TB      As for P                                      kg P kg-1 dry biomass
+    KMAXLV_TB      As for K                                      kg K kg-1 dry biomass
 
-    NMAXRT_FR      Maximum N concentration in roots as fraction  SCr     -
+    NMAXRT_FR      Maximum N concentration in roots as fraction  -
                    of maximum N concentration in leaves
-    PMAXRT_FR      As for P                                      SCr     -
-    KMAXRT_FR      As for K                                      SCr     -
+    PMAXRT_FR      As for P                                      -
+    KMAXRT_FR      As for K                                      -
 
-    NMAXST_FR      Maximum N concentration in stems as fraction  SCr     -
+    NMAXST_FR      Maximum N concentration in stems as fraction  -
                    of maximum N concentration in leaves
-    PMAXST_FR      As for P                                      SCr     -
-    KMAXST_FR      As for K                                      SCr     -
+    PMAXST_FR      As for P                                      -
+    KMAXST_FR      As for K                                      -
 
-    NMAXSO         Maximum N concentration in storage organs     SCr     kg N kg-1 dry biomass
-    PMAXSO         As for P                                      SCr     kg P kg-1 dry biomass
-    KMAXSO         As for K                                      SCr     kg K kg-1 dry biomass
+    NMAXSO         Maximum N concentration in storage organs     kg N kg-1 dry biomass
+    PMAXSO         As for P                                      kg P kg-1 dry biomass
+    KMAXSO         As for K                                      kg K kg-1 dry biomass
 
-    NCRIT_FR       Critical N concentration as fraction of       SCr     -
+    NCRIT_FR       Critical N concentration as fraction of       -
                    maximum N concentration for vegetative
                    plant organs as a whole (leaves + stems)
-    PCRIT_FR       As for P                                      SCr     -
-    KCRIT_FR       As for K                                      SCr     -
+    PCRIT_FR       As for P                                      -
+    KCRIT_FR       As for K                                      -
 
-    TCNT           Time coefficient for N translation to         SCr     days
+    TCNT           Time coefficient for N translation to         days
                    storage organs
-    TCPT           As for P                                      SCr     days
-    TCKT           As for K                                      SCr     days
+    TCPT           As for P                                      days
+    TCKT           As for K                                      days
 
-    NFIX_FR        fraction of crop nitrogen uptake by           SCr     kg N kg-1 dry biomass
+    NFIX_FR        fraction of crop nitrogen uptake by           kg N kg-1 dry biomass
                    biological fixation
-    DVS_NPK_STOP    Development stage after which no nutrients    SCr     -
+    DVS_NPK_STOP   Development stage after which no nutrients    -
                    are taken up from the soil by the crop.
-    ============  ============================================= ======= =======================
+    ============  =============================================  ======================
 
     **State variables**
 

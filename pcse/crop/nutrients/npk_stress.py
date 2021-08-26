@@ -38,7 +38,7 @@ class NPK_Stress(SimulationObject):
     The stress index (SI) is determined as a simple ratio between those
     concentrations according to:
 
-    :math:`SI = (C_{a) - C_{r})/(C_{c} - C_{r})`
+    :math:`SI = (C_{a} - C_{r})/(C_{c} - C_{r})`
 
     with subscript `a`, `r` and `c` being the actual, residual and critical
     concentration for the nutrient.
@@ -51,41 +51,41 @@ class NPK_Stress(SimulationObject):
 
     **Simulation parameters**
 
-    ============  ============================================= =======  ======================
-     Name          Description                                   Type     Unit
-    ============  ============================================= =======  ======================
-    NMAXLV_TB      Maximum N concentration in leaves as          TCr     kg N kg-1 dry biomass
+    ============  ============================================= ======================
+     Name          Description                                   Unit
+    ============  ============================================= ======================
+    NMAXLV_TB      Maximum N concentration in leaves as         kg N kg-1 dry biomass
                    function of DVS
-    PMAXLV_TB      As for P                                      TCr     kg P kg-1 dry biomass
-    KMAXLV_TB      As for K                                      TCr     kg K kg-1 dry biomass
+    PMAXLV_TB      As for P                                     kg P kg-1 dry biomass
+    KMAXLV_TB      As for K                                     kg K kg-1 dry biomass
 
-    NMAXRT_FR      Maximum N concentration in roots as fraction  SCr     -
+    NMAXRT_FR      Maximum N concentration in roots as fraction -
                    of maximum N concentration in leaves
-    PMAXRT_FR      As for P                                      SCr     -
-    KMAXRT_FR      As for K                                      SCr     -
+    PMAXRT_FR      As for P                                     -
+    KMAXRT_FR      As for K                                     -
 
-    NMAXST_FR      Maximum N concentration in stems as fraction  SCr     -
+    NMAXST_FR      Maximum N concentration in stems as fraction -
                    of maximum N concentration in leaves
-    PMAXST_FR      As for P                                      SCr     -
-    KMAXST_FR      As for K                                      SCr     -
+    PMAXST_FR      As for P                                     -
+    KMAXST_FR      As for K                                     -
 
-    NCRIT_FR       Critical N concentration as fraction of       SCr     -
+    NCRIT_FR       Critical N concentration as fraction of      -
                    maximum N concentration for vegetative
                    plant organs as a whole (leaves + stems)
-    PCRIT_FR       As for P                                      SCr     -
-    KCRIT_FR       As for K                                      SCr     -
+    PCRIT_FR       As for P                                     -
+    KCRIT_FR       As for K                                     -
 
-    NRESIDLV       Residual N fraction in leaves                 SCr     kg N kg-1 dry biomass
-    PRESIDLV       Residual P fraction in leaves                 SCr     kg P kg-1 dry biomass
-    KRESIDLV       Residual K fraction in leaves                 SCr     kg K kg-1 dry biomass
+    NRESIDLV       Residual N fraction in leaves                kg N kg-1 dry biomass
+    PRESIDLV       Residual P fraction in leaves                kg P kg-1 dry biomass
+    KRESIDLV       Residual K fraction in leaves                kg K kg-1 dry biomass
 
-    NRESIDST       Residual N fraction in stems                  SCr     kg N kg-1 dry biomass
-    PRESIDST       Residual P fraction in stems                  SCr     kg P kg-1 dry biomass
-    KRESIDST       Residual K fraction in stems                  SCr     kg K kg-1 dry biomass
+    NRESIDST       Residual N fraction in stems                 kg N kg-1 dry biomass
+    PRESIDST       Residual P fraction in stems                 kg P kg-1 dry biomass
+    KRESIDST       Residual K fraction in stems                 kg K kg-1 dry biomass
 
-    NLUE_NPK       Coefficient for the reduction of RUE due      SCr     -
+    NLUE_NPK       Coefficient for the reduction of RUE due     -
                    to nutrient (N-P-K) stress
-    ============  ============================================= ======= =======================
+    ============  ============================================= ======================
 
     **Rate variables**
 

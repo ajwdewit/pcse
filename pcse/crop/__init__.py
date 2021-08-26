@@ -12,3 +12,6 @@ from . import stem_dynamics
 from . import storage_organ_dynamics
 from . import leaf_dynamics
 from . import lintul3
+from . import lingra
+from . import lingraN
+from . import lingra_ndynamics

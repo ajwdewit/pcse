@@ -29,21 +29,21 @@ class NPK_Translocation(SimulationObject):
 
     **Simulation parameters**
 
-    ===============  ============================================= =======  ======================
-     Name             Description                                   Type     Unit
-    ===============  ============================================= =======  ======================
-    NRESIDLV          Residual N fraction in leaves                 SCr     kg N kg-1 dry biomass
-    PRESIDLV          Residual P fraction in leaves                 SCr     kg P kg-1 dry biomass
-    KRESIDLV          Residual K fraction in leaves                 SCr     kg K kg-1 dry biomass
+    ===============  =============================================  ======================
+     Name             Description                                    Unit
+    ===============  =============================================  ======================
+    NRESIDLV          Residual N fraction in leaves                 kg N kg-1 dry biomass
+    PRESIDLV          Residual P fraction in leaves                 kg P kg-1 dry biomass
+    KRESIDLV          Residual K fraction in leaves                 kg K kg-1 dry biomass
 
-    NRESIDST          Residual N fraction in stems                  SCr     kg N kg-1 dry biomass
-    PRESIDST          Residual P fraction in stems                  SCr     kg P kg-1 dry biomass
-    KRESIDST          Residual K fraction in stems                  SCr     kg K kg-1 dry biomass
+    NRESIDST          Residual N fraction in stems                  kg N kg-1 dry biomass
+    PRESIDST          Residual P fraction in stems                  kg P kg-1 dry biomass
+    KRESIDST          Residual K fraction in stems                  kg K kg-1 dry biomass
 
-    NPK_TRANSLRT_FR   PK translocation from roots as a fraction     SCr     -
+    NPK_TRANSLRT_FR   NPK translocation from roots as a fraction     -
                       of resp. total NPK amounts translocated
                       from leaves and stems
-    ===============  ============================================= ======= =======================
+    ===============  =============================================  ======================
 
 
     **State variables**
@@ -70,6 +70,8 @@ class NPK_Translocation(SimulationObject):
 
 
     **Rate variables**
+
+
     ===================  ================================================= ==== ==============
      Name                 Description                                      Pbl      Unit
     ===================  ================================================= ==== ==============
@@ -88,8 +90,8 @@ class NPK_Translocation(SimulationObject):
 
     None
 
-
     **External dependencies:**
+
     ===========  ================================ ======================  ===========
      Name         Description                      Provided by             Unit
     ===========  ================================ ======================  ===========

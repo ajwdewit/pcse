@@ -1,8 +1,32 @@
+#####################################
 An overview of new features and fixes
-=====================================
+#####################################
 
+**********************
+What's new in PCSE 5.5
+**********************
+
+PCSE 5.5 has the following new features:
+
+- WOFOST version 8.0 (beta) has been included which has variants for potential (PP), water-limited (WLP) and
+  nutrient + water-limited (NWLP) production. Note that dynamics for N/P/K are included in all model variants
+  but for the PP and WLP variants the supply of N/P/K is assumed to be unlimited. Note that this a beta version
+  because testing of the N/P/K limited growth against experimental data has so far been limited. Nevertheless,
+  the dynamics for N/P/K are based on well known principles from other models and rely on the concept of dilution
+  curves that define the maximum, critical and residual N/P/K concentration in the crop.
+- A full implementation of the LINGRA and LINGRA-N grassland simulation models are now included. This model allows
+  to make estimates of productivity of rye grass.
+- WOFOST 7.1 has been upgraded to 7.2, this is mainly to be consistent with the updated system description
+  for WOFOST at https://wofost.readthedocs.io. Old code that relies on importing WOFOST 7.1 will keep working
+  though.
+- The WOFOST 7.2 phenology module can now be imported as a standalone model. This is useful when calibration is
+  limited to phenology as it greatly increases the model performance.
+- The FAO Water Requirement Satisfaction Index is included as a model.
+
+
+**********************
 What's new in PCSE 5.4
-----------------------
+**********************
 
 PCSE 5.4 has the following new features:
 
@@ -10,9 +34,9 @@ PCSE 5.4 has the following new features:
 - The NASAPOWERWeatherDataProvider has been upgraded to take the new API into account
 
 
-
+**********************
 What's new in PCSE 5.3
-----------------------
+**********************
 
 PCSE 5.3 has the following new features:
 
@@ -35,8 +59,9 @@ Some bugs have been fixed:
 
 .. _github: https://github.com/ajwdewit/WOFOST_crop_parameters
 
+**********************
 What's new in PCSE 5.2
-----------------------
+**********************
 
 PCSE version 5.2 brings the following new features:
 
@@ -60,8 +85,9 @@ Changes in 5.2.5:
   to _run() will increase the DAY, but the internal state variables do not change anymore, although they
   are kept available and can be queried and stored in OUTPUT.
 
+**********************
 What's new in PCSE 5.1
-----------------------
+**********************
 
 PCSE version 5.1 brings the following new features:
 

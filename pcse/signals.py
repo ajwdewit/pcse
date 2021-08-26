@@ -72,17 +72,17 @@ following output::
     TypeError occurred: handle_mysignal() takes exactly 3 non-keyword arguments (1 given)
 
 Currently the following signals are used within PCSE with the following
-keywords.*
+keywords.
 
 **CROP_START**
 
- Indicates that a new crop cycle will start.
+ Indicates that a new crop cycle will start:
  
- self._send_signal(signal=signals.crop_start, day=<date>,
-                   crop_name=<string>, variety_name=<string>,
-                   crop_start_type=<string>, crop_end_type=<string>)
+     self._send_signal(signal=signals.crop_start, day=<date>,
+                       crop_name=<string>, variety_name=<string>,
+                       crop_start_type=<string>, crop_end_type=<string>)
 
- keyword arguments with signals.crop_start:
+ keyword arguments with `signals.crop_start`:
     
     * day: Current date
     * crop_name: a string identifying the crop
@@ -92,13 +92,13 @@ keywords.*
 
 **CROP_FINISH**
 
- Indicates that the current crop cycle is finished
+ Indicates that the current crop cycle is finished::
  
- self._send_signal(signal=signals.crop_finish, day=<date>,
-                   finish_type=<string>, crop_delete=<True|False>)
+     self._send_signal(signal=signals.crop_finish, day=<date>,
+                       finish_type=<string>, crop_delete=<True|False>)
 
-keyword arguments with signals.crop_finish:
-    
+keyword arguments with `signals.crop_finish`:
+
     * day: Current date
     * finish_type: string describing the reason for finishing the simulation, e.g.
       maturity, harvest, all leaves died, maximum duration reached, etc.
@@ -109,17 +109,17 @@ keyword arguments with signals.crop_finish:
 **TERMINATE**
  
  Indicates that the entire system should terminate (crop & soil water balance) and
- that terminal output should be collected.
+ that terminal output should be collected::
 
- self._send_signal(signal=signals.terminate)
+    self._send_signal(signal=signals.terminate)
 
  No keyword arguments are defined for this signal
 
 **OUTPUT**
 
- Indicates that the model state should be saved for later use.
+ Indicates that the model state should be saved for later use::
 
- self._send_signal(signal=signals.output)
+    self._send_signal(signal=signals.output)
  
  No keyword arguments are defined for this signal
 
@@ -127,20 +127,20 @@ keyword arguments with signals.crop_finish:
 
  Indicates that the model state should be saved for later use,
  SUMMARY_OUTPUT is only generated when a CROP_FINISH signal is
- received indicating that the crop simulation must finish.
+ received indicating that the crop simulation must finish::
 
- self._send_signal(signal=signals.output)
+    self._send_signal(signal=signals.output)
 
  No keyword arguments are defined for this signal
 
 **APPLY_NPK**
 
-Is used for application of Nitrate/Phosphate/Potassium (N/P/K) fertilizer
+Is used for application of Nitrate/Phosphate/Potassium (N/P/K) fertilizer::
 
-self._send_signal(signal=signals.apply_npk, N_amount=<float>, P_amount=<float>, K_amount=<float>,
-                  N_recovery<float>, P_recovery=<float>, K_recovery=<float>)
+    self._send_signal(signal=signals.apply_npk, N_amount=<float>, P_amount=<float>, K_amount=<float>,
+                      N_recovery<float>, P_recovery=<float>, K_recovery=<float>)
 
-Keyword arguments with signals.apply_npk:
+Keyword arguments with `signals.apply_npk`:
 
     * N/P/K_amount: Amount of fertilizer in kg/ha applied on this day.
     * N/P/K_recovery: Recovery fraction for the given type of fertilizer
@@ -148,15 +148,26 @@ Keyword arguments with signals.apply_npk:
 
 **IRRIGATE**
 
-Is used for sending irrigation events.
+Is used for sending irrigation events::
 
-self._send_signal(signal=signals.irrigate, amount=<float>, efficiency=<float>)
+    self._send_signal(signal=signals.irrigate, amount=<float>, efficiency=<float>)
 
-Keyword arguments with signals.irrigate:
+Keyword arguments with `signals.irrigate`:
 
     * amount: Amount of irrigation in cm water applied on this day.
     * efficiency: efficiency of irrigation, meaning that the total amount of water that
       is added to the soil reservoir equals amount * efficiency
+
+
+**MOWING**
+
+Is used for sending mowing events used by the LINGRA/LINGRA-N models::
+
+    self._send_signal(signal=signals.mowing, biomass_remaining=<float>)
+
+Keyword arguments with `signals.mowing`:
+
+    * biomass_remaining: The amount of biomass remaining after mowing in kg/ha.
 
 
 .. _PyDispatcher: http://pydispatcher.sourceforge.net/

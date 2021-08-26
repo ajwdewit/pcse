@@ -17,103 +17,103 @@ class NPK_Crop_Dynamics(SimulationObject):
 
     **Simulation parameters**
     
-    =============  ================================================ =======  ======================
-     Name           Description                                      Type     Unit
-    =============  ================================================ =======  ======================
-    DVS_NPK_STOP   DVS above which no crop N-P-K uptake occurs      SCr       -
+    =============  ================================================= =======================
+     Name           Description                                        Unit
+    =============  ================================================= =======================
+    DVS_NPK_STOP   DVS above which no crop N-P-K uptake occurs           -
 
-    NMAXLV_TB      Maximum N concentration in leaves as            TCr     kg N kg-1 dry biomass
+    NMAXLV_TB      Maximum N concentration in leaves as               kg N kg-1 dry biomass
                    function of dvs
-    PMAXLV_TB      As for P                                        TCr     kg P kg-1 dry biomass
-    KMAXLV_TB      As for K                                        TCr     kg K kg-1 dry biomass
+    PMAXLV_TB      As for P                                           kg P kg-1 dry biomass
+    KMAXLV_TB      As for K                                           kg K kg-1 dry biomass
 
-    NMAXRT_FR      Maximum N concentration in roots as fraction    SCr     -
+    NMAXRT_FR      Maximum N concentration in roots as fraction       -
                    of maximum N concentration in leaves
-    PMAXRT_FR      As for P                                        SCr     -
-    KMAXRT_FR      As for K                                        SCr     -
+    PMAXRT_FR      As for P                                           -
+    KMAXRT_FR      As for K                                           -
 
-    NMAXST_FR      Maximum N concentration in stems as fraction    SCr     -
+    NMAXST_FR      Maximum N concentration in stems as fraction       -
                    of maximum N concentration in leaves
-    KMAXST_FR      As for K                                        SCr     -
-    PMAXST_FR      As for P                                        SCr     -
+    KMAXST_FR      As for K                                           -
+    PMAXST_FR      As for P                                           -
 
-    NRESIDLV       Residual N fraction in leaves                   SCr     kg N kg-1 dry biomass
-    PRESIDLV       Residual P fraction in leaves                   SCr     kg P kg-1 dry biomass
-    KRESIDLV       Residual K fraction in leaves                   SCr     kg K kg-1 dry biomass
+    NRESIDLV       Residual N fraction in leaves                      kg N kg-1 dry biomass
+    PRESIDLV       Residual P fraction in leaves                      kg P kg-1 dry biomass
+    KRESIDLV       Residual K fraction in leaves                      kg K kg-1 dry biomass
 
-    NRESIDRT       Residual N fraction in roots                    SCr     kg N kg-1 dry biomass
-    PRESIDRT       Residual P fraction in roots                    SCr     kg P kg-1 dry biomass
-    KRESIDRT       Residual K fraction in roots                    SCr     kg K kg-1 dry biomass
+    NRESIDRT       Residual N fraction in roots                       kg N kg-1 dry biomass
+    PRESIDRT       Residual P fraction in roots                       kg P kg-1 dry biomass
+    KRESIDRT       Residual K fraction in roots                       kg K kg-1 dry biomass
 
-    NRESIDST       Residual N fraction in stems                    SCr     kg N kg-1 dry biomass
-    PRESIDST       Residual P fraction in stems                    SCr     kg P kg-1 dry biomass
-    KRESIDST       Residual K fraction in stems                    SCr     kg K kg-1 dry biomass
-    =============  ================================================ =======  ======================
+    NRESIDST       Residual N fraction in stems                       kg N kg-1 dry biomass
+    PRESIDST       Residual P fraction in stems                       kg P kg-1 dry biomass
+    KRESIDST       Residual K fraction in stems                       kg K kg-1 dry biomass
+    =============  ================================================= =======================
 
     **State variables**
 
-    ==========  ================================================= ==== ============
-     Name        Description                                      Pbl      Unit
-    ==========  ================================================= ==== ============
-    NamountLV     Actual N amount in living leaves                   Y   |kg N ha-1|
-    PamountLV     Actual P amount in living leaves                   Y   |kg P ha-1|
-    KamountLV     Actual K amount in living leaves                   Y   |kg K ha-1|
+    ==========  ================================================== ============
+     Name        Description                                          Unit
+    ==========  ================================================== ============
+    NamountLV     Actual N amount in living leaves                  |kg N ha-1|
+    PamountLV     Actual P amount in living leaves                  |kg P ha-1|
+    KamountLV     Actual K amount in living leaves                  |kg K ha-1|
         
-    NamountST     Actual N amount in living stems                    Y   |kg N ha-1|
-    PamountST     Actual P amount in living stems                    Y   |kg P ha-1|
-    KamountST     Actual K amount in living stems                    Y   |kg K ha-1|
+    NamountST     Actual N amount in living stems                   |kg N ha-1|
+    PamountST     Actual P amount in living stems                   |kg P ha-1|
+    KamountST     Actual K amount in living stems                   |kg K ha-1|
 
-    NamountSO     Actual N amount in living storage organs           Y   |kg N ha-1|
-    PamountSO     Actual P amount in living storage organs           Y   |kg P ha-1|
-    KamountSO     Actual K amount in living storage organs           Y   |kg K ha-1|
+    NamountSO     Actual N amount in living storage organs          |kg N ha-1|
+    PamountSO     Actual P amount in living storage organs          |kg P ha-1|
+    KamountSO     Actual K amount in living storage organs          |kg K ha-1|
     
-    NamountRT     Actual N amount in living roots                    Y   |kg N ha-1|
-    PamountRT     Actual P amount in living roots                    Y   |kg P ha-1|
-    KamountRT     Actual K amount in living roots                    Y   |kg K ha-1|
+    NamountRT     Actual N amount in living roots                   |kg N ha-1|
+    PamountRT     Actual P amount in living roots                   |kg P ha-1|
+    KamountRT     Actual K amount in living roots                   |kg K ha-1|
     
-    Nuptake_T    total absorbed N amount                        N   |kg N ha-1|
-    Puptake_T    total absorbed P amount                        N   |kg P ha-1|
-    Kuptake_T    total absorbed K amount                        N   |kg K ha-1|
-    Nfix_T       total biological fixated N amount                  N   |kg N ha-1|
-    ==========  ================================================= ==== ============
+    Nuptake_T    total absorbed N amount                            |kg N ha-1|
+    Puptake_T    total absorbed P amount                            |kg P ha-1|
+    Kuptake_T    total absorbed K amount                            |kg K ha-1|
+    Nfix_T       total biological fixated N amount                  |kg N ha-1|
+    ==========  ================================================== ============
 
     **Rate variables**
 
-    ===========  ================================================= ==== ============
-     Name         Description                                      Pbl      Unit
-    ===========  ================================================= ==== ============
-    RNamountLV     Weight increase (N) in leaves                    N   |kg ha-1 d-1|
-    RPamountLV     Weight increase (P) in leaves                    N   |kg ha-1 d-1|
-    RKamountLV     Weight increase (K) in leaves                    N   |kg ha-1 d-1|
+    ===========  =================================================  ================
+     Name         Description                                           Unit
+    ===========  =================================================  ================
+    RNamountLV     Weight increase (N) in leaves                    |kg N ha-1 d-1|
+    RPamountLV     Weight increase (P) in leaves                    |kg P ha-1 d-1|
+    RKamountLV     Weight increase (K) in leaves                    |kg K ha-1 d-1|
     
-    RNamountST     Weight increase (N) in stems                     N   |kg ha-1 d-1|
-    RPamountST     Weight increase (P) in stems                     N   |kg ha-1 d-1|
-    RKamountST     Weight increase (K) in stems                     N   |kg ha-1 d-1|
+    RNamountST     Weight increase (N) in stems                     |kg N ha-1 d-1|
+    RPamountST     Weight increase (P) in stems                     |kg P ha-1 d-1|
+    RKamountST     Weight increase (K) in stems                     |kg K ha-1 d-1|
         
-    RNamountRT     Weight increase (N) in roots                     N   |kg ha-1 d-1|
-    RPamountRT     Weight increase (P) in roots                     N   |kg ha-1 d-1|
-    RKamountRT     Weight increase (K) in roots                     N   |kg ha-1 d-1|
+    RNamountRT     Weight increase (N) in roots                     |kg N ha-1 d-1|
+    RPamountRT     Weight increase (P) in roots                     |kg P ha-1 d-1|
+    RKamountRT     Weight increase (K) in roots                     |kg K ha-1 d-1|
     
-    RNamountSO     Weight increase (N) in storage organs            N   |kg ha-1 d-1|
-    RPamountSO     Weight increase (P) in storage organs            N   |kg ha-1 d-1|
-    RKamountSO     Weight increase (K) in storage organs            N   |kg ha-1 d-1|
+    RNamountSO     Weight increase (N) in storage organs            |kg N ha-1 d-1|
+    RPamountSO     Weight increase (P) in storage organs            |kg P ha-1 d-1|
+    RKamountSO     Weight increase (K) in storage organs            |kg K ha-1 d-1|
 
-    RNdeathLV      Rate of N loss in leaves                         N   |kg ha-1 d-1|
-    RPdeathLV      as for P                                         N   |kg ha-1 d-1|
-    RKdeathLV      as for K                                         N   |kg ha-1 d-1|
+    RNdeathLV      Rate of N loss in leaves                         |kg N ha-1 d-1|
+    RPdeathLV      as for P                                         |kg P ha-1 d-1|
+    RKdeathLV      as for K                                         |kg K ha-1 d-1|
 
-    RNdeathST      Rate of N loss in roots                          N   |kg ha-1 d-1|
-    RPdeathST      as for P                                         N   |kg ha-1 d-1|
-    RKdeathST      as for K                                         N   |kg ha-1 d-1|
+    RNdeathST      Rate of N loss in roots                          |kg N ha-1 d-1|
+    RPdeathST      as for P                                         |kg P ha-1 d-1|
+    RKdeathST      as for K                                         |kg K ha-1 d-1|
 
-    RNdeathRT      Rate of N loss in stems                          N   |kg ha-1 d-1|
-    RPdeathRT      as for P                                         N   |kg ha-1 d-1|
-    RKdeathRT      as for K                                         N   |kg ha-1 d-1|
+    RNdeathRT      Rate of N loss in stems                          |kg N ha-1 d-1|
+    RPdeathRT      as for P                                         |kg P ha-1 d-1|
+    RKdeathRT      as for K                                         |kg K ha-1 d-1|
 
-    RNloss         N loss due to senescence                         N   |kg ha-1 d-1|
-    RPloss         P loss due to senescence                         N   |kg ha-1 d-1|
-    RKloss         K loss due to senescence                         N   |kg ha-1 d-1|
-    ===========  ================================================= ==== ============
+    RNloss         N loss due to senescence                         |kg N ha-1 d-1|
+    RPloss         P loss due to senescence                         |kg P ha-1 d-1|
+    RKloss         K loss due to senescence                         |kg K ha-1 d-1|
+    ===========  =================================================  ================
     
     **Signals send or handled**
     
@@ -121,17 +121,17 @@ class NPK_Crop_Dynamics(SimulationObject):
     
     **External dependencies**
     
-    =======  =================================== ====================  ============
+    =======  =================================== ====================  ==============
      Name     Description                         Provided by            Unit
-    =======  =================================== ====================  ============
+    =======  =================================== ====================  ==============
     DVS      Crop development stage              DVS_Phenology           -
     WLV      Dry weight of living leaves         WOFOST_Leaf_Dynamics  |kg ha-1|
     WRT      Dry weight of living roots          WOFOST_Root_Dynamics  |kg ha-1|
     WST      Dry weight of living stems          WOFOST_Stem_Dynamics  |kg ha-1|
-    DRLV     Death rate of leaves                WOFOST_Leaf_Dynamics  |kg ha-1 d-|
-    DRRT     Death rate of roots                 WOFOST_Root_Dynamics  |kg ha-1 d-|
-    DRST     Death rate of stems                 WOFOST_Stem_Dynamics  |kg ha-1 d-|
-    =======  =================================== ====================  ============
+    DRLV     Death rate of leaves                WOFOST_Leaf_Dynamics  |kg ha-1 d-1|
+    DRRT     Death rate of roots                 WOFOST_Root_Dynamics  |kg ha-1 d-1|
+    DRST     Death rate of stems                 WOFOST_Stem_Dynamics  |kg ha-1 d-1|
+    =======  =================================== ====================  ==============
     """
 
     translocation = Instance(SimulationObject)

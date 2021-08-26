@@ -6,9 +6,6 @@ some examples to get you started with modelling. The examples are currently focu
 the WOFOST and LINTUL3 crop simulation models, although other crop simulation models may become available within
 PCSE in the future.
 
-Note that an these examples plus demonstrations of advanced topics are also available as Jupyter
-notebooks at https://github.com/ajwdewit/pcse_notebooks
-
 
 An interactive PCSE/WOFOST session
 ==================================
