@@ -65,8 +65,10 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
     """
     # Variable names in POWER data
-    power_variables = ["ALLSKY_TOA_SW_DWN", "ALLSKY_SFC_SW_DWN", "T2M", "T2M_MIN",
+    power_variables_old = ["ALLSKY_TOA_SW_DWN", "ALLSKY_SFC_SW_DWN", "T2M", "T2M_MIN",
                        "T2M_MAX", "T2MDEW", "WS2M", "PRECTOT"]
+    power_variables = ["TOA_SW_DWN", "ALLSKY_SFC_SW_DWN", "T2M", "T2M_MIN",
+                       "T2M_MAX", "T2MDEW", "WS2M", "PRECTOTCORR"]
     # other constants
     HTTP_OK = 200
     angstA = 0.29
@@ -139,7 +141,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
         # Store the informational header then parse variables
         self.description = [powerdata["header"]["title"]]
-        self.elevation = float(powerdata["features"][0]["geometry"]["coordinates"][2])
+        self.elevation = float(powerdata["geometry"]["coordinates"][2])
         df_power = self._process_POWER_records(powerdata)
 
         # Determine Angstrom A/B parameters
@@ -181,7 +183,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
             return self.angstA, self.angstB
 
         # calculate relative radiation (swv_dwn/toa_dwn) and percentiles
-        relative_radiation = df_power.ALLSKY_SFC_SW_DWN/df_power.ALLSKY_TOA_SW_DWN
+        relative_radiation = df_power.ALLSKY_SFC_SW_DWN/df_power.TOA_SW_DWN
         ix = relative_radiation.notnull()
         angstrom_a = float(np.percentile(relative_radiation[ix].values, 5))
         angstrom_ab = float(np.percentile(relative_radiation[ix].values, 98))
@@ -208,18 +210,16 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         start_date = dt.date(1983,7,1)
         end_date = dt.date.today()
 
-        # build URL for retrieving data
-        server = "https://power.larc.nasa.gov/cgi-bin/v1/DataAccess.py"
+        # build URL for retrieving data, using new NASA POWER api
+        server = "https://power.larc.nasa.gov/api/temporal/daily/point"
         payload = {"request": "execute",
-                   "identifier": "SinglePoint",
                    "parameters": ",".join(self.power_variables),
-                   "lat": latitude,
-                   "lon": longitude,
-                   "startDate": start_date.strftime("%Y%m%d"),
-                   "endDate": end_date.strftime("%Y%m%d"),
-                   "userCommunity": "AG",
-                   "tempAverage": "DAILY",
-                   "outputList": "JSON",
+                   "latitude": latitude,
+                   "longitude": longitude,
+                   "start": start_date.strftime("%Y%m%d"),
+                   "end": end_date.strftime("%Y%m%d"),
+                   "community": "AG",
+                   "format": "JSON",
                    "user": "anonymous"
                    }
         msg = "Starting retrieval from NASA Power"
@@ -319,7 +319,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
         df_power = {}
         for varname in self.power_variables:
-            s = pd.Series(powerdata["features"][0]["properties"]["parameter"][varname])
+            s = pd.Series(powerdata["properties"]["parameter"][varname])
             s[s == fill_value] = np.NaN
             df_power[varname] = s
         df_power = pd.DataFrame(df_power)
@@ -339,7 +339,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                                 "TMIN": df_power.T2M_MIN,
                                 "TEMP": df_power.T2M,
                                 "IRRAD": df_power.ALLSKY_SFC_SW_DWN.apply(MJ_to_J),
-                                "RAIN": df_power.PRECTOT.apply(mm_to_cm),
+                                "RAIN": df_power.PRECTOTCORR.apply(mm_to_cm),
                                 "WIND": df_power.WS2M,
                                 "VAP": df_power.T2MDEW.apply(tdew_to_hpa),
                                 "DAY": df_power.DAY.apply(to_date),
