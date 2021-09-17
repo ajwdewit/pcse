@@ -234,7 +234,6 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         msg = "Successfully retrieved data from NASA Power"
         self.logger.debug(msg)
         return req.json()
-        # return json.load(open("nasapower.json"))
 
     def _find_cache_file(self, latitude, longitude):
         """Try to find a cache file for given latitude/longitude.

@@ -296,8 +296,11 @@ must be provided to the model.
 .. _DummySoilDataProvider:
 .. autoclass:: pcse.util.DummySoilDataProvider
 
-.. _WOFOST71SiteDataProvider:
-.. autoclass:: pcse.util.WOFOST71SiteDataProvider
+.. _WOFOST72SiteDataProvider:
+.. autoclass:: pcse.util.WOFOST72SiteDataProvider
+
+.. _WOFOST80SiteDataProvider:
+.. autoclass:: pcse.util.WOFOST80SiteDataProvider
 
 
 .. _DBtools:

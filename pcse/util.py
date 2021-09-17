@@ -947,37 +947,19 @@ def version_tuple(v):
     return tuple(map(int, (v.split("."))))
 
 
-class WOFOST71SiteDataProvider(dict):
-    """Site data provider for WOFOST 7.1.
+class _GenericSiteDataProvider(dict):
+    """Generic Site data provider
 
-    Site specific parameters for WOFOST 7.1 can be provided through this data provider as well as through
-    a normal python dictionary. The sole purpose of implementing this data provider is that the site
-    parameters for WOFOST are documented, checked and that sensible default values are given.
+    It just checks the values provided as keywords given the _defaults and _required values
 
-    The following site specific parameter values can be set through this data provider::
-
-        - IFUNRN    Indicates whether non-infiltrating fraction of rain is a function of storm size (1)
-                    or not (0). Default 0
-        - NOTINF    Maximum fraction of rain not-infiltrating into the soil [0-1], default 0.
-        - SSMAX     Maximum depth of water that can be stored on the soil surface [cm]
-        - SSI       Initial depth of water stored on the surface [cm]
-        - WAV       Initial amount of water in total soil profile [cm]
-        - SMLIM     Initial maximum moisture content in initial rooting depth zone [0-1], default 0.4
-        - CO2       Atmospheric CO2 level (ppm), default 360.
+    _defaults = {"VARNAME": (default, {maxvalue, minvalue}, type),
+                }
+    _required = ["VARNAME"]
     """
-    
-    _defaults = {"IFUNRN": (0, {0, 1}, int),
-                 "NOTINF": (0, [0., 1.], float),
-                 "SSI": (0., [0., 100.], float),
-                 "SSMAX": (0., [0., 100.], float),
-                 "WAV": (None, [0., 100.], float),
-                 "SMLIM": (0.4, [0., 1.], float),
-                 "CO2": (360., [300., 1400.], float)}
-    _required = ["WAV"]
 
     def __init__(self, **kwargs):
         dict.__init__(self)
-        
+
         for par_name, (default_value, par_range, par_conversion) in self._defaults.items():
             if par_name not in kwargs:
                 # parameter was not provided, use the default if possible
@@ -1004,6 +986,95 @@ class WOFOST71SiteDataProvider(dict):
         if kwargs:
             msg = "Unknown parameter values provided to WOFOSTSiteDataProvider: %s" % kwargs
             print(msg)
+
+
+class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
+    """Site data provider for WOFOST 7.2.
+
+    Site specific parameters for WOFOST 7.2 can be provided through this data provider as well as through
+    a normal python dictionary. The sole purpose of implementing this data provider is that the site
+    parameters for WOFOST are documented, checked and that sensible default values are given.
+
+    The following site specific parameter values can be set through this data provider::
+
+        - IFUNRN    Indicates whether non-infiltrating fraction of rain is a function of storm size (1)
+                    or not (0). Default 0
+        - NOTINF    Maximum fraction of rain not-infiltrating into the soil [0-1], default 0.
+        - SSMAX     Maximum depth of water that can be stored on the soil surface [cm]
+        - SSI       Initial depth of water stored on the surface [cm]
+        - WAV       Initial amount of water in total soil profile [cm]
+        - SMLIM     Initial maximum moisture content in initial rooting depth zone [0-1], default 0.4
+        - CO2       Atmospheric CO2 level (ppm), default 360.
+    """
+    
+    _defaults = {"IFUNRN": (0, {0, 1}, int),
+                 "NOTINF": (0, [0., 1.], float),
+                 "SSI": (0., [0., 100.], float),
+                 "SSMAX": (0., [0., 100.], float),
+                 "WAV": (None, [0., 100.], float),
+                 "SMLIM": (0.4, [0., 1.], float),
+                 "CO2": (360., [300., 1400.], float)}
+    _required = ["WAV"]
+
+# This is just to keep old code working
+WOFOST71SiteDataProvider = WOFOST72SiteDataProvider
+
+
+class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
+    """Site data provider for WOFOST 8.0.
+
+    Site specific parameters for WOFOST 8.0 can be provided through this data provider as well as through
+    a normal python dictionary. The sole purpose of implementing this data provider is that the site
+    parameters for WOFOST are documented, checked and that sensible default values are given.
+
+    The following site specific parameter values can be set through this data provider::
+
+        - IFUNRN        Indicates whether non-infiltrating fraction of rain is a function of
+                        storm size (1) or not (0). Default 0
+        - NOTINF        Maximum fraction of rain not-infiltrating into the soil [0-1],
+                        default 0.
+        - SSMAX         Maximum depth of water that can be stored on the soil surface [cm]
+        - SSI           Initial depth of water stored on the surface [cm]
+        - WAV           Initial amount of water in total soil profile [cm]
+        - SMLIM         Initial maximum moisture content in initial rooting depth zone [0-1],
+                        default 0.4
+        - CO2           Atmospheric CO2 level (ppm), default 360.
+        - BG_N_SUPPLY   Background N supply through atmospheric deposition in kg/ha/day. Can be
+                        in the order of 25 kg/ha/year in areas with high N pollution. Default 0.0
+        - NSOILBASE     Base N amount available in the soil. This is often estimated as the nutrient
+                        left over from the previous growth cycle (surplus nutrients, crop residues
+                        or green manure).
+        - NSOILBASE_FR  Daily fraction of soil N coming available through mineralization
+        - BG_P_SUPPLY   Background P supply in kg/ha/day. Usually this is mainly through deposition
+                        of dust and an order of magnitude smaller then N deposition. Default 0.0
+        - PSOILBASE     Base P amount available in the soil.
+        - PSOILBASE_FR  Daily fraction of soil P coming available through mineralization
+        - BG_K_SUPPLY   Background P supply in kg/ha/day. Default 0.0
+        - KSOILBASE     Base K amount available in the soil
+        - KSOILBASE_FR  Daily fraction of soil K coming available through mineralization
+
+    Providing estimates of the parameters for nutrient supply is not required, but their
+    default values are all assumed to be zero.
+    """
+
+    _defaults = {"IFUNRN": (0, {0, 1}, int),
+                 "NOTINF": (0, [0., 1.], float),
+                 "SSI": (0., [0., 100.], float),
+                 "SSMAX": (0., [0., 100.], float),
+                 "WAV": (None, [0., 100.], float),
+                 "SMLIM": (0.4, [0., 1.], float),
+                 "CO2": (360., [300., 1400.], float),
+                 "BG_N_SUPPLY": (0, (0, 0.1), float),
+                 "NSOILBASE": (0, (0, 100), float),
+                 "NSOILBASE_FR": (0.025, (0, 100), float),
+                 "BG_P_SUPPLY": (0, (0, 0.05), float),
+                 "PSOILBASE": (0, (0, 100), float),
+                 "PSOILBASE_FR": (0.025, (0, 100), float),
+                 "BG_K_SUPPLY": (0, (0, 0.05), float),
+                 "KSOILBASE": (0, (0, 100), float),
+                 "KSOILBASE_FR": (0.025, (0, 0.05), float),
+                 }
+    _required = ["WAV"]
 
 
 def get_user_home():
