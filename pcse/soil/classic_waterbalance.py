@@ -7,7 +7,7 @@ of potential production (`WaterbalancePP`) and water-limited production
 """
 from math import sqrt
 
-from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool
+from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool, List
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit, Afgen, merge_dict
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
@@ -258,6 +258,8 @@ class WaterbalanceFD(SimulationObject):
     _RIRR = Float(0.)
     # default depth of upper layer (root zone depth)
     DEFAULT_RD = Float(10.)
+    # Increments on WLOW due to state updates
+    _increments_W = List()
 
     class Parameters(ParamTemplate):
         # Soil parameters
@@ -378,6 +380,8 @@ class WaterbalanceFD(SimulationObject):
         self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
         # signal for irrigation
         self._connect_signal(self._on_IRRIGATE, signals.irrigate)
+
+        self._increments_W = []
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -550,9 +554,10 @@ class WaterbalanceFD(SimulationObject):
 
         # Checksums waterbalance for systems without groundwater
         # for rootzone (WBALRT) and whole system (WBALTT)
-        s.WBALRT = s.TOTINF + s.WI + s.WDRT - s.EVST - s.WTRAT - s.PERCT - s.W
-        s.WBALTT = (s.SSI + s.RAINT + s.TOTIRR + s.WI - s.W + s.WLOWI -
-                    s.WLOW - s.WTRAT - s.EVWT - s.EVST - s.TSR - s.LOSST - s.SS)
+        # The sum of all increments made are added to ensure a closing waterbalance
+        s.WBALRT = s.TOTINF + s.WI + s.WDRT - s.EVST - s.WTRAT - s.PERCT - s.W + sum(self._increments_W)
+        s.WBALTT = (s.SSI + s.RAINT + s.TOTIRR + s.WI - s.W + sum(self._increments_W) +
+                    s.WLOWI - s.WLOW - s.WTRAT - s.EVWT - s.EVST - s.TSR - s.LOSST - s.SS)
 
         if abs(s.WBALRT) > 0.0001:
             msg = "Water balance for root zone does not close."
@@ -626,6 +631,26 @@ class WaterbalanceFD(SimulationObject):
 
     def _on_IRRIGATE(self, amount, efficiency):
         self._RIRR = amount * efficiency
+
+    def _set_variable_SM(self, nSM):
+        s = self.states
+
+        # old values
+        oSM = s.SM
+        oW = s.W
+        # new values
+        nW = nSM/oSM * s.W
+
+        # update states
+        s.W = nW
+        s.SM = nSM
+        s.WWLOW = s.WLOW + s.W
+
+        # Store increments on W
+        self._increments_W.append(nW - oW)
+
+        # Return increments on all variables
+        return {"W": nW - oW, "SM": nSM - oSM}
 
 
 class WaterbalanceFDSnow(SimulationObject):
