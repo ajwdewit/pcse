@@ -7,12 +7,13 @@ PACKAGE = "pcse"
 NAME = "PCSE"
 DESCRIPTION = 'Framework for developing crop simulation models, ' \
               'includes an implementation of '\
-              'the WOFOST and LINTUL crop simulation models.'
+              'the WOFOST and LINTUL crop simulation models and ' \
+              'the LINGRA grassland simulation model.'
 AUTHOR = "Allard de Wit"
 AUTHOR_EMAIL = 'allard.dewit@wur.nl'
 URL = 'http://github.com/ajwdewit/pcse/'
 LICENSE="EUPL"
-VERSION = "5.4.2"
+VERSION = "5.5.0"
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -36,13 +37,12 @@ setup(
     download_url='http://github.com/ajwdewit/pcse/tarball/'+VERSION,
     license='EUPL',
     author=AUTHOR,
-    install_requires=['numpy>=1.6.0',
-                      'SQLAlchemy>=0.8.0',
-                      'PyYAML>=3.11',
-                      'xlrd>=0.9.3',
-                      'xlwt>=1.0.0',
+    install_requires=['SQLAlchemy>=1.3.0',
+                      'PyYAML>=5.1',
+                      'xlrd>=1.2.0',
+                      'openpyxl>=3.0.0',
                       'requests>=2.0.0',
-                      'pandas>=0.20',
+                      'pandas>=0.25',
                       'traitlets-pcse==5.0.0.dev'],
     author_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
@@ -56,7 +56,7 @@ setup(
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: European Union Public Licence 1.1 (EUPL 1.1)',
+        'License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)',
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python',

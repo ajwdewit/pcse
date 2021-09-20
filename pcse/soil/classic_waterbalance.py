@@ -633,6 +633,15 @@ class WaterbalanceFD(SimulationObject):
         self._RIRR = amount * efficiency
 
     def _set_variable_SM(self, nSM):
+        """Force the model states based on the given soil moisture value.
+
+        This implies that besides the root-zone soil content, also the
+        water available in the root zone (W) must be updated since SM
+        is derived from W.
+
+        Further, the increment made to W is added to self._increments_W
+        in order to ensure that the water balance still closes.
+        """
         s = self.states
 
         # old values
