@@ -57,4 +57,5 @@ include pcse/tests/test_data/wofost_npk.crop
 include pcse/tests/test_data/wofost_npk_reference_results.csv
 include pcse/tests/test_data/wofost_npk.site
 include pcse/tests/test_data/wofost_npk.soil
-
+include pcse/tests/test_data/wofost_npk_potential.csv
+include pcse/tests/test_data/wofost_npk_waterlimited.csv
