@@ -13,6 +13,8 @@ Wofost80_WLP_FD_beta   An implementation of WOFOST 8.0 for water-limited product
                        for freely draining soils.
 Wofost80_NWLP_FD_beta  An implementation of WOFOST 8.0 for water-limited and nutrient-limited production scenarios
                        including N/P/K dynamics for freely draining soils.
+LINGRA_PP              A LINGRA implementation for simulating potential production scenarios.
+LINGRA_WLP_FD          A LINGRA implementation for simulating water-limited production scenarios with freely draining soils.
 LINTUL3                An implementation of the LINTUL3 model for production scenarios under water-limited and nitrogen-
                        limited production scenarios.
 FAO_WRSI               An implementation of the Water Requirement Satisfaction Index model. This re-uses components
