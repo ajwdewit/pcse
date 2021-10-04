@@ -337,7 +337,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
         strvalues = line.split()
         if len(strvalues) != 5:
             msg = "Did not find 5 values on location parameter line of file %s"
-            raise PCSEError(msg % file)
+            raise PCSEError(msg % cb_file)
         
         parnames = ["longitude", "latitude", "elevation", "angstA", "angstB"]
         for parname, strvalue in zip(parnames, strvalues):
