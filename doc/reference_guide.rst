@@ -48,7 +48,14 @@ forward by calling the SimulationObjects, calling the agromanagement
 unit, keeping track of time, providing the weather data needed and
 storing the model variables during the simulation for later output.
 The Engine itself is generic and can be used for any model that is defined
-in PCSE.
+in PCSE. The overall structure of the engine can be found in the figure below
+which shows the different elements that are called by the Engine.
+
+.. figure:: figures/PCSE_Engine_structure.png
+   :align: center
+   :width: 500 px
+
+
 
 .. _ContinuousSimulation:
 
@@ -228,21 +235,22 @@ of an entire crop or a soil profile.
 
 This approach has several advantages:
 
-* Model code with a certain purpose is grouped together, making it easier
-  to read, understand and maintain.
-* A SimulationObject contains only parameters, rate and state variables
-  that are needed. In contrast, with monolythic code it is often unclear (at
-  first glance at least) what biophysical process they belong to.
-* Isolation of process implementations creates less dependencies, but more
-  importantly, dependencies are evident from the code which makes it easier
-  to modify individual SimulationObjects.
-* SimulationObjects can be tested individually by comparing output vs the
-  expected output (e.g. unit testing).
-* SimulationObjects can be exchanged for other objects with the same purpose
-  but a different biophysical approach. For example, the WOFOST assimilation
-  approach could be easily replaced by a more simple Light Use Efficiency or
-  Water Use Efficiency approach, by replacing the SimulationObject that
-  handles the |CO2| assimilation.
+#. Model code with a certain purpose is grouped together, making it easier
+   to read, understand and maintain.
+#. A SimulationObject contains only parameters, rate and state variables
+   that are needed. In contrast, with monolythic code it is often unclear (at
+   first glance at least) what biophysical process they belong to.
+#. Isolation of process implementations creates less dependencies, but more
+   importantly, dependencies are evident from the code which makes it easier
+   to modify individual SimulationObjects.
+#. SimulationObjects can be tested individually by comparing output vs the
+   expected output (e.g. unit testing).
+#. SimulationObjects can be exchanged for other objects with the same purpose
+   but a different biophysical approach. For example, the WOFOST assimilation
+   approach could be easily replaced by a more simple Light Use Efficiency or
+   Water Use Efficiency approach, by replacing the SimulationObject that
+   handles the |CO2| assimilation.
+
 
 Characteristics of SimulationObjects
 ------------------------------------
