@@ -215,18 +215,23 @@ class NPK_Soil_Dynamics(SimulationObject):
         p = self.params
         k = self.kiosk
 
-        if k.DVS < p.DVS_NPK_STOP and k.RFTRA > 0.01:
-            NutrientLIMIT = 1.0
-        else:
-            NutrientLIMIT = 0.
+        # if k.DVS < p.DVS_NPK_STOP and k.RFTRA > 0.01:
+        #     NutrientLIMIT = 1.0
+        # else:
+        #     NutrientLIMIT = 0.
                     
-        r.RNSOIL = -max(0., min(p.NSOILBASE_FR * self.NSOILI * NutrientLIMIT, s.NSOIL))
-        r.RPSOIL = -max(0., min(p.PSOILBASE_FR * self.PSOILI * NutrientLIMIT, s.PSOIL))
-        r.RKSOIL = -max(0., min(p.KSOILBASE_FR * self.KSOILI * NutrientLIMIT, s.KSOIL))
-               
-        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - k.RNuptake - r.RNSOIL
-        r.RPAVAIL = r.FERT_P_SUPPLY + p.BG_P_SUPPLY - k.RPuptake - r.RPSOIL
-        r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - k.RKuptake - r.RKSOIL
+        r.RNSOIL = -max(0., min(p.NSOILBASE_FR * self.NSOILI, s.NSOIL))
+        r.RPSOIL = -max(0., min(p.PSOILBASE_FR * self.PSOILI, s.PSOIL))
+        r.RKSOIL = -max(0., min(p.KSOILBASE_FR * self.KSOILI, s.KSOIL))
+
+        # Check uptake rates from crop, if a crop is actuall growing
+        RNuptake = k.RNuptake if "RNuptake" in self.kiosk else 0.
+        RPuptake = k.RNuptake if "RPuptake" in self.kiosk else 0.
+        RKuptake = k.RNuptake if "RKuptake" in self.kiosk else 0.
+
+        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - RNuptake - r.RNSOIL
+        r.RPAVAIL = r.FERT_P_SUPPLY + p.BG_P_SUPPLY - RPuptake - r.RPSOIL
+        r.RKAVAIL = r.FERT_K_SUPPLY + p.BG_K_SUPPLY - RKuptake - r.RKSOIL
         
     @prepare_states
     def integrate(self, day, delt=1.0):

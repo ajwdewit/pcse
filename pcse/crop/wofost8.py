@@ -211,10 +211,10 @@ class Wofost80(SimulationObject):
         self.evtra(day, drv)
 
         # nutrient status and reduction factor
-        NNI, NPKI, NPKREF = self.npk_stress(day, drv)
+        NNI, NPKI, RFNPK = self.npk_stress(day, drv)
 
         # Select minimum of nutrient and water/oxygen stress
-        reduction = min(NPKREF, k.RFTRA)
+        reduction = min(RFNPK, k.RFTRA)
 
         rates.GASS = rates.PGASS * reduction
 
