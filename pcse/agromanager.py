@@ -958,3 +958,7 @@ class AgroManager(AncillaryObject):
             return 0
         else:
             return self.crop_calendars[0].duration
+
+    def __str__(self):
+        return f"{AgroManager.__name__} applying {len(self.campaign_start_dates)} " \
+               f"starting {self._start_date}, ending {self._end_date}"
