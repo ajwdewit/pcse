@@ -67,7 +67,10 @@ class Wofost80(SimulationObject):
     TAGP          Total above-ground Production                      N    |kg ha-1|
     GASST         Total gross assimilation                           N    |kg CH2O ha-1|
     MREST         Total gross maintenance respiration                N    |kg CH2O ha-1|
-    CTRAT         Total crop transpiration                           N    cm
+    CTRAT         Total crop transpiration accumulated over the
+                  crop cycle                                         N    cm
+    CEVST         Total soil evaporation accumulated over the
+                  crop cycle                                         N    cm
     HI            Harvest Index (only calculated during              N    -
                   `finalize()`)
     DOF           Date representing the day of finish of the crop    N    -
@@ -121,6 +124,7 @@ class Wofost80(SimulationObject):
         GASST = Float(-99.)
         MREST = Float(-99.)
         CTRAT = Float(-99.) # Crop total transpiration
+        CEVST = Float(-99.)
         HI = Float(-99.)
         DOF = Instance(datetime.date)
         FINISH_TYPE = Unicode("")
@@ -165,7 +169,7 @@ class Wofost80(SimulationObject):
         self.states = self.StateVariables(kiosk,
                                           publish=["TAGP","GASST","MREST","HI"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0,
-                                          CTRAT=0.0, HI=0.0,
+                                          CTRAT=0.0, HI=0.0, CEVST=0.0,
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
@@ -288,9 +292,10 @@ class Wofost80(SimulationObject):
         states.GASST += rates.GASS
         states.MREST += rates.MRES
         
-        # total crop transpiration (CTRAT)
+        # total crop transpiration and soil evaporation
         states.CTRAT += self.kiosk.TRA
-        
+        states.CEVST += self.kiosk.EVS
+
     @prepare_states
     def finalize(self, day):
 

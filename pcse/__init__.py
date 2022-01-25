@@ -30,7 +30,7 @@ from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
 __stable__ = False
-__version__ = "5.5.0-dev"
+__version__ = "5.5.1-dev"
 
 import sys, os
 from . import util
