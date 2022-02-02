@@ -1,5 +1,11 @@
 {
   "Version": 1,
-  "ProjectMap": {},
-  "NextColorIndex": 0
+  "ProjectMap": {
+    "46ea281d-7857-41dd-9be5-d3a5fe2de2c8": {
+      "ProjectGuid": "46ea281d-7857-41dd-9be5-d3a5fe2de2c8",
+      "DisplayName": "pcse",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
 }
