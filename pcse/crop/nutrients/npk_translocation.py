@@ -216,20 +216,17 @@ class NPK_Translocation(SimulationObject):
         # translocatable N amount in the organs [kg N ha-1]
         s.NtranslocatableLV = max(0., k.NamountLV - k.WLV * p.NRESIDLV)
         s.NtranslocatableST = max(0., k.NamountST - k.WST * p.NRESIDST)
-        s.NtranslocatableRT = max((s.NtranslocatableLV + s.NtranslocatableST) *
-                                  p.NPK_TRANSLRT_FR, k.NamountRT - k.WRT * p.NRESIDRT)
+        s.NtranslocatableRT = max(0., k.NamountRT - k.WRT * p.NRESIDRT)
 
         # translocatable P amount in the organs [kg P ha-1]
         s.PtranslocatableLV = max(0., k.PamountLV - k.WLV * p.PRESIDLV)
         s.PtranslocatableST = max(0., k.PamountST - k.WST * p.PRESIDST)
-        s.PtranslocatableRT = max((s.PtranslocatableLV + s.PtranslocatableST) *
-                                  p.NPK_TRANSLRT_FR, k.PamountRT - k.WRT * p.PRESIDRT)
+        s.PtranslocatableRT = max(0., k.PamountRT - k.WRT * p.PRESIDRT)
 
         # translocatable K amount in the organs [kg K ha-1]
         s.KtranslocatableLV = max(0., k.KamountLV - k.WLV * p.KRESIDLV)
         s.KtranslocatableST = max(0., k.KamountST - k.WST * p.KRESIDST)
-        s.KtranslocatableRT = max((s.KtranslocatableLV + s.KtranslocatableST) *
-                                  p.NPK_TRANSLRT_FR, k.KamountRT - k.WRT * p.KRESIDRT)
+        s.KtranslocatableRT = max(0., k.KamountRT - k.WRT * p.KRESIDRT)
 
         # total translocatable NPK amount in the organs [kg N ha-1]
         s.Ntranslocatable = s.NtranslocatableLV + s.NtranslocatableST + s.NtranslocatableRT

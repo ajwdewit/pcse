@@ -74,16 +74,21 @@ class NPK_Demand_Uptake(SimulationObject):
 
     NFIX_FR        fraction of crop nitrogen uptake by           kg N kg-1 dry biomass
                    biological fixation
-    DVS_NPK_STOP   Development stage after which no nutrients    -
-                   are taken up from the soil by the crop.
+    RNUPTAKEMAX    Maximum rate of N uptake                      |kg N ha-1 d-1|
+    RPUPTAKEMAX    Maximum rate of P uptake                      |kg N ha-1 d-1|
+    RKUPTAKEMAX    Maximum rate of K uptake                      |kg N ha-1 d-1|
     ============  =============================================  ======================
 
     **State variables**
 
-    ==========  ================================================= ==== ============
-     Name        Description                                      Pbl      Unit
-    ==========  ================================================= ==== ============
-    NdemandLV     N Demand in living leaves                         N   |kg N ha-1|
+    =============  ================================================= ==== ============
+     Name           Description                                      Pbl      Unit
+    =============  ================================================= ==== ============
+    NuptakeTotal     Total N uptake by the crop                        N   |kg N ha-1|
+    PuptakeTotal     Total P uptake by the crop                        N   |kg N ha-1|
+    KuptakeTotal     Total K uptake by the crop                        N   |kg N ha-1|
+    NfixTotal      Total N fixated by the crop                         N   |kg N ha-1|
+
     NdemandST     N Demand in living stems                          N   |kg N ha-1|
     NdemandRT     N Demand in living roots                          N   |kg N ha-1|
     NdemandSO     N Demand in storage organs                        N   |kg N ha-1|
@@ -123,7 +128,26 @@ class NPK_Demand_Uptake(SimulationObject):
     RNuptake       Total rate of N uptake                            Y   |kg N ha-1 d-1|
     RPuptake       Total rate of P uptake                            Y   |kg P ha-1 d-1|
     RKuptake       Total rate of K uptake                            Y   |kg K ha-1 d-1|
-    RNfixation     Rate of N fixation                                Y   |kg K ha-1 d-1|
+    RNfixation     Rate of N fixation                                Y   |kg N ha-1 d-1|
+
+    NdemandLV      N Demand in living leaves                         N   |kg N ha-1|
+    NdemandST      N Demand in living stems                          N   |kg N ha-1|
+    NdemandRT      N Demand in living roots                          N   |kg N ha-1|
+    NdemandSO      N Demand in storage organs                        N   |kg N ha-1|
+
+    PdemandLV      P Demand in living leaves                         N   |kg P ha-1|
+    PdemandST      P Demand in living stems                          N   |kg P ha-1|
+    PdemandRT      P Demand in living roots                          N   |kg P ha-1|
+    PdemandSO      P Demand in storage organs                        N   |kg P ha-1|
+
+    KdemandLV      K Demand in living leaves                         N   |kg K ha-1|
+    KdemandST      K Demand in living stems                          N   |kg K ha-1|
+    KdemandRT      K Demand in living roots                          N   |kg K ha-1|
+    KdemandSO      K Demand in storage organs                        N   |kg K ha-1|
+
+    Ndemand        Total crop N demand                               N   |kg N ha-1 d-1|
+    Pdemand        Total crop P demand                               N   |kg P ha-1 d-1|
+    Kdemand        Total crop K demand                               N   |kg K ha-1 d-1|
     ===========  ================================================= ==== ================
 
     **Signals send or handled**
@@ -171,43 +195,49 @@ class NPK_Demand_Uptake(SimulationObject):
         TCKT = Float(-99.)  # time coefficient for K translocation to storage organs [days]
 
         NFIX_FR = Float(-99.)  # fraction of crop nitrogen uptake by biological fixation
-        DVS_NPK_STOP = Float(-99.)  # development stage above which no crop N-P-K uptake does occur
+        RNUPTAKEMAX = Float()  # Maximum N uptake rate
+        RPUPTAKEMAX = Float()  # Maximum P uptake rate
+        RKUPTAKEMAX = Float()  # Maximum K uptake rate
 
     class RateVariables(RatesTemplate):
-        RNuptakeLV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
+        RNuptakeLV = Float(-99.)  # N uptake rates in organs [kg ha-1 d -1]
         RNuptakeST = Float(-99.)
         RNuptakeRT = Float(-99.)
         RNuptakeSO = Float(-99.)
 
-        RPuptakeLV = Float(-99.)  # P uptake rate [kg ha-1 d -1]
+        RPuptakeLV = Float(-99.)  # P uptake rates in organs [kg ha-1 d -1]
         RPuptakeST = Float(-99.)
         RPuptakeRT = Float(-99.)
         RPuptakeSO = Float(-99.)
 
-        RKuptakeLV = Float(-99.)  # N uptake rate [kg ha-1 d -1]
+        RKuptakeLV = Float(-99.)  # K uptake rates in organs [kg ha-1 d -1]
         RKuptakeST = Float(-99.)
         RKuptakeRT = Float(-99.)
         RKuptakeSO = Float(-99.)
 
-        RNuptake = Float(-99.)  # Total N uptake rate [kg ha-1 d -1]
-        RPuptake = Float(-99.)
-        RKuptake = Float(-99.)
-        RNfixation = Float(-99.)
+        RNuptake = Float(-99.)  # Total N uptake rates [kg ha-1 d -1]
+        RPuptake = Float(-99.)  # For P
+        RKuptake = Float(-99.)  # For K
+        RNfixation = Float(-99.)  # Total N fixated
 
-        NdemandLV = Float(-99.)
+        NdemandLV = Float(-99.)  # N demand in organs [kg ha-1]
         NdemandST = Float(-99.)
         NdemandRT = Float(-99.)
         NdemandSO = Float(-99.)
 
-        PdemandLV = Float(-99.)
+        PdemandLV = Float(-99.)  # P demand in organs [kg ha-1]
         PdemandST = Float(-99.)
         PdemandRT = Float(-99.)
         PdemandSO = Float(-99.)
 
-        KdemandLV = Float(-99.)
+        KdemandLV = Float(-99.)  # K demand in organs [kg ha-1]
         KdemandST = Float(-99.)
         KdemandRT = Float(-99.)
         KdemandSO = Float(-99.)
+
+        Ndemand = Float()  # Total N/P/K demand of the crop
+        Pdemand = Float()
+        Kdemand = Float()
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -228,7 +258,6 @@ class NPK_Demand_Uptake(SimulationObject):
     @prepare_rates
     def calc_rates(self, day, drv):
         r = self.rates
-        s = self.states
         p = self.params
         k = self.kiosk
 
@@ -257,9 +286,9 @@ class NPK_Demand_Uptake(SimulationObject):
         r.KdemandRT = max(mc.KMAXRT * k.WRT - k.KamountRT, 0.) + max(k.GRRT * mc.KMAXRT, 0) * delt
         r.KdemandSO = max(mc.KMAXSO * k.WSO - k.KamountSO, 0.)
 
-        Ndemand = r.NdemandLV + r.NdemandST + r.NdemandRT
-        Pdemand = r.PdemandLV + r.PdemandST + r.PdemandRT
-        Kdemand = r.KdemandLV + r.KdemandST + r.KdemandRT
+        r.Ndemand = r.NdemandLV + r.NdemandST + r.NdemandRT
+        r.Pdemand = r.PdemandLV + r.PdemandST + r.PdemandRT
+        r.Kdemand = r.KdemandLV + r.KdemandST + r.KdemandRT
 
         # NPK uptake rate in storage organs (kg N ha-1 d-1) is the mimimum of supply and
         # demand divided by the time coefficient for N/P/K translocation
@@ -267,43 +296,42 @@ class NPK_Demand_Uptake(SimulationObject):
         r.RPuptakeSO = min(r.PdemandSO, k.Ptranslocatable)/p.TCPT
         r.RKuptakeSO = min(r.KdemandSO, k.Ktranslocatable)/p.TCKT
 
-        # No nutrients are absorbed after development stage DVS_NPK_STOP or
-        # when severe water shortage occurs i.e. RFTRA <= 0.01
-        if k.DVS < p.DVS_NPK_STOP and k.RFTRA > 0.01:
+        # No nutrients are absorbed when severe water shortage occurs i.e. RFTRA <= 0.01
+        if k.RFTRA > 0.01:
             NutrientLIMIT = 1.0
         else:
             NutrientLIMIT = 0.
 
         # biological nitrogen fixation
-        r.RNfixation = (max(0., p.NFIX_FR * Ndemand) * NutrientLIMIT)
+        r.RNfixation = (max(0., p.NFIX_FR * r.Ndemand) * NutrientLIMIT)
 
         # NPK uptake rate from soil
-        r.RNuptake = (max(0., min(Ndemand - r.RNfixation, k.NAVAIL)) * NutrientLIMIT)
-        r.RPuptake = (max(0., min(Pdemand, k.PAVAIL)) * NutrientLIMIT)
-        r.RKuptake = (max(0., min(Kdemand, k.KAVAIL)) * NutrientLIMIT)
+        r.RNuptake = (max(0., min(r.Ndemand - r.RNfixation, k.NAVAIL, p.RNUPTAKEMAX)) * NutrientLIMIT)
+        r.RPuptake = (max(0., min(r.Pdemand, k.PAVAIL, p.RPUPTAKEMAX)) * NutrientLIMIT)
+        r.RKuptake = (max(0., min(r.Kdemand, k.KAVAIL, p.RKUPTAKEMAX)) * NutrientLIMIT)
 
-        # NPK uptake rate
+        # NPK uptake rate for different organs weighted as fraction of total demand
         # if no demand then uptake rate = 0.
-        if Ndemand == 0.:
+        if r.Ndemand == 0.:
             r.RNuptakeLV = r.RNuptakeST = r.RNuptakeRT = 0.
         else:
-            r.RNuptakeLV = (r.NdemandLV / Ndemand) * (r.RNuptake + r.RNfixation)
-            r.RNuptakeST = (r.NdemandST / Ndemand) * (r.RNuptake + r.RNfixation)
-            r.RNuptakeRT = (r.NdemandRT / Ndemand) * (r.RNuptake + r.RNfixation)
+            r.RNuptakeLV = (r.NdemandLV / r.Ndemand) * (r.RNuptake + r.RNfixation)
+            r.RNuptakeST = (r.NdemandST / r.Ndemand) * (r.RNuptake + r.RNfixation)
+            r.RNuptakeRT = (r.NdemandRT / r.Ndemand) * (r.RNuptake + r.RNfixation)
 
-        if Pdemand == 0.:
+        if r.Pdemand == 0.:
             r.RPuptakeLV = r.RPuptakeST = r.RPuptakeRT = 0.
         else:
-            r.RPuptakeLV = (r.PdemandLV / Pdemand) * r.RPuptake
-            r.RPuptakeST = (r.PdemandST / Pdemand) * r.RPuptake
-            r.RPuptakeRT = (r.PdemandRT / Pdemand) * r.RPuptake
+            r.RPuptakeLV = (r.PdemandLV / r.Pdemand) * r.RPuptake
+            r.RPuptakeST = (r.PdemandST / r.Pdemand) * r.RPuptake
+            r.RPuptakeRT = (r.PdemandRT / r.Pdemand) * r.RPuptake
 
-        if Kdemand == 0.:
+        if r.Kdemand == 0.:
             r.RKuptakeLV = r.RKuptakeST = r.RKuptakeRT = 0.
         else:
-            r.RKuptakeLV = (r.KdemandLV / Kdemand) * r.RKuptake
-            r.RKuptakeST = (r.KdemandST / Kdemand) * r.RKuptake
-            r.RKuptakeRT = (r.KdemandRT / Kdemand) * r.RKuptake
+            r.RKuptakeLV = (r.KdemandLV / r.Kdemand) * r.RKuptake
+            r.RKuptakeST = (r.KdemandST / r.Kdemand) * r.RKuptake
+            r.RKuptakeRT = (r.KdemandRT / r.Kdemand) * r.RKuptake
 
     @prepare_states
     def integrate(self, day, delt=1.0):

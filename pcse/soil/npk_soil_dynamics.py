@@ -70,8 +70,9 @@ class NPK_Soil_Dynamics(SimulationObject):
                   mineralisation
     KSOILBASE_FR  Fraction of base soil N that comes available   SSi        -
                   every day
-    DVS_NPK_STOP   Development stage after which no nutrients
-                  are taken up from the soil by the crop.
+    NAVAILI       Initial N available in the N pool              SSi      |kg ha-1|
+    PAVAILI       Initial P available in the P pool              SSi      |kg ha-1|
+    KAVAILI       Initial K available in the K pool              SSi      |kg ha-1|
     BG_N_SUPPLY   Background supply of N through atmospheric     SSi      |kg ha-1 d-1|
                   deposition.
     BG_P_SUPPLY   Background supply of P through atmospheric     SSi      |kg ha-1 d-1|
@@ -153,8 +154,12 @@ class NPK_Soil_Dynamics(SimulationObject):
         
         KSOILBASE = Float(-99.)  # total mineral soil K available at start of growth period [kg N/ha]
         KSOILBASE_FR = Float(-99.)  # fraction of soil mineral K coming available per day [day-1]
-        
-        DVS_NPK_STOP = Float(-99.)  # Development stage after which no nutrients are absorbed
+
+        # Initial values of available nutrients which is different from the previous ones
+        #
+        NAVAILI = Float()
+        PAVAILI = Float()
+        KAVAILI = Float()
 
         # Background rates of N/P/K supply [kg/ha/day]
         BG_N_SUPPLY = Float()
@@ -204,7 +209,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         self.states = self.StateVariables(kiosk,
             publish=["NAVAIL", "PAVAIL", "KAVAIL"],
             NSOIL=p.NSOILBASE, PSOIL=p.PSOILBASE, KSOIL=p.KSOILBASE,
-            NAVAIL=0., PAVAIL=0., KAVAIL=0.)
+            NAVAIL=p.NAVAILI, PAVAIL=p.PAVAILI, KAVAIL=p.KAVAILI)
 
         self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
         
@@ -215,16 +220,11 @@ class NPK_Soil_Dynamics(SimulationObject):
         p = self.params
         k = self.kiosk
 
-        # if k.DVS < p.DVS_NPK_STOP and k.RFTRA > 0.01:
-        #     NutrientLIMIT = 1.0
-        # else:
-        #     NutrientLIMIT = 0.
-                    
         r.RNSOIL = -max(0., min(p.NSOILBASE_FR * self.NSOILI, s.NSOIL))
         r.RPSOIL = -max(0., min(p.PSOILBASE_FR * self.PSOILI, s.PSOIL))
         r.RKSOIL = -max(0., min(p.KSOILBASE_FR * self.KSOILI, s.KSOIL))
 
-        # Check uptake rates from crop, if a crop is actuall growing
+        # Check uptake rates from crop, if a crop is actually growing
         RNuptake = k.RNuptake if "RNuptake" in self.kiosk else 0.
         RPuptake = k.RNuptake if "RPuptake" in self.kiosk else 0.
         RKuptake = k.RNuptake if "RKuptake" in self.kiosk else 0.
@@ -239,14 +239,14 @@ class NPK_Soil_Dynamics(SimulationObject):
         states = self.states
 
         # mineral NPK amount in the soil
-        states.NSOIL += rates.RNSOIL
-        states.PSOIL += rates.RPSOIL
-        states.KSOIL += rates.RKSOIL
+        states.NSOIL += rates.RNSOIL * delt
+        states.PSOIL += rates.RPSOIL * delt
+        states.KSOIL += rates.RKSOIL * delt
         
         # total (soil + fertilizer) NPK amount in soil
-        states.NAVAIL += rates.RNAVAIL
-        states.PAVAIL += rates.RPAVAIL
-        states.KAVAIL += rates.RKAVAIL
+        states.NAVAIL += rates.RNAVAIL * delt
+        states.PAVAIL += rates.RPAVAIL * delt
+        states.KAVAIL += rates.RKAVAIL * delt
 
     def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
                       P_recovery=None, K_recovery=None):

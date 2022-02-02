@@ -1004,7 +1004,8 @@ class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
         - SSI       Initial depth of water stored on the surface [cm]
         - WAV       Initial amount of water in total soil profile [cm]
         - SMLIM     Initial maximum moisture content in initial rooting depth zone [0-1], default 0.4
-        - CO2       Atmospheric CO2 level (ppm), default 360.
+
+    Currently only the value for WAV is mandatory to specify.
     """
     
     _defaults = {"IFUNRN": (0, {0, 1}, int),
@@ -1012,8 +1013,7 @@ class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
                  "SSI": (0., [0., 100.], float),
                  "SSMAX": (0., [0., 100.], float),
                  "WAV": (None, [0., 100.], float),
-                 "SMLIM": (0.4, [0., 1.], float),
-                 "CO2": (360., [300., 1400.], float)}
+                 "SMLIM": (0.4, [0., 1.], float)}
     _required = ["WAV"]
 
 # This is just to keep old code working
@@ -1052,9 +1052,12 @@ class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
         - BG_K_SUPPLY   Background P supply in kg/ha/day. Default 0.0
         - KSOILBASE     Base K amount available in the soil
         - KSOILBASE_FR  Daily fraction of soil K coming available through mineralization
+        - NAVAILI       Amount of N available in the pool at initialization of the system [kg/ha]
+        - PAVAILI       Amount of P available in the pool at initialization of the system [kg/ha]
+        - KAVAILI       Amount of K available in the pool at initialization of the system [kg/ha]
 
-    Providing estimates of the parameters for nutrient supply is not required, but their
-    default values are all assumed to be zero.
+    Currently, the parameters for initial water availability (WAV) and initial availability of
+    nutrients (NAVAILI, PAVAILI, KAVAILI) are mandatory to specify.
     """
 
     _defaults = {"IFUNRN": (0, {0, 1}, int),
@@ -1073,8 +1076,11 @@ class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
                  "BG_K_SUPPLY": (0, (0, 0.05), float),
                  "KSOILBASE": (0, (0, 100), float),
                  "KSOILBASE_FR": (0.025, (0, 0.05), float),
+                 "NAVAILI": (None, (0, 250), float),
+                 "PAVAILI": (None, (0, 50), float),
+                 "KAVAILI": (None, (0, 250), float),
                  }
-    _required = ["WAV"]
+    _required = ["WAV", "NAVAIL", "PAVAIL", "KAVAIL"]
 
 
 def get_user_home():
