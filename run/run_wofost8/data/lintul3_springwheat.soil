@@ -1,0 +1,7 @@
+# Soil hydraulic properties
+WCAD   = 0.10 			
+WCWP   = 0.20
+WCFC   = 0.40
+WCWET  = 0.45
+WCST   = 0.50
+DRATE  = 30.  			# Maximum drainage rate of the soil (mm/day) 
