@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "pcse", "pcse.pyproj", "{46EA281D-7857-41DD-9BE5-D3A5FE2DE2C8}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "run_wofost80", "..\run_wofost80\run_wofost80.pyproj", "{6999F8D1-40F8-4B96-80A0-E30FA32E5E22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{46EA281D-7857-41DD-9BE5-D3A5FE2DE2C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{46EA281D-7857-41DD-9BE5-D3A5FE2DE2C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6999F8D1-40F8-4B96-80A0-E30FA32E5E22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6999F8D1-40F8-4B96-80A0-E30FA32E5E22}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
