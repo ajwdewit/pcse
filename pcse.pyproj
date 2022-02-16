@@ -31,6 +31,9 @@
     <Content Include="doc\figures\pylib.png" />
     <Content Include="doc\figures\sugarbeet.png" />
     <Content Include="pcse\co2_annmean_gl.txt" />
+    <Content Include="pcse\conf\Wofost72_PP_HB.conf" />
+    <Content Include="pcse\conf\Wofost80_NWLP_FD_HB.conf" />
+    <Content Include="pcse\conf\Wofost80_PP_HB.conf" />
     <Content Include="requirements.txt" />
     <Content Include="run\run_wofost8\data\lintul3_springwheat.amgt" />
     <Content Include="run\run_wofost8\data\lintul3_springwheat.crop" />
