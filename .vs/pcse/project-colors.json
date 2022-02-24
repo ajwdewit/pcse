@@ -5,7 +5,22 @@
       "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
       "DisplayName": "Miscellaneous Files",
       "ColorIndex": -1
+    },
+    "461792ea-c576-4632-a446-0f30969b2c27": {
+      "ProjectGuid": "461792ea-c576-4632-a446-0f30969b2c27",
+      "DisplayName": "run_debouwing1983_allN",
+      "ColorIndex": 0
+    },
+    "6999f8d1-40f8-4b96-80a0-e30fa32e5e22": {
+      "ProjectGuid": "6999f8d1-40f8-4b96-80a0-e30fa32e5e22",
+      "DisplayName": "run_wofost80",
+      "ColorIndex": 1
+    },
+    "46ea281d-7857-41dd-9be5-d3a5fe2de2c8": {
+      "ProjectGuid": "46ea281d-7857-41dd-9be5-d3a5fe2de2c8",
+      "DisplayName": "pcse",
+      "ColorIndex": 2
     }
   },
-  "NextColorIndex": 0
+  "NextColorIndex": 3
 }
