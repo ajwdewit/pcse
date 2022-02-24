@@ -9,6 +9,8 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "run_wofost80", "..\run_wofo
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "run_debouwing1983", "..\run_debouwing1983\run_debouwing1983.pyproj", "{01AD7A4E-3C6D-483C-A9EA-59F0F69861DE}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "run_debouwing1983_allN", "..\run_debouwing1983_allN\run_debouwing1983_allN.pyproj", "{461792EA-C576-4632-A446-0F30969B2C27}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,8 @@ Global
 		{6999F8D1-40F8-4B96-80A0-E30FA32E5E22}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01AD7A4E-3C6D-483C-A9EA-59F0F69861DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{01AD7A4E-3C6D-483C-A9EA-59F0F69861DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{461792EA-C576-4632-A446-0F30969B2C27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{461792EA-C576-4632-A446-0F30969B2C27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
