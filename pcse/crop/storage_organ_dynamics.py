@@ -115,6 +115,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         rates  = self.rates
         states = self.states
         params = self.params
+        k = self.kiosk
         
         FO = self.kiosk["FO"]
         ADMI = self.kiosk["ADMI"]
@@ -122,7 +123,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         # Growth/death rate organs
         rates.GRSO = ADMI * FO
         rates.DRSO = 0.0
-        rates.GWSO = rates.GRSO - rates.DRSO
+        r.GWSO = r.GRSO - r.DRSO + k.REALLOC_SO
 
     @prepare_states
     def integrate(self, day, delt=1.0):
