@@ -251,6 +251,23 @@ class Wofost80(SimulationObject):
         self._check_carbon_balance(day, rates.DMI, rates.GASS, rates.MRES,
                                    CVF, pf)
 
+        # Reallocation from stems/leaves
+        if k.DVS < params.REALLOC_DVS:
+            rates.REALLOC_LV = 0.0
+            rates.REALLOC_ST = 0.0
+            rates.REALLOC_SO = 0.0
+        else:
+            if self._WST_REALLOC is None:  # Start of reallocation, compute max reallocatable biomass
+                self._WST_REALLOC = k.WST * params.REALLOC_STEM_FRACTION
+                self._WLV_REALLOC = k.WLV * params.REALLOC_LEAF_FRACTION
+            # Reallocation rate in terms of loss of stem/leaf dry matter
+            rates.REALLOC_LV = self._WLV_REALLOC * params.REALLOC_LEAF_RATE
+            rates.REALLOC_ST = self._WST_REALLOC * params.REALLOC_STEM_RATE
+            # Reallocation rate in terms of increase in storage organs taking
+            # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
+            rates.REALLOC_SO = (rates.REALLOC_LV/params.CVL + rates.REALLOC_ST/params.CVS) * params.CVO * (1.0 - params.REALLOC_LOSS)
+
+
         # distribution over plant organ
 
         # Below-ground dry matter increase and root dynamics
@@ -308,6 +325,11 @@ class Wofost80(SimulationObject):
         # total crop transpiration and soil evaporation
         states.CTRAT += self.kiosk.TRA
         states.CEVST += self.kiosk.EVS
+
+        # Decrease reallocatable amounts
+        if self._WST_REALLOC is not None:
+            self._WLV_REALLOC -= rates.REALLOC_LV
+            self._WST_REALLOC -= rates.REALLOC_ST
 
     @prepare_states
     def finalize(self, day):
