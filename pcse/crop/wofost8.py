@@ -122,6 +122,12 @@ class Wofost80(SimulationObject):
         CVO = Float(-99.)
         CVR = Float(-99.)
         CVS = Float(-99.)
+        REALLOC_DVS = Float()
+        REALLOC_STEM_FRACTION = Float()
+        REALLOC_LEAF_FRACTION = Float()
+        REALLOC_STEM_RATE = Float()
+        REALLOC_LEAF_RATE = Float()
+        REALLOC_LOSS = Float()
 
     class StateVariables(StatesTemplate):
         TAGP = Float(-99.)
