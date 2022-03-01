@@ -97,6 +97,10 @@ class Wofost80(SimulationObject):
     =======  ================================================ ==== =============
 
     """
+
+    # Placeholders for biomass available for reallocation
+    _WLV_REALLOC = Float(None)
+    _WST_REALLOC = Float(None)
     
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)

@@ -20,7 +20,12 @@
       "ProjectGuid": "46ea281d-7857-41dd-9be5-d3a5fe2de2c8",
       "DisplayName": "pcse",
       "ColorIndex": 2
+    },
+    "01ad7a4e-3c6d-483c-a9ea-59f0f69861de": {
+      "ProjectGuid": "01ad7a4e-3c6d-483c-a9ea-59f0f69861de",
+      "DisplayName": "run_debouwing1983",
+      "ColorIndex": 3
     }
   },
-  "NextColorIndex": 3
+  "NextColorIndex": 4
 }
