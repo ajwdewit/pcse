@@ -146,6 +146,9 @@ class Wofost80(SimulationObject):
         ASRC = Float(-99.)
         DMI = Float(-99.)
         ADMI = Float(-99.)
+        REALLOC_LV = Float()
+        REALLOC_ST = Float()
+        REALLOC_SO = Float()
 
     def initialize(self, day, kiosk, parvalues):
         """
