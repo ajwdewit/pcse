@@ -116,7 +116,7 @@ def totass2(DAYL, DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, AVRAD, DIFPP, DSIN
     # calculation of assimilation is done only when it will not be zero
     # (AMAX >0, LAI >0, DAYL >0)
     DTGA = 0.
-    if (AMAX > 0. and LAI > 0. and DAYL > 0.):
+    if (LAI > 0. and DAYL > 0.):
         for i in range(3):
             HOUR   = 12.0+0.5*DAYL*XGAUSS[i]
             SINB   = max(0.,SINLD+COSLD*cos(2.*pi*(HOUR+12.)/24.))
