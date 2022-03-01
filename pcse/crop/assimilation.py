@@ -104,11 +104,6 @@ def totass2(DAYL, DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, AVRAD, DIFPP, DSIN
     Authors: Allard de Wit
     Date   : September 2011
     """
-
-    AMAX = AMAXTB(DVS)
-    AMAX *= CO2AMAX
-    AMAX *= TMPF
-
     # Gauss points and weights
     XGAUSS = [0.1127017, 0.5000000, 0.8872983]
     WGAUSS = [0.2777778, 0.4444444, 0.2777778]
@@ -123,7 +118,7 @@ def totass2(DAYL, DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, AVRAD, DIFPP, DSIN
             PAR    = 0.5*AVRAD*SINB*(1.+0.4*SINB)/DSINBE
             PARDIF = min(PAR,SINB*DIFPP)
             PARDIR = PAR-PARDIF
-            FGROS = assim2(AMAX,EFF,LAI,KDIF,SINB,PARDIR,PARDIF)
+            FGROS = assim2(DVS, AMAXTB, CO2AMAX, TMPF, EFF,LAI,KDIF,SINB,PARDIR,PARDIF)
             DTGA += FGROS*WGAUSS[i]
     DTGA *= DAYL
 
@@ -194,7 +189,7 @@ def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     FGROS  = FGROS*LAI
     return FGROS
 
-def assim2(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
+def assim2(DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     """This routine calculates the gross CO2 assimilation rate of
     the whole crop, FGROS, by performing a Gaussian integration
     over depth in the crop canopy. At three different depths in
@@ -213,6 +208,11 @@ def assim2(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     Python version:
     Allard de Wit, 2011
     """
+
+    AMAX = AMAXTB(DVS)
+    AMAX *= CO2AMAX
+    AMAX *= TMPF
+
     # Gauss points and weights
     XGAUSS = [0.1127017, 0.5000000, 0.8872983]
     WGAUSS = [0.2777778, 0.4444444, 0.2777778]
