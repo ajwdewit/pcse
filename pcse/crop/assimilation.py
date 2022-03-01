@@ -72,7 +72,7 @@ def totass(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
 
     return DTGA
 
-def totass2(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
+def totass2(DAYL, DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     """ This routine calculates the daily total gross CO2 assimilation by
     performing a Gaussian integration over time. At three different times of
     the day, irradiance is computed and used to calculate the instantaneous
@@ -104,6 +104,10 @@ def totass2(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     Authors: Allard de Wit
     Date   : September 2011
     """
+
+    AMAX = AMAXTB(DVS)
+    AMAX *= CO2AMAX
+    AMAX *= TMPF
 
     # Gauss points and weights
     XGAUSS = [0.1127017, 0.5000000, 0.8872983]
@@ -438,21 +442,17 @@ class WOFOST_Assimilation2(SimulationObject):
 
         # daily dry matter production
 
+        # Calculation of CO2 and temperature response factors of AMAX
+        CO2AMAX = p.CO2AMAXTB(p.CO2)
+        TMPF = p.TMPFTB(drv.TEMP)
+
         # gross assimilation and correction for sub-optimum average day
         # temperature and CO2 concentration
-        AMAX = p.AMAXTB(DVS)
-        CO2AMAXTB = p.CO2AMAXTB(p.CO2)
-        TMPFTB = p.TMPFTB(drv.TEMP)
-
-        AMAX *= CO2AMAXTB
-        AMAX *= TMPFTB
-
         KDIF = p.KDIFTB(DVS)
-
-        CO2EFFTB = p.CO2EFFTB(p.CO2)
+        CO2EFFTB = p.CO2EFFTB(p.CO2)        
         EFF  = p.EFFTB(drv.DTEMP) * CO2EFFTB
 
-        DTGA = totass2(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
+        DTGA = totass2(DAYL, DVS, p.AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
         DTGA *= p.TMNFTB(TMINRA)
