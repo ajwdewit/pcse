@@ -158,7 +158,7 @@ class Wofost80(SimulationObject):
         """
         
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI"])
+        self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI", "REALLOC_LV", "REALLOC_ST", "REALLOC_SO"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
