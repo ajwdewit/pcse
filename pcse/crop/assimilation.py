@@ -209,10 +209,6 @@ def assim2(DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     Allard de Wit, 2011
     """
 
-    AMAX = AMAXTB(DVS)
-    AMAX *= CO2AMAX
-    AMAX *= TMPF
-
     # Gauss points and weights
     XGAUSS = [0.1127017, 0.5000000, 0.8872983]
     WGAUSS = [0.2777778, 0.4444444, 0.2777778]
@@ -229,6 +225,12 @@ def assim2(DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     FGROS = 0.
     for i in range(3):
         LAIC = LAI*XGAUSS[i]
+
+        # Calculate AMAX 
+        AMAX = AMAXTB(DVS)
+        AMAX *= CO2AMAX
+        AMAX *= TMPF
+
         # absorbed diffuse radiation (VISDF),light from direct
         # origine (VIST) and direct light (VISD)
         VISDF  = (1.-REFS)*PARDIF*KDIF  *exp(-KDIF  *LAIC)
