@@ -123,7 +123,7 @@ def totass2(DAYL, DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, AVRAD, DIFPP, DSIN
             PAR    = 0.5*AVRAD*SINB*(1.+0.4*SINB)/DSINBE
             PARDIF = min(PAR,SINB*DIFPP)
             PARDIR = PAR-PARDIF
-            FGROS = assim(AMAX,EFF,LAI,KDIF,SINB,PARDIR,PARDIF)
+            FGROS = assim2(AMAX,EFF,LAI,KDIF,SINB,PARDIR,PARDIF)
             DTGA += FGROS*WGAUSS[i]
     DTGA *= DAYL
 
@@ -194,6 +194,70 @@ def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     FGROS  = FGROS*LAI
     return FGROS
 
+def assim2(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
+    """This routine calculates the gross CO2 assimilation rate of
+    the whole crop, FGROS, by performing a Gaussian integration
+    over depth in the crop canopy. At three different depths in
+    the canopy, i.e. for different values of LAI, the
+    assimilation rate is computed for given fluxes of photosynthe-
+    tically active radiation, whereafter integration over depth
+    takes place. More information on this routine is given by
+    Spitters et al. (1988). The input variables SINB, PARDIR
+    and PARDIF are calculated in routine TOTASS.
+
+    Subroutines and functions called: none.
+    Called by routine TOTASS.
+
+    Author: D.W.G. van Kraalingen, 1986
+
+    Python version:
+    Allard de Wit, 2011
+    """
+    # Gauss points and weights
+    XGAUSS = [0.1127017, 0.5000000, 0.8872983]
+    WGAUSS = [0.2777778, 0.4444444, 0.2777778]
+
+    SCV = 0.2
+
+    # 13.2 extinction coefficients KDIF, KDIRBL, KDIRT
+    REFH = (1.-sqrt(1.-SCV))/(1.+sqrt(1.-SCV))
+    REFS = REFH*2./(1.+1.6*SINB)
+    KDIRBL = (0.5/SINB)*KDIF/(0.8*sqrt(1.-SCV))
+    KDIRT = KDIRBL*sqrt(1.-SCV)
+
+    #13.3 three-point Gaussian integration over LAI
+    FGROS = 0.
+    for i in range(3):
+        LAIC = LAI*XGAUSS[i]
+        # absorbed diffuse radiation (VISDF),light from direct
+        # origine (VIST) and direct light (VISD)
+        VISDF  = (1.-REFS)*PARDIF*KDIF  *exp(-KDIF  *LAIC)
+        VIST   = (1.-REFS)*PARDIR*KDIRT *exp(-KDIRT *LAIC)
+        VISD   = (1.-SCV) *PARDIR*KDIRBL*exp(-KDIRBL*LAIC)
+
+        # absorbed flux in W/m2 for shaded leaves and assimilation
+        VISSHD = VISDF+VIST-VISD
+        FGRSH  = AMAX*(1.-exp(-VISSHD*EFF/max(2.0, AMAX)))
+
+        # direct light absorbed by leaves perpendicular on direct
+        # beam and assimilation of sunlit leaf area
+        VISPP  = (1.-SCV)*PARDIR/SINB
+        if (VISPP <= 0.):
+            FGRSUN = FGRSH
+        else:
+            FGRSUN = AMAX*(1.-(AMAX-FGRSH) \
+                     *(1.-exp(-VISPP*EFF/max(2.0,AMAX)))/ (EFF*VISPP))
+
+        # fraction of sunlit leaf area (FSLLA) and local
+        # assimilation rate (FGL)
+        FSLLA  = exp(-KDIRBL*LAIC)
+        FGL    = FSLLA*FGRSUN+(1.-FSLLA)*FGRSH
+
+        # integration
+        FGROS += FGL*WGAUSS[i]
+
+    FGROS  = FGROS*LAI
+    return FGROS
 
 class WOFOST_Assimilation(SimulationObject):
     """Class implementing a WOFOST/SUCROS style assimilation routine.
