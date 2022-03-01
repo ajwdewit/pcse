@@ -716,6 +716,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         p = self.params
         r = self.rates
         s = self.states
+        k = self.kiosk
 
         # --------- leave death ---------
         tLV = array('d', s.LV)
@@ -740,6 +741,14 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         # Integration of physiological age
         tLVAGE = deque([age + r.FYSAGE for age in tLVAGE])
+
+        # Uniformly reduce leaf biomass in case of reallocation
+        if k.REALLOC_LV > 0:
+            sumLV = sum(tLV)
+            if k.REALLOC_LV < sumLV:
+                ReductionFactorLV = (sumLV - k.REALLOC_LV)/sumLV
+                tLV = np.array(tLV) * ReductionFactorLV
+
         tLV = deque(tLV)
         tSLA = deque(tSLA)
 
