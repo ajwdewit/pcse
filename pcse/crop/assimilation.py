@@ -72,7 +72,7 @@ def totass(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
 
     return DTGA
 
-def totass2(DAYL, DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
+def totass2(DAYL, DVS, AMAXTB, AMAX_INTERCEPT, AMAX_SLOPE,  CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     """ This routine calculates the daily total gross CO2 assimilation by
     performing a Gaussian integration over time. At three different times of
     the day, irradiance is computed and used to calculate the instantaneous
@@ -118,7 +118,7 @@ def totass2(DAYL, DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, AVRAD, DIFPP,
             PAR    = 0.5*AVRAD*SINB*(1.+0.4*SINB)/DSINBE
             PARDIF = min(PAR,SINB*DIFPP)
             PARDIR = PAR-PARDIF
-            FGROS = assim2(DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, SINB, PARDIR, PARDIF)
+            FGROS = assim2(DVS, AMAXTB, AMAX_INTERCEPT, AMAX_SLOPE, CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, SINB, PARDIR, PARDIF)
             DTGA += FGROS*WGAUSS[i]
     DTGA *= DAYL
 
@@ -189,7 +189,7 @@ def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     FGROS  = FGROS*LAI
     return FGROS
 
-def assim2(DVS, AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, SINB, PARDIR, PARDIF):
+def assim2(DVS, AMAXTB, AMAX_INTERCEPT, AMAX_SLOPE, CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, SINB, PARDIR, PARDIF):
     """This routine calculates the gross CO2 assimilation rate of
     the whole crop, FGROS, by performing a Gaussian integration
     over depth in the crop canopy. At three different depths in
@@ -477,6 +477,9 @@ class WOFOST_Assimilation2(SimulationObject):
         CO2AMAXTB = AfgenTrait()
         CO2EFFTB = AfgenTrait()
         CO2 = Float(-99.)
+
+        AMAX_SLOPE = Float()
+        AMAX_INTERCEPT = Float()
         KN = Float()
 
     def initialize(self, day, kiosk, cropdata):
@@ -499,6 +502,10 @@ class WOFOST_Assimilation2(SimulationObject):
         DVS = k.DVS
         LAI = k.LAI
         NLV = k.NamountLV
+
+        # Parameter values used to calculate AMAX from SLN
+        AMAX_SLOPE = p.AMAX_SLOPE
+        AMAX_INTERCEPT = p.AMAX_INTERCEPT
 
         # Calculate specific leaf nitrogen of canopy
         if(LAI > 0):
@@ -525,7 +532,7 @@ class WOFOST_Assimilation2(SimulationObject):
         CO2EFFTB = p.CO2EFFTB(p.CO2)        
         EFF  = p.EFFTB(drv.DTEMP) * CO2EFFTB
 
-        DTGA = totass2(DAYL, DVS, p.AMAXTB, CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
+        DTGA = totass2(DAYL, DVS, p.AMAXTB, p.AMAX_INTERCEPT, p.AMAX_SLOPE, CO2AMAX, TMPF, EFF, LAI, KDIF, SLN, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
         DTGA *= p.TMNFTB(TMINRA)
