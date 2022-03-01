@@ -125,7 +125,6 @@ def totass2(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
 
     return DTGA
 
-
 def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     """This routine calculates the gross CO2 assimilation rate of
     the whole crop, FGROS, by performing a Gaussian integration
@@ -442,10 +441,17 @@ class WOFOST_Assimilation2(SimulationObject):
         # gross assimilation and correction for sub-optimum average day
         # temperature and CO2 concentration
         AMAX = p.AMAXTB(DVS)
-        AMAX *= p.CO2AMAXTB(p.CO2)
-        AMAX *= p.TMPFTB(drv.DTEMP)
+        CO2AMAXTB = p.CO2AMAXTB(p.CO2)
+        TMPFTB = p.TMPFTB(drv.TEMP)
+
+        AMAX *= CO2AMAXTB
+        AMAX *= TMPFTB
+
         KDIF = p.KDIFTB(DVS)
-        EFF  = p.EFFTB(drv.DTEMP) * p.CO2EFFTB(p.CO2)
+
+        CO2EFFTB = p.CO2EFFTB(p.CO2)
+        EFF  = p.EFFTB(drv.DTEMP) * CO2EFFTB
+
         DTGA = totass2(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
@@ -455,4 +461,3 @@ class WOFOST_Assimilation2(SimulationObject):
         PGASS = DTGA * 30./44.
 
         return PGASS
-
