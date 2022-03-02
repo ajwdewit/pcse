@@ -250,24 +250,10 @@ def assim2(DVS, AMAXTB, AMAX_INTERCEPT, AMAX_SLOPE, CO2AMAX, TMPF, EFF, KN, LAI,
         #AMAX *= TMPF
 
         # Calculate AMAX with gradient in canopy ORYZA
-        #if(LAI > 0):
-        #    SLN = (NLV / (LAI * 10))  * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
-        #else:
-        #    SLN = 0
-
-        #if(SLN < 0.5):
-        #    AMAX = max(0, 68.33 * (SLN - 0.2))
-        #else:
-        #    AMAX = 9.5 + 22 * SLN
-
-        #AMAX *= CO2AMAX
-        #AMAX *= TMPF
-
-        # Calculate AMAX without gradient in canopy ORYZA
         if(LAI > 0):
-            SLN = (NLV / (LAI * 10))
+            SLN = (NLV / (LAI * 10)) * LAI * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
         else:
-            SLN = 0
+            SLN = NLV / 10
 
         if(SLN < 0.5):
             AMAX = max(0, 68.33 * (SLN - 0.2))
