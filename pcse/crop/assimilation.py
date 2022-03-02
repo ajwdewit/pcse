@@ -228,13 +228,52 @@ def assim2(DVS, AMAXTB, AMAX_INTERCEPT, AMAX_SLOPE, CO2AMAX, TMPF, EFF, KN, LAI,
 
         # Calculate AMAX with table function
         #AMAX = AMAXTB(DVS)
+        #AMAX *= CO2AMAX
+        #AMAX *= TMPF
 
         # Calculate AMAX without nitrogen gradient in canopy
+        #if(LAI > 0):
+        #    SLN = NLV / (LAI * 10)
+        #else:
+        #    SLN = 0
+        #AMAX = AMAX_SLOPE * SLN + AMAX_INTERCEPT
+        #AMAX *= CO2AMAX
+        #AMAX *= TMPF
+
+        # Calculate AMAX with gradient in canopy
+        #if(LAI > 0):
+        #    SLN = (NLV / (LAI * 10))  * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
+        #else:
+        #    SLN = 0
+        #AMAX = AMAX_SLOPE * SLN + AMAX_INTERCEPT
+        #AMAX *= CO2AMAX
+        #AMAX *= TMPF
+
+        # Calculate AMAX with gradient in canopy ORYZA
+        #if(LAI > 0):
+        #    SLN = (NLV / (LAI * 10))  * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
+        #else:
+        #    SLN = 0
+
+        #if(SLN < 0.5):
+        #    AMAX = max(0, 68.33 * (SLN - 0.2))
+        #else:
+        #    AMAX = 9.5 + 22 * SLN
+
+        #AMAX *= CO2AMAX
+        #AMAX *= TMPF
+
+        # Calculate AMAX without gradient in canopy ORYZA
         if(LAI > 0):
-            SLN = NLV / LAI
+            SLN = (NLV / (LAI * 10))
         else:
             SLN = 0
-        AMAX = AMAX_SLOPE * (SLN/10) + AMAX_INTERCEPT
+
+        if(SLN < 0.5):
+            AMAX = max(0, 68.33 * (SLN - 0.2))
+        else:
+            AMAX = 9.5 + 22 * SLN
+
         AMAX *= CO2AMAX
         AMAX *= TMPF
 

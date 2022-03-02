@@ -25,7 +25,12 @@
       "ProjectGuid": "01ad7a4e-3c6d-483c-a9ea-59f0f69861de",
       "DisplayName": "run_debouwing1983",
       "ColorIndex": 3
+    },
+    "4b3eaeec-414f-44f3-8f67-c2f5f9d58a1b": {
+      "ProjectGuid": "4b3eaeec-414f-44f3-8f67-c2f5f9d58a1b",
+      "DisplayName": "run_wheat",
+      "ColorIndex": 4
     }
   },
-  "NextColorIndex": 4
+  "NextColorIndex": 5
 }

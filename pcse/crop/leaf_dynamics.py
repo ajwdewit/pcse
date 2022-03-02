@@ -4,6 +4,7 @@
 from math import exp
 from collections import deque
 from array import array
+import numpy as np
 
 from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
