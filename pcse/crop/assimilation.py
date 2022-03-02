@@ -226,29 +226,6 @@ def assim2(DVS, AMAXTB, AMAX_INTERCEPT, AMAX_SLOPE, CO2AMAX, TMPF, EFF, KN, LAI,
     for i in range(3):
         LAIC = LAI*XGAUSS[i]
 
-        # Calculate AMAX with table function
-        #AMAX = AMAXTB(DVS)
-        #AMAX *= CO2AMAX
-        #AMAX *= TMPF
-
-        # Calculate AMAX without nitrogen gradient in canopy
-        #if(LAI > 0):
-        #    SLN = NLV / (LAI * 10)
-        #else:
-        #    SLN = 0
-        #AMAX = AMAX_SLOPE * SLN + AMAX_INTERCEPT
-        #AMAX *= CO2AMAX
-        #AMAX *= TMPF
-
-        # Calculate AMAX with gradient in canopy
-        #if(LAI > 0):
-        #    SLN = (NLV / (LAI * 10))  * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
-        #else:
-        #    SLN = 0
-        #AMAX = AMAX_SLOPE * SLN + AMAX_INTERCEPT
-        #AMAX *= CO2AMAX
-        #AMAX *= TMPF
-
         # Calculate AMAX with gradient in canopy ORYZA
         if(LAI > 0):
             SLN = (NLV / (LAI * 10)) * LAI * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
