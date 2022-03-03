@@ -486,9 +486,6 @@ class WOFOST_Assimilation2(SimulationObject):
         CO2AMAXTB = AfgenTrait()
         CO2EFFTB = AfgenTrait()
         CO2 = Float(-99.)
-
-        AMAX_SLOPE = Float()
-        AMAX_INTERCEPT = Float()
         KN = Float()
 
     def initialize(self, day, kiosk, cropdata):
