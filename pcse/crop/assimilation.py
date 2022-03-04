@@ -227,7 +227,7 @@ def assim2(CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
         LAIC = LAI*XGAUSS[i]
 
         # Calculate AMAX with gradient in canopy ORYZA
-        if(LAI > 0):
+        if(LAI > 1e-9):
             SLN = (NLV / (LAI * 10)) * LAI * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
         else:
             SLN = NLV / 10

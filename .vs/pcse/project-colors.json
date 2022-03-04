@@ -30,7 +30,12 @@
       "ProjectGuid": "4b3eaeec-414f-44f3-8f67-c2f5f9d58a1b",
       "DisplayName": "run_wheat",
       "ColorIndex": 4
+    },
+    "a099b270-8ed3-4d79-8f88-c89c329ef401": {
+      "ProjectGuid": "a099b270-8ed3-4d79-8f88-c89c329ef401",
+      "DisplayName": "Solution Items",
+      "ColorIndex": 5
     }
   },
-  "NextColorIndex": 5
+  "NextColorIndex": 6
 }
