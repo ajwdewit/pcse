@@ -265,8 +265,8 @@ class Wofost80(SimulationObject):
             rates.REALLOC_ST = self._WST_REALLOC * params.REALLOC_STEM_RATE
             # Reallocation rate in terms of increase in storage organs taking
             # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
-            # rates.REALLOC_SO = (rates.REALLOC_LV/params.CVL + rates.REALLOC_ST/params.CVS) * params.CVO * (1.0 - params.REALLOC_LOSS)
-            rates.REALLOC_SO = (rates.REALLOC_LV + rates.REALLOC_ST) * (1.0 - params.REALLOC_LOSS)
+            rates.REALLOC_SO = (rates.REALLOC_LV/params.CVL + rates.REALLOC_ST/params.CVS) * params.CVO * (1.0 - params.REALLOC_LOSS)
+
 
         # distribution over plant organ
 
