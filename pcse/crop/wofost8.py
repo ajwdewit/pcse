@@ -127,7 +127,7 @@ class Wofost80(SimulationObject):
         REALLOC_LEAF_FRACTION = Float()
         REALLOC_STEM_RATE = Float()
         REALLOC_LEAF_RATE = Float()
-        REALLOC_LOSS = Float()
+        REALLOC_EFFICIENCY = Float()
 
     class StateVariables(StatesTemplate):
         TAGP = Float(-99.)
@@ -265,7 +265,7 @@ class Wofost80(SimulationObject):
             rates.REALLOC_ST = self._WST_REALLOC * params.REALLOC_STEM_RATE
             # Reallocation rate in terms of increase in storage organs taking
             # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
-            rates.REALLOC_SO = (rates.REALLOC_LV/params.CVL + rates.REALLOC_ST/params.CVS) * params.CVO * (1.0 - params.REALLOC_LOSS)
+            rates.REALLOC_SO = (rates.REALLOC_LV + rates.REALLOC_ST)  * params.REALLOC_EFFICIENCY
 
 
         # distribution over plant organ
