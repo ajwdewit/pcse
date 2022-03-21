@@ -92,7 +92,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk)
+        self.rates  = self.RateVariables(kiosk, publish = ["GRSO"])
         self.kiosk = kiosk
         
         # INITIAL STATES

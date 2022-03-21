@@ -112,9 +112,9 @@ class NPK_Translocation(SimulationObject):
     """
 
     class Parameters(ParamTemplate):
-        NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
-        NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
-        NRESIDRT = Float(-99.)  # residual N fraction in roots [kg N kg-1 dry biomass]
+        #NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
+        #NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
+        #NRESIDRT = Float(-99.)  # residual N fraction in roots [kg N kg-1 dry biomass]
 
         PRESIDLV = Float(-99.)  # residual P fraction in leaves [kg P kg-1 dry biomass]
         PRESIDST = Float(-99.)  # residual P fraction in stems [kg P kg-1 dry biomass]
@@ -129,9 +129,9 @@ class NPK_Translocation(SimulationObject):
                                        # and stems
 
     class RateVariables(RatesTemplate):
-        RNtranslocationLV = Float(-99.)  # N translocation rate from leaves [kg ha-1 d-1]
-        RNtranslocationST = Float(-99.)  # N translocation rate from stems [kg ha-1 d-1]
-        RNtranslocationRT = Float(-99.)  # N translocation rate from roots [kg ha-1 d-1]
+        #RNtranslocationLV = Float(-99.)  # N translocation rate from leaves [kg ha-1 d-1]
+        #RNtranslocationST = Float(-99.)  # N translocation rate from stems [kg ha-1 d-1]
+        #RNtranslocationRT = Float(-99.)  # N translocation rate from roots [kg ha-1 d-1]
 
         RPtranslocationLV = Float(-99.)  # P translocation rate from leaves [kg ha-1 d-1]
         RPtranslocationST = Float(-99.)  # P translocation rate from stems [kg ha-1 d-1]
@@ -142,9 +142,9 @@ class NPK_Translocation(SimulationObject):
         RKtranslocationRT = Float(-99.)  # K translocation rate from roots [kg ha-1 d-1]
 
     class StateVariables(StatesTemplate):
-        NtranslocatableLV = Float(-99.)  # translocatable N amount in leaves [kg N ha-1]
-        NtranslocatableST = Float(-99.)  # translocatable N amount in stems [kg N ha-1]
-        NtranslocatableRT = Float(-99.)  # translocatable N amount in roots [kg N ha-1]
+        #NtranslocatableLV = Float(-99.)  # translocatable N amount in leaves [kg N ha-1]
+        #NtranslocatableST = Float(-99.)  # translocatable N amount in stems [kg N ha-1]
+        #NtranslocatableRT = Float(-99.)  # translocatable N amount in roots [kg N ha-1]
         
         PtranslocatableLV = Float(-99.)  # translocatable P amount in leaves [kg N ha-1]
         PtranslocatableST = Float(-99.)  # translocatable P amount in stems [kg N ha-1]
@@ -154,7 +154,7 @@ class NPK_Translocation(SimulationObject):
         KtranslocatableST = Float(-99.)  # translocatable K amount in stems [kg N ha-1]
         KtranslocatableRT = Float(-99.)  # translocatable K amount in roots [kg N ha-1]
 
-        Ntranslocatable = Float(-99.)  # Total N amount that can be translocated to the storage organs [kg N ha-1]
+        #Ntranslocatable = Float(-99.)  # Total N amount that can be translocated to the storage organs [kg N ha-1]
         Ptranslocatable = Float(-99.)  # Total P amount that can be translocated to the storage organs [kg P ha-1]
         Ktranslocatable = Float(-99.)  # Total K amount that can be translocated to the storage organs [kg K ha-1]
 
@@ -166,15 +166,17 @@ class NPK_Translocation(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["RNtranslocationLV", "RNtranslocationST", "RNtranslocationRT",
+        self.rates = self.RateVariables(kiosk, publish=[#"RNtranslocationLV", "RNtranslocationST", "RNtranslocationRT",
                                                         "RPtranslocationLV", "RPtranslocationST", "RPtranslocationRT",
                                                         "RKtranslocationLV", "RKtranslocationST", "RKtranslocationRT"])
 
         self.states = self.StateVariables(kiosk,
-            NtranslocatableLV=0., NtranslocatableST=0., NtranslocatableRT=0., PtranslocatableLV=0., PtranslocatableST=0.,
-            PtranslocatableRT=0., KtranslocatableLV=0., KtranslocatableST=0. ,KtranslocatableRT=0.,
-            Ntranslocatable=0., Ptranslocatable=0., Ktranslocatable=0.,
-            publish=["Ntranslocatable", "Ptranslocatable", "Ktranslocatable"])
+            #NtranslocatableLV=0., NtranslocatableST=0., NtranslocatableRT=0., 
+            PtranslocatableLV=0., PtranslocatableST=0., PtranslocatableRT=0., KtranslocatableLV=0., KtranslocatableST=0. ,KtranslocatableRT=0.,
+            # Ntranslocatable=0., 
+            Ptranslocatable=0., Ktranslocatable=0.,
+            publish=[#"Ntranslocatable", 
+                "Ptranslocatable", "Ktranslocatable"])
         self.kiosk = kiosk
         
     @prepare_rates
@@ -186,12 +188,12 @@ class NPK_Translocation(SimulationObject):
         # partitioning of the uptake for storage organs from the leaves, stems, roots
         # assuming equal distribution of N/P/K from each organ.
         # If amount of translocatable N/P/K = 0 then translocation rate is 0
-        if s.Ntranslocatable > 0.:
-            r.RNtranslocationLV = k.RNuptakeSO * s.NtranslocatableLV / s.Ntranslocatable
-            r.RNtranslocationST = k.RNuptakeSO * s.NtranslocatableST / s.Ntranslocatable
-            r.RNtranslocationRT = k.RNuptakeSO * s.NtranslocatableRT / s.Ntranslocatable
-        else:
-            r.RNtranslocationLV = r.RNtranslocationST = r.RNtranslocationRT = 0.
+        #if s.Ntranslocatable > 0.:
+        #    r.RNtranslocationLV = k.RNuptakeSO * s.NtranslocatableLV / s.Ntranslocatable
+        #    r.RNtranslocationST = k.RNuptakeSO * s.NtranslocatableST / s.Ntranslocatable
+        #    r.RNtranslocationRT = k.RNuptakeSO * s.NtranslocatableRT / s.Ntranslocatable
+        #else:
+        #    r.RNtranslocationLV = r.RNtranslocationST = r.RNtranslocationRT = 0.
 
         if s.Ptranslocatable > 0:
             r.RPtranslocationLV = k.RPuptakeSO * s.PtranslocatableLV / s.Ptranslocatable
@@ -213,10 +215,10 @@ class NPK_Translocation(SimulationObject):
         s = self.states
         k = self.kiosk
         
-        # translocatable N amount in the organs [kg N ha-1]
-        s.NtranslocatableLV = max(0., k.NamountLV - k.WLV * p.NRESIDLV)
-        s.NtranslocatableST = max(0., k.NamountST - k.WST * p.NRESIDST)
-        s.NtranslocatableRT = max(0., k.NamountRT - k.WRT * p.NRESIDRT)
+        ## translocatable N amount in the organs [kg N ha-1]
+        #s.NtranslocatableLV = max(0., k.NamountLV - k.WLV * p.NRESIDLV)
+        #s.NtranslocatableST = max(0., k.NamountST - k.WST * p.NRESIDST)
+        #s.NtranslocatableRT = max(0., k.NamountRT - k.WRT * p.NRESIDRT)
 
         # translocatable P amount in the organs [kg P ha-1]
         s.PtranslocatableLV = max(0., k.PamountLV - k.WLV * p.PRESIDLV)
@@ -229,6 +231,6 @@ class NPK_Translocation(SimulationObject):
         s.KtranslocatableRT = max(0., k.KamountRT - k.WRT * p.KRESIDRT)
 
         # total translocatable NPK amount in the organs [kg N ha-1]
-        s.Ntranslocatable = s.NtranslocatableLV + s.NtranslocatableST + s.NtranslocatableRT
+        #s.Ntranslocatable = s.NtranslocatableLV + s.NtranslocatableST + s.NtranslocatableRT
         s.Ptranslocatable = s.PtranslocatableLV + s.PtranslocatableST + s.PtranslocatableRT
         s.Ktranslocatable = s.KtranslocatableLV + s.KtranslocatableST + s.KtranslocatableRT

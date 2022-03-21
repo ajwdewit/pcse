@@ -302,7 +302,7 @@ class NPK_Crop_Dynamics(SimulationObject):
         rates.RNamountLV = k.RNuptakeLV - k.RNtranslocationLV - rates.RNdeathLV
         rates.RNamountST = k.RNuptakeST - k.RNtranslocationST - rates.RNdeathST
         rates.RNamountRT = k.RNuptakeRT - k.RNtranslocationRT - rates.RNdeathRT
-        rates.RNamountSO = k.RNuptakeSO
+        rates.RNamountSO = k.RNuptakeSO + k.RNtranslocation
         
         # P rates in leaves, stems, root and storage organs
         rates.RPamountLV = k.RPuptakeLV - k.RPtranslocationLV - rates.RPdeathLV

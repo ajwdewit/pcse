@@ -178,6 +178,8 @@ class NPK_Demand_Uptake(SimulationObject):
         PMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
         KMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
         
+        DVS_NPK_TRANSL = Float(-99.)
+
         NMAXRT_FR = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
         PMAXRT_FR = Float(-99.)  # maximum P concentration in roots as fraction of maximum P concentration in leaves
         KMAXRT_FR = Float(-99.)  # maximum K concentration in roots as fraction of maximum K concentration in leaves
@@ -199,7 +201,16 @@ class NPK_Demand_Uptake(SimulationObject):
         RPUPTAKEMAX = Float()  # Maximum P uptake rate
         RKUPTAKEMAX = Float()  # Maximum K uptake rate
 
+        NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
+        NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
+        NRESIDRT = Float(-99.)  # residual N fraction in roots [kg N kg-1 dry biomass]
+
     class RateVariables(RatesTemplate):
+        RNtranslocationLV = Float(-99.)  # N translocation rate from leaves [kg ha-1 d-1]
+        RNtranslocationST = Float(-99.)  # N translocation rate from stems [kg ha-1 d-1]
+        RNtranslocationRT = Float(-99.)  # N translocation rate from roots [kg ha-1 d-1]
+        RNtranslocation = Float(-99.)    # N translocation rate to storage organs [kg ha-1 d-1]
+
         RNuptakeLV = Float(-99.)  # N uptake rates in organs [kg ha-1 d -1]
         RNuptakeST = Float(-99.)
         RNuptakeRT = Float(-99.)
@@ -239,6 +250,12 @@ class NPK_Demand_Uptake(SimulationObject):
         Pdemand = Float()
         Kdemand = Float()
 
+    class StateVariables(StatesTemplate):
+        NtranslocatableLV = Float(-99.)  # translocatable N amount in leaves [kg N ha-1]
+        NtranslocatableST = Float(-99.)  # translocatable N amount in stems [kg N ha-1]
+        NtranslocatableRT = Float(-99.)  # translocatable N amount in roots [kg N ha-1]
+        Ntranslocatable = Float(-99.)
+
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -250,16 +267,21 @@ class NPK_Demand_Uptake(SimulationObject):
         self.kiosk = kiosk
 
         self.rates = self.RateVariables(kiosk,
-            publish=["RNuptakeLV", "RNuptakeST", "RNuptakeRT", "RNuptakeSO",
+            publish=["RNtranslocationLV", "RNtranslocationST", "RNtranslocationRT", "RNtranslocation", 
+                     "RNuptakeLV", "RNuptakeST", "RNuptakeRT", "RNuptakeSO",
                      "RPuptakeLV", "RPuptakeST", "RPuptakeRT", "RPuptakeSO",
                      "RKuptakeLV", "RKuptakeST", "RKuptakeRT", "RKuptakeSO",
                      "RNuptake", "RPuptake", "RKuptake", "RNfixation"])
+
+        self.states = self.StateVariables(kiosk, NtranslocatableLV=0., NtranslocatableST=0., NtranslocatableRT=0., 
+                                          Ntranslocatable=0., publish=["Ntranslocatable"])
 
     @prepare_rates
     def calc_rates(self, day, drv):
         r = self.rates
         p = self.params
         k = self.kiosk
+        s = self.states
 
         delt = 1.0
         mc = self._compute_NPK_max_concentrations()
@@ -268,11 +290,11 @@ class NPK_Demand_Uptake(SimulationObject):
         # Demand consists of a demand carried over from previous timesteps plus a demand from new growth
         # Note that we are pre-integrating here, so a multiplication with time-step delt is required
 
-        # N demand [kg ha-1]
-        r.NdemandLV = max(mc.NMAXLV * k.WLV - k.NamountLV, 0.) + max(k.GRLV * mc.NMAXLV, 0) * delt
-        r.NdemandST = max(mc.NMAXST * k.WST - k.NamountST, 0.) + max(k.GRST * mc.NMAXST, 0) * delt
-        r.NdemandRT = max(mc.NMAXRT * k.WRT - k.NamountRT, 0.) + max(k.GRRT * mc.NMAXRT, 0) * delt
-        r.NdemandSO = max(mc.NMAXSO * k.WSO - k.NamountSO, 0.)
+        ## N demand [kg ha-1]
+        #r.NdemandLV = max(mc.NMAXLV * k.WLV - k.NamountLV, 0.) + max(k.GRLV * mc.NMAXLV, 0) * delt
+        #r.NdemandST = max(mc.NMAXST * k.WST - k.NamountST, 0.) + max(k.GRST * mc.NMAXST, 0) * delt
+        #r.NdemandRT = max(mc.NMAXRT * k.WRT - k.NamountRT, 0.) + max(k.GRRT * mc.NMAXRT, 0) * delt
+        #r.NdemandSO = max(mc.NMAXSO * k.WSO - k.NamountSO, 0.) + max(k.GRSO * mc.NMAXSO, 0) * delt
 
         # P demand [kg ha-1]
         r.PdemandLV = max(mc.PMAXLV * k.WLV - k.PamountLV, 0.) + max(k.GRLV * mc.PMAXLV, 0) * delt
@@ -286,13 +308,13 @@ class NPK_Demand_Uptake(SimulationObject):
         r.KdemandRT = max(mc.KMAXRT * k.WRT - k.KamountRT, 0.) + max(k.GRRT * mc.KMAXRT, 0) * delt
         r.KdemandSO = max(mc.KMAXSO * k.WSO - k.KamountSO, 0.)
 
-        r.Ndemand = r.NdemandLV + r.NdemandST + r.NdemandRT
+        #r.Ndemand = r.NdemandLV + r.NdemandST + r.NdemandRT + r.NDemandSO
         r.Pdemand = r.PdemandLV + r.PdemandST + r.PdemandRT
         r.Kdemand = r.KdemandLV + r.KdemandST + r.KdemandRT
 
         # NPK uptake rate in storage organs (kg N ha-1 d-1) is the mimimum of supply and
         # demand divided by the time coefficient for N/P/K translocation
-        r.RNuptakeSO = min(r.NdemandSO, k.Ntranslocatable)/p.TCNT
+        #r.RNuptakeSO = min(r.NdemandSO, k.Ntranslocatable)/p.TCNT
         r.RPuptakeSO = min(r.PdemandSO, k.Ptranslocatable)/p.TCPT
         r.RKuptakeSO = min(r.KdemandSO, k.Ktranslocatable)/p.TCKT
 
@@ -302,22 +324,19 @@ class NPK_Demand_Uptake(SimulationObject):
         else:
             NutrientLIMIT = 0.
 
-        # biological nitrogen fixation
-        r.RNfixation = (max(0., p.NFIX_FR * r.Ndemand) * NutrientLIMIT)
-
         # NPK uptake rate from soil
-        r.RNuptake = (max(0., min(r.Ndemand - r.RNfixation, k.NAVAIL, p.RNUPTAKEMAX)) * NutrientLIMIT)
+        #r.RNuptake = (max(0., min(r.Ndemand - r.RNfixation, k.NAVAIL, p.RNUPTAKEMAX)) * NutrientLIMIT)
         r.RPuptake = (max(0., min(r.Pdemand, k.PAVAIL, p.RPUPTAKEMAX)) * NutrientLIMIT)
         r.RKuptake = (max(0., min(r.Kdemand, k.KAVAIL, p.RKUPTAKEMAX)) * NutrientLIMIT)
 
         # NPK uptake rate for different organs weighted as fraction of total demand
         # if no demand then uptake rate = 0.
-        if r.Ndemand == 0.:
-            r.RNuptakeLV = r.RNuptakeST = r.RNuptakeRT = 0.
-        else:
-            r.RNuptakeLV = (r.NdemandLV / r.Ndemand) * (r.RNuptake + r.RNfixation)
-            r.RNuptakeST = (r.NdemandST / r.Ndemand) * (r.RNuptake + r.RNfixation)
-            r.RNuptakeRT = (r.NdemandRT / r.Ndemand) * (r.RNuptake + r.RNfixation)
+        #if r.Ndemand == 0.:
+        #    r.RNuptakeLV = r.RNuptakeST = r.RNuptakeRT = 0.
+        #else:
+        #    r.RNuptakeLV = (r.NdemandLV / r.Ndemand) * (r.RNuptake + r.RNfixation)
+        #    r.RNuptakeST = (r.NdemandST / r.Ndemand) * (r.RNuptake + r.RNfixation)
+        #    r.RNuptakeRT = (r.NdemandRT / r.Ndemand) * (r.RNuptake + r.RNfixation)
 
         if r.Pdemand == 0.:
             r.RPuptakeLV = r.RPuptakeST = r.RPuptakeRT = 0.
@@ -332,6 +351,53 @@ class NPK_Demand_Uptake(SimulationObject):
             r.RKuptakeLV = (r.KdemandLV / r.Kdemand) * r.RKuptake
             r.RKuptakeST = (r.KdemandST / r.Kdemand) * r.RKuptake
             r.RKuptakeRT = (r.KdemandRT / r.Kdemand) * r.RKuptake
+
+        # N demand [kg ha-1]
+        r.NdemandLV = max(mc.NMAXLV * k.WLV - k.NamountLV, 0.) + max(k.GRLV * mc.NMAXLV, 0) * delt
+        r.NdemandST = max(mc.NMAXST * k.WST - k.NamountST, 0.) + max(k.GRST * mc.NMAXST, 0) * delt
+        r.NdemandRT = max(mc.NMAXRT * k.WRT - k.NamountRT, 0.) + max(k.GRRT * mc.NMAXRT, 0) * delt
+        r.NdemandSO = max(mc.NMAXSO * k.WSO - k.NamountSO, 0.) + max(k.GRSO * mc.NMAXSO, 0) * delt
+
+        # biological nitrogen fixation
+        r.RNfixation = (max(0., p.NFIX_FR * r.Ndemand) * NutrientLIMIT)
+
+        # Calculate translocatable nitrogen in different organs
+        if(k.DVS < p.DVS_NPK_TRANSL):
+            s.NTranslocatableLV = 0.
+            s.NTranslocatableRT = 0.
+            s.NTranslocatableST = 0.
+            s.NTranslocatable = 0.
+        else:
+            s.NTranslocatableLV = max(0., k.NamountLV - k.WLV * p.NRESIDLV)
+            s.NTranslocatableRT = max(0., k.NamountRT - k.WRT * p.NRESIDRT)
+            s.NTranslocatableST = max(0., k.NamountST - k.WST * p.NRESIDST)
+            s.NTranslocatable = s.NTranslocatableLV + s.NTranslocatableRT + s.NTranslocatableST
+
+        r.RNtranslocation = min(r.NdemandSO/delt, s.NTranslocatable / p.TCNT)
+
+        if(s.NTranslocatable == 0):
+            r.RNtranslocationLV = 0.
+            r.RNtranslocationRT = 0.
+            r.RNtranslocationST = 0.
+        else:
+            r.RNtranslocationLV = r.RNtranslocation * (s.NTranslocatableLV / s.NTranslocatable)
+            r.RNtranslocationRT = r.RNtranslocation * (s.NTranslocatableRT / s.NTranslocatable) 
+            r.RNtranslocationST = r.RNtranslocation * (s.NTranslocatableST / s.NTranslocatable)
+
+        r.Ndemand = (r.NdemandLV + r.RNtranslocationLV) + (r.NdemandST + r.RNtranslocationST) + (r.NdemandRT + r.RNtranslocationRT) + (r.NdemandSO - r.RNtranslocation)
+        r.RNuptake = (max(0., min(r.Ndemand - r.RNfixation, k.NAVAIL, p.RNUPTAKEMAX)) * NutrientLIMIT)
+
+        if r.Ndemand == 0:
+            r.RNuptakeLV = 0.
+            r.RNuptakeRT = 0.
+            r.RNuptakeST = 0.
+            r.RNuptakeSO = 0.
+        else:
+            r.RNuptakeLV = max(0.,min(r.NdemandLV/delt + r.RNtranslocationLV, r.RNuptake * (r.NdemandLV/delt + r.RNtranslocationLV) / r.Ndemand))
+            r.RNuptakeRT = max(0.,min(r.NdemandRT/delt + r.RNtranslocationRT, r.RNuptake * (r.NdemandRT/delt + r.RNtranslocationRT) / r.Ndemand))
+            r.RNuptakeST = max(0.,min(r.NdemandST/delt + r.RNtranslocationST, r.RNuptake * (r.NdemandST/delt + r.RNtranslocationST) / r.Ndemand))
+            r.RNuptakeSO = max(0.,min(r.NdemandSO/delt - r.RNtranslocation,   r.RNuptake * (r.NdemandSO/delt - r.RNtranslocation) / r.Ndemand))
+
 
     @prepare_states
     def integrate(self, day, delt=1.0):
