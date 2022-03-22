@@ -124,29 +124,15 @@ class NPK_Stress(SimulationObject):
 
     class Parameters(ParamTemplate):
         NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs
-        PMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
-        KMAXLV_TB = AfgenTrait()  # maximum P concentration in leaves as function of dvs
         NCRIT_FR = Float(-99.)   # optimal N concentration as fraction of maximum N concentration
-        PCRIT_FR = Float(-99.)   # optimal P concentration as fraction of maximum P concentration
-        KCRIT_FR = Float(-99.)   # optimal K concentration as fraction of maximum K concentration
         NMAXRT_FR = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
         NMAXST_FR = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
-        PMAXST_FR = Float(-99.)  # maximum P concentration in roots as fraction of maximum P concentration in leaves
-        PMAXRT_FR = Float(-99.)  # maximum P concentration in stems as fraction of maximum P concentration in leaves
-        KMAXRT_FR = Float(-99.)  # maximum K concentration in roots as fraction of maximum K concentration in leaves
-        KMAXST_FR = Float(-99.)  # maximum K concentration in stems as fraction of maximum K concentration in leaves
         NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
         NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
-        PRESIDLV = Float(-99.)  # residual P fraction in leaves [kg P kg-1 dry biomass]
-        PRESIDST = Float(-99.)  # residual P fraction in stems [kg P kg-1 dry biomass]
-        KRESIDLV = Float(-99.)  # residual K fraction in leaves [kg K kg-1 dry biomass]
-        KRESIDST = Float(-99.)  # residual K fraction in stems [kg K kg-1 dry biomass]
         NLUE_NPK = Float(-99.)  # coefficient for the reduction of RUE due to nutrient (N-P-K) stress
 
     class RateVariables(RatesTemplate):
         NNI = Float()
-        PNI = Float()
-        KNI = Float()
         NPKI = Float()
         RFNPK = Float()
 
@@ -175,13 +161,9 @@ class NPK_Stress(SimulationObject):
 
         # Maximum NPK concentrations in leaves (kg N kg-1 DM)
         NMAXLV = p.NMAXLV_TB(k.DVS)
-        PMAXLV = p.PMAXLV_TB(k.DVS)
-        KMAXLV = p.KMAXLV_TB(k.DVS)
 
         # Maximum NPK concentrations in stems (kg N kg-1 DM)
         NMAXST = p.NMAXST_FR * NMAXLV
-        PMAXST = p.PMAXRT_FR * PMAXLV
-        KMAXST = p.KMAXST_FR * KMAXLV
         
         # Total vegetative living above-ground biomass (kg DM ha-1)
         VBM = k.WLV + k.WST
@@ -191,17 +173,9 @@ class NPK_Stress(SimulationObject):
         NcriticalLV  = p.NCRIT_FR * NMAXLV * k.WLV
         NcriticalST  = p.NCRIT_FR * NMAXST * k.WST
         
-        PcriticalLV = p.PCRIT_FR * PMAXLV * k.WLV
-        PcriticalST = p.PCRIT_FR * PMAXST * k.WST
-
-        KcriticalLV = p.KCRIT_FR * KMAXLV * k.WLV
-        KcriticalST = p.KCRIT_FR * KMAXST * k.WST
-        
         # if above-ground living biomass = 0 then optimum = 0
         if VBM > 0.:
             NcriticalVBM = (NcriticalLV + NcriticalST)/VBM
-            PcriticalVBM = (PcriticalLV + PcriticalST)/VBM
-            KcriticalVBM = (KcriticalLV + KcriticalST)/VBM
         else:
             NcriticalVBM = PcriticalVBM = KcriticalVBM = 0.
 
@@ -210,8 +184,6 @@ class NPK_Stress(SimulationObject):
         # if above-ground living biomass = 0 then concentration = 0
         if VBM > 0.:
             NconcentrationVBM  = (k.NamountLV + k.NamountST)/VBM
-            PconcentrationVBM  = (k.PamountLV + k.PamountST)/VBM
-            KconcentrationVBM  = (k.KamountLV + k.KamountST)/VBM
         else:
             NconcentrationVBM = PconcentrationVBM = KconcentrationVBM = 0.
 
@@ -220,8 +192,6 @@ class NPK_Stress(SimulationObject):
         # if above-ground living biomass = 0 then residual concentration = 0
         if VBM > 0.:
             NresidualVBM = (k.WLV * p.NRESIDLV + k.WST * p.NRESIDST)/VBM
-            PresidualVBM = (k.WLV * p.PRESIDLV + k.WST * p.PRESIDST)/VBM
-            KresidualVBM = (k.WLV * p.KRESIDLV + k.WST * p.KRESIDST)/VBM
         else:
             NresidualVBM = PresidualVBM = KresidualVBM = 0.
             
@@ -230,17 +200,7 @@ class NPK_Stress(SimulationObject):
         else:
             r.NNI = 0.001
             
-        if (PcriticalVBM - PresidualVBM) > 0.:
-            r.PNI = limit(0.001, 1.0, (PconcentrationVBM - PresidualVBM)/(PcriticalVBM - PresidualVBM))
-        else:
-           r.PNI = 0.001
-            
-        if (KcriticalVBM-KresidualVBM) > 0:
-            r.KNI = limit(0.001, 1.0, (KconcentrationVBM - KresidualVBM)/(KcriticalVBM - KresidualVBM))
-        else:
-            r.KNI = 0.001
-      
-        r.NPKI = min(r.NNI, r.PNI, r.KNI)
+        r.NPKI = r.NNI
 
         # Nutrient reduction factor for assimilation
         r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))

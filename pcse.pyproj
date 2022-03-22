@@ -83,7 +83,6 @@
     <Compile Include="pcse\crop\npk_dynamics.py" />
     <Compile Include="pcse\crop\nutrients\npk_demand_uptake.py" />
     <Compile Include="pcse\crop\nutrients\npk_stress.py" />
-    <Compile Include="pcse\crop\nutrients\npk_translocation.py" />
     <Compile Include="pcse\crop\nutrients\__init__.py" />
     <Compile Include="pcse\crop\partitioning.py" />
     <Compile Include="pcse\crop\phenology.py" />

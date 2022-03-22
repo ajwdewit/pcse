@@ -6,7 +6,6 @@ from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 from ..util import AfgenTrait
-from .nutrients import NPK_Translocation
 from .nutrients import NPK_Demand_Uptake
 
 
@@ -133,7 +132,6 @@ class NPK_Crop_Dynamics(SimulationObject):
     =======  =================================== ====================  ==============
     """
 
-    translocation = Instance(SimulationObject)
     demand_uptake = Instance(SimulationObject)
 
     NamountLVI = Float(-99.)  # initial soil N amount in leaves
@@ -154,49 +152,21 @@ class NPK_Crop_Dynamics(SimulationObject):
     class Parameters(ParamTemplate):
         DVS_NPK_STOP = Float(-99.)
         NMAXLV_TB = AfgenTrait()
-        PMAXLV_TB = AfgenTrait()
-        KMAXLV_TB = AfgenTrait()
         NMAXST_FR = Float(-99.)
         NMAXRT_FR = Float(-99.)
-        PMAXST_FR = Float(-99.)
-        PMAXRT_FR = Float(-99.)
-        KMAXST_FR = Float(-99.)
-        KMAXRT_FR = Float(-99.)
         NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
         NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
         NRESIDRT = Float(-99.)  # residual N fraction in roots [kg N kg-1 dry biomass]
-        PRESIDLV = Float(-99.)  # residual P fraction in leaves [kg P kg-1 dry biomass]
-        PRESIDST = Float(-99.)  # residual P fraction in stems [kg P kg-1 dry biomass]
-        PRESIDRT = Float(-99.)  # residual P fraction in roots [kg P kg-1 dry biomass]
-        KRESIDLV = Float(-99.)  # residual K fraction in leaves [kg K kg-1 dry biomass]
-        KRESIDST = Float(-99.)  # residual K fraction in stems [kg K kg-1 dry biomass]
-        KRESIDRT = Float(-99.)  # residual K fraction in roots [kg K kg-1 dry biomass]
 
     class StateVariables(StatesTemplate):
         NamountLV = Float(-99.) # N amount in leaves [kg N ha-1]
-        PamountLV = Float(-99.) # P amount in leaves [kg P ]
-        KamountLV = Float(-99.) # K amount in leaves [kg K ]
-        
-        NamountST = Float(-99.) # N amount in stems [kg N ]
-        PamountST = Float(-99.) # P amount in stems [kg P ]
-        KamountST = Float(-99.) # K amount in stems [kg K ]
-      
+        NamountST = Float(-99.) # N amount in stems [kg N ]      
         NamountSO = Float(-99.) # N amount in storage organs [kg N ]
-        PamountSO = Float(-99.) # P amount in storage organs [kg P ]
-        KamountSO = Float(-99.) # K amount in storage organs [kg K ]
-        
-        NamountRT = Float(-99.) # N amount in roots [kg N ]
-        PamountRT = Float(-99.) # P amount in roots [kg P ]
-        KamountRT = Float(-99.) # K amount in roots [kg K ]
-        
+        NamountRT = Float(-99.) # N amount in roots [kg N ]        
         NuptakeTotal = Float(-99.) # total absorbed N amount [kg N ]
-        PuptakeTotal = Float(-99.) # total absorbed P amount [kg P ]
-        KuptakeTotal = Float(-99.) # total absorbed K amount [kg K ]
         NfixTotal = Float(-99.) # total biological fixated N amount [kg N ]
-        
+    
         NlossesTotal = Float(-99.)
-        PlossesTotal = Float(-99.)
-        KlossesTotal = Float(-99.)
 
     class RateVariables(RatesTemplate):
         RNamountLV = Float(-99.)  # Net rates of NPK in different plant organs 
@@ -204,32 +174,12 @@ class NPK_Crop_Dynamics(SimulationObject):
         RKamountLV = Float(-99.)
         
         RNamountST = Float(-99.)
-        RPamountST = Float(-99.)
-        RKamountST = Float(-99.)
-               
         RNamountRT = Float(-99.)
         RPamountRT = Float(-99.)
-        RKamountRT = Float(-99.)
-        
-        RNamountSO = Float(-99.)
-        RPamountSO = Float(-99.)
-        RKamountSO = Float(-99.)
-               
         RNdeathLV = Float(-99.)  # N loss rate leaves [kg ha-1 d-1]
         RNdeathST = Float(-99.)  # N loss rate stems  [kg ha-1 d-1]
-        RNdeathRT = Float(-99.)  # N loss rate roots  [kg ha-1 d-1]
-        
-        RPdeathLV = Float(-99.)  # P loss rate leaves [kg ha-1 d-1]
-        RPdeathST = Float(-99.)  # P loss rate stems  [kg ha-1 d-1]
-        RPdeathRT = Float(-99.)  # P loss rate roots  [kg ha-1 d-1]
-        
-        RKdeathLV = Float(-99.)  # K loss rate leaves [kg ha-1 d-1]
-        RKdeathST = Float(-99.)  # K loss rate stems  [kg ha-1 d-1]
-        RKdeathRT = Float(-99.)  # K loss rate roots  [kg ha-1 d-1]
-
+        RNdeathRT = Float(-99.)  # N loss rate roots  [kg ha-1 d-1]        
         RNloss = Float(-99.)
-        RPloss = Float(-99.)
-        RKloss = Float(-99.)
         
     def initialize(self, day, kiosk, parvalues):
         """
@@ -242,7 +192,6 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.kiosk = kiosk
         
         # Initialize components of the npk_crop_dynamics
-        self.translocation = NPK_Translocation(day, kiosk, parvalues)
         self.demand_uptake = NPK_Demand_Uptake(day, kiosk, parvalues)
 
         # INITIAL STATES
@@ -255,24 +204,11 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.NamountRTI = NamountRT = k.WRT * params.NMAXLV_TB(k.DVS) * params.NMAXRT_FR
         self.NamountSOI = NamountSO = 0.
         
-        self.PamountLVI = PamountLV = k.WLV * params.PMAXLV_TB(k.DVS)
-        self.PamountSTI = PamountST = k.WST * params.PMAXLV_TB(k.DVS) * params.PMAXST_FR
-        self.PamountRTI = PamountRT = k.WRT * params.PMAXLV_TB(k.DVS) * params.PMAXRT_FR
-        self.PamountSOI = PamountSO = 0.
-
-        self.KamountLVI = KamountLV = k.WLV * params.KMAXLV_TB(k.DVS)
-        self.KamountSTI = KamountST = k.WST * params.KMAXLV_TB(k.DVS) * params.KMAXST_FR
-        self.KamountRTI = KamountRT = k.WRT * params.KMAXLV_TB(k.DVS) * params.KMAXRT_FR
-        self.KamountSOI = KamountSO = 0.
-
         self.states = self.StateVariables(kiosk,
-                        publish=["NamountLV", "NamountST", "NamountRT", "NamountSO", "PamountLV", "PamountST",
-                                 "PamountRT", "PamountSO", "KamountLV", "KamountST", "KamountRT", "KamountSO"],
+                        publish=["NamountLV", "NamountST", "NamountRT", "NamountSO"],
                         NamountLV=NamountLV, NamountST=NamountST, NamountRT=NamountRT, NamountSO=NamountSO,
-                        PamountLV=PamountLV, PamountST=PamountST, PamountRT=PamountRT, PamountSO=PamountSO,
-                        KamountLV=KamountLV, KamountST=KamountST, KamountRT=KamountRT, KamountSO=KamountSO,
-                        NuptakeTotal=0, PuptakeTotal=0., KuptakeTotal=0., NfixTotal=0.,
-                        NlossesTotal=0, PlossesTotal=0., KlossesTotal=0.)
+                        NuptakeTotal=0, NfixTotal=0.,
+                        NlossesTotal=0)
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -281,20 +217,11 @@ class NPK_Crop_Dynamics(SimulationObject):
         k = self.kiosk
         
         self.demand_uptake.calc_rates(day, drv)
-        self.translocation.calc_rates(day, drv)
 
         # Compute loss of NPK due to death of plant material
         rates.RNdeathLV = params.NRESIDLV * k.DRLV
         rates.RNdeathST = params.NRESIDST * k.DRST
         rates.RNdeathRT = params.NRESIDRT * k.DRRT
-
-        rates.RPdeathLV = params.PRESIDLV * k.DRLV
-        rates.RPdeathST = params.PRESIDST * k.DRST
-        rates.RPdeathRT = params.PRESIDRT * k.DRRT
-
-        rates.RKdeathLV = params.KRESIDLV * k.DRLV
-        rates.RKdeathST = params.KRESIDST * k.DRST
-        rates.RKdeathRT = params.KRESIDRT * k.DRRT
 
         # N rates in leaves, stems, root and storage organs computed as
         # uptake - translocation - death.
@@ -302,27 +229,10 @@ class NPK_Crop_Dynamics(SimulationObject):
         rates.RNamountLV = k.RNuptakeLV - k.RNtranslocationLV - rates.RNdeathLV
         rates.RNamountST = k.RNuptakeST - k.RNtranslocationST - rates.RNdeathST
         rates.RNamountRT = k.RNuptakeRT - k.RNtranslocationRT - rates.RNdeathRT
-        rates.RNamountSO = k.RNuptakeSO + k.RNtranslocation
-        
-        # P rates in leaves, stems, root and storage organs
-        rates.RPamountLV = k.RPuptakeLV - k.RPtranslocationLV - rates.RPdeathLV
-        rates.RPamountST = k.RPuptakeST - k.RPtranslocationST - rates.RPdeathST
-        rates.RPamountRT = k.RPuptakeRT - k.RPtranslocationRT - rates.RPdeathRT
-        rates.RPamountSO = k.RPuptakeSO
-
-        # K rates in leaves, stems, root and storage organs
-        rates.RKamountLV = k.RKuptakeLV - k.RKtranslocationLV - rates.RKdeathLV
-        rates.RKamountST = k.RKuptakeST - k.RKtranslocationST - rates.RKdeathST
-        rates.RKamountRT = k.RKuptakeRT - k.RKtranslocationRT - rates.RKdeathRT
-        rates.RKamountSO = k.RKuptakeSO
-        
+        rates.RNamountSO = k.RNuptakeSO + k.RNtranslocation        
         rates.RNloss = rates.RNdeathLV + rates.RNdeathST + rates.RNdeathRT
-        rates.RPloss = rates.RPdeathLV + rates.RPdeathST + rates.RPdeathRT
-        rates.RKloss = rates.RKdeathLV + rates.RKdeathST + rates.RKdeathRT
 
         self._check_N_balance(day)
-        self._check_P_balance(day)
-        self._check_K_balance(day)
         
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -335,31 +245,13 @@ class NPK_Crop_Dynamics(SimulationObject):
         states.NamountST += rates.RNamountST
         states.NamountRT += rates.RNamountRT
         states.NamountSO += rates.RNamountSO
-        
-        # P amount in leaves, stems, root and storage organs
-        states.PamountLV += rates.RPamountLV
-        states.PamountST += rates.RPamountST
-        states.PamountRT += rates.RPamountRT
-        states.PamountSO += rates.RPamountSO
-
-        # K amount in leaves, stems, root and storage organs
-        states.KamountLV += rates.RKamountLV
-        states.KamountST += rates.RKamountST
-        states.KamountRT += rates.RKamountRT
-        states.KamountSO += rates.RKamountSO
-        
-        self.translocation.integrate(day, delt)
+                
         self.demand_uptake.integrate(day, delt)
 
         # total NPK uptake from soil
         states.NuptakeTotal += k.RNuptake
-        states.PuptakeTotal += k.RPuptake
-        states.KuptakeTotal += k.RKuptake
-        states.NfixTotal += k.RNfixation
-        
+        states.NfixTotal += k.RNfixation        
         states.NlossesTotal += rates.RNloss
-        states.PlossesTotal += rates.RPloss
-        states.KlossesTotal += rates.RKloss
 
     def _check_N_balance(self, day):
         s = self.states
@@ -375,36 +267,4 @@ class NPK_Crop_Dynamics(SimulationObject):
             msg += "NamountLV: %f, NamountST: %f, NamountRT: %f, NamountSO: %f\n" % \
                    (s.NamountLV, s.NamountST, s.NamountRT, s.NamountSO)
             msg += "NLOSST: %f\n" % (s.NlossesTotal)
-            raise exc.NutrientBalanceError(msg)
-
-    def _check_P_balance(self, day):
-        s = self.states
-        checksum = abs(s.PuptakeTotal +
-                       (self.PamountLVI + self.PamountSTI + self.PamountRTI + self.PamountSOI) -
-                       (s.PamountLV + s.PamountST + s.PamountRT + s.PamountSO + s.PlossesTotal))
-
-        if abs(checksum) >= 1.:
-            msg = "P flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, Puptake_T: %f\n" % (checksum, s.PuptakeTotal)
-            msg += "PamountLVI: %f, PamountSTI: %f, PamountRTI: %f, PamountSOI: %f\n" % \
-                   (self.PamountLVI, self.PamountSTI, self.PamountRTI, self.PamountSOI)
-            msg += "PamountLV: %f, PamountST: %f, PamountRT: %f, PamountSO: %f\n" % \
-                   (s.PamountLV, s.PamountST, s.PamountRT, s.PamountSO)
-            msg += "PLOSST: %f\n" % (s.PlossesTotal)
-            raise exc.NutrientBalanceError(msg)
-
-    def _check_K_balance(self, day):
-        s = self.states
-        checksum = abs(s.KuptakeTotal +
-                       (self.KamountLVI + self.KamountSTI + self.KamountRTI + self.KamountSOI) -
-                       (s.KamountLV + s.KamountST + s.KamountRT + s.KamountSO + s.KlossesTotal))
-
-        if abs(checksum) >= 1.:
-            msg = "K flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, Kuptake_T: %f\n"  % (checksum, s.KuptakeTotal)
-            msg += "KamountLVI: %f, KamountSTI: %f, KamountRTI: %f, KamountSOI: %f\n" % \
-                   (self.KamountLVI, self.KamountSTI, self.KamountRTI, self.KamountSOI)
-            msg += "KamountLV: %f, KamountST: %f, KamountRT: %f, KamountSO: %f\n" % \
-                   (s.KamountLV, s.KamountST, s.KamountRT, s.KamountSO)
-            msg += "KLOSST: %f\n" % (s.KlossesTotal)
             raise exc.NutrientBalanceError(msg)
