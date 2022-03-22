@@ -662,7 +662,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         # added IS
         # Extra death rate due to nutrient stress
         # has to be added to rates.DSLV
-        r.DSLV4 = s.WLV * p.RDRLV_NPK * (1.0 - self.kiosk["NPKI"])
+        r.DSLV4 = s.WLV * p.RDRLV_NPK * (1.0 - self.kiosk["NNI"])
 
         # added IS
         # leaf death equals maximum of water stress, shading and frost
