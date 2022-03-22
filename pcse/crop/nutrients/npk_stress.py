@@ -5,8 +5,6 @@
 """
 Class to calculate various nutrient relates stress factors:
     NNI      nitrogen nutrition index   
-    PNI      phosphorous nutrition index
-    KNI      potassium nutrition index
     NPKI     NPK nutrition index (= minimum of N/P/K-index)
     NPKREF   assimilation reduction factor based on NPKI
 """
@@ -56,32 +54,15 @@ class NPK_Stress(SimulationObject):
     ============  ============================================= ======================
     NMAXLV_TB      Maximum N concentration in leaves as         kg N kg-1 dry biomass
                    function of DVS
-    PMAXLV_TB      As for P                                     kg P kg-1 dry biomass
-    KMAXLV_TB      As for K                                     kg K kg-1 dry biomass
-
     NMAXRT_FR      Maximum N concentration in roots as fraction -
                    of maximum N concentration in leaves
-    PMAXRT_FR      As for P                                     -
-    KMAXRT_FR      As for K                                     -
-
     NMAXST_FR      Maximum N concentration in stems as fraction -
                    of maximum N concentration in leaves
-    PMAXST_FR      As for P                                     -
-    KMAXST_FR      As for K                                     -
-
     NCRIT_FR       Critical N concentration as fraction of      -
                    maximum N concentration for vegetative
                    plant organs as a whole (leaves + stems)
-    PCRIT_FR       As for P                                     -
-    KCRIT_FR       As for K                                     -
-
     NRESIDLV       Residual N fraction in leaves                kg N kg-1 dry biomass
-    PRESIDLV       Residual P fraction in leaves                kg P kg-1 dry biomass
-    KRESIDLV       Residual K fraction in leaves                kg K kg-1 dry biomass
-
     NRESIDST       Residual N fraction in stems                 kg N kg-1 dry biomass
-    PRESIDST       Residual P fraction in stems                 kg P kg-1 dry biomass
-    KRESIDST       Residual K fraction in stems                 kg K kg-1 dry biomass
 
     NLUE_NPK       Coefficient for the reduction of RUE due     -
                    to nutrient (N-P-K) stress
@@ -97,9 +78,6 @@ class NPK_Stress(SimulationObject):
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ==============
     NNI       Nitrogen nutrition index                          Y     -
-    PNI       Nitrogen nutrition index                          N     -
-    KNI       Nitrogen nutrition index                          N     -
-    NPKI      Minimum of NNI, PNI, KNI                          Y     -
     RFNPK     Reduction factor for |CO2| assimlation            N     -
               based on NPKI and the parameter NLUE_NPK
     =======  ================================================= ==== ==============
@@ -115,10 +93,6 @@ class NPK_Stress(SimulationObject):
     WLV          Dry weight of living leaves         WOFOST_Leaf_Dynamics  |kg ha-1|
     NamountLV    Amount of N in leaves               NPK_Crop_Dynamics     |kg ha-1|
     NamountST    Amount of N in stems                NPK_Crop_Dynamics     |kg ha-1|
-    PamountLV    Amount of P in leaves               NPK_Crop_Dynamics     |kg ha-1|
-    PamountST    Amount of P in stems                NPK_Crop_Dynamics     |kg ha-1|
-    KamountLV    Amount of K in leaves               NPK_Crop_Dynamics     |kg ha-1|
-    KamountST    Amount of K in stems                NPK_Crop_Dynamics     |kg ha-1|
     ==========  =================================== =====================  ==============
     """
 

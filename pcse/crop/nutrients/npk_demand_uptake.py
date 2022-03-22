@@ -41,40 +41,18 @@ class NPK_Demand_Uptake(SimulationObject):
     ============  =============================================  ======================
     NMAXLV_TB      Maximum N concentration in leaves as          kg N kg-1 dry biomass
                    function of DVS
-    PMAXLV_TB      As for P                                      kg P kg-1 dry biomass
-    
-As for K                                      kg K kg-1 dry biomass
-
     NMAXRT_FR      Maximum N concentration in roots as fraction  -
                    of maximum N concentration in leaves
-    PMAXRT_FR      As for P                                      -
-    KMAXRT_FR      As for K                                      -
-
     NMAXST_FR      Maximum N concentration in stems as fraction  -
                    of maximum N concentration in leaves
-    PMAXST_FR      As for P                                      -
-    KMAXST_FR      As for K                                      -
-
     NMAXSO         Maximum N concentration in storage organs     kg N kg-1 dry biomass
-    PMAXSO         As for P                                      kg P kg-1 dry biomass
-    KMAXSO         As for K                                      kg K kg-1 dry biomass
-
     NCRIT_FR       Critical N concentration as fraction of       -
                    maximum N concentration for vegetative
                    plant organs as a whole (leaves + stems)
-    PCRIT_FR       As for P                                      -
-    KCRIT_FR       As for K                                      -
-
     TCNT           Time coefficient for N translation to         days
                    storage organs
-    TCPT           As for P                                      days
-    TCKT           As for K                                      days
-
-    NFIX_FR        fraction of crop nitrogen uptake by           kg N kg-1 dry biomass
-                   biological fixation
+    NFIX_FR        fraction of crop nitrogen uptake by           kg N kg-1 dry biomass                   biological fixation
     RNUPTAKEMAX    Maximum rate of N uptake                      |kg N ha-1 d-1|
-    RPUPTAKEMAX    Maximum rate of P uptake                      |kg N ha-1 d-1|
-    RKUPTAKEMAX    Maximum rate of K uptake                      |kg N ha-1 d-1|
     ============  =============================================  ======================
 
     **State variables**
@@ -83,23 +61,10 @@ As for K                                      kg K kg-1 dry biomass
      Name           Description                                      Pbl      Unit
     =============  ================================================= ==== ============
     NuptakeTotal     Total N uptake by the crop                        N   |kg N ha-1|
-    PuptakeTotal     Total P uptake by the crop                        N   |kg N ha-1|
-    KuptakeTotal     Total K uptake by the crop                        N   |kg N ha-1|
     NfixTotal      Total N fixated by the crop                         N   |kg N ha-1|
-
     NdemandST     N Demand in living stems                          N   |kg N ha-1|
     NdemandRT     N Demand in living roots                          N   |kg N ha-1|
     NdemandSO     N Demand in storage organs                        N   |kg N ha-1|
-
-    PdemandLV     P Demand in living leaves                         N   |kg P ha-1|
-    PdemandST     P Demand in living stems                          N   |kg P ha-1|
-    PdemandRT     P Demand in living roots                          N   |kg P ha-1|
-    PdemandSO     P Demand in storage organs                        N   |kg P ha-1|
-
-    KdemandLV     K Demand in living leaves                         N   |kg K ha-1|
-    KdemandST     K Demand in living stems                          N   |kg K ha-1|
-    KdemandRT     K Demand in living roots                          N   |kg K ha-1|
-    KdemandSO     K Demand in storage organs                        N   |kg K ha-1|
     ==========  ================================================= ==== ============
 
 
@@ -112,40 +77,13 @@ As for K                                      kg K kg-1 dry biomass
     RNuptakeST     Rate of N uptake in stems                         Y   |kg N ha-1 d-1|
     RNuptakeRT     Rate of N uptake in roots                         Y   |kg N ha-1 d-1|
     RNuptakeSO     Rate of N uptake in storage organs                Y   |kg N ha-1 d-1|
-
-    RPuptakeLV     Rate of P uptake in leaves                        Y   |kg P ha-1 d-1|
-    RPuptakeST     Rate of P uptake in stems                         Y   |kg P ha-1 d-1|
-    RPuptakeRT     Rate of P uptake in roots                         Y   |kg P ha-1 d-1|
-    RPuptakeSO     Rate of P uptake in storage organs                Y   |kg P ha-1 d-1|
-
-    RKuptakeLV     Rate of K uptake in leaves                        Y   |kg K ha-1 d-1|
-    RKuptakeST     Rate of K uptake in stems                         Y   |kg K ha-1 d-1|
-    RKuptakeRT     Rate of K uptake in roots                         Y   |kg K ha-1 d-1|
-    RKuptakeSO     Rate of K uptake in storage organs                Y   |kg K ha-1 d-1|
-
     RNuptake       Total rate of N uptake                            Y   |kg N ha-1 d-1|
-    RPuptake       Total rate of P uptake                            Y   |kg P ha-1 d-1|
-    RKuptake       Total rate of K uptake                            Y   |kg K ha-1 d-1|
     RNfixation     Rate of N fixation                                Y   |kg N ha-1 d-1|
-
     NdemandLV      N Demand in living leaves                         N   |kg N ha-1|
     NdemandST      N Demand in living stems                          N   |kg N ha-1|
     NdemandRT      N Demand in living roots                          N   |kg N ha-1|
     NdemandSO      N Demand in storage organs                        N   |kg N ha-1|
-
-    PdemandLV      P Demand in living leaves                         N   |kg P ha-1|
-    PdemandST      P Demand in living stems                          N   |kg P ha-1|
-    PdemandRT      P Demand in living roots                          N   |kg P ha-1|
-    PdemandSO      P Demand in storage organs                        N   |kg P ha-1|
-
-    KdemandLV      K Demand in living leaves                         N   |kg K ha-1|
-    KdemandST      K Demand in living stems                          N   |kg K ha-1|
-    KdemandRT      K Demand in living roots                          N   |kg K ha-1|
-    KdemandSO      K Demand in storage organs                        N   |kg K ha-1|
-
     Ndemand        Total crop N demand                               N   |kg N ha-1 d-1|
-    Pdemand        Total crop P demand                               N   |kg P ha-1 d-1|
-    Kdemand        Total crop K demand                               N   |kg K ha-1 d-1|
     ===========  ================================================= ==== ================
 
     **Signals send or handled**
@@ -161,12 +99,8 @@ As for K                                      kg K kg-1 dry biomass
     TRA               Crop transpiration                  Evapotranspiration     |cm d-1|
     TRAMX             Potential crop transpiration        Evapotranspiration     |cm d-1|
     NAVAIL            Total available N from soil         NPK_Soil_Dynamics      |kg ha-1|
-    PAVAIL            Total available P from soil         NPK_Soil_Dynamics      |kg ha-1|
-    KAVAIL            Total available K from soil         NPK_Soil_Dynamics      |kg ha-1|
     Ntranslocatable   Translocatable amount of N from     NPK_Translocation      |kg ha-1|
                       stems, Leaves and roots
-    Ptranslocatable   As for P                            NPK_Translocation      |kg ha-1|
-    Ktranslocatable   As for K                            NPK_Translocation      |kg ha-1|
     ================  =================================== ====================  ===========
 
     """

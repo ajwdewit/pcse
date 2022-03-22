@@ -59,22 +59,10 @@ class NPK_Soil_Dynamics(SimulationObject):
                   mineralisation
     NSOILBASE_FR  Fraction of base soil N that comes available   SSi        -
                   every day
-    PSOILBASE     Base soil supply of N available through        SSi      |kg ha-1|
-                  mineralisation
-    PSOILBASE_FR  Fraction of base soil N that comes available             -
-                  every day
-    KSOILBASE     Base soil supply of N available through        SSi      |kg ha-1|
-                  mineralisation
-    KSOILBASE_FR  Fraction of base soil N that comes available   SSi        -
-                  every day
     NAVAILI       Initial N available in the N pool              SSi      |kg ha-1|
     PAVAILI       Initial P available in the P pool              SSi      |kg ha-1|
     KAVAILI       Initial K available in the K pool              SSi      |kg ha-1|
     BG_N_SUPPLY   Background supply of N through atmospheric     SSi      |kg ha-1 d-1|
-                  deposition.
-    BG_P_SUPPLY   Background supply of P through atmospheric     SSi      |kg ha-1 d-1|
-                  deposition.
-    BG_K_SUPPLY   Background supply of K through atmospheric     SSi      |kg ha-1 d-1|
                   deposition.
     ============  ============================================= =======  ==============
 
@@ -86,13 +74,7 @@ class NPK_Soil_Dynamics(SimulationObject):
     =======  ================================================= ==== ============
      NSOIL    total mineral soil N available at start of         N    [kg ha-1]
               growth period
-     PSOIL    total mineral soil P available at start of         N    [kg ha-1]
-              growth period
-     KSOIL    total mineral soil K available at start of         N    [kg ha-1]
-              growth period
      NAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
-     PAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
-     KAVAIL   Total mineral N from soil and fertiliser           Y    |kg ha-1|
     =======  ================================================= ==== ============
 
     **Rate variables**
@@ -101,19 +83,12 @@ class NPK_Soil_Dynamics(SimulationObject):
      Name            Description                                       Pbl      Unit
     ==============  ================================================= ==== =============
     RNSOIL           Rate of change on total soil mineral N            N   |kg ha-1 d-1|
-    RPSOIL           Rate of change on total soil mineral P            N   |kg ha-1 d-1|
-    RKSOIL           Rate of change on total soil mineral K            N   |kg ha-1 d-1|
-
     RNAVAIL          Total change in N availability                    N   |kg ha-1 d-1|
-    RPAVAIL          Total change in P availability                    N   |kg ha-1 d-1|
-    RKAVAIL          Total change in K availability                    N   |kg ha-1 d-1|
 
     # Rate of fertilizer supply for N/P/K [kg/ha/day]
     FERT_N_SUPPLY    Supply of fertilizer N. This will be supplied     N   |kg ha-1 d-1|
                      by the AgroManager module through the event
                      mechanism. See the section on signals below.
-    FERT_P_SUPPLY    As previous for P                                 N   |kg ha-1 d-1|
-    FERT_K_SUPPLY    As previous for K                                 N   |kg ha-1 d-1|
     ==============  ================================================= ==== =============
 
     **Signals send or handled**
@@ -133,8 +108,6 @@ class NPK_Soil_Dynamics(SimulationObject):
     TRAMX      Potential crop transpiration        Evapotranspiration     |cm|
                increase
     RNuptake   Rate of N uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
-    RPuptake   Rate of P uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
-    RKuptake   Rate of K uptake by the crop        NPK_Demand_Uptake     |kg ha-1 d-1|
     =========  =================================== ===================  ==============
     """
 
