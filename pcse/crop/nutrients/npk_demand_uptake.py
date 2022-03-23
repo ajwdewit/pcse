@@ -13,26 +13,23 @@ MaxNutrientConcentrations = namedtuple("MaxNutrientConcentrations",
                                        ["NMAXLV","NMAXST", "NMAXRT", "NMAXSO"])
 
 class NPK_Demand_Uptake(SimulationObject):
-    """Calculates the crop N/P/K demand and its uptake from the soil.
+    """Calculates the crop N demand and its uptake from the soil.
 
-    Crop N/P/K demand is calculated as the difference between the
-    actual N/P/K concentration (kg N/P/K per kg biomass) in the
-    vegetative plant organs (leaves, stems and roots) and the maximum
-    N/P/K concentration for each organ. N/P/K uptake is then estimated
-    as the minimum of supply from the soil and demand from the crop.
+    Crop N demand is calculated as the difference between the actual N
+   (kg N per kg biomass) in the vegetative plant organs (leaves, stems and roots) 
+    and the maximum N concentration for each organ. N uptake is then 
+    estimated as the minimum of supply from the soil and demand from the crop.
 
     Nitrogen fixation (leguminous plants) is calculated by assuming that a
     fixed fraction of the daily N demand is supplied by nitrogen fixation.
     The remaining part has to be supplied by the soil.
 
-    The N/P/K demand of the storage organs is calculated in a somewhat
+    The N demand of the storage organs is calculated in a somewhat
     different way because it is assumed that the demand from the storage
     organs is fulfilled by translocation of N/P/K from the leaves, stems
-    and roots. So Therefore the uptake of the storage organs is calculated
-    as the minimum of the translocatable N/P/K (supply) and the demand from
-    the storage organs. Moreover, there is time coefficient for translocation
-    which takes into account that there is a delay in the availability of
-    translocatable N/P/K
+    and roots. Therefore the uptake of the storage organs is calculated
+    as the minimum of the daily translocatable N supply and the demand from
+    the storage organs.
 
     **Simulation parameters**
 
@@ -51,7 +48,7 @@ class NPK_Demand_Uptake(SimulationObject):
                    plant organs as a whole (leaves + stems)
     TCNT           Time coefficient for N translation to         days
                    storage organs
-    NFIX_FR        fraction of crop nitrogen uptake by           kg N kg-1 dry biomass                   biological fixation
+    NFIX_FR        fraction of crop nitrogen uptake by           kg N kg-1 dry biomass biological fixation
     RNUPTAKEMAX    Maximum rate of N uptake                      |kg N ha-1 d-1|
     ============  =============================================  ======================
 
@@ -232,12 +229,11 @@ class NPK_Demand_Uptake(SimulationObject):
         pass
 
     def _compute_NPK_max_concentrations(self):
-        """Computes the maximum N/P/K concentrations in leaves, stems, roots and storage organs.
+        """Computes the maximum N concentrations in leaves, stems, roots and storage organs.
         
         Note that max concentrations are first derived from the dilution curve for leaves. 
         Maximum concentrations for stems and roots are computed as a fraction of the 
-        concentration for leaves. Maximum concentration for storage organs is directly taken from
-        the parameters N/P/KMAXSO.
+        concentration for leaves.
         """
 
         p = self.params
@@ -245,9 +241,9 @@ class NPK_Demand_Uptake(SimulationObject):
         NMAXLV = p.NMAXLV_TB(k.DVS)
 
         max_NPK_conc = MaxNutrientConcentrations(
-            # Maximum NPK concentrations in leaves [kg N kg-1 DM]
+            # Maximum N concentrations in leaves [kg N kg-1 DM]
             NMAXLV=NMAXLV,
-            # Maximum NPK concentrations in stems and roots [kg N kg-1 DM]
+            # Maximum N concentrations in stems and roots [kg N kg-1 DM]
             NMAXST=(p.NMAXST_FR * NMAXLV),
             NMAXRT=p.NMAXRT_FR * NMAXLV,
             NMAXSO=p.NMAXSO

@@ -15,9 +15,9 @@ from ...base import ParamTemplate, SimulationObject, RatesTemplate
 from ...decorators import prepare_rates
 
 class NPK_Stress(SimulationObject):
-    """Implementation of NPK stress calculation through [NPK]nutrition index.
+    """Implementation of N stress calculation through [N]nutrition index.
 
-    Stress factors are calculated based on the mass concentrations of N/P/K in
+    Stress factors are calculated based on the mass concentration of N in
     the leaf and stem biomass of the plant. For each pool of nutrients, four
     concentrations are calculated based on the biomass for leaves and stems:
     - the actual concentration based on the actual amount of nutrients
@@ -25,11 +25,9 @@ class NPK_Stress(SimulationObject):
     - The maximum concentration, being the maximum that the plant can absorb
       into its leaves and stems.
     - The critical concentration, being the concentration that is needed to
-      maintain growth rates that are not limited by N/P/K. For P and K, the
-      critical concentration is usually equal to the maximum concentration.
-      For N, the critical concentration can be lower than the maximum
-      concentration. This concentration is sometimes called 'optimal
-      concentration'.
+      maintain growth rates that are not limited by N.For N, the critical
+      concentration can be lower than the maximum concentration. This 
+      concentration is sometimes called 'optimal concentration'.
     - The residual concentration which is the amount that is locked
       into the plant structural biomass and cannot be mobilized anymore.
 
@@ -39,12 +37,9 @@ class NPK_Stress(SimulationObject):
     :math:`SI = (C_{a} - C_{r})/(C_{c} - C_{r})`
 
     with subscript `a`, `r` and `c` being the actual, residual and critical
-    concentration for the nutrient.
-    This equation is applied in analogue to N, P and K and results in the
-    nitrogen nutrition index (NNI), phosphorous nutrition index (PNI) and
-    Potassium nutrition index (KNI). Next, the NPK index (NPKI) is calculated
-    as the minimum of NNI, PNI, KNI. Finally, the reduction factor for
-    assimilation (NPKREF) is calculated using the reduction factor for
+    concentration for the N.
+    This equation results in the nitrogen nutrition index (NNI). Finally, the reduction 
+    factor for assimilation (NPKREF) is calculated using the reduction factor for
     light use efficiency (NLUE_NPK).
 
     **Simulation parameters**
@@ -151,7 +146,7 @@ class NPK_Stress(SimulationObject):
         if VBM > 0.:
             NcriticalVBM = (NcriticalLV + NcriticalST)/VBM
         else:
-            NcriticalVBM = PcriticalVBM = KcriticalVBM = 0.
+            NcriticalVBM = 0.
 
         # NPK concentration in total vegetative living per kg above-ground
         # biomass  (kg N/P/K kg-1 DM)
@@ -159,10 +154,10 @@ class NPK_Stress(SimulationObject):
         if VBM > 0.:
             NconcentrationVBM  = (k.NamountLV + k.NamountST)/VBM
         else:
-            NconcentrationVBM = PconcentrationVBM = KconcentrationVBM = 0.
+            NconcentrationVBM = 0.
 
         # Residual NPK concentration in total vegetative living above-ground
-        # biomass  (kg N/P/K kg-1 DM)
+        # biomass  (kg N kg-1 DM)
         # if above-ground living biomass = 0 then residual concentration = 0
         if VBM > 0.:
             NresidualVBM = (k.WLV * p.NRESIDLV + k.WST * p.NRESIDST)/VBM

@@ -13,7 +13,7 @@ from pcse import signals
 class NPK_PotentialProduction(SimulationObject):
     """Provides unlimited soil N/P/K for potential production simulations.
 
-    NAVAIL, KAVAIL and PAVAIL just remain 100 kg/ha whatever the crop takes.
+    NAVAIL just remains 100 kg/ha whatever the crop takes.
     """
 
     class StateVariables(StatesTemplate):
@@ -36,17 +36,17 @@ class NPK_PotentialProduction(SimulationObject):
 
 
 class NPK_Soil_Dynamics(SimulationObject):
-    """A simple module for soil N/P/K dynamics.
+    """A simple module for soil N dynamics.
 
-    This modules represents the soil as a bucket for available N/P/K consisting
+    This modules represents the soil as a bucket for available N consisting
     of two components: 1) a native soil supply which consists of an initial
-    amount of N/P/K which will become available with a fixed fraction every day
-    and 2) an external supply which is computed as an amount of N/P/K supplied
+    amount of N which will become available with a fixed fraction every day
+    and 2) an external supply which is computed as an amount of N supplied
     and multiplied by a recovery fraction in order to have an effective amount of
-    N/P/K that is available for crop growth.
+    N that is available for crop growth.
 
     This module does not simulate any soil physiological processes and is only
-    a book-keeping approach for N/P/K availability. On the other hand, it
+    a book-keeping approach for N availability. On the other hand, it
     requires no detailed soil parameters. Only an initial soil amount, the
     fertilizer inputs, a recovery fraction and a background supply.
 
@@ -121,7 +121,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         #
         NAVAILI = Float()
 
-        # Background rates of N/P/K supply [kg/ha/day]
+        # Background rates of N supply [kg/ha/day]
         BG_N_SUPPLY = Float()
 
     class StateVariables(StatesTemplate):
@@ -132,7 +132,7 @@ class NPK_Soil_Dynamics(SimulationObject):
         RNSOIL = Float(-99.)        
         RNAVAIL = Float(-99.)
 
-        # Rate of fertilizer supply for N/P/K [kg/ha/day]
+        # Rate of fertilizer supply for N [kg/ha/day]
         FERT_N_SUPPLY = Float()
 
     def initialize(self, day, kiosk, parvalues):
@@ -173,10 +173,10 @@ class NPK_Soil_Dynamics(SimulationObject):
         rates = self.rates
         states = self.states
 
-        # mineral NPK amount in the soil
+        # mineral N amount in the soil
         states.NSOIL += rates.RNSOIL * delt
         
-        # total (soil + fertilizer) NPK amount in soil
+        # total (soil + fertilizer) N amount in soil
         states.NAVAIL += rates.RNAVAIL * delt
 
     def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,

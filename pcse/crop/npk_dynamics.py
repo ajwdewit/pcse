@@ -10,9 +10,9 @@ from .nutrients import NPK_Demand_Uptake
 
 
 class NPK_Crop_Dynamics(SimulationObject):
-    """Implementation of overall NPK crop dynamics.
+    """Implementation of overall N crop dynamics.
 
-    NPK_Crop_Dynamics implements the overall logic of N/P/K book-keeping within the
+    NPK_Crop_Dynamics implements the overall logic of N book-keeping within the
     crop.
 
     **Simulation parameters**
