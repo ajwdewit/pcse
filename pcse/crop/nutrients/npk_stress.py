@@ -75,6 +75,7 @@ class NPK_Stress(SimulationObject):
     NNI       Nitrogen nutrition index                          Y     -
     RFNPK     Reduction factor for |CO2| assimlation            N     -
               based on NPKI and the parameter NLUE_NPK
+    NSTRESS   Ratio of maximum to actual aboveground crop N     Y     -
     =======  ================================================= ==== ==============
 
 
@@ -93,17 +94,21 @@ class NPK_Stress(SimulationObject):
 
     class Parameters(ParamTemplate):
         NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs
+        NSLLV_TB = AfgenTrait()      # N stress multiplication factor for leaf death
+
         NCRIT_FR = Float(-99.)   # optimal N concentration as fraction of maximum N concentration
         NMAXRT_FR = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
         NMAXST_FR = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
         NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
         NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
         NLUE_NPK = Float(-99.)  # coefficient for the reduction of RUE due to nutrient (N-P-K) stress
+        NMAXSO = Float(-99.)
 
     class RateVariables(RatesTemplate):
         NNI = Float()
         NPKI = Float()
         RFNPK = Float()
+        NSLLV = Float()
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -114,7 +119,7 @@ class NPK_Stress(SimulationObject):
 
         self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["NPKI", "NNI"])
+        self.rates = self.RateVariables(kiosk, publish=["NPKI", "NNI", "NSLLV"])
 
     @prepare_rates
     def __call__(self, day, drv):
@@ -170,6 +175,21 @@ class NPK_Stress(SimulationObject):
             r.NNI = 0.001
             
         r.NPKI = r.NNI
+
+
+        NamountABG = k.NamountLV + k.NamountST + k.NamountSO
+        NamountABGMX = k.WLV * NMAXLV + k.WST * NMAXST + k.WSO * p.NMAXSO
+
+        if NamountABGMX / NamountABG <= 1:
+            NstressDLV = 1.
+        elif NamountABGMX / NamountABG > 2:
+            NstressDLV = 2.
+        else:
+            NstressDLV = NamountABGMX / NamountABG 
+        
+        r.NSLLV = p.NSLLV_TB(NstressDLV)
+        print(r.NSLLV)
+
 
         # Nutrient reduction factor for assimilation
         r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))
