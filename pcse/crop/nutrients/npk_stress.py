@@ -176,20 +176,18 @@ class NPK_Stress(SimulationObject):
             
         r.NPKI = r.NNI
 
-
+        # Calculate multiplication factor of leaf death due to N stress
         NamountABG = k.NamountLV + k.NamountST + k.NamountSO
         NamountABGMX = k.WLV * NMAXLV + k.WST * NMAXST + k.WSO * p.NMAXSO
 
         if NamountABGMX / NamountABG <= 1:
-            NstressDLV = 1.
+            NstressIndexDLV = 1.
         elif NamountABGMX / NamountABG > 2:
-            NstressDLV = 2.
+            NstressIndexDLV = 2.
         else:
-            NstressDLV = NamountABGMX / NamountABG 
+            NstressIndexDLV = NamountABGMX / NamountABG 
         
-        r.NSLLV = p.NSLLV_TB(NstressDLV)
-        print(r.NSLLV)
-
+        r.NSLLV = p.NSLLV_TB(NstressIndexDLV)
 
         # Nutrient reduction factor for assimilation
         r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))

@@ -654,7 +654,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         # Death of leaves due to frost damage as determined by
         # Reduction Factor Frost "RF_FROST"
-        if "RF_FROST" in self.kiosk:
+        if "RF_FROST" in k:
             r.DSLV3 = s.WLV * k.RF_FROST
         else:
             r.DSLV3 = 0.
@@ -663,11 +663,11 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         # Extra death rate due to nutrient stress
         # has to be added to rates.DSLV
 
-        r.DSLV4 = s.WLV * p.RDRLV_NPK * (1.0 - self.kiosk["NNI"])
+        # r.DSLV4 = s.WLV * p.RDRLV_NPK * (1.0 - self.kiosk["NNI"])
 
         # added IS
         # leaf death equals maximum of water stress, shading and frost
-        r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3) + r.DSLV4
+        r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3) * k.NSLLV
 
         # Determine how much leaf biomass classes have to die in states.LV,
         # given the a life span > SPAN, these classes will be accumulated

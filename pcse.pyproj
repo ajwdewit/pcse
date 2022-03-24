@@ -11,7 +11,7 @@
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <InterpreterId>Global|PythonCore|3.9</InterpreterId>
+    <InterpreterId>MSBuild|env_pce|C:\Users\bergh026\source\repos\OptimizePartitioningFunctionsHB\OptimizePartitioningFunctionsHB.pyproj</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
@@ -198,7 +198,7 @@
     <Folder Include="tests" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="Global|PythonCore|3.9" />
+    <InterpreterReference Include="MSBuild|env_pce|C:\Users\bergh026\source\repos\OptimizePartitioningFunctionsHB\OptimizePartitioningFunctionsHB.pyproj" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
