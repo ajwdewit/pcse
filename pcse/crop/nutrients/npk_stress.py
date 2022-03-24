@@ -103,12 +103,15 @@ class NPK_Stress(SimulationObject):
         NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
         NLUE_NPK = Float(-99.)  # coefficient for the reduction of RUE due to nutrient (N-P-K) stress
         NMAXSO = Float(-99.)
+        RGRLAI_MIN = Float(-99.)
+        RGRLAI = Float(-99.)
 
     class RateVariables(RatesTemplate):
         NNI = Float()
         NPKI = Float()
         RFNPK = Float()
         NSLLV = Float()
+        RFRGRL = Float()
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -119,7 +122,7 @@ class NPK_Stress(SimulationObject):
 
         self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["NPKI", "NNI", "NSLLV"])
+        self.rates = self.RateVariables(kiosk, publish=["NPKI", "NNI", "NSLLV", "RFRGRL"])
 
     @prepare_rates
     def __call__(self, day, drv):
@@ -188,6 +191,16 @@ class NPK_Stress(SimulationObject):
             NstressIndexDLV = NamountABGMX / NamountABG 
         
         r.NSLLV = p.NSLLV_TB(NstressIndexDLV)
+
+        # Calculate reduction factor of leaf growth rate in exponential growth phase
+
+        if(k.WLV > 0):
+            NconcentrationLV = k.NamountLV / k.WLV
+        else:
+            NconcentrationLV = 0.
+
+        NstressIndexRGRLAI = max(0, min(1, (NconcentrationLV - 0.9 * NMAXLV) / (NMAXLV - 0.9 * NMAXLV)))
+        r.RFRGRL = 1 - (1.-NstressIndexRGRLAI)*(p.RGRLAI-p.RGRLAI_MIN) / p.RGRLAI
 
         # Nutrient reduction factor for assimilation
         r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))

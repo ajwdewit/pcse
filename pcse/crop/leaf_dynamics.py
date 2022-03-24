@@ -700,7 +700,8 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
             # added IS
             # Nutrient and water stress during juvenile stage:
             if k.DVS < 0.2 and s.LAI < 0.75:
-                factor = k.RFTRA * exp(-p.NLAI_NPK * (1.0 - k.NPKI))
+                #factor = k.RFTRA * exp(-p.NLAI_NPK * (1.0 - k.NPKI))
+                factor = k.RFTRA * k.RFRGRL
             else:
                 factor = 1.
 
