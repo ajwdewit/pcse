@@ -86,7 +86,7 @@ class NPK_Crop_Dynamics(SimulationObject):
     NamountSOI = Float(-99.)  # initial soil N amount in storage organs
     
     class Parameters(ParamTemplate):
-        DVS_NPK_STOP = Float(-99.)
+        #DVS_NPK_STOP = Float(-99.)
         NMAXLV_TB = AfgenTrait()
         NMAXST_FR = Float(-99.)
         NMAXRT_FR = Float(-99.)

@@ -563,8 +563,8 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         SLATB = AfgenTrait()
         KDIFTB = AfgenTrait()
         RDRLV_NPK = Float(-99.)  # max. relative death rate of leaves due to nutrient NPK stress
-        NSLA_NPK = Float(-99.)  # coefficient for the effect of nutrient NPK stress on SLA reduction
-        NLAI_NPK = Float(-99.)  # coefficient for the reduction due to nutrient NPK stress of the 
+        #NSLA_NPK = Float(-99.)  # coefficient for the effect of nutrient NPK stress on SLA reduction
+        #NLAI_NPK = Float(-99.)  # coefficient for the reduction due to nutrient NPK stress of the 
                                   # LAI increase (during juvenile phase)
 
     class StateVariables(StatesTemplate):
@@ -690,12 +690,13 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         # physiologic ageing of leaves per time step
         r.FYSAGE = max(0., (drv.TEMP - p.TBASE)/(35. - p.TBASE))
 
-        # added IS
-        # correction SLA due to nutrient stress
-        sla_npk_factor = exp(-p.NSLA_NPK * (1.0 - k.NPKI))
+        ## added IS
+        ## correction SLA due to nutrient stress
+        #sla_npk_factor = exp(-p.NSLA_NPK * (1.0 - k.NPKI))
 
-        # specific leaf area of leaves per time step
-        r.SLAT = p.SLATB(k.DVS) * sla_npk_factor
+        ## specific leaf area of leaves per time step
+        #r.SLAT = p.SLATB(k.DVS) * sla_npk_factor
+        r.SLAT = p.SLATB(k.DVS)
 
         # leaf area not to exceed exponential growth curve
         if s.LAIEXP < 6.:
