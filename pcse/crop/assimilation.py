@@ -236,9 +236,12 @@ def assim2(CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
             AMAX = max(0, 68.33 * (SLN - 0.2))
         else:
             AMAX = 9.5 + 22 * SLN
-
+        
+        AMAX = max(0, 32.4 * (SLN-0.2))
         AMAX *= CO2AMAX
         AMAX *= TMPF
+
+        AMAX = min(38.18 * CO2AMAX * TMPF, AMAX)
 
         # absorbed diffuse radiation (VISDF),light from direct
         # origine (VIST) and direct light (VISD)
