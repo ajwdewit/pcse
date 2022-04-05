@@ -96,7 +96,7 @@ class NPK_Stress(SimulationObject):
         NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs
         NSLLV_TB = AfgenTrait()      # N stress multiplication factor for leaf death
 
-        NCRIT_FR = Float(-99.)   # optimal N concentration as fraction of maximum N concentration
+        #NCRIT_FR = Float(-99.)   # optimal N concentration as fraction of maximum N concentration
         NMAXRT_FR = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
         NMAXST_FR = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
         NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
@@ -107,8 +107,8 @@ class NPK_Stress(SimulationObject):
         RGRLAI = Float(-99.)
 
     class RateVariables(RatesTemplate):
-        NNI = Float()
-        NPKI = Float()
+        #NNI = Float()
+        #NPKI = Float()
         RFNPK = Float()
         NSLLV = Float()
         RFRGRL = Float()
@@ -122,7 +122,8 @@ class NPK_Stress(SimulationObject):
 
         self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["NPKI", "NNI", "NSLLV", "RFRGRL"])
+        #self.rates = self.RateVariables(kiosk, publish=["NPKI", "NNI", "NSLLV", "RFRGRL"])
+        self.rates = self.RateVariables(kiosk, publish = ["NSLLV", "RFRGRL"])
 
     @prepare_rates
     def __call__(self, day, drv):
@@ -142,42 +143,42 @@ class NPK_Stress(SimulationObject):
         # Maximum NPK concentrations in stems (kg N kg-1 DM)
         NMAXST = p.NMAXST_FR * NMAXLV
         
-        # Total vegetative living above-ground biomass (kg DM ha-1)
-        VBM = k.WLV + k.WST
+        ## Total vegetative living above-ground biomass (kg DM ha-1)
+        #VBM = k.WLV + k.WST
       
-        # Critical (Optimal) NPK amount in vegetative above-ground living biomass
-        # and its NPK concentration
-        NcriticalLV  = p.NCRIT_FR * NMAXLV * k.WLV
-        NcriticalST  = p.NCRIT_FR * NMAXST * k.WST
+        ### Critical (Optimal) NPK amount in vegetative above-ground living biomass
+        ### and its NPK concentration
+        ##NcriticalLV  = p.NCRIT_FR * NMAXLV * k.WLV
+        ##NcriticalST  = p.NCRIT_FR * NMAXST * k.WST
         
-        # if above-ground living biomass = 0 then optimum = 0
-        if VBM > 0.:
-            NcriticalVBM = (NcriticalLV + NcriticalST)/VBM
-        else:
-            NcriticalVBM = 0.
+        ## if above-ground living biomass = 0 then optimum = 0
+        ##if VBM > 0.:
+        ##    NcriticalVBM = (NcriticalLV + NcriticalST)/VBM
+        ##else:
+        ##    NcriticalVBM = 0.
 
-        # NPK concentration in total vegetative living per kg above-ground
-        # biomass  (kg N/P/K kg-1 DM)
-        # if above-ground living biomass = 0 then concentration = 0
-        if VBM > 0.:
-            NconcentrationVBM  = (k.NamountLV + k.NamountST)/VBM
-        else:
-            NconcentrationVBM = 0.
+        ## NPK concentration in total vegetative living per kg above-ground
+        ## biomass  (kg N/P/K kg-1 DM)
+        ## if above-ground living biomass = 0 then concentration = 0
+        #if VBM > 0.:
+        #    NconcentrationVBM  = (k.NamountLV + k.NamountST)/VBM
+        #else:
+        #    NconcentrationVBM = 0.
 
-        # Residual NPK concentration in total vegetative living above-ground
-        # biomass  (kg N kg-1 DM)
-        # if above-ground living biomass = 0 then residual concentration = 0
-        if VBM > 0.:
-            NresidualVBM = (k.WLV * p.NRESIDLV + k.WST * p.NRESIDST)/VBM
-        else:
-            NresidualVBM = PresidualVBM = KresidualVBM = 0.
+        ## Residual NPK concentration in total vegetative living above-ground
+        ## biomass  (kg N kg-1 DM)
+        ## if above-ground living biomass = 0 then residual concentration = 0
+        #if VBM > 0.:
+        #    NresidualVBM = (k.WLV * p.NRESIDLV + k.WST * p.NRESIDST)/VBM
+        #else:
+        #    NresidualVBM = PresidualVBM = KresidualVBM = 0.
             
-        if (NcriticalVBM - NresidualVBM) > 0.:
-            r.NNI = limit(0.001, 1.0, (NconcentrationVBM - NresidualVBM)/(NcriticalVBM - NresidualVBM))
-        else:
-            r.NNI = 0.001
+        #if (NcriticalVBM - NresidualVBM) > 0.:
+        #    r.NNI = limit(0.001, 1.0, (NconcentrationVBM - NresidualVBM)/(NcriticalVBM - NresidualVBM))
+        #else:
+        #    r.NNI = 0.001
             
-        r.NPKI = r.NNI
+        #r.NPKI = r.NNI
 
         # Calculate multiplication factor of leaf death due to N stress
         NamountABG = k.NamountLV + k.NamountST + k.NamountSO
@@ -202,7 +203,8 @@ class NPK_Stress(SimulationObject):
         NstressIndexRGRLAI = max(0, min(1, (NconcentrationLV - 0.9 * NMAXLV) / (NMAXLV - 0.9 * NMAXLV)))
         r.RFRGRL = 1 - (1.-NstressIndexRGRLAI)*(p.RGRLAI-p.RGRLAI_MIN) / p.RGRLAI
 
-        # Nutrient reduction factor for assimilation
-        r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))
+        ## Nutrient reduction factor for assimilation
+        #r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))
          
-        return r.NNI, r.NPKI, r.RFNPK
+        #return r.NNI, r.NPKI, r.RFNPK
+        return r.RFNPK
