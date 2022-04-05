@@ -667,7 +667,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         # added IS
         # leaf death equals maximum of water stress, shading and frost
-        r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3) * k.NSLLV
+        #r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3) * k.NSLLV
 
         # Determine how much leaf biomass classes have to die in states.LV,
         # given the a life span > SPAN, these classes will be accumulated
@@ -679,6 +679,10 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
             if lvage > p.SPAN:
                 DALV += lv
         r.DALV = DALV
+
+        # Suggestion Allard accelarete ageing:
+        r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3)
+        r.DALV = min(DALV * k.NSLLV, k.WLV)
 
         # Total death rate leaves
         r.DRLV = max(r.DSLV, r.DALV)
