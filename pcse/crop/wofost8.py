@@ -15,7 +15,7 @@ from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
 from .leaf_dynamics import WOFOST_Leaf_Dynamics_NPK as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
     Storage_Organ_Dynamics
-from .assimilation import WOFOST_Assimilation2 as Assimilation
+from .assimilation import WOFOST_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_NPK as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
