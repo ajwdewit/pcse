@@ -285,31 +285,12 @@ class DVS_Partitioning_NPK(SimulationObject):
     @prepare_states
     def integrate(self, day, delt=1.0):
         """
-        Update partitioning factors based on development stage (DVS)
-        and the Nitrogen nutrition Index (NNI)
+        Update partitioning factors based on development stage (DVS) and water and oxygen stress
         """
 
         p = self.params
         s = self.states
         k = self.kiosk
-
-        #if k.RFTRA < k.NNI:
-        #    # Water stress is more severe than nitrogen stress and the
-        #    # partitioning follows the original LINTUL2 assumptions
-        #    # Note: we use specifically nitrogen stress not nutrient stress!!!
-        #    FRTMOD = max(1., 1./(k.RFTRA + 0.5))
-        #    s.FR = min(0.6, p.FRTB(k.DVS) * FRTMOD)
-        #    s.FL = p.FLTB(k.DVS)
-        #    s.FS = p.FSTB(k.DVS)
-        #    s.FO = p.FOTB(k.DVS)
-        #else:
-        #    # Nitrogen stress is more severe than water stress resulting in
-        #    # less partitioning to leaves and more to stems
-        #    FLVMOD = exp(-p.NPART * (1.0 - k.NNI))
-        #    s.FL = p.FLTB(k.DVS) * FLVMOD
-        #    s.FS = p.FSTB(k.DVS) + p.FLTB(k.DVS) - s.FL
-        #    s.FR = p.FRTB(k.DVS)
-        #    s.FO = p.FOTB(k.DVS)
 
         FRTMOD = max(1., 1./(k.RFTRA + 0.5))
         s.FR = min(0.6, p.FRTB(k.DVS) * FRTMOD)
