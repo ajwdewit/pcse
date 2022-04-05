@@ -227,14 +227,8 @@ class Wofost80(SimulationObject):
         # (evapo)transpiration rates
         self.evtra(day, drv)
 
-        # nutrient status and reduction factor
-        #NNI, NPKI, RFNPK = self.npk_stress(day, drv)
-        RFNPK = self.npk_stress(day, drv)
-
-        # Select minimum of nutrient and water/oxygen stress
-        reduction = min(RFNPK, k.RFTRA)
-
-        rates.GASS = rates.PGASS * reduction
+        # Canopy assimilation rate can be reduced due to water/oxygen stress if RFTRA < 1.0
+        rates.GASS = rates.PGASS * k.RFTRA
 
         # Respiration
         PMRES = self.mres(day, drv)
@@ -267,7 +261,9 @@ class Wofost80(SimulationObject):
             # Reallocation rate in terms of increase in storage organs taking
             # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
             rates.REALLOC_SO = (rates.REALLOC_LV + rates.REALLOC_ST)  * params.REALLOC_EFFICIENCY
-
+        
+        # Calculate N stress indices
+        self.npk_stress(day, drv)
 
         # distribution over plant organ
 
