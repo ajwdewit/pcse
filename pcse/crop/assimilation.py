@@ -72,7 +72,7 @@ def totass(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
 
     return DTGA
 
-def totass2(DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
+def totass2(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     """ This routine calculates the daily total gross CO2 assimilation by
     performing a Gaussian integration over time. At three different times of
     the day, irradiance is computed and used to calculate the instantaneous
@@ -118,7 +118,7 @@ def totass2(DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVRAD, DIFPP, DSINBE, 
             PAR    = 0.5*AVRAD*SINB*(1.+0.4*SINB)/DSINBE
             PARDIF = min(PAR,SINB*DIFPP)
             PARDIR = PAR-PARDIF
-            FGROS = assim2(CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF)
+            FGROS = assim2(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF)
             DTGA += FGROS*WGAUSS[i]
     DTGA *= DAYL
 
@@ -189,7 +189,7 @@ def assim(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     FGROS  = FGROS*LAI
     return FGROS
 
-def assim2(CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
+def assim2(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
     """This routine calculates the gross CO2 assimilation rate of
     the whole crop, FGROS, by performing a Gaussian integration
     over depth in the crop canopy. At three different depths in
@@ -237,11 +237,12 @@ def assim2(CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
         else:
             AMAX = 9.5 + 22 * SLN
         
-        AMAX = max(0, 32.4 * (SLN-0.2))
+        #AMAX = max(0, 27.7 * (SLN-0.02))
+        AMAX = max(0, AMAX_SLP * (SLN - AMAX_LNB))
         AMAX *= CO2AMAX
         AMAX *= TMPF
 
-        AMAX = min(38.18 * CO2AMAX * TMPF, AMAX)
+        AMAX = min(AMAX_REF * CO2AMAX * TMPF, AMAX)
 
         # absorbed diffuse radiation (VISDF),light from direct
         # origine (VIST) and direct light (VISD)
@@ -481,7 +482,10 @@ class WOFOST_Assimilation2(SimulationObject):
     _TMNSAV = Instance(deque)
 
     class Parameters(ParamTemplate):
-        AMAXTB = AfgenTrait()
+        #AMAXTB = AfgenTrait()
+        AMAX_LNB = Float(-99.)
+        AMAX_SLP = Float(-99.)
+        AMAX_REF = Float(-99.)
         EFFTB = AfgenTrait()
         KDIFTB = AfgenTrait()
         TMPFTB = AfgenTrait()
@@ -531,7 +535,7 @@ class WOFOST_Assimilation2(SimulationObject):
         CO2EFFTB = p.CO2EFFTB(p.CO2)        
         EFF  = p.EFFTB(drv.DTEMP) * CO2EFFTB
 
-        DTGA = totass2(DAYL, CO2AMAX, TMPF, EFF, p.KN, LAI, NLV, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
+        DTGA = totass2(p.AMAX_LNB, p.AMAX_REF, p.AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, p.KN, LAI, NLV, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
         DTGA *= p.TMNFTB(TMINRA)
