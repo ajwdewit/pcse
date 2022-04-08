@@ -235,7 +235,7 @@ class DVS_Partitioning_NPK(SimulationObject):
         FLTB = AfgenTrait()
         FSTB = AfgenTrait()
         FOTB = AfgenTrait()
-        NPART = Float(-99.)  # coefficient for the effect of N stress on leaf allocation
+        #NPART = Float(-99.)  # coefficient for the effect of N stress on leaf allocation
 
     class StateVariables(StatesTemplate):
         FR = Float(-99.)
