@@ -171,6 +171,18 @@ class Wofost72_PP_HB(Engine):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
 
+class Wofost72_WLP_HB(Engine):
+    """Convenience class for running WOFOST7.2 Potential Production.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost72_WLP_HB.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
 
 class Wofost80_PP_beta_HB(Engine):
     """Convenience class for running WOFOST8.0 potential production (includes NPK dynamics)
