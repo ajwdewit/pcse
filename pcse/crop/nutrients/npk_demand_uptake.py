@@ -183,6 +183,9 @@ class NPK_Demand_Uptake(SimulationObject):
         r.NdemandRT = max(mc.NMAXRT * k.WRT - k.NamountRT, 0.) + max(k.GRRT * mc.NMAXRT, 0) * delt
         r.NdemandSO = max(mc.NMAXSO * k.WSO - k.NamountSO, 0.) + max(k.GRSO * mc.NMAXSO, 0) * delt
 
+        r.Ndemand = r.NdemandLV + r.NdemandST + r.NdemandRT + r.NdemandSO
+
+
         # biological nitrogen fixation
         r.RNfixation = (max(0., p.NFIX_FR * r.Ndemand) * NutrientLIMIT)
 
@@ -209,7 +212,7 @@ class NPK_Demand_Uptake(SimulationObject):
             r.RNtranslocationRT = r.RNtranslocation * (s.NTranslocatableRT / s.NTranslocatable) 
             r.RNtranslocationST = r.RNtranslocation * (s.NTranslocatableST / s.NTranslocatable)
 
-        r.Ndemand = (r.NdemandLV + r.RNtranslocationLV) + (r.NdemandST + r.RNtranslocationST) + (r.NdemandRT + r.RNtranslocationRT) + (r.NdemandSO - r.RNtranslocation)
+        #r.Ndemand = (r.NdemandLV + r.RNtranslocationLV) + (r.NdemandST + r.RNtranslocationST) + (r.NdemandRT + r.RNtranslocationRT) + (r.NdemandSO - r.RNtranslocation)
         r.RNuptake = (max(0., min(r.Ndemand - r.RNfixation, k.NAVAIL, p.RNUPTAKEMAX)) * NutrientLIMIT)
 
         if r.Ndemand == 0:
