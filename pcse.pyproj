@@ -70,6 +70,7 @@
     <Compile Include="pcse\base\variablekiosk.py" />
     <Compile Include="pcse\base\weather.py" />
     <Compile Include="pcse\base\__init__.py" />
+    <Compile Include="pcse\conf\Wofost72_WLP_HB.conf" />
     <Compile Include="pcse\conf\__init__.py" />
     <Compile Include="pcse\crop\abioticdamage.py" />
     <Compile Include="pcse\crop\assimilation.py" />
