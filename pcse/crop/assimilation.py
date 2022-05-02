@@ -379,7 +379,7 @@ def assim7(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
         FGROS += FGL*WGAUSS[i]
 
     FGROS  = FGROS*LAI
-    return 
+    return FGROS
 
 class WOFOST_Assimilation7(SimulationObject):
     """Class implementing a WOFOST/SUCROS style assimilation routine.
