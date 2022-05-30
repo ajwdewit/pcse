@@ -100,7 +100,7 @@ class NPK_Stress(SimulationObject):
     PNI       Nitrogen nutrition index                          N     -
     KNI       Nitrogen nutrition index                          N     -
     NPKI      Minimum of NNI, PNI, KNI                          Y     -
-    NPKREF    Reduction factor for |CO2| assimlation            N     -
+    RFNPK     Reduction factor for |CO2| assimlation            N     -
               based on NPKI and the parameter NLUE_NPK
     =======  ================================================= ==== ==============
 
@@ -148,7 +148,7 @@ class NPK_Stress(SimulationObject):
         PNI = Float()
         KNI = Float()
         NPKI = Float()
-        NPKREF = Float()
+        RFNPK = Float()
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -243,6 +243,6 @@ class NPK_Stress(SimulationObject):
         r.NPKI = min(r.NNI, r.PNI, r.KNI)
 
         # Nutrient reduction factor for assimilation
-        r.NPKREF = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001-r.NPKI)**2))
+        r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))
          
-        return r.NNI, r.NPKI, r.NPKREF
+        return r.NNI, r.NPKI, r.RFNPK

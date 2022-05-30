@@ -9,6 +9,7 @@ from ..util import AfgenTrait
 from .nutrients import NPK_Translocation
 from .nutrients import NPK_Demand_Uptake
 
+
 class NPK_Crop_Dynamics(SimulationObject):
     """Implementation of overall NPK crop dynamics.
 
@@ -20,8 +21,6 @@ class NPK_Crop_Dynamics(SimulationObject):
     =============  ================================================= =======================
      Name           Description                                        Unit
     =============  ================================================= =======================
-    DVS_NPK_STOP   DVS above which no crop N-P-K uptake occurs           -
-
     NMAXLV_TB      Maximum N concentration in leaves as               kg N kg-1 dry biomass
                    function of dvs
     PMAXLV_TB      As for P                                           kg P kg-1 dry biomass
@@ -190,14 +189,14 @@ class NPK_Crop_Dynamics(SimulationObject):
         PamountRT = Float(-99.) # P amount in roots [kg P ]
         KamountRT = Float(-99.) # K amount in roots [kg K ]
         
-        Nuptake_T = Float(-99.) # total absorbed N amount [kg N ]
-        Puptake_T = Float(-99.) # total absorbed P amount [kg P ]
-        Kuptake_T = Float(-99.) # total absorbed K amount [kg K ]
-        Nfix_T = Float(-99.) # total biological fixated N amount [kg N ]
+        NuptakeTotal = Float(-99.) # total absorbed N amount [kg N ]
+        PuptakeTotal = Float(-99.) # total absorbed P amount [kg P ]
+        KuptakeTotal = Float(-99.) # total absorbed K amount [kg K ]
+        NfixTotal = Float(-99.) # total biological fixated N amount [kg N ]
         
-        Nlosses_T = Float(-99.)
-        Plosses_T = Float(-99.)
-        Klosses_T = Float(-99.)
+        NlossesTotal = Float(-99.)
+        PlossesTotal = Float(-99.)
+        KlossesTotal = Float(-99.)
 
     class RateVariables(RatesTemplate):
         RNamountLV = Float(-99.)  # Net rates of NPK in different plant organs 
@@ -272,8 +271,8 @@ class NPK_Crop_Dynamics(SimulationObject):
                         NamountLV=NamountLV, NamountST=NamountST, NamountRT=NamountRT, NamountSO=NamountSO,
                         PamountLV=PamountLV, PamountST=PamountST, PamountRT=PamountRT, PamountSO=PamountSO,
                         KamountLV=KamountLV, KamountST=KamountST, KamountRT=KamountRT, KamountSO=KamountSO,
-                        Nuptake_T=0, Puptake_T=0., Kuptake_T=0., Nfix_T=0.,
-                        Nlosses_T=0, Plosses_T=0., Klosses_T=0.)
+                        NuptakeTotal=0, PuptakeTotal=0., KuptakeTotal=0., NfixTotal=0.,
+                        NlossesTotal=0, PlossesTotal=0., KlossesTotal=0.)
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -353,59 +352,59 @@ class NPK_Crop_Dynamics(SimulationObject):
         self.demand_uptake.integrate(day, delt)
 
         # total NPK uptake from soil
-        states.Nuptake_T += k.RNuptake
-        states.Puptake_T += k.RPuptake
-        states.Kuptake_T += k.RKuptake
-        states.Nfix_T += k.RNfixation
+        states.NuptakeTotal += k.RNuptake
+        states.PuptakeTotal += k.RPuptake
+        states.KuptakeTotal += k.RKuptake
+        states.NfixTotal += k.RNfixation
         
-        states.Nlosses_T += rates.RNloss
-        states.Plosses_T += rates.RPloss
-        states.Klosses_T += rates.RKloss
+        states.NlossesTotal += rates.RNloss
+        states.PlossesTotal += rates.RPloss
+        states.KlossesTotal += rates.RKloss
 
     def _check_N_balance(self, day):
         s = self.states
-        checksum = abs(s.Nuptake_T + s.Nfix_T +
+        checksum = abs(s.NuptakeTotal + s.NfixTotal +
                        (self.NamountLVI + self.NamountSTI + self.NamountRTI + self.NamountSOI) -
-                       (s.NamountLV + s.NamountST + s.NamountRT + s.NamountSO + s.Nlosses_T))
+                       (s.NamountLV + s.NamountST + s.NamountRT + s.NamountSO + s.NlossesTotal))
 
         if abs(checksum) >= 1.0:
             msg = "N flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, Nuptake_T: %f, Nfix_T: %f\n" % (checksum, s.Nuptake_T, s.Nfix_T)
+            msg += "Checksum: %f, Nuptake_T: %f, Nfix_T: %f\n" % (checksum, s.NuptakeTotal, s.NfixTotal)
             msg += "NamountLVI: %f, NamountSTI: %f, NamountRTI: %f, NamountSOI: %f\n"  % \
                    (self.NamountLVI, self.NamountSTI, self.NamountRTI, self.NamountSOI)
             msg += "NamountLV: %f, NamountST: %f, NamountRT: %f, NamountSO: %f\n" % \
                    (s.NamountLV, s.NamountST, s.NamountRT, s.NamountSO)
-            msg += "NLOSST: %f\n" % (s.Nlosses_T)
+            msg += "NLOSST: %f\n" % (s.NlossesTotal)
             raise exc.NutrientBalanceError(msg)
 
     def _check_P_balance(self, day):
         s = self.states
-        checksum = abs(s.Puptake_T +
+        checksum = abs(s.PuptakeTotal +
                        (self.PamountLVI + self.PamountSTI + self.PamountRTI + self.PamountSOI) -
-                       (s.PamountLV + s.PamountST + s.PamountRT + s.PamountSO + s.Plosses_T))
+                       (s.PamountLV + s.PamountST + s.PamountRT + s.PamountSO + s.PlossesTotal))
 
         if abs(checksum) >= 1.:
             msg = "P flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, Puptake_T: %f\n" % (checksum, s.Puptake_T)
+            msg += "Checksum: %f, Puptake_T: %f\n" % (checksum, s.PuptakeTotal)
             msg += "PamountLVI: %f, PamountSTI: %f, PamountRTI: %f, PamountSOI: %f\n" % \
                    (self.PamountLVI, self.PamountSTI, self.PamountRTI, self.PamountSOI)
             msg += "PamountLV: %f, PamountST: %f, PamountRT: %f, PamountSO: %f\n" % \
                    (s.PamountLV, s.PamountST, s.PamountRT, s.PamountSO)
-            msg += "PLOSST: %f\n" % (s.Plosses_T)
+            msg += "PLOSST: %f\n" % (s.PlossesTotal)
             raise exc.NutrientBalanceError(msg)
 
     def _check_K_balance(self, day):
         s = self.states
-        checksum = abs(s.Kuptake_T +
+        checksum = abs(s.KuptakeTotal +
                        (self.KamountLVI + self.KamountSTI + self.KamountRTI + self.KamountSOI) -
-                       (s.KamountLV + s.KamountST + s.KamountRT + s.KamountSO + s.Klosses_T))
+                       (s.KamountLV + s.KamountST + s.KamountRT + s.KamountSO + s.KlossesTotal))
 
         if abs(checksum) >= 1.:
             msg = "K flows not balanced on day %s\n" % day
-            msg += "Checksum: %f, Kuptake_T: %f\n"  % (checksum, s.Kuptake_T)
+            msg += "Checksum: %f, Kuptake_T: %f\n"  % (checksum, s.KuptakeTotal)
             msg += "KamountLVI: %f, KamountSTI: %f, KamountRTI: %f, KamountSOI: %f\n" % \
                    (self.KamountLVI, self.KamountSTI, self.KamountRTI, self.KamountSOI)
             msg += "KamountLV: %f, KamountST: %f, KamountRT: %f, KamountSO: %f\n" % \
                    (s.KamountLV, s.KamountST, s.KamountRT, s.KamountSO)
-            msg += "KLOSST: %f\n" % (s.Klosses_T)
+            msg += "KLOSST: %f\n" % (s.KlossesTotal)
             raise exc.NutrientBalanceError(msg)
