@@ -19,7 +19,7 @@ except ImportError as exc:
     ftotass = fastro = None
 
 
-def totass(AMAX_LNB, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
+def totass(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     """ This routine calculates the daily total gross CO2 assimilation by
     performing a Gaussian integration over time. At three different times of
     the day, irradiance is computed and used to calculate the instantaneous
@@ -71,7 +71,7 @@ def totass(AMAX_LNB, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVR
     return DTGA
 
 
-def assim(AMAX_LNB, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
+def assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
     """This routine calculates the gross CO2 assimilation rate of
     the whole crop, FGROS, by performing a Gaussian integration
     over depth in the crop canopy. At three different depths in
@@ -114,7 +114,7 @@ def assim(AMAX_LNB, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARD
         else:
             SLN = (NLV / (LAI * 10))
 
-        AMAX =  CO2AMAX * TMPF * max(0, AMAX_SLP * (SLN - AMAX_LNB))
+        AMAX =  CO2AMAX * TMPF * min(AMAX_REF, max(0, AMAX_SLP * (SLN - AMAX_LNB)))
 
         # absorbed diffuse radiation (VISDF),light from direct
         # origine (VIST) and direct light (VISD)
@@ -207,6 +207,7 @@ class WOFOST_Assimilation(SimulationObject):
 
     class Parameters(ParamTemplate):
         AMAX_LNB = Float(-99.)
+        AMAX_REF = Float(-99.)
         AMAX_SLP = Float(-99.)
         EFFTB = AfgenTrait()
         KDIFTB = AfgenTrait()
@@ -257,7 +258,7 @@ class WOFOST_Assimilation(SimulationObject):
         CO2EFFTB = p.CO2EFFTB(p.CO2)        
         EFF  = p.EFFTB(drv.DTEMP) * CO2EFFTB
 
-        DTGA = totass(p.AMAX_LNB, p.AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, p.KN, LAI, NLV, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
+        DTGA = totass(p.AMAX_LNB, p.AMAX_REF, p.AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, p.KN, LAI, NLV, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
         DTGA *= p.TMNFTB(TMINRA)
