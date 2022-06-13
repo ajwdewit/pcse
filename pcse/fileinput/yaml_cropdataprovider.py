@@ -80,10 +80,6 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     case use `force_reload=True` to force loading the parameters from the URL.
     """
     repository = "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master/"
-    crop_types = ["barley", "cassava", "chickpea", "cotton", "cowpea", "fababean", "groundnut",
-                  "maize", "millet", "mungbean", "pigeonpea", "potato", "rapeseed", "rice",
-                  "sorghum", "soybean", "sugarbeet", "sugarcane", "sunflower", "sweetpotato",
-                  "tobacco", "wheat"]
 
     HTTP_OK = 200
     current_crop_name = None
@@ -101,27 +97,35 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                 for fname_fp in yaml_file_names:
                     with open(fname_fp) as fp:
                         parameters = yaml.safe_load(fp)
-                    self._check_version(parameters)
+                    self._check_version(parameters, crop_fname=fname_fp)
                     # Add crop parameters to internal store. Assume that the name of the file
-                    # is the name of the crop (crop_name).
+                    # is the name of the crop (crop_fname).
                     dir, fname = os.path.split(fname_fp)
-                    crop_name, ext = os.path.splitext(fname)
-                    self._add_crop(crop_name, parameters)
+                    crop_fname, ext = os.path.splitext(fname)
+                    self._add_crop(crop_fname, parameters)
             else:
                 if repository is not None:
                     if not repository.endswith("/"):
                         repository += "/"
                     self.repository = repository
-                for crop_name in self.crop_types:
-                    url = self.repository + crop_name + ".yaml"
+                try:
+                    url = self.repository + "crops.yaml"
+                    response = urlopen(url)
+                    self.crop_types = yaml.safe_load(response)["available_crops"]
+                except URLError as e:
+                    msg = "Unable to find crops.yaml at '%s' due to: %s" % (url, e)
+                    raise exc.PCSEError(msg)
+
+                for crop_fname in self.crop_types:
+                    url = self.repository + crop_fname
                     try:
                         response = urlopen(url)
                     except URLError as e:
                         msg = "Unable to open '%s' due to: %s" % (url, e)
                         raise exc.PCSEError(msg)
                     parameters = yaml.safe_load(response)
-                    self._check_version(parameters)
-                    self._add_crop(crop_name, parameters)
+                    self._check_version(parameters, crop_fname)
+                    self._add_crop(crop_fname, parameters)
 
             with open(self._get_cache_fname(fpath), "wb") as fp:
                 pickle.dump((self.compatible_version, self._store), fp, pickle.HIGHEST_PROTOCOL)
@@ -169,17 +173,21 @@ class YAMLCropDataProvider(MultiCropDataProvider):
 
         return False
 
-    def _check_version(self, parameters):
+    def _check_version(self, parameters, crop_fname):
         """Checks the version of the parameter input with the version supported by this data provider.
 
         Raises an exception if the parameter set is incompatible.
 
         :param parameters: The parameter set loaded by YAML
         """
-        v = parameters['Version']
-        if version_tuple(v) != version_tuple(self.compatible_version):
-            msg = "Version supported by %s is %s, while parameter set version is %s!"
-            raise exc.PCSEError(msg % (self.__class__.__name__, self.compatible_version, parameters['Version']))
+        try:
+            v = parameters['Version']
+            if version_tuple(v) != version_tuple(self.compatible_version):
+                msg = "Version supported by %s is %s, while parameter set version is %s!"
+                raise exc.PCSEError(msg % (self.__class__.__name__, self.compatible_version, parameters['Version']))
+        except Exception as e:
+            msg = f"Version check failed on crop parameter file: {crop_fname}"
+            raise exc.PCSEError(msg)
 
     def _add_crop(self, crop_name, parameters):
         """Store the parameter sets for the different varieties for the given crop.
@@ -190,8 +198,12 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     def _get_yaml_files(self, fpath):
         """Returns all the files ending on *.yaml in the given path.
         """
-        fnames = os.listdir(fpath)
-        crop_fnames = [os.path.join(fpath, fn) for fn in fnames if fn.endswith("yaml")]
+        fname = os.path.join(fpath, "crops.yaml")
+        if not os.path.exists(fname):
+            msg = "Cannot find crops.yaml at {f}".format(f=fname)
+            raise exc.PCSEError(msg)
+        fnames = yaml.safe_load(open(fname))
+        crop_fnames = [os.path.join(fpath, fn) for fn in fnames["available_crops"]]
         return crop_fnames
 
     def set_active_crop(self, crop_name, variety_name):
