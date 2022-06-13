@@ -48,17 +48,19 @@ class TestWOFOST80_Potential_WinterWheat(unittest.TestCase):
         msg = "Different number of rows in model output and reference results"
         self.assertEqual(len(ref_results), len(self.output), msg)
         ntests = 0
-        for ref, out in zip(ref_results, self.output):
+        for ref_results, sim_outputs in zip(ref_results, self.output):
             msg = "Date not equal when comparing reference with simulation."
-            day = ref.pop("day")
-            self.assertEqual(day, str(out.pop("day")), msg)
-            for name, refvalue in ref.items():
-                rv = self._safe_cast_float(refvalue)
-                sv = out[name]
-                if rv is None and sv is None:
+            day = ref_results.pop("day")
+            self.assertEqual(day, str(sim_outputs.pop("day")), msg)
+            for name, ref_value in ref_results.items():
+                if name not in sim_outputs:
                     continue
-                msg = "%s, %s: %f != %f" % (day, name, sv, rv)
-                self.assertAlmostEqual(rv, sv, msg=msg, delta=0.001)
+                v1 = self._safe_cast_float(ref_value)
+                v2 = sim_outputs[name]
+                if v1 is None and v2 is None:
+                    continue
+                msg = "%s, %s: %f != %f" % (day, name, v2, v1)
+                self.assertAlmostEqual(v1, v2, msg=msg, delta=0.001)
             ntests += 1
         msg = "Number of days tested should be 216, found %i" % ntests
         self.assertEqual(ntests, 216, msg)
