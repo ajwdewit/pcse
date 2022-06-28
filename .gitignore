@@ -44,3 +44,4 @@ runfiles
 
 .vs/*
 pcse.sln
+/*.pyproj
