@@ -64,7 +64,7 @@ def totass(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV,
             PAR    = 0.5*AVRAD*SINB*(1.+0.4*SINB)/DSINBE
             PARDIF = min(PAR,SINB*DIFPP)
             PARDIR = PAR-PARDIF
-            FGROS = assim(AMAX_LNB, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF)
+            FGROS = assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF)
             DTGA += FGROS*WGAUSS[i]
     DTGA *= DAYL
 
@@ -114,7 +114,7 @@ def assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, 
         else:
             SLN = (NLV / (LAI * 10))
 
-        AMAX =  CO2AMAX * TMPF * min(AMAX_REF, max(0, AMAX_SLP * (SLN - AMAX_LNB)))
+        AMAX =  CO2AMAX * TMPF * min(AMAX_REF , max(0, AMAX_SLP * (SLN - AMAX_LNB)))
 
         # absorbed diffuse radiation (VISDF),light from direct
         # origine (VIST) and direct light (VISD)
