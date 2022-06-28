@@ -45,3 +45,4 @@ runfiles
 .vs/*
 pcse.sln
 /*.pyproj
+/env_pcse
