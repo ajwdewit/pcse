@@ -41,3 +41,6 @@ runfiles
 
 # Cache files from YAML experiments
 *.cache
+
+.vs/*
+pcse.sln
