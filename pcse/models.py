@@ -157,3 +157,13 @@ class LINGRA_NWLP_FD(Engine):
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
+
+
+class ALCEPAS(Engine):
+    """ALCEPAS Onion growth model.
+    """
+    config = "alcepas.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
