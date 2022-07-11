@@ -92,6 +92,10 @@ class YAMLCropDataProvider(MultiCropDataProvider):
         MultiCropDataProvider.__init__(self)
 
         if not self._load_cache(fpath) or force_reload:
+            if force_reload:  # enforce a clear state when we force a reload
+                self.clear()
+                self._store.clear()
+
             if fpath is not None:
                 yaml_file_names = self._get_yaml_files(fpath)
                 for crop_name, yaml_fname in yaml_file_names.items():
