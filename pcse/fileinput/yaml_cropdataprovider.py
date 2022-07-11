@@ -94,20 +94,16 @@ class YAMLCropDataProvider(MultiCropDataProvider):
         if not self._load_cache(fpath) or force_reload:
             if fpath is not None:
                 yaml_file_names = self._get_yaml_files(fpath)
-                for fname_fp in yaml_file_names:
-                    with open(fname_fp) as fp:
+                for crop_name, yaml_fname in yaml_file_names.items():
+                    with open(yaml_fname) as fp:
                         parameters = yaml.safe_load(fp)
-                    self._check_version(parameters, crop_fname=fname_fp)
-                    # Add crop parameters to internal store. Assume that the name of the file
-                    # is the name of the crop (crop_fname).
-                    dir, fname = os.path.split(fname_fp)
-                    crop_fname, ext = os.path.splitext(fname)
-                    self._add_crop(crop_fname, parameters)
-            else:
-                if repository is not None:
-                    if not repository.endswith("/"):
-                        repository += "/"
-                    self.repository = repository
+                    self._check_version(parameters, crop_fname=yaml_fname)
+                    self._add_crop(crop_name, parameters)
+
+            elif repository is not None:
+                if not repository.endswith("/"):
+                    repository += "/"
+                self.repository = repository
                 try:
                     url = self.repository + "crops.yaml"
                     response = urlopen(url)
@@ -116,16 +112,20 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                     msg = "Unable to find crops.yaml at '%s' due to: %s" % (url, e)
                     raise exc.PCSEError(msg)
 
-                for crop_fname in self.crop_types:
-                    url = self.repository + crop_fname
+                for crop_name in self.crop_types:
+                    url = self.repository + crop_name + ".yaml"
                     try:
                         response = urlopen(url)
                     except URLError as e:
                         msg = "Unable to open '%s' due to: %s" % (url, e)
                         raise exc.PCSEError(msg)
                     parameters = yaml.safe_load(response)
-                    self._check_version(parameters, crop_fname)
-                    self._add_crop(crop_fname, parameters)
+                    self._check_version(parameters, crop_name)
+                    self._add_crop(crop_name, parameters)
+
+            else:
+                msg = "No path or URL specified where to find YAML crop parameter files"
+                raise exc.PCSEError(msg)
 
             with open(self._get_cache_fname(fpath), "wb") as fp:
                 pickle.dump((self.compatible_version, self._store), fp, pickle.HIGHEST_PROTOCOL)
@@ -200,11 +200,11 @@ class YAMLCropDataProvider(MultiCropDataProvider):
         """
         fname = os.path.join(fpath, "crops.yaml")
         if not os.path.exists(fname):
-            msg = "Cannot find crops.yaml at {f}".format(f=fname)
+            msg = "Cannot find 'crops.yaml' at {f}".format(f=fname)
             raise exc.PCSEError(msg)
-        fnames = yaml.safe_load(open(fname))
-        crop_fnames = [os.path.join(fpath, fn) for fn in fnames["available_crops"]]
-        return crop_fnames
+        crop_names = yaml.safe_load(open(fname))["available_crops"]
+        crop_yaml_fnames = {crop: os.path.join(fpath, crop + ".yaml") for crop in crop_names}
+        return crop_yaml_fnames
 
     def set_active_crop(self, crop_name, variety_name):
         """Sets the parameters in the internal dict for given crop_name and variety_name
@@ -228,7 +228,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
         self.current_variety_name = variety_name
 
         # Retrieve parameter name/values from input (ignore description and units)
-        parameters = {k: v[0] for k, v in variety_sets[variety_name].items()}
+        parameters = {k: v[0] for k, v in variety_sets[variety_name].items() if k != "Metadata"}
         # update internal dict with parameter values for this variety
         self.update(parameters)
 
