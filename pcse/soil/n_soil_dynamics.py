@@ -108,6 +108,8 @@ class N_Soil_Dynamics(SimulationObject):
     """
 
     NSOILI = Float(-99.) # initial soil N amount
+    # placeholders for FERT_N/P/K_SUPPLY
+    _FERT_N_SUPPLY = Float(0.)
 
     class Parameters(ParamTemplate):      
         NSOILBASE = Float(-99.)  # total mineral soil N available at start of growth period [kg N/ha]
@@ -148,6 +150,10 @@ class N_Soil_Dynamics(SimulationObject):
         p = self.params
         k = self.kiosk
 
+        # Rate of supplied N
+        r.FERT_N_SUPPLY = self._FERT_N_SUPPLY
+        self._FERT_N_SUPPLY = 0.
+
         r.RNSOIL = max(0., min(p.NSOILBASE_FR * self.NSOILI, s.NSOIL))
         r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - k.RNuptake + r.RNSOIL
 
@@ -163,5 +169,5 @@ class N_Soil_Dynamics(SimulationObject):
 
     @prepare_rates
     def _on_APPLY_N(self, N_amount=None, N_recovery=None, *args, **kwargs):
-        r = self.rates
-        r.FERT_N_SUPPLY = N_amount * N_recovery
+
+        self._FERT_N_SUPPLY = N_amount * N_recovery
