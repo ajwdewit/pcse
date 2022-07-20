@@ -8,6 +8,7 @@ when creating PCSE simulation units.
 """
 import logging
 import pickle
+import datetime as dt
 
 from .. import exceptions as exc
 from ..settings import settings
@@ -298,6 +299,13 @@ class WeatherDataProvider(object):
         missing = (self.last_date - self.first_date).days - len(self.store) + 1
         return missing
 
+    @property
+    def missing_days(self):
+        numdays = (self.last_date - self.first_date).days
+        all_days = {self.first_date + dt.timedelta(days=i) for i in range(numdays)}
+        avail_days = {t[0] for t in self.store.keys()}
+        return sorted(all_days - avail_days)
+
     def check_keydate(self, key):
         """Check representations of date for storage/retrieval of weather data.
 
@@ -317,19 +325,15 @@ class WeatherDataProvider(object):
         elif isinstance(key, dt.date):
             return key
         elif isinstance(key, (str, int)):
+            date_formats = {7: "%Y%j", 8: "%Y%m%d", 10: "%Y-%m-%d"}
             skey = str(key).strip()
             l = len(skey)
-            if l == 8:
-                # assume YYYYMMDD
-                dkey = dt.datetime.strptime(skey, "%Y%m%d")
-                return dkey.date()
-            elif l == 7:
-                # assume YYYYDDD
-                dkey = dt.datetime.strptime(skey, "%Y%j")
-                return dkey.date()
-            else:
+            if l not in date_formats:
                 msg = "Key for WeatherDataProvider not recognized as date: %s"
                 raise KeyError(msg % key)
+
+            dkey = dt.datetime.strptime(skey, date_formats[l])
+            return dkey.date()
         else:
             msg = "Key for WeatherDataProvider not recognized as date: %s"
             raise KeyError(msg % key)

@@ -254,10 +254,8 @@ values from files or databases.
 Tools for reading input files
 -----------------------------
 
-The file_input tools contain three classes: the `CABOFileReader` for reading in
-parameter files in the CABO format,  the `CABOWeatherDataProvider` for reading
-files from the CABO weather system and the `PCSEFileReader` for reading
-files in PCSE format.
+The file_input tools contain several classes for reading weather files,
+parameter files and agromanagement files.
 
 .. _CABOFileReader:
 .. autoclass:: pcse.fileinput.CABOFileReader

@@ -13,7 +13,7 @@ AUTHOR = "Allard de Wit"
 AUTHOR_EMAIL = 'allard.dewit@wur.nl'
 URL = 'http://github.com/ajwdewit/pcse/'
 LICENSE="EUPL"
-VERSION = "5.5.2"
+VERSION = "5.5.3"
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,7 +39,6 @@ setup(
     author=AUTHOR,
     install_requires=['SQLAlchemy>=1.3.0',
                       'PyYAML>=5.1',
-                      'xlrd>=1.2.0',
                       'openpyxl>=3.0.0',
                       'requests>=2.0.0',
                       'pandas>=0.25',
