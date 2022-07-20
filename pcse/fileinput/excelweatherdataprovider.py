@@ -4,47 +4,62 @@
 """A weather data provider reading its data from Excel files.
 """
 import os
-import datetime as dt
-import xlrd
+import openpyxl
 
 from ..base import WeatherDataContainer, WeatherDataProvider
 from ..util import reference_ET, angstrom, check_angstromAB
 from ..exceptions import PCSEError
 from ..settings import settings
 
-# Conversion functions, note that we defined a second parameter 's' that is only there
-# to catch the sheet which is needed in the function xlsdate_to_date(value, sheet).
-NoConversion = lambda x, s: x
-kJ_to_J = lambda x, s: x*1000.
-kPa_to_hPa = lambda x, s: x*10.
-mm_to_cm = lambda x, s: x/10.
+# Conversion functions
+NoConversion = lambda x: x
+kJ_to_J = lambda x: x*1000.
+kPa_to_hPa = lambda x: x*10.
+mm_to_cm = lambda x: x/10.
 
 
-class NoDataError(PCSEError):
-    pass
+def determine_true_false(value):
+    """OpenPyXL has a somewhat strange treatment of true/false
 
+    Excel cell value      OpenPyXL cell value       Type
+       =FALSE()            '=FALSE()'               str
+       =FALSE              '=FALSE'                 str
+       false                False                   bool
+       =TRUE()             '=TRUE()'                str
+       =TRUE               '=TRUE'                  str
+       TRUE                 True                    bool
 
-class OutOfRange(PCSEError):
-    pass
+    Finally, there is the possibility for true/false to be presented
+    by 0/1 integer values.
 
-
-def xlsdate_to_date(value, sheet):
-    """Convert an excel date into a python date
-
-    :param value: A value from an excel cell
-    :param sheet: A reference to the excel sheet for getting the datemode
-    :return: a python date
+    This function tries to handle all of the them.
     """
-    year, month, day, hr, min, sec = xlrd.xldate_as_tuple(value, sheet.book.datemode)
-    return dt.date(year, month, day)
+    if isinstance(value, str):
+        v = value.lower()
+        if "true" in v:
+            return True
+        elif "false" in v:
+            return False
+    elif isinstance(value, bool):
+        return value
+    elif isinstance(value, int):
+        if value == 1:
+            return True
+        elif value == 0:
+            return False
+
+    msg = f"cannot determine True|False: {value}"
+    raise ValueError(msg)
 
 
 class ExcelWeatherDataProvider(WeatherDataProvider):
-    """Reading weather data from an excel file.
+    """Reading weather data from an excel file (.xlsx only).
 
     :param xls_fname: name of the Excel file to be read
-    :param mising_snow_depth: the value that should use for missing SNOW_DEPTH values
-    :param force_reload: bypass the cache file and reload data from the XLS file
+    :param mising_snow_depth: the value that should use for missing SNOW_DEPTH values,
+           the default value is `None`.
+    :param force_reload: bypass the cache file, reload data from the .xlsx file and
+           write a new cache file. Cache files are written under `$HOME/.pcse/meteo_cache`
 
     For reading weather data from file, initially only the CABOWeatherDataProvider
     was available that reads its data from a text file in the CABO Weather format.
@@ -64,7 +79,6 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         "TMAX": NoConversion,
         "TMIN": NoConversion,
         "IRRAD": kJ_to_J,
-        "DAY": xlsdate_to_date,
         "VAP": kPa_to_hPa,
         "WIND": NoConversion,
         "RAIN": mm_to_cm,
@@ -73,9 +87,9 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
     # row numbers where values start. Note that the row numbers are
     # zero-based, so add 1 to find the corresponding row in excel.
-    site_row = 8
-    label_row = 10
-    data_start_row = 12
+    site_row = 9
+    label_row = 11
+    data_start_row = 13
 
     def __init__(self, xls_fname, missing_snow_depth=None, force_reload=False):
         WeatherDataProvider.__init__(self)
@@ -87,8 +101,8 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
             raise PCSEError(msg)
 
         if force_reload or not self._load_cache_file(self.fp_xls_fname):
-            book = xlrd.open_workbook(self.fp_xls_fname)
-            sheet = book.sheet_by_index(0)
+            book = openpyxl.load_workbook(self.fp_xls_fname, read_only=True)
+            sheet = book.active
 
             self._read_header(sheet)
             self._read_site_characteristics(sheet)
@@ -98,12 +112,12 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
     def _read_header(self, sheet):
 
-        country = sheet.cell_value(1, 1)
-        station = sheet.cell_value(2, 1)
-        desc = sheet.cell_value(3, 1)
-        src = sheet.cell_value(4, 1)
-        contact = sheet.cell_value(5, 1)
-        self.nodata_value = float(sheet.cell_value(6, 1))
+        country = sheet["B2"].value
+        station = sheet["B3"].value
+        desc = sheet["B4"].value
+        src = sheet["B5"].value
+        contact = sheet["B6"].value
+        self.nodata_value = float(sheet["B7"].value)
         self.description = [u"Weather data for:",
                             u"Country: %s" % country,
                             u"Station: %s" % station,
@@ -113,37 +127,47 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
     def _read_site_characteristics(self, sheet):
 
-        self.longitude = float(sheet.cell_value(self.site_row, 0))
-        self.latitude = float(sheet.cell_value(self.site_row, 1))
-        self.elevation = float(sheet.cell_value(self.site_row, 2))
-        angstA = float(sheet.cell_value(self.site_row, 3))
-        angstB = float(sheet.cell_value(self.site_row, 4))
+        self.longitude = float(sheet[f"A{self.site_row}"].value)
+        self.latitude = float(sheet[f"B{self.site_row}"].value)
+        self.elevation = float(sheet[f"C{self.site_row}"].value)
+        angstA = float(sheet[f"D{self.site_row}"].value)
+        angstB = float(sheet[f"E{self.site_row}"].value)
         self.angstA, self.angstB = check_angstromAB(angstA, angstB)
-        self.has_sunshine = bool(sheet.cell_value(self.site_row, 5))
+        try:
+            has_sunshine = sheet[f"F{self.site_row}"].value
+            self.has_sunshine = determine_true_false(has_sunshine)
+        except ValueError as e:
+            raise PCSEError(f"Cannot determine if sheet as radiation or sunshine hours: {e}")
+
 
     def _read_observations(self, sheet):
 
         # First get the column labels
-        labels = [cell.value for cell in sheet.row(self.label_row)]
+        labels = [cell.value for cell in sheet[self.label_row]]
 
         # Start reading all rows with data
-        rownums = list(range(sheet.nrows))
-        for rownum in rownums[self.data_start_row:]:
+        # rownums = list(range(sheet.nrows))
+        for rownum, row in enumerate(sheet[self.data_start_row:sheet.max_row]):
             try:
-                row = sheet.row(rownum)
                 d = {}
                 for cell, label in zip(row, labels):
+                    if label == "DAY":
+                        if cell.value is None:
+                            raise ValueError
+                        else:
+                            d[label] = cell.value.date()
+                            continue
+
                     # explicitly convert to float. If this fails a ValueError will be thrown
                     value = float(cell.value)
 
                     # Check for observations marked as missing. Currently only missing
                     # data is allowed for SNOWDEPTH. Otherwise raise an error
-                    eps = 0.0001
-                    if (value - self.nodata_value) < eps:
+                    if self._is_missing_value(value):
                         if label == "SNOWDEPTH":
                             value = self.missing_snow_depth
                         else:
-                            raise NoDataError
+                            raise ValueError()
 
                     if label == "IRRAD" and self.has_sunshine is True:
                         if 0 < value < 24:
@@ -151,11 +175,12 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                             value = angstrom(d["DAY"], self.latitude, value, self.angstA, self.angstB)
                             value /= 1000.  # convert to kJ/m2/day for compatibility with obs_conversion function
                         else:
-                            msg = "Sunshine duration not within 0-24 interval for row %i" % (rownum + 1)
-                            raise OutOfRange(msg)
+                            msg = "Sunshine duration not within 0-24 interval for row %i" % \
+                                  (rownum + self.data_start_row)
+                            raise ValueError(msg)
 
                     func = self.obs_conversions[label]
-                    d[label] = func(value, sheet)
+                    d[label] = func(value)
 
                 # Reference ET in mm/day
                 e0, es0, et0 = reference_ET(LAT=self.latitude, ELEV=self.elevation, ANGSTA=self.angstA,
@@ -166,17 +191,10 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                 wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude, ELEV=self.elevation, **d)
                 self._store_WeatherDataContainer(wdc, d["DAY"])
 
-            except ValueError as e: # strange value in cell
-                msg = "Failed reading row: %i. Skipping..." % (rownum + 1)
+            except ValueError as e:  # strange value in cell
+                msg = "Failed reading row: %i. Skipping..." % (rownum + self.data_start_row)
                 self.logger.warn(msg)
                 print(msg)
-
-            except NoDataError as e: # Missing value encountered
-                msg = "No data value (%f) encountered at row %i. Skipping..." % (self.nodata_value, (rownum + 1))
-                self.logger.warn(msg)
-
-            except OutOfRange as e:
-                self.logger.warn(e)
 
     def _load_cache_file(self, xls_fname):
 
@@ -223,3 +241,14 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         except (IOError, EnvironmentError) as e:
             msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
             self.logger.warning(msg)
+
+    def _is_missing_value(self, value):
+        """Checks if value is equal to the value specified for missign date
+
+        :return: True|False
+        """
+        eps = 0.0001
+        if abs(value - self.nodata_value) < eps:
+            return True
+        else:
+            return False

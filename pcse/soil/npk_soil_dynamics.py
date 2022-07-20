@@ -144,8 +144,13 @@ class NPK_Soil_Dynamics(SimulationObject):
     NSOILI = Float(-99.) # initial soil N amount
     PSOILI = Float(-99.) # initial soil P amount
     KSOILI = Float(-99.) # initial soil K amount
-    
-    class Parameters(ParamTemplate):      
+
+    # placeholders for FERT_N/P/K_SUPPLY
+    _FERT_N_SUPPLY = Float(0.)
+    _FERT_P_SUPPLY = Float(0.)
+    _FERT_K_SUPPLY = Float(0.)
+
+    class Parameters(ParamTemplate):
         NSOILBASE = Float(-99.)  # total mineral soil N available at start of growth period [kg N/ha]
         NSOILBASE_FR = Float(-99.)  # fraction of soil mineral N coming available per day [day-1]
 
@@ -220,6 +225,14 @@ class NPK_Soil_Dynamics(SimulationObject):
         p = self.params
         k = self.kiosk
 
+        # Rate of supplied N/P/K
+        r.FERT_N_SUPPLY = self._FERT_N_SUPPLY
+        r.FERT_P_SUPPLY = self._FERT_P_SUPPLY
+        r.FERT_K_SUPPLY = self._FERT_K_SUPPLY
+        self._FERT_N_SUPPLY = 0.
+        self._FERT_P_SUPPLY = 0.
+        self._FERT_K_SUPPLY = 0.
+
         r.RNSOIL = -max(0., min(p.NSOILBASE_FR * self.NSOILI, s.NSOIL))
         r.RPSOIL = -max(0., min(p.PSOILBASE_FR * self.PSOILI, s.PSOIL))
         r.RKSOIL = -max(0., min(p.KSOILBASE_FR * self.KSOILI, s.KSOIL))
@@ -251,9 +264,6 @@ class NPK_Soil_Dynamics(SimulationObject):
     def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
                       P_recovery=None, K_recovery=None):
 
-        r = self.rates
-        r.unlock()
-        r.FERT_N_SUPPLY = N_amount * N_recovery
-        r.FERT_P_SUPPLY = P_amount * P_recovery
-        r.FERT_K_SUPPLY = K_amount * K_recovery
-        r.lock()
+        self._FERT_N_SUPPLY = N_amount * N_recovery
+        self._FERT_P_SUPPLY = P_amount * P_recovery
+        self._FERT_K_SUPPLY = K_amount * K_recovery
