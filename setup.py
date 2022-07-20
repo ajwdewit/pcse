@@ -39,7 +39,6 @@ setup(
     author=AUTHOR,
     install_requires=['SQLAlchemy>=1.3.0',
                       'PyYAML>=5.1',
-                      'xlrd>=1.2.0',
                       'openpyxl>=3.0.0',
                       'requests>=2.0.0',
                       'pandas>=0.25',

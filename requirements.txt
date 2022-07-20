@@ -1,7 +1,6 @@
 SQLAlchemy>=0.8.0
 numpy>=1.6.0
 PyYAML>=3.11
-xlrd>=0.9.3
 openpyxl>=3.0
 requests>=2.0.0
 pandas>=0.20
