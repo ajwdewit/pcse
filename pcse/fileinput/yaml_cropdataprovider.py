@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2017 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), February 2017
-import glob
+# Copyright (c) 2004-2022 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), August 2022
+import logging
 import os, sys
 
 v = sys.version_info
@@ -79,7 +79,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     and there is a risk that parameters are loaded from an outdated cache file. In that
     case use `force_reload=True` to force loading the parameters from the URL.
     """
-    repository = "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master/"
+    default_repository = "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master/"
 
     HTTP_OK = 200
     current_crop_name = None
@@ -97,42 +97,61 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                 self._store.clear()
 
             if fpath is not None:
-                yaml_file_names = self._get_yaml_files(fpath)
-                for crop_name, yaml_fname in yaml_file_names.items():
-                    with open(yaml_fname) as fp:
-                        parameters = yaml.safe_load(fp)
-                    self._check_version(parameters, crop_fname=yaml_fname)
-                    self._add_crop(crop_name, parameters)
+                self.read_local_repository(fpath)
 
             elif repository is not None:
-                if not repository.endswith("/"):
-                    repository += "/"
-                self.repository = repository
-                try:
-                    url = self.repository + "crops.yaml"
-                    response = urlopen(url)
-                    self.crop_types = yaml.safe_load(response)["available_crops"]
-                except URLError as e:
-                    msg = "Unable to find crops.yaml at '%s' due to: %s" % (url, e)
-                    raise exc.PCSEError(msg)
-
-                for crop_name in self.crop_types:
-                    url = self.repository + crop_name + ".yaml"
-                    try:
-                        response = urlopen(url)
-                    except URLError as e:
-                        msg = "Unable to open '%s' due to: %s" % (url, e)
-                        raise exc.PCSEError(msg)
-                    parameters = yaml.safe_load(response)
-                    self._check_version(parameters, crop_name)
-                    self._add_crop(crop_name, parameters)
+                self.read_remote_repository(repository)
 
             else:
-                msg = "No path or URL specified where to find YAML crop parameter files"
-                raise exc.PCSEError(msg)
+                msg = f"No path or URL specified where to find YAML crop parameter files, " \
+                      f"using default at {self.default_repository}"
+                self.logger.info(msg)
+                self.read_remote_repository(self.default_repository)
 
             with open(self._get_cache_fname(fpath), "wb") as fp:
                 pickle.dump((self.compatible_version, self._store), fp, pickle.HIGHEST_PROTOCOL)
+
+    def read_local_repository(self, fpath):
+        """Reads the crop YAML files on the local file system
+
+        :param fpath: the location of the YAML files on the filesystem
+        """
+        yaml_file_names = self._get_yaml_files(fpath)
+        for crop_name, yaml_fname in yaml_file_names.items():
+            with open(yaml_fname) as fp:
+                parameters = yaml.safe_load(fp)
+            self._check_version(parameters, crop_fname=yaml_fname)
+            self._add_crop(crop_name, parameters)
+
+    def read_remote_repository(self, repository):
+        """Reads the crop files from a remote git repository
+
+        :param repository: The url of the repository pointing to the URL where the raw inputs can be obtained.
+            E.g. for github this is https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master
+        :return:
+        """
+
+        if not repository.endswith("/"):
+            repository += "/"
+        self.repository = repository
+        try:
+            url = self.repository + "crops.yaml"
+            response = urlopen(url)
+            self.crop_types = yaml.safe_load(response)["available_crops"]
+        except URLError as e:
+            msg = "Unable to find crops.yaml at '%s' due to: %s" % (url, e)
+            raise exc.PCSEError(msg)
+
+        for crop_name in self.crop_types:
+            url = self.repository + crop_name + ".yaml"
+            try:
+                response = urlopen(url)
+            except URLError as e:
+                msg = "Unable to open '%s' due to: %s" % (url, e)
+                raise exc.PCSEError(msg)
+            parameters = yaml.safe_load(response)
+            self._check_version(parameters, crop_name)
+            self._add_crop(crop_name, parameters)
 
     def _get_cache_fname(self, fpath):
         """Returns the name of the cache file for the CropDataProvider.
@@ -263,3 +282,9 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                   (self.__class__.__name__, self.current_crop_name, self.current_variety_name)
             msg += "Available crop parameters:\n %s" % str(dict.__str__(self))
             return msg
+
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
