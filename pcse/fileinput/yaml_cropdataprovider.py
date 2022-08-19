@@ -275,7 +275,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
 
     def __str__(self):
         if not self:
-            msg = "%s - crop and variety not set: no activate crop parameter set!\n" % self.__class__.__name__
+            msg = "%s - crop and variety not set: no active crop parameter set!\n" % self.__class__.__name__
             return msg
         else:
             msg = "%s - current active crop '%s' with variety '%s'\n" % \

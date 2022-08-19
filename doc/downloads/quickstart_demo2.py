@@ -13,7 +13,7 @@ from pcse.fileinput import CABOFileReader
 from pcse.fileinput import PCSEFileReader
 from pcse.fileinput import YAMLAgroManagementReader
 from pcse.models import Wofost71_WLP_FD
-from pcse.base_classes import ParameterProvider
+from pcse.base import ParameterProvider
 
 # First set the location where the crop, soil and crop calendar files can be found
 data_dir = r""

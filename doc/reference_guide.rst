@@ -766,7 +766,7 @@ signals of type `mysignal` having two arguments `arg1` and `arg2`. When the obje
 initialized and the `send_mysignal()` is called the handler will print out the values
 of its two arguments::
 
-    >>> from pcse.base_classes import VariableKiosk
+    >>> from pcse.base import VariableKiosk
     >>> from datetime import date
     >>> d = date(2000,1,1)
     >>> v = VariableKiosk()
@@ -982,8 +982,8 @@ https://github.com/ajwdewit/WOFOST_crop_parameters::
     >>> print(p)
     YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
 
-All crops and varieties have been loaded from the YAML file, however no active
-crop has been set. Therefore, we need to activate a a particular crop and variety:
+All crops and varieties have been loaded from the github repository, however no active
+crop has been set. Therefore, we can activate a particular crop and variety:
 
     >>> p.set_active_crop('wheat', 'Winter_wheat_101')
     >>> print(p)
@@ -995,6 +995,23 @@ crop has been set. Therefore, we need to activate a a particular crop and variet
      ...
      'TSUM2': 1194, 'TSUM1': 543, 'TSUMEM': 120}
 
+In practice it is usually not necessary to activate a crop parameter set manually because the AgroManager
+can handle this. Defining an agromanagement definition with the proper `crop_name` and `variety_name` will
+automatically activate the crop/variety during the model simulation::
+
+    AgroManagement:
+    - 1999-08-01:
+        CropCalendar:
+            crop_name: wheat
+            variety_name: Winter_wheat_101
+            crop_start_date: 1999-09-15
+            crop_start_type: sowing
+            crop_end_date:
+            crop_end_type: maturity
+            max_duration: 300
+        TimedEvents:
+        StateEvents:
+
 Additionally, it is possible to load YAML parameter files from your local file system::
 
     >>> p = YAMLCropDataProvider(fpath=r"D:\UserData\sources\WOFOST_crop_parameters")
@@ -1005,6 +1022,9 @@ Finally, it is possible to pull data from your fork of my github repository by s
 the URL to that repository::
 
     >>> p = YAMLCropDataProvider(repository="https://raw.githubusercontent.com/<your_account>/WOFOST_crop_parameters/master/")
+
+Note that this URL should point to the location where the raw files can be found. In case of github, these URLs
+start with `https://raw.githubusercontent`, for other systems (e.g. gitlab) check the manual.
 
 To increase performance of loading parameters, the YAMLCropDataProvider will create a
 cache file that can be restored much quicker compared to loading the YAML files.
@@ -1063,7 +1083,7 @@ for accessing names and values::
     >>> import os
     >>> import sqlalchemy as sa
     >>> from pcse.fileinput import CABOFileReader, PCSEFileReader
-    >>> from pcse.base_classes import ParameterProvider
+    >>> from pcse.base import ParameterProvider
     >>> from pcse.db.pcse import fetch_sitedata
     >>> import pcse.settings
 
