@@ -9,7 +9,7 @@ from ..util import AfgenTrait
 from .nutrients import NPK_Demand_Uptake
 
 
-class NPK_Crop_Dynamics(SimulationObject):
+class N_Crop_Dynamics(SimulationObject):
     """Implementation of overall N crop dynamics.
 
     NPK_Crop_Dynamics implements the overall logic of N book-keeping within the
@@ -86,7 +86,6 @@ class NPK_Crop_Dynamics(SimulationObject):
     NamountSOI = Float(-99.)  # initial soil N amount in storage organs
     
     class Parameters(ParamTemplate):
-        #DVS_NPK_STOP = Float(-99.)
         NMAXLV_TB = AfgenTrait()
         NMAXST_FR = Float(-99.)
         NMAXRT_FR = Float(-99.)
