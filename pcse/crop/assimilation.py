@@ -184,7 +184,7 @@ class WOFOST_Assimilation(SimulationObject):
 
     *State and rate variables*
 
-    `WOFOST_Assimilation2` has no state/rate variables, but calculates the
+    `WOFOST_Assimilation` has no state/rate variables, but calculates the
     rate of assimilation which is returned directly from the `__call__()`
     method.
 
@@ -200,6 +200,7 @@ class WOFOST_Assimilation(SimulationObject):
     =======  =================================== =================  ============
     DVS      Crop development stage              DVS_Phenology       -
     LAI      Leaf area index                     Leaf_dynamics       -
+    NLV      Leaf nitrogen amount                
     =======  =================================== =================  ============
     """
 

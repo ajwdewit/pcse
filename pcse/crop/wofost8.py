@@ -19,7 +19,7 @@ from .assimilation import WOFOST_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_NPK as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
-from .npk_dynamics import N_Crop_Dynamics as NPK_crop
+from .n_dynamics import N_Crop_Dynamics as NPK_crop
 from pcse.soil.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
 from .nutrients.npk_stress import NPK_Stress as NPK_Stress
 
