@@ -165,6 +165,12 @@ class WOFOST_Assimilation(SimulationObject):
     =========  ============================================= =======  ============
      Name       Description                                   Type     Unit
     =========  ============================================= =======  ============
+    AMAX_LNB   Specific leaf nitrogen below which there is
+               no gross photosynthesis                        Cr      |kg ha-1|
+    AMAX_REF   Maximum leaf CO2 assim. rate under reference   TCr     |kg ha-1 hr-1|
+               conditions and high specific leaf nitrogen.
+    AMAX_SLP   Slope of linear response of AMAX to specific   Cr      |kg hr-1 / kg|
+               leaf nitrogen content at reference conditions  Cr      
     AMAXTB     Max. leaf |CO2| assim. rate as a function of   TCr     |kg ha-1 hr-1|
                of DVS
     EFFTB      Light use effic. single leaf as a function     TCr     |kg ha-1 hr-1 /(J m-2 s-1)|
@@ -199,8 +205,8 @@ class WOFOST_Assimilation(SimulationObject):
      Name     Description                         Provided by         Unit
     =======  =================================== =================  ============
     DVS      Crop development stage              DVS_Phenology       -
-    LAI      Leaf area index                     Leaf_dynamics       -
-    NLV      Leaf nitrogen amount                
+    LAI      Leaf area index                     leaf_dynamics       -
+    NLV      Leaf nitrogen amount                n_dynamics          kg ha-1
     =======  =================================== =================  ============
     """
 
