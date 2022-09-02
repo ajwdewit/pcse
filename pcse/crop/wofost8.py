@@ -12,11 +12,11 @@ from .phenology import DVS_Phenology as Phenology
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics_NPK as Leaf_Dynamics
+from .leaf_dynamics import WOFOST_Leaf_Dynamics_N as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
     Storage_Organ_Dynamics
 from .assimilation import WOFOST_Assimilation as Assimilation
-from .partitioning import DVS_Partitioning_NPK as Partitioning
+from .partitioning import DVS_Partitioning_N as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
 from .n_dynamics import N_Crop_Dynamics as N_crop

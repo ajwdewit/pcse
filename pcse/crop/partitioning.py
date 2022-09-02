@@ -160,7 +160,7 @@ class DVS_Partitioning(SimulationObject):
         return self.states.PF
 
 
-class DVS_Partitioning_NPK(SimulationObject):
+class DVS_Partitioning_N(SimulationObject):
     """Class for assimilate partitioning based on development stage (`DVS`)
     with influence of NPK stress.
 

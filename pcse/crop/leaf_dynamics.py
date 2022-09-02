@@ -447,7 +447,7 @@ class CSDM_Leaf_Dynamics(SimulationObject):
                               crop_delete=True)
 
 
-class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
+class WOFOST_Leaf_Dynamics_N(SimulationObject):
     """Leaf dynamics for the WOFOST crop model including leaf response to
     N stress.
 
