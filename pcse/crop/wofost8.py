@@ -21,7 +21,7 @@ from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
 from .n_dynamics import N_Crop_Dynamics as N_crop
 from pcse.soil.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
-from .nutrients.npk_stress import NPK_Stress as NPK_Stress
+from .nutrients.n_stress import N_Stress as N_Stress
 
 
 class Wofost80(SimulationObject):
@@ -178,7 +178,7 @@ class Wofost80(SimulationObject):
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
         # Added for book keeping of N/P/K in crop and soil
         self.npk_crop_dynamics = N_crop(day, kiosk, parvalues)
-        self.n_stress = NPK_Stress(day, kiosk, parvalues)
+        self.n_stress = N_Stress(day, kiosk, parvalues)
         
 
         # Initial total (living+dead) above-ground biomass of the crop
