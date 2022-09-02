@@ -54,15 +54,15 @@ class N_Demand_Uptake(SimulationObject):
 
     **State variables**
 
-    =============  ================================================= ==== ============
-     Name           Description                                      Pbl      Unit
-    =============  ================================================= ==== ============
-    NuptakeTotal     Total N uptake by the crop                        N   |kg N ha-1|
-    NfixTotal      Total N fixated by the crop                         N   |kg N ha-1|
+    ============= ================================================= ==== ============
+     Name          Description                                      Pbl      Unit
+    ============= ================================================= ==== ============
+    NuptakeTotal  Total N uptake by the crop                        N   |kg N ha-1|
+    NfixTotal     Total N fixated by the crop                       N   |kg N ha-1|
     NdemandST     N Demand in living stems                          N   |kg N ha-1|
     NdemandRT     N Demand in living roots                          N   |kg N ha-1|
     NdemandSO     N Demand in storage organs                        N   |kg N ha-1|
-    ==========  ================================================= ==== ============
+    ==========    ================================================= ==== ============
 
 
     **Rate variables**
@@ -212,7 +212,6 @@ class N_Demand_Uptake(SimulationObject):
             r.RNtranslocationRT = r.RNtranslocation * (s.NTranslocatableRT / s.NTranslocatable) 
             r.RNtranslocationST = r.RNtranslocation * (s.NTranslocatableST / s.NTranslocatable)
 
-        #r.Ndemand = (r.NdemandLV + r.RNtranslocationLV) + (r.NdemandST + r.RNtranslocationST) + (r.NdemandRT + r.RNtranslocationRT) + (r.NdemandSO - r.RNtranslocation)
         r.RNuptake = (max(0., min(r.Ndemand - r.RNfixation, k.NAVAIL, p.RNUPTAKEMAX)) * NutrientLIMIT)
 
         if r.Ndemand == 0:
