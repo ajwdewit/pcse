@@ -6,7 +6,7 @@ from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 from ..util import AfgenTrait
-from .nutrients import NPK_Demand_Uptake
+from .nutrients import N_Demand_Uptake
 
 
 class N_Crop_Dynamics(SimulationObject):
@@ -104,7 +104,7 @@ class N_Crop_Dynamics(SimulationObject):
         NlossesTotal = Float(-99.)
 
     class RateVariables(RatesTemplate):
-        RNamountLV = Float(-99.)  # Net rates of NPK in different plant organs 
+        RNamountLV = Float(-99.)  # Net rates of N in different plant organs 
         RNamountST = Float(-99.)
         RNamountRT = Float(-99.)
         RNdeathLV = Float(-99.)  # N loss rate leaves [kg ha-1 d-1]
@@ -123,7 +123,7 @@ class N_Crop_Dynamics(SimulationObject):
         self.kiosk = kiosk
         
         # Initialize components of the npk_crop_dynamics
-        self.demand_uptake = NPK_Demand_Uptake(day, kiosk, parvalues)
+        self.demand_uptake = N_Demand_Uptake(day, kiosk, parvalues)
 
         # INITIAL STATES
         params = self.params

@@ -12,7 +12,7 @@ from ...util import AfgenTrait
 MaxNutrientConcentrations = namedtuple("MaxNutrientConcentrations",
                                        ["NMAXLV","NMAXST", "NMAXRT", "NMAXSO"])
 
-class NPK_Demand_Uptake(SimulationObject):
+class N_Demand_Uptake(SimulationObject):
     """Calculates the crop N demand and its uptake from the soil.
 
     Crop N demand is calculated as the difference between the actual N

@@ -19,7 +19,7 @@ from .assimilation import WOFOST_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_NPK as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
-from .n_dynamics import N_Crop_Dynamics as NPK_crop
+from .n_dynamics import N_Crop_Dynamics as N_crop
 from pcse.soil.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
 from .nutrients.npk_stress import NPK_Stress as NPK_Stress
 
@@ -77,7 +77,7 @@ class Wofost80(SimulationObject):
                   simulation.
     FINISH_TYPE   String representing the reason for finishing the   N    -
                   simulation: maturity, harvest, leave death, etc.
-    REALLOC_<o>   Reallocation rate of organ o                       N    -
+    REALLOC_<o>   Reallocation rate of organ o                      
     ============  ================================================= ==== ===============
 
  
@@ -118,7 +118,7 @@ class Wofost80(SimulationObject):
     ro_dynamics = Instance(SimulationObject)
     so_dynamics = Instance(SimulationObject)
     npk_crop_dynamics = Instance(SimulationObject)
-    npk_stress = Instance(SimulationObject)
+    n_stress Instance(SimulationObject)
         
     # Parameters, rates and states which are relevant at the main crop
     # simulation level
@@ -177,8 +177,8 @@ class Wofost80(SimulationObject):
         self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
         # Added for book keeping of N/P/K in crop and soil
-        self.npk_crop_dynamics = NPK_crop(day, kiosk, parvalues)
-        self.npk_stress = NPK_Stress(day, kiosk, parvalues)
+        self.npk_crop_dynamics = N_crop(day, kiosk, parvalues)
+        self.n_stress = NPK_Stress(day, kiosk, parvalues)
         
 
         # Initial total (living+dead) above-ground biomass of the crop
@@ -268,7 +268,7 @@ class Wofost80(SimulationObject):
             rates.REALLOC_SO = (rates.REALLOC_LV + rates.REALLOC_ST)  * params.REALLOC_EFFICIENCY
         
         # Calculate N stress indices
-        self.npk_stress(day, drv)
+        self.n_stress(day, drv)
 
         # distribution over plant organ
 
