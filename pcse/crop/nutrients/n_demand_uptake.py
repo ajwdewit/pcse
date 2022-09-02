@@ -169,7 +169,7 @@ class N_Demand_Uptake(SimulationObject):
         s = self.states
 
         delt = 1.0
-        mc = self._compute_NPK_max_concentrations()
+        mc = self._compute_N_max_concentrations()
 
         # No nutrients are absorbed when severe water shortage occurs i.e. RFTRA <= 0.01
         if k.RFTRA > 0.01:
@@ -231,7 +231,7 @@ class N_Demand_Uptake(SimulationObject):
     def integrate(self, day, delt=1.0):
         pass
 
-    def _compute_NPK_max_concentrations(self):
+    def _compute_N_max_concentrations(self):
         """Computes the maximum N concentrations in leaves, stems, roots and storage organs.
         
         Note that max concentrations are first derived from the dilution curve for leaves. 
@@ -243,7 +243,7 @@ class N_Demand_Uptake(SimulationObject):
         k = self.kiosk
         NMAXLV = p.NMAXLV_TB(k.DVS)
 
-        max_NPK_conc = MaxNutrientConcentrations(
+        max_N_conc = MaxNutrientConcentrations(
             # Maximum N concentrations in leaves [kg N kg-1 DM]
             NMAXLV=NMAXLV,
             # Maximum N concentrations in stems and roots [kg N kg-1 DM]
@@ -252,4 +252,4 @@ class N_Demand_Uptake(SimulationObject):
             NMAXSO=p.NMAXSO
         )
 
-        return max_NPK_conc
+        return max_N_conc
