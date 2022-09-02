@@ -12,7 +12,7 @@ from ...util import limit, AfgenTrait
 from ...base import ParamTemplate, SimulationObject, RatesTemplate
 from ...decorators import prepare_rates
 
-class N_StressimulationObject):
+class N_Stress(SimulationObject):
     """Implementation of N stress calculation through [N]nutrition index.
 
     HB 20220405 A lot of changes have been done in this subroutine. It needs to be redocumented.

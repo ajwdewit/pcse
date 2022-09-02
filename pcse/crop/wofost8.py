@@ -20,7 +20,7 @@ from .partitioning import DVS_Partitioning_NPK as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
 from .n_dynamics import N_Crop_Dynamics as N_crop
-from pcse.soil.npk_soil_dynamics import NPK_Soil_Dynamics as NPK_soil
+from pcse.soil.n_soil_dynamics import N_Soil_Dynamics as N_soil
 from .nutrients.n_stress import N_Stress as N_Stress
 
 
@@ -118,7 +118,7 @@ class Wofost80(SimulationObject):
     ro_dynamics = Instance(SimulationObject)
     so_dynamics = Instance(SimulationObject)
     npk_crop_dynamics = Instance(SimulationObject)
-    n_stress Instance(SimulationObject)
+    n_stress = Instance(SimulationObject)
         
     # Parameters, rates and states which are relevant at the main crop
     # simulation level
