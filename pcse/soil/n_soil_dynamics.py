@@ -152,6 +152,7 @@ class N_Soil_Dynamics(SimulationObject):
         
         self.states = self.StateVariables(kiosk,
             publish=["NAVAIL"], NSOIL=p.NSOILBASE, NAVAIL=p.NAVAILI)
+        self._connect_signal(self._on_APPLY_N, signals.apply_n)
         self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
         
     @prepare_rates
@@ -178,6 +179,12 @@ class N_Soil_Dynamics(SimulationObject):
         
         # total (soil + fertilizer) N amount in soil
         states.NAVAIL += rates.RNAVAIL * delt
+
+    def _on_APPLY_N(self, N_amount=None,N_recovery=None):
+        r = self.rates
+        r.unlock()
+        r.FERT_N_SUPPLY = N_amount * N_recovery
+        r.lock()
 
     def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
                       P_recovery=None, K_recovery=None):
