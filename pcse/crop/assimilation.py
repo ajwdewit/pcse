@@ -24,7 +24,8 @@ def totass(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV,
     performing a Gaussian integration over time. At three different times of
     the day, irradiance is computed and used to calculate the instantaneous
     canopy assimilation, whereafter integration takes place. More information
-    on this routine is given by Spitters et al. (1988).
+    on this routine is given by Spitters et al. (1988). AMAX is calculated in
+    routine assim.
 
     FORMAL PARAMETERS:  (I=input,O=output,C=control,IN=init,T=time)
     name   type meaning                                    units  class
@@ -50,6 +51,11 @@ def totass(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV,
     Python version:
     Authors: Allard de Wit
     Date   : September 2011
+
+    Update calculation AMAX:
+    Author: Herman Berghuijs
+    Date:   September 2022
+
     """
     # Gauss points and weights
     XGAUSS = [0.1127017, 0.5000000, 0.8872983]
@@ -80,12 +86,14 @@ def assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, 
     tically active radiation, whereafter integration over depth
     takes place. More information on this routine is given by
     Spitters et al. (1988). The input variables SINB, PARDIR
-    and PARDIF are calculated in routine TOTASS.
+    and PARDIF are calculated in routine TOTASS. AMAX is calculated
+    using the specific leaf nitrogen
 
     Subroutines and functions called: none.
     Called by routine TOTASS.
 
     Author: D.W.G. van Kraalingen, 1986
+    Updated: H.N.C. Berghuijs, 2022
 
     Python version:
     Allard de Wit, 2011
