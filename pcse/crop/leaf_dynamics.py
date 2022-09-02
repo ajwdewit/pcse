@@ -449,7 +449,7 @@ class CSDM_Leaf_Dynamics(SimulationObject):
 
 class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
     """Leaf dynamics for the WOFOST crop model including leaf response to
-    NPK stress.
+    N stress.
 
     # HB 20220405: This function was changed quite a bit and needs redocumentation.
 
@@ -482,14 +482,14 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
              light as function of DVS
     SLATB    Specific leaf area as a function of DVS        TCr     |ha kg-1|
     RDRNS    max. relative death rate of leaves due to      TCr         -
-             nutrient NPK stress
+             nutrient N stress
     NLAI     coefficient for the reduction due to           TCr         -
-             nutrient NPK stress of the LAI increase
+             nutrient N stress of the LAI increase
              (during juvenile phase).
     NSLA     Coefficient for the effect of nutrient NPK     TCr         -
              stress on SLA reduction
     RDRNS    Max. relative death rate of leaves due to      TCr         -
-             nutrient NPK stress
+             nutrient N stress
     =======  ============================================= =======  ============
 
     *State variables*
