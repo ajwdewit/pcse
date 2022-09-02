@@ -20,20 +20,21 @@ class N_Stress(SimulationObject):
     ============  ============================================= ======================
      Name          Description                                   Unit
     ============  ============================================= ======================
-    NMAXLV_TB      Maximum N concentration in leaves as         kg N kg-1 dry biomass
+    NMAXLV_TB      Maximum N concentration in leaves as         kg N kg-1 dry matter
                    function of DVS
     NMAXRT_FR      Maximum N concentration in roots as fraction -
                    of maximum N concentration in leaves
+    NMAXSO         Maximum N oconcentration in grains           kg N kg-1 dry matter
     NMAXST_FR      Maximum N concentration in stems as fraction -
                    of maximum N concentration in leaves
     NCRIT_FR       Critical N concentration as fraction of      -
                    maximum N concentration for vegetative
                    plant organs as a whole (leaves + stems)
-    NRESIDLV       Residual N fraction in leaves                kg N kg-1 dry biomass
-    NRESIDST       Residual N fraction in stems                 kg N kg-1 dry biomass
+    NRESIDLV       Residual N fraction in leaves                kg N kg-1 dry matter
+    NRESIDST       Residual N fraction in stems                 kg N kg-1 dry matter
+    RGRLAI_MIN     Relative growth rate in exponential growth   d-1
+                   phase at maximum N stress
 
-    NLUE_NPK       Coefficient for the reduction of RUE due     -
-                   to nutrient (N-P-K) stress
     ============  ============================================= ======================
 
     **Rate variables**
@@ -45,7 +46,9 @@ class N_Stress(SimulationObject):
     =======  ================================================= ==== ==============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ==============
-    NSTRESS   Ratio of maximum to actual aboveground crop N     Y     -
+    NSLLV     N Stress factor                                  Y    -
+    RFRGRL    Reduction factor relative growth rate in         Y    -
+              exponential phase
     =======  ================================================= ==== ==============
 
 
@@ -64,12 +67,12 @@ class N_Stress(SimulationObject):
     """
 
     class Parameters(ParamTemplate):
-        NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs
-        NSLLV_TB = AfgenTrait()      # N stress multiplication factor for leaf death
-        NMAXRT_FR = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
-        NMAXST_FR = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves
-        NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
-        NRESIDST = Float(-99.)  # residual N fraction in stems [kg N kg-1 dry biomass]
+        NMAXLV_TB = AfgenTrait()
+        NSLLV_TB = AfgenTrait() 
+        NMAXRT_FR = Float(-99.)
+        NMAXST_FR = Float(-99.)
+        NRESIDLV = Float(-99.)
+        NRESIDST = Float(-99.)
         NMAXSO = Float(-99.)
         RGRLAI_MIN = Float(-99.)
         RGRLAI = Float(-99.)
@@ -101,10 +104,10 @@ class N_Stress(SimulationObject):
         r = self.rates
         k = self.kiosk
 
-        # Maximum NPK concentrations in leaves (kg N kg-1 DM)
+        # Maximum N concentrations in leaves (kg N kg-1 DM)
         NMAXLV = p.NMAXLV_TB(k.DVS)
 
-        # Maximum NPK concentrations in stems (kg N kg-1 DM)
+        # Maximum N concentrations in stems (kg N kg-1 DM)
         NMAXST = p.NMAXST_FR * NMAXLV
         
         # Calculate multiplication factor of leaf death due to N stress
