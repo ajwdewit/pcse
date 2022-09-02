@@ -77,26 +77,31 @@ class Wofost80(SimulationObject):
                   simulation.
     FINISH_TYPE   String representing the reason for finishing the   N    -
                   simulation: maturity, harvest, leave death, etc.
+    REALLOC_<o>   Reallocation rate of organ o                       N    -
     ============  ================================================= ==== ===============
 
  
      **Rate variables:**
 
-    =======  ================================================ ==== =============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================ ==== =============
-    GASS     Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
-    PGASS    Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
-    MRES     Actual maintenance respiration rate, taking into
-             account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
-    PMRES    Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
-    ASRC     Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
-    DMI      Total dry matter increase, calculated as ASRC
-             times a weighted conversion efficieny.             Y  |kg ha-1 d-1|
-    ADMI     Aboveground dry matter increase                    Y  |kg ha-1 d-1|
-    =======  ================================================ ==== =============
-
-    """
+    ======================= ================================================= ==== =============
+     Name                    Description                                      Pbl      Unit
+    =======================  ================================================ ==== =============
+    GASS                    Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
+    PGASS                   Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
+    MRES                    Actual maintenance respiration rate, taking into
+                            account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
+    PMRES                   Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
+    REALLOC_DVS             Development stage at which reallocation starts     N  -
+    REALLOC_<o>_FRACTION    Fraction of dry matter of organ o that becomes
+                            available at development stage REALLOC_DVS         Y  |kg DM kg-1 DM|
+    REALLOC_<o>_RATE:       Relative rate of reallocation from organ o.        N  |d-1|
+    REALLOC_EFFICIENCY:     Efficiency of reallocation                         N  |kg DM kg-1 DM|
+    ASRC                    Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
+    DMI                     Total dry matter increase, calculated as ASRC
+                            times a weighted conversion efficieny.             Y  |kg ha-1 d-1|
+    ADMI                    Aboveground dry matter increase                    Y  |kg ha-1 d-1|
+    =======================  ================================================ ==== =============
+        """
 
     # Placeholders for biomass available for reallocation
     _WLV_REALLOC = Float(None)
