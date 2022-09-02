@@ -75,7 +75,6 @@ class N_Stress(SimulationObject):
         RGRLAI = Float(-99.)
 
     class RateVariables(RatesTemplate):
-        RFNPK = Float()
         NSLLV = Float()
         RFRGRL = Float()
 
