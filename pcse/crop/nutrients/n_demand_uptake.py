@@ -95,16 +95,14 @@ class N_Demand_Uptake(SimulationObject):
     DVS               Crop development stage              DVS_Phenology              -
     TRA               Crop transpiration                  Evapotranspiration     |cm d-1|
     TRAMX             Potential crop transpiration        Evapotranspiration     |cm d-1|
-    NAVAIL            Total available N from soil         NPK_Soil_Dynamics      |kg ha-1|
-    Ntranslocatable   Translocatable amount of N from     NPK_Translocation      |kg ha-1|
-                      stems, Leaves and roots
+    NAVAIL            Total available N from soil         N_Soil_Dynamics      |kg ha-1|
     ================  =================================== ====================  ===========
 
     """
 
     class Parameters(ParamTemplate):
         NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs        
-        DVS_NPK_TRANSL = Float(-99.)
+        DVS_N_TRANSL = Float(-99.)
 
         NMAXRT_FR = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
         NMAXST_FR = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves        
@@ -190,7 +188,7 @@ class N_Demand_Uptake(SimulationObject):
         r.RNfixation = (max(0., p.NFIX_FR * r.Ndemand) * NutrientLIMIT)
 
         # Calculate translocatable nitrogen in different organs
-        if(k.DVS < p.DVS_NPK_TRANSL):
+        if(k.DVS < p.DVS_N_TRANSL):
             s.NTranslocatableLV = 0.
             s.NTranslocatableRT = 0.
             s.NTranslocatableST = 0.

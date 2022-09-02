@@ -43,8 +43,8 @@ class Wofost80(SimulationObject):
         7. Stem dynamics (self.st_dynamics)
         8. Root dynamics (self.ro_dynamics)
         9. Storage organ dynamics (self.so_dynamics)
-        10. N/P/K crop dynamics (self.npk_crop_dynamics)
-        12. N/P/K stress (self.npk_stress)
+        10. N/P/K crop dynamics (self.n_crop_dynamics)
+        12. N/P/K stress (self.n_stress)
 
     **Simulation parameters:**
     
@@ -117,7 +117,7 @@ class Wofost80(SimulationObject):
     st_dynamics = Instance(SimulationObject)
     ro_dynamics = Instance(SimulationObject)
     so_dynamics = Instance(SimulationObject)
-    npk_crop_dynamics = Instance(SimulationObject)
+    n_crop_dynamics = Instance(SimulationObject)
     n_stress = Instance(SimulationObject)
         
     # Parameters, rates and states which are relevant at the main crop
@@ -177,7 +177,7 @@ class Wofost80(SimulationObject):
         self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
         # Added for book keeping of N/P/K in crop and soil
-        self.npk_crop_dynamics = N_crop(day, kiosk, parvalues)
+        self.n_crop_dynamics = N_crop(day, kiosk, parvalues)
         self.n_stress = N_Stress(day, kiosk, parvalues)
         
 
@@ -282,7 +282,7 @@ class Wofost80(SimulationObject):
         self.lv_dynamics.calc_rates(day, drv)
         
         # Update nutrient rates in crop and soil
-        self.npk_crop_dynamics.calc_rates(day, drv)
+        self.n_crop_dynamics.calc_rates(day, drv)
 
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -313,7 +313,7 @@ class Wofost80(SimulationObject):
         self.lv_dynamics.integrate(day, delt)
 
         # Update nutrient states in crop and soil
-        self.npk_crop_dynamics.integrate(day, delt)
+        self.n_crop_dynamics.integrate(day, delt)
 
         # Integrate total (living+dead) above-ground biomass of the crop
         states.TAGP = self.kiosk.TWLV + \

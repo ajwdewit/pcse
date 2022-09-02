@@ -564,7 +564,6 @@ class WOFOST_Leaf_Dynamics_N(SimulationObject):
         TDWI = Float(-99.)
         SLATB = AfgenTrait()
         KDIFTB = AfgenTrait()
-        RDRLV_NPK = Float(-99.)  # max. relative death rate of leaves due to nutrient NPK stress
 
     class StateVariables(StatesTemplate):
         LV = Instance(deque)
@@ -681,7 +680,6 @@ class WOFOST_Leaf_Dynamics_N(SimulationObject):
 
         ## added IS
         ## correction SLA due to nutrient stress
-        #sla_npk_factor = exp(-p.NSLA_NPK * (1.0 - k.NPKI))
 
         ## specific leaf area of leaves per time step
         r.SLAT = p.SLATB(k.DVS)
@@ -693,7 +691,6 @@ class WOFOST_Leaf_Dynamics_N(SimulationObject):
             # added IS
             # Nutrient and water stress during juvenile stage:
             if k.DVS < 0.2 and s.LAI < 0.75:
-                #factor = k.RFTRA * exp(-p.NLAI_NPK * (1.0 - k.NPKI))
                 factor = k.RFTRA * k.RFRGRL
             else:
                 factor = 1.

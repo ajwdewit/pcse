@@ -162,7 +162,7 @@ class DVS_Partitioning(SimulationObject):
 
 class DVS_Partitioning_N(SimulationObject):
     """Class for assimilate partitioning based on development stage (`DVS`)
-    with influence of NPK stress.
+    with influence of N stress.
 
     `DVS_Partitioning_NPK` calculates the partitioning of the assimilates to roots,
     stems, leaves and storage organs using fixed partitioning tables as a

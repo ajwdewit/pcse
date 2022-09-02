@@ -61,8 +61,8 @@ class N_Stress(SimulationObject):
     WST          Dry weight of living stems          WOFOST_Stem_Dynamics               |kg ha-1|
     WLV          Dry weight of living leaves         WOFOST_Leaf_Dynamics               |kg ha-1|
     WSO          Dry weight of storage organs        WOFOST_Storage_Organ_Dynamics      |kg ha-1|
-    NamountLV    Amount of N in leaves               NPK_Crop_Dynamics                  |kg ha-1|
-    NamountST    Amount of N in stems                NPK_Crop_Dynamics                  |kg ha-1|
+    NamountLV    Amount of N in leaves               N_Crop_Dynamics                  |kg ha-1|
+    NamountST    Amount of N in stems                N_Crop_Dynamics                  |kg ha-1|
     ==========  =================================== =================================== ==============
     """
 
@@ -98,7 +98,6 @@ class N_Stress(SimulationObject):
 
         :param day: the current date
         :param drv: the driving variables
-        :return: A tuple (NNI, NPKI, NPKREF)
         """
         p = self.params
         r = self.rates
