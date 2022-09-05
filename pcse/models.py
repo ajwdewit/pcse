@@ -33,6 +33,20 @@ class Wofost72_WLP_FD(Engine):
                         config=self.config)
 
 
+class Wofost80_NWLP_FD(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost80_NWLP_FD.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
 class Wofost72_Phenology(Engine):
     """Convenience class for running WOFOST7.2 phenology only.
 
