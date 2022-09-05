@@ -79,7 +79,6 @@ class Wofost80_WLP_FD_beta(Engine):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
 
-
 class Wofost80_NWLP_FD_beta(Engine):
     """Convenience class for running WOFOST8.0 nutrient and water-limited production
 
@@ -209,6 +208,21 @@ class Wofost80_WLP_FD_beta_HB(Engine):
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
+
+
+class Wofost80_N_beta_HB(Engine):
+    """Convenience class for running WOFOST8.0 nitrogen-limited production 
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost80_N_HB.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
 
 class Wofost80_NWLP_FD_beta_HB(Engine):
     """Convenience class for running WOFOST8.0 nutrient and water-limited production
