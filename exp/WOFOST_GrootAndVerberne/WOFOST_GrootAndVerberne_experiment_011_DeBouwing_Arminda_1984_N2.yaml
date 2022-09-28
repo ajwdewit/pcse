@@ -57,7 +57,7 @@ Metadata:
 Model:
   module: pcse.models
   model: Wofost80_NWLP_FD_beta_HB
-AgroManagement:
+Agromanagement:
 - 1983-10-27:
     CropCalendar:
       crop_name: winterwheat
@@ -196022,7 +196022,7 @@ WeatherVariables:
   LAT: 52.0
   LON: 5.7
 - DAY: 2002-08-31
-  IRRAD: -999000.0
+  IRRAD: 15163000.0
   TMIN: 13.1
   TMAX: 15.7
   VAP: 14.8

@@ -57,7 +57,7 @@ Metadata:
 Model:
   module: pcse.models
   model: Wofost80_NWLP_FD_beta_HB
-AgroManagement:
+Agromanagement:
 - 1982-10-19:
     CropCalendar:
       crop_name: winterwheat
