@@ -50,21 +50,21 @@ Metadata:
       vrange:
       - 0.0
       - 400.0
-    ANLV:
+    NamountLV:
       long_title: Total accumulated leaf nitrogen amount
       short_title: Leaf nitrogen amount
       unit: kg.ha-1
       vrange:
       - 0.0
       - 400.0
-    ANSO:
+    NamountSO:
       long_title: Total accumulated storage organ nitrogen amount
       short_title: Storage organ nitrogen amount
       unit: kg.ha-1
       vrange:
       - 0.0
       - 500.0
-    ANST:
+    NamountST:
       long_title: Total accumulated stem and chaff nitrogen amount
       short_title: Stem and chaff nitrogen amount
       unit: kg.ha-1
@@ -76,9 +76,9 @@ VariablestoSummarize:
 - WST
 - WLV
 - LAI
-- ANLV
-- ANSO
-- ANST
+- NamountLV
+- NamountSO
+- NamountST
 Experiments:
 - WOFOST_GrootAndVerberne//WOFOST_GrootAndVerberne_experiment_001_DeBouwing_Arminda_1983_N1.yaml
 - WOFOST_GrootAndVerberne//WOFOST_GrootAndVerberne_experiment_002_DeBouwing_Arminda_1983_N2.yaml

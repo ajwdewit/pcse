@@ -33,15 +33,15 @@ Metadata:
       long_title: Leaf area index
       short_title: Leaf area index
       unit: m2.m-2
-    ANLV:
+    NamountLV:
       long_title: Total accumulated leaf nitrogen amount
       short_title: Leaf nitrogen amount
       unit: kg.ha-1
-    ANSO:
+    NamountSO:
       long_title: Total accumulated storage organ nitrogen amount
       short_title: Storage organ nitrogen amount
       unit: kg.ha-1
-    ANST:
+    NamountST:
       long_title: Total accumulated stem and chaff nitrogen amount
       short_title: Stem and chaff nitrogen amount
       unit: kg.ha-1
@@ -414,98 +414,98 @@ SummaryObservations:
   WST: 9310.0
   WLV: 0.0
   LAI: .nan
-  ANLV: 16.1
-  ANSO: 160.5
-  ANST: 44.5
+  NamountLV: 16.1
+  NamountSO: 160.5
+  NamountST: 44.5
 TimeSeriesObservations:
 - day: 1984-02-15
   WSO: .nan
   WST: .nan
   WLV: 71.0
   LAI: 0.1
-  ANLV: .nan
-  ANSO: .nan
-  ANST: .nan
+  NamountLV: .nan
+  NamountSO: .nan
+  NamountST: .nan
 - day: 1984-03-14
   WSO: .nan
   WST: .nan
   WLV: 104.0
   LAI: 0.2
-  ANLV: .nan
-  ANSO: .nan
-  ANST: .nan
+  NamountLV: .nan
+  NamountSO: .nan
+  NamountST: .nan
 - day: 1984-04-04
   WSO: 0.0
   WST: 45.0
   WLV: 179.0
   LAI: 0.4
-  ANLV: 10.4
-  ANSO: 0.0
-  ANST: 2.3
+  NamountLV: 10.4
+  NamountSO: 0.0
+  NamountST: 2.3
 - day: 1984-04-25
   WSO: 0.0
   WST: 291.0
   WLV: 737.0
   LAI: 1.6
-  ANLV: 34.3
-  ANSO: 0.0
-  ANST: 10.0
+  NamountLV: 34.3
+  NamountSO: 0.0
+  NamountST: 10.0
 - day: 1984-05-09
   WSO: 0.0
   WST: 1124.0
   WLV: 1311.0
   LAI: 3.1
-  ANLV: 43.9
-  ANSO: 0.0
-  ANST: 20.0
+  NamountLV: 43.9
+  NamountSO: 0.0
+  NamountST: 20.0
 - day: 1984-05-29
   WSO: 0.0
   WST: 2461.0
   WLV: 1513.0
   LAI: 3.6
-  ANLV: 38.5
-  ANSO: 0.0
-  ANST: 58.0
+  NamountLV: 38.5
+  NamountSO: 0.0
+  NamountST: 58.0
 - day: 1984-06-20
   WSO: 0.0
   WST: 8013.0
   WLV: 1954.0
   LAI: 4.8
-  ANLV: 54.0
-  ANSO: 0.0
-  ANST: 54.699999999999996
+  NamountLV: 54.0
+  NamountSO: 0.0
+  NamountST: 54.699999999999996
 - day: 1984-07-04
   WSO: 540.0
   WST: 9571.0
   WLV: 1835.0
   LAI: 4.0
-  ANLV: 33.0
-  ANSO: 12.3
-  ANST: 94.4
+  NamountLV: 33.0
+  NamountSO: 12.3
+  NamountST: 94.4
 - day: 1984-07-18
   WSO: 2704.0
   WST: 9205.0
   WLV: 1527.0
   LAI: 3.2
-  ANLV: 26.9
-  ANSO: 57.7
-  ANST: 79.2
+  NamountLV: 26.9
+  NamountSO: 57.7
+  NamountST: 79.2
 - day: 1984-08-08
   WSO: 8181.0
   WST: 8565.0
   WLV: 868.0
   LAI: 1.9
-  ANLV: 17.8
-  ANSO: 158.3
-  ANST: 48.599999999999994
+  NamountLV: 17.8
+  NamountSO: 158.3
+  NamountST: 48.599999999999994
 - day: 1984-08-22
   WSO: 7617.0
   WST: 9310.0
   WLV: 0.0
   LAI: .nan
-  ANLV: 16.1
-  ANSO: 160.5
-  ANST: 44.5
+  NamountLV: 16.1
+  NamountSO: 160.5
+  NamountST: 44.5
 WeatherVariables:
 - DAY: 1974-01-01
   IRRAD: 1010000.0
