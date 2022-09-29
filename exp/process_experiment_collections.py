@@ -21,6 +21,9 @@ import matplotlib.style
 matplotlib.style.use("ggplot")
 import matplotlib.pyplot as plt
 
+from pcse.util import reference_ET
+
+
 from pcse.base import ParameterProvider, WeatherDataProvider, WeatherDataContainer
 
 this_dir = Path(__file__).parent
@@ -37,6 +40,11 @@ class YAMLWeatherDataProvider(WeatherDataProvider):
         for weather in yaml_weather:
             if "SNOWDEPTH" in weather:
                 weather.pop("SNOWDEPTH")
+            if "ET0" not in weather:
+                E0, ES0, ET0 = reference_ET(**weather)
+                weather["ET0"] = ET0/10.
+                weather["ES0"] = ES0/10.
+                weather["E0"] = E0/10.
             wdc = WeatherDataContainer(**weather)
             self._store_WeatherDataContainer(wdc, wdc.DAY)
 
