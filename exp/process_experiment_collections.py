@@ -189,7 +189,10 @@ def run_experiment_collection(collection_fname):
         df_summary = df_summary.append(df1)
         df_exp_summary = df_exp_summary.append(df2)
 
-    build_summary_plots(collection_fname, exp_collection, df_summary, df_exp_summary)
+    if(exp_collection["VariablestoSummarize"]==[]):
+        pass
+    else:
+        build_summary_plots(collection_fname, exp_collection, df_summary, df_exp_summary)
 
 
 def main(output_dir=None):
