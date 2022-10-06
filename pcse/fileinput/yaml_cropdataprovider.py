@@ -91,10 +91,10 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     def __init__(self, fpath=None, repository=None, force_reload=False):
         MultiCropDataProvider.__init__(self)
 
-        if not self._load_cache(fpath) or force_reload:
-            if force_reload:  # enforce a clear state when we force a reload
-                self.clear()
-                self._store.clear()
+        if force_reload is True or self._load_cache(fpath) is False:  # either force a reload or load cache fails
+            # enforce a clear state
+            self.clear()
+            self._store.clear()
 
             if fpath is not None:
                 self.read_local_repository(fpath)
@@ -174,7 +174,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                 # This only works for files not for github repos
                 if fpath is not None:
                     yaml_file_names = self._get_yaml_files(fpath)
-                    yaml_file_dates = [os.stat(fn).st_mtime for fn in yaml_file_names]
+                    yaml_file_dates = [os.stat(fn).st_mtime for crop,fn in yaml_file_names.items()]
                     # retrieve modification date of cache file
                     cache_date = os.stat(cache_fname_fp).st_mtime
                     # Ensure cache file is more recent then any of the YAML files
