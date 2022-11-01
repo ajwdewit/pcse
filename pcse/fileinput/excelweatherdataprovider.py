@@ -193,7 +193,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
 
             except ValueError as e:  # strange value in cell
                 msg = "Failed reading row: %i. Skipping..." % (rownum + self.data_start_row)
-                self.logger.warn(msg)
+                self.logger.warning(msg)
                 print(msg)
 
     def _load_cache_file(self, xls_fname):
