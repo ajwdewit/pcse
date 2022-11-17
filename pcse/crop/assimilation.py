@@ -118,10 +118,13 @@ def assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, 
 
         # Calculate AMAX with gradient in canopy ORYZA
         if(LAI >= 0.01):
-            SLN = (NLV / (LAI * 10)) * LAI * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
+            #SLN = (NLV / (LAI * 10)) * LAI * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
+            SLN = NLV * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
         else:
-            SLN = (NLV / (LAI * 10))
+            #SLN = (NLV / (LAI * 10))
+            SLN = NLV/LAI
 
+        #AMAX =  CO2AMAX * TMPF * min(AMAX_REF , max(0, AMAX_SLP * (SLN - AMAX_LNB)))
         AMAX =  CO2AMAX * TMPF * min(AMAX_REF , max(0, AMAX_SLP * (SLN - AMAX_LNB)))
 
         # absorbed diffuse radiation (VISDF),light from direct
