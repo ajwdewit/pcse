@@ -10,6 +10,8 @@ import datetime as dt
 import csv
 import math
 
+from ast import literal_eval
+
 from ..base import WeatherDataContainer, WeatherDataProvider
 from ..util import reference_ET, angstrom, check_angstromAB
 from ..exceptions import PCSEError
@@ -151,6 +153,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
 
         if force_reload or not self._load_cache_file(self.fp_csv_fname):
             with open(csv_fname, 'r') as csv_file:
+                csv_file.readline()  # Skip first line
                 self._read_meta(csv_file)
                 self._read_observations(csv_file, delimiter)
             self._write_cache_file(self.fp_csv_fname)
@@ -160,7 +163,10 @@ class CSVWeatherDataProvider(WeatherDataProvider):
         for line in csv_file:
             if line.startswith('## Daily weather observations'):
                 break
-            exec(line, {}, header)
+            statements = line.split(';')
+            for stmt in statements:
+                key, val = stmt.split('=')
+                header[key.strip()] = literal_eval(val.strip())
 
         self.nodata_value = -99
         self.description = [u"Weather data for:",

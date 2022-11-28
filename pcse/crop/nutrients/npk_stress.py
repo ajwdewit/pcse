@@ -38,7 +38,7 @@ class NPK_Stress(SimulationObject):
     The stress index (SI) is determined as a simple ratio between those
     concentrations according to:
 
-    :math:`SI = (C_{a) - C_{r})/(C_{c} - C_{r})`
+    :math:`SI = (C_{a} - C_{r})/(C_{c} - C_{r})`
 
     with subscript `a`, `r` and `c` being the actual, residual and critical
     concentration for the nutrient.
@@ -51,41 +51,41 @@ class NPK_Stress(SimulationObject):
 
     **Simulation parameters**
 
-    ============  ============================================= =======  ======================
-     Name          Description                                   Type     Unit
-    ============  ============================================= =======  ======================
-    NMAXLV_TB      Maximum N concentration in leaves as          TCr     kg N kg-1 dry biomass
+    ============  ============================================= ======================
+     Name          Description                                   Unit
+    ============  ============================================= ======================
+    NMAXLV_TB      Maximum N concentration in leaves as         kg N kg-1 dry biomass
                    function of DVS
-    PMAXLV_TB      As for P                                      TCr     kg P kg-1 dry biomass
-    KMAXLV_TB      As for K                                      TCr     kg K kg-1 dry biomass
+    PMAXLV_TB      As for P                                     kg P kg-1 dry biomass
+    KMAXLV_TB      As for K                                     kg K kg-1 dry biomass
 
-    NMAXRT_FR      Maximum N concentration in roots as fraction  SCr     -
+    NMAXRT_FR      Maximum N concentration in roots as fraction -
                    of maximum N concentration in leaves
-    PMAXRT_FR      As for P                                      SCr     -
-    KMAXRT_FR      As for K                                      SCr     -
+    PMAXRT_FR      As for P                                     -
+    KMAXRT_FR      As for K                                     -
 
-    NMAXST_FR      Maximum N concentration in stems as fraction  SCr     -
+    NMAXST_FR      Maximum N concentration in stems as fraction -
                    of maximum N concentration in leaves
-    PMAXST_FR      As for P                                      SCr     -
-    KMAXST_FR      As for K                                      SCr     -
+    PMAXST_FR      As for P                                     -
+    KMAXST_FR      As for K                                     -
 
-    NCRIT_FR       Critical N concentration as fraction of       SCr     -
+    NCRIT_FR       Critical N concentration as fraction of      -
                    maximum N concentration for vegetative
                    plant organs as a whole (leaves + stems)
-    PCRIT_FR       As for P                                      SCr     -
-    KCRIT_FR       As for K                                      SCr     -
+    PCRIT_FR       As for P                                     -
+    KCRIT_FR       As for K                                     -
 
-    NRESIDLV       Residual N fraction in leaves                 SCr     kg N kg-1 dry biomass
-    PRESIDLV       Residual P fraction in leaves                 SCr     kg P kg-1 dry biomass
-    KRESIDLV       Residual K fraction in leaves                 SCr     kg K kg-1 dry biomass
+    NRESIDLV       Residual N fraction in leaves                kg N kg-1 dry biomass
+    PRESIDLV       Residual P fraction in leaves                kg P kg-1 dry biomass
+    KRESIDLV       Residual K fraction in leaves                kg K kg-1 dry biomass
 
-    NRESIDST       Residual N fraction in stems                  SCr     kg N kg-1 dry biomass
-    PRESIDST       Residual P fraction in stems                  SCr     kg P kg-1 dry biomass
-    KRESIDST       Residual K fraction in stems                  SCr     kg K kg-1 dry biomass
+    NRESIDST       Residual N fraction in stems                 kg N kg-1 dry biomass
+    PRESIDST       Residual P fraction in stems                 kg P kg-1 dry biomass
+    KRESIDST       Residual K fraction in stems                 kg K kg-1 dry biomass
 
-    NLUE_NPK       Coefficient for the reduction of RUE due      SCr     -
+    NLUE_NPK       Coefficient for the reduction of RUE due     -
                    to nutrient (N-P-K) stress
-    ============  ============================================= ======= =======================
+    ============  ============================================= ======================
 
     **Rate variables**
 
@@ -100,26 +100,26 @@ class NPK_Stress(SimulationObject):
     PNI       Nitrogen nutrition index                          N     -
     KNI       Nitrogen nutrition index                          N     -
     NPKI      Minimum of NNI, PNI, KNI                          Y     -
-    NPKREF    Reduction factor for |CO2| assimlation            N     -
+    RFNPK     Reduction factor for |CO2| assimlation            N     -
               based on NPKI and the parameter NLUE_NPK
     =======  ================================================= ==== ==============
 
 
     **External dependencies:**
 
-    =========  =================================== =====================  ==============
-     Name       Description                         Provided by            Unit
-    =========  =================================== =====================  ==============
-    DVS         Crop development stage              DVS_Phenology           -
-    WST         Dry weight of living stems          WOFOST_Stem_Dynamics  |kg ha-1|
-    WLV         Dry weight of living leaves         WOFOST_Leaf_Dynamics  |kg ha-1|
-    ANLV        Amount of N in leaves               NPK_Crop_Dynamics     |kg ha-1|
-    ANST        Amount of N in stems                NPK_Crop_Dynamics     |kg ha-1|
-    APLV        Amount of P in leaves               NPK_Crop_Dynamics     |kg ha-1|
-    APST        Amount of P in stems                NPK_Crop_Dynamics     |kg ha-1|
-    AKLV        Amount of K in leaves               NPK_Crop_Dynamics     |kg ha-1|
-    AKST        Amount of K in stems                NPK_Crop_Dynamics     |kg ha-1|
-    =========  =================================== =====================  ==============
+    ==========  =================================== =====================  ==============
+     Name        Description                         Provided by            Unit
+    ==========  =================================== =====================  ==============
+    DVS          Crop development stage              DVS_Phenology           -
+    WST          Dry weight of living stems          WOFOST_Stem_Dynamics  |kg ha-1|
+    WLV          Dry weight of living leaves         WOFOST_Leaf_Dynamics  |kg ha-1|
+    NamountLV    Amount of N in leaves               NPK_Crop_Dynamics     |kg ha-1|
+    NamountST    Amount of N in stems                NPK_Crop_Dynamics     |kg ha-1|
+    PamountLV    Amount of P in leaves               NPK_Crop_Dynamics     |kg ha-1|
+    PamountST    Amount of P in stems                NPK_Crop_Dynamics     |kg ha-1|
+    KamountLV    Amount of K in leaves               NPK_Crop_Dynamics     |kg ha-1|
+    KamountST    Amount of K in stems                NPK_Crop_Dynamics     |kg ha-1|
+    ==========  =================================== =====================  ==============
     """
 
     class Parameters(ParamTemplate):
@@ -148,7 +148,7 @@ class NPK_Stress(SimulationObject):
         PNI = Float()
         KNI = Float()
         NPKI = Float()
-        NPKREF = Float()
+        RFNPK = Float()
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -171,25 +171,12 @@ class NPK_Stress(SimulationObject):
         """
         p = self.params
         r = self.rates
+        k = self.kiosk
 
-        # published states from the kiosk
-        WLV = self.kiosk["WLV"]
-        WST = self.kiosk["WST"]
-        DVS = self.kiosk["DVS"]
-        
-        ANLV = self.kiosk["ANLV"]  # N amount in leaves [kg ha-1]
-        ANST = self.kiosk["ANST"]  # N amount in stems [kg ha-1
-        
-        APLV = self.kiosk["APLV"]  # P amount in leaves [kg ha-1]
-        APST = self.kiosk["APST"]  # P amount in stems [kg ha-1]
-        
-        AKLV = self.kiosk["AKLV"]  # K amount in leaves [kg ha-1]
-        AKST = self.kiosk["AKST"]  # K amount in stems [kg ha-1]
-       
         # Maximum NPK concentrations in leaves (kg N kg-1 DM)
-        NMAXLV = p.NMAXLV_TB(DVS)
-        PMAXLV = p.PMAXLV_TB(DVS)
-        KMAXLV = p.KMAXLV_TB(DVS)
+        NMAXLV = p.NMAXLV_TB(k.DVS)
+        PMAXLV = p.PMAXLV_TB(k.DVS)
+        KMAXLV = p.KMAXLV_TB(k.DVS)
 
         # Maximum NPK concentrations in stems (kg N kg-1 DM)
         NMAXST = p.NMAXST_FR * NMAXLV
@@ -197,65 +184,65 @@ class NPK_Stress(SimulationObject):
         KMAXST = p.KMAXST_FR * KMAXLV
         
         # Total vegetative living above-ground biomass (kg DM ha-1)
-        TBGMR = WLV + WST 
+        VBM = k.WLV + k.WST
       
         # Critical (Optimal) NPK amount in vegetative above-ground living biomass
         # and its NPK concentration
-        NCRITLV  = p.NCRIT_FR * NMAXLV * WLV
-        NCRITST  = p.NCRIT_FR * NMAXST * WST
+        NcriticalLV  = p.NCRIT_FR * NMAXLV * k.WLV
+        NcriticalST  = p.NCRIT_FR * NMAXST * k.WST
         
-        PCRITLV = p.PCRIT_FR * PMAXLV * WLV
-        PCRITST = p.PCRIT_FR * PMAXST * WST
+        PcriticalLV = p.PCRIT_FR * PMAXLV * k.WLV
+        PcriticalST = p.PCRIT_FR * PMAXST * k.WST
 
-        KCRITLV = p.KCRIT_FR * KMAXLV * WLV
-        KCRITST = p.KCRIT_FR * KMAXST * WST
+        KcriticalLV = p.KCRIT_FR * KMAXLV * k.WLV
+        KcriticalST = p.KCRIT_FR * KMAXST * k.WST
         
         # if above-ground living biomass = 0 then optimum = 0
-        if TBGMR > 0.:
-            NCRITMR = (NCRITLV + NCRITST)/TBGMR
-            PCRITMR = (PCRITLV + PCRITST)/TBGMR
-            KCRITMR = (KCRITLV + KCRITST)/TBGMR
+        if VBM > 0.:
+            NcriticalVBM = (NcriticalLV + NcriticalST)/VBM
+            PcriticalVBM = (PcriticalLV + PcriticalST)/VBM
+            KcriticalVBM = (KcriticalLV + KcriticalST)/VBM
         else:
-            NCRITMR = PCRITMR = KCRITMR = 0.
+            NcriticalVBM = PcriticalVBM = KcriticalVBM = 0.
 
         # NPK concentration in total vegetative living per kg above-ground
         # biomass  (kg N/P/K kg-1 DM)
         # if above-ground living biomass = 0 then concentration = 0
-        if TBGMR > 0.:
-            NFGMR  = (ANLV + ANST)/TBGMR
-            PFGMR  = (APLV + APST)/TBGMR
-            KFGMR  = (AKLV + AKST)/TBGMR
+        if VBM > 0.:
+            NconcentrationVBM  = (k.NamountLV + k.NamountST)/VBM
+            PconcentrationVBM  = (k.PamountLV + k.PamountST)/VBM
+            KconcentrationVBM  = (k.KamountLV + k.KamountST)/VBM
         else:
-            NFGMR = PFGMR = KFGMR = 0.
+            NconcentrationVBM = PconcentrationVBM = KconcentrationVBM = 0.
 
         # Residual NPK concentration in total vegetative living above-ground
         # biomass  (kg N/P/K kg-1 DM)
         # if above-ground living biomass = 0 then residual concentration = 0
-        if TBGMR > 0.:
-            NRMR = (WLV * p.NRESIDLV + WST * p.NRESIDST)/TBGMR
-            PRMR = (WLV * p.PRESIDLV + WST * p.PRESIDST)/TBGMR
-            KRMR = (WLV * p.KRESIDLV + WST * p.KRESIDST)/TBGMR
+        if VBM > 0.:
+            NresidualVBM = (k.WLV * p.NRESIDLV + k.WST * p.NRESIDST)/VBM
+            PresidualVBM = (k.WLV * p.PRESIDLV + k.WST * p.PRESIDST)/VBM
+            KresidualVBM = (k.WLV * p.KRESIDLV + k.WST * p.KRESIDST)/VBM
         else:
-            NRMR = PRMR = KRMR = 0.
+            NresidualVBM = PresidualVBM = KresidualVBM = 0.
             
-        if (NCRITMR - NRMR) > 0.:
-            r.NNI = limit(0.001, 1.0, (NFGMR-NRMR)/(NCRITMR-NRMR))
+        if (NcriticalVBM - NresidualVBM) > 0.:
+            r.NNI = limit(0.001, 1.0, (NconcentrationVBM - NresidualVBM)/(NcriticalVBM - NresidualVBM))
         else:
             r.NNI = 0.001
             
-        if (PCRITMR - PRMR) > 0.:
-            r.PNI = limit(0.001, 1.0, (PFGMR-PRMR)/(PCRITMR-PRMR))
+        if (PcriticalVBM - PresidualVBM) > 0.:
+            r.PNI = limit(0.001, 1.0, (PconcentrationVBM - PresidualVBM)/(PcriticalVBM - PresidualVBM))
         else:
            r.PNI = 0.001
             
-        if (KCRITMR-KRMR) > 0:
-            r.KNI = limit(0.001, 1.0, (KFGMR-KRMR)/(KCRITMR-KRMR))
+        if (KcriticalVBM-KresidualVBM) > 0:
+            r.KNI = limit(0.001, 1.0, (KconcentrationVBM - KresidualVBM)/(KcriticalVBM - KresidualVBM))
         else:
             r.KNI = 0.001
       
         r.NPKI = min(r.NNI, r.PNI, r.KNI)
 
         # Nutrient reduction factor for assimilation
-        r.NPKREF = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001-r.NPKI)**2))
+        r.RFNPK = limit(0., 1.0, 1. - (p.NLUE_NPK * (1.0001 - r.NPKI) ** 2))
          
-        return r.NNI, r.NPKI, r.NPKREF
+        return r.NNI, r.NPKI, r.RFNPK

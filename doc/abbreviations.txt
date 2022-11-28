@@ -21,6 +21,13 @@
 .. |kg ha-1 hr-1| replace:: kg ha\ :sup:`-1`\ hr\ :sup:`-1`\
 .. |kg ha-1 hr-1 /(J m-2 s-1)| replace:: kg ha\ :sup:`-1`\ hr\ :sup:`-1`\ /(J m\ :sup:`-2`\ sec\ :sup:`-1`\)
 
+.. |kg N ha-1| replace:: kg N ha\ :sup:`-1`\
+.. |kg P ha-1| replace:: kg P ha\ :sup:`-1`\
+.. |kg K ha-1| replace:: kg K ha\ :sup:`-1`\
+.. |kg N ha-1 d-1| replace:: kg N ha\ :sup:`-1` d\ :sup:`-1`\
+.. |kg P ha-1 d-1| replace:: kg P ha\ :sup:`-1` d\ :sup:`-1`\
+.. |kg K ha-1 d-1| replace:: kg K ha\ :sup:`-1` d\ :sup:`-1`\
+
 .. |day-1| replace:: day\ :sup:`-1`\
 .. |cm day-1| replace:: cm day\ :sup:`-1`\
 .. |cmC-1day-1| replace:: :math:`cm^{\circ}C^{-1} day^{-1}`

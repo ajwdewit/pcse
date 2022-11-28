@@ -362,6 +362,22 @@ class CSDM_Leaf_Dynamics(SimulationObject):
     transfer models to estimate biophysical canopy characteristics.
     Remote Sensing of Environment. Volume 95, Issue 1, 15 March 2005,
     Pages 115-124. http://dx.doi.org/10.1016/j.rse.2004.11.017
+
+        
+    For plotting the CSDM model with GNUPLOT the following example code can be used:
+
+        td = 150
+        CSDM_MAX = 5.
+        CSDM_MIN = 0.15
+        CSDM_A = 0.085
+        CSDM_B = 0.045
+        CSDM_T1 = int(td/3.)
+        CSDM_T2 = td
+
+        set xrange [0:200]
+        set yrange [-1:8]
+        plot CSDM_MIN + CSDM_MAX*(1./(1. + exp(-CSDM_B*(x - CSDM_T1)))**2 - exp(CSDM_A*(x - CSDM_T2)))
+    
     """
 
     class Parameters(ParamTemplate):
@@ -586,7 +602,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         self.kiosk = kiosk
         self.params = self.Parameters(cropdata)
-        self.rates = self.RateVariables(kiosk,publish=["DRLV"])
+        self.rates = self.RateVariables(kiosk,publish=["DRLV", "GRLV"])
 
         # CALCULATE INITIAL STATE VARIABLES
         p = self.params

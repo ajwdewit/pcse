@@ -1,4 +1,7 @@
 .. include:: abbreviations.txt
+###############
+Reference Guide
+###############
 
 An overview of PCSE
 ===================
@@ -45,7 +48,14 @@ forward by calling the SimulationObjects, calling the agromanagement
 unit, keeping track of time, providing the weather data needed and
 storing the model variables during the simulation for later output.
 The Engine itself is generic and can be used for any model that is defined
-in PCSE.
+in PCSE. The overall structure of the engine can be found in the figure below
+which shows the different elements that are called by the Engine.
+
+.. figure:: figures/PCSE_Engine_structure.png
+   :align: center
+   :width: 500 px
+
+
 
 .. _ContinuousSimulation:
 
@@ -129,21 +139,20 @@ Engine configuration files
 
 The engine needs a configuration file that specifies which components should
 be used for simulation and additional information. This is most easily
-explained by an example such as the configuration file for the WOFOST model
+explained by an example such as the configuration file for the WOFOST 7.2 model
 for potential crop production::
 
     # -*- coding: utf-8 -*-
-    # Copyright (c) 2004-2014 Alterra, Wageningen-UR
-    # Allard de Wit (allard.dewit@wur.nl), April 2014
-    """PCSE configuration file for WOFOST Potential Production simulation
-    in PCSE identical to the FORTRAN WOFOST 7.1
+    # Copyright (c) 2004-2021 Wageningen Environmental Research
+    # Allard de Wit (allard.dewit@wur.nl), August 2021
+    """PCSE configuration file for WOFOST 7.2 Potential Production simulation
 
     This configuration file defines the soil and crop components that
     should be used for potential production simulation.
     """
 
     from pcse.soil.classic_waterbalance import WaterbalancePP
-    from pcse.crop.wofost import Wofost
+    from pcse.crop.wofost7 import Wofost
     from pcse.agromanager import AgroManager
 
     # Module to be used for water balance
@@ -172,12 +181,11 @@ for potential crop production::
     # Set to an empty list if you do not want any SUMMARY_OUTPUT
     SUMMARY_OUTPUT_VARS = ["DVS","LAIMAX","TAGP", "TWSO", "TWLV", "TWST",
                            "TWRT", "CTRAT", "RD", "DOS", "DOE", "DOA",
-                           "DOM", "DOH", "DOV"]
+                           "DOM", "DOH", "DOV", "CEVST"]
 
     # Summary variables to save at TERMINATE signals
     # Set to an empty list if you do not want any TERMINAL_OUTPUT
     TERMINAL_OUTPUT_VARS = []
-
 
 As you can see, the configuration file is written in plain python code.
 First of all, it defines the placeholders *SOIL*, *CROP* and
@@ -185,8 +193,9 @@ First of all, it defines the placeholders *SOIL*, *CROP* and
 the simulation of these processes. These placeholders simply point to
 the modules that were imported at the start of the configuration file.
 
-.. note: Modules must be imported using fully qualified names and relative
-         imports cannot be used.
+.. note::
+    Modules in configuration files must be imported using fully qualified
+    names and relative imports cannot be used.
 
 The second part is for defining the
 variables (*OUTPUT_VARS*) that should be stored during the model run
@@ -200,7 +209,7 @@ entire simulation (*TERMINAL_OUTPUT_VARS*).
     reside in the 'conf/' folder inside the package. When the Engine is started
     with the name of a configuration file, it searches this folder to locate the file.
     This implies that if you want the start the Engine with your own (modified)
-    configuration file, you *must* specify it as an absolute or relative path
+    configuration file, you *must* specify it as an absolute path
     otherwise the Engine will not find it.
 
 The relationship between models and the engine
@@ -226,21 +235,22 @@ of an entire crop or a soil profile.
 
 This approach has several advantages:
 
-* Model code with a certain purpose is grouped together, making it easier
-  to read, understand and maintain.
-* A SimulationObject contains only parameters, rate and state variables
-  that are needed. In contrast, with monolythic code it is often unclear (at
-  first glance at least) what biophysical process they belong to.
-* Isolation of process implementations creates less dependencies, but more
-  importantly, dependencies are evident from the code which makes it easier
-  to modify individual SimulationObjects.
-* SimulationObjects can be tested individually by comparing output vs the
-  expected output (e.g. unit testing).
-* SimulationObjects can be exchanged for other objects with the same purpose
-  but a different biophysical approach. For example, the WOFOST assimilation
-  approach could be easily replaced by a more simple Light Use Efficiency or
-  Water Use Efficiency approach, by replacing the SimulationObject that
-  handles the |CO2| assimilation.
+#. Model code with a certain purpose is grouped together, making it easier
+   to read, understand and maintain.
+#. A SimulationObject contains only parameters, rate and state variables
+   that are needed. In contrast, with monolythic code it is often unclear (at
+   first glance at least) what biophysical process they belong to.
+#. Isolation of process implementations creates less dependencies, but more
+   importantly, dependencies are evident from the code which makes it easier
+   to modify individual SimulationObjects.
+#. SimulationObjects can be tested individually by comparing output vs the
+   expected output (e.g. unit testing).
+#. SimulationObjects can be exchanged for other objects with the same purpose
+   but a different biophysical approach. For example, the WOFOST assimilation
+   approach could be easily replaced by a more simple Light Use Efficiency or
+   Water Use Efficiency approach, by replacing the SimulationObject that
+   handles the |CO2| assimilation.
+
 
 Characteristics of SimulationObjects
 ------------------------------------
@@ -756,7 +766,7 @@ signals of type `mysignal` having two arguments `arg1` and `arg2`. When the obje
 initialized and the `send_mysignal()` is called the handler will print out the values
 of its two arguments::
 
-    >>> from pcse.base_classes import VariableKiosk
+    >>> from pcse.base import VariableKiosk
     >>> from datetime import date
     >>> d = date(2000,1,1)
     >>> v = VariableKiosk()
@@ -972,8 +982,8 @@ https://github.com/ajwdewit/WOFOST_crop_parameters::
     >>> print(p)
     YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
 
-All crops and varieties have been loaded from the YAML file, however no activate
-crop has been set. Therefore, we need to activate a a particular crop and variety:
+All crops and varieties have been loaded from the github repository, however no active
+crop has been set. Therefore, we can activate a particular crop and variety:
 
     >>> p.set_active_crop('wheat', 'Winter_wheat_101')
     >>> print(p)
@@ -985,6 +995,23 @@ crop has been set. Therefore, we need to activate a a particular crop and variet
      ...
      'TSUM2': 1194, 'TSUM1': 543, 'TSUMEM': 120}
 
+In practice it is usually not necessary to activate a crop parameter set manually because the AgroManager
+can handle this. Defining an agromanagement definition with the proper `crop_name` and `variety_name` will
+automatically activate the crop/variety during the model simulation::
+
+    AgroManagement:
+    - 1999-08-01:
+        CropCalendar:
+            crop_name: wheat
+            variety_name: Winter_wheat_101
+            crop_start_date: 1999-09-15
+            crop_start_type: sowing
+            crop_end_date:
+            crop_end_type: maturity
+            max_duration: 300
+        TimedEvents:
+        StateEvents:
+
 Additionally, it is possible to load YAML parameter files from your local file system::
 
     >>> p = YAMLCropDataProvider(fpath=r"D:\UserData\sources\WOFOST_crop_parameters")
@@ -995,6 +1022,9 @@ Finally, it is possible to pull data from your fork of my github repository by s
 the URL to that repository::
 
     >>> p = YAMLCropDataProvider(repository="https://raw.githubusercontent.com/<your_account>/WOFOST_crop_parameters/master/")
+
+Note that this URL should point to the location where the raw files can be found. In case of github, these URLs
+start with `https://raw.githubusercontent`, for other systems (e.g. gitlab) check the manual.
 
 To increase performance of loading parameters, the YAMLCropDataProvider will create a
 cache file that can be restored much quicker compared to loading the YAML files.
@@ -1034,9 +1064,8 @@ This also implies that all the python syntax features can be used in PCSE parame
 
 Finally, several data providers exist for retrieving crop, soil and site parameter values from the database
 of the Crop Growth Monitoring System including data providers for a
-:ref:`CGMS8 <CGMS8tools>` database,
-a :ref:`CGMS12 <CGMS12tools>` database and a :ref:`CGMS14 <CGMS14tools>`
-database.
+:ref:`CGMS8 <CGMS8tools>`, :ref:`CGMS12 <CGMS12tools>` and :ref:`CGMS14/CGMS18 <CGMS14tools>` databases.
+
 
 As described earlier, PCSE needs parameters to define the soil, the crop and and additional
 ancillary class of parameters called 'site'. Nevertheless, the different modules in PCSE have
@@ -1054,7 +1083,7 @@ for accessing names and values::
     >>> import os
     >>> import sqlalchemy as sa
     >>> from pcse.fileinput import CABOFileReader, PCSEFileReader
-    >>> from pcse.base_classes import ParameterProvider
+    >>> from pcse.base import ParameterProvider
     >>> from pcse.db.pcse import fetch_sitedata
     >>> import pcse.settings
 
@@ -1096,11 +1125,9 @@ described in the section above on  :ref:`defining agromanagement <refguide_agrom
 this datastructure the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>` module is available
 which can be provided directly as input into the Engine.
 
-For reading Agromanagement input from a CGMS database see the sections on the database tools for
-a :ref:`CGMS8 <CGMS8tools>` database, a :ref:`CGMS12 <CGMS12tools>` database and
-a :ref:`CGMS14 <CGMS14tools>` database. Note that the support for defining agromanagement
-in CGMS databases is limited to crop calendars only. The CGMS database has no support for defining state and
-timed events yet.
+For reading Agromanagement input from a CGMS database see the sections on the database tools CGMS.
+Note that the support for defining agromanagement in CGMS databases is limited to crop calendars only.
+The CGMS database has no support for defining state and timed events yet.
 
 
 Global PCSE settings

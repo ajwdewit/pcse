@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Wageningen Environmental Sciences, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), January 2018
-"""This runs the YAML unittests by processing the various YAML test file in the `test_data_dir`
+# Copyright (c) 2004-2021 Wageningen Environmental Sciences, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), July 2021
+"""This runs the YAML unittests by processing the various YAML test file in the folder `test_data`
 """
 import unittest
 import os
@@ -17,8 +17,11 @@ from pcse.crop.respiration import WOFOST_Maintenance_Respiration
 from pcse.crop.partitioning import DVS_Partitioning
 from pcse.crop.root_dynamics import WOFOST_Root_Dynamics
 from pcse.crop.evapotranspiration import Evapotranspiration
-from pcse.crop.wofost import Wofost
-from pcse.soil.classic_waterbalance import WaterbalanceFD
+from pcse.crop.wofost7 import Wofost
+from pcse.crop.lingra import LINGRA
+from pcse.crop.lingraN import LINGRA_N
+from pcse.soil.classic_waterbalance import WaterbalanceFD, WaterbalancePP
+from pcse.soil.soil_wrappers import SoilModuleWrapper_N_WLP_FD
 from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvider, TestSimulationObject
 
 # This defines the YAML tests, each rows represents:
@@ -26,16 +29,22 @@ from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvi
 # - the crop simobject to be tested
 # - an optional soil simobject to be tested
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
-quick_tests = [("test_potentialproduction_wofost71*", Wofost, None),
-               ("test_waterlimitedproduction_wofost71*", Wofost, WaterbalanceFD)]
-full_tests = [("test_phenology_wofost71*", DVS_Phenology, None),
-              ("test_assimilation_wofost71*", WOFOST_Assimilation, None),
-              ("test_partitioning_wofost71*", DVS_Partitioning, None),
-              ("test_leafdynamics_wofost71*", WOFOST_Leaf_Dynamics, None),
-              ("test_rootdynamics_wofost71*", WOFOST_Root_Dynamics, None),
-              ("test_respiration_wofost71*", WOFOST_Maintenance_Respiration, None),
-              ("test_transpiration_wofost71*", Evapotranspiration, None),
-              ].extend(quick_tests)
+quick_tests = [
+               ("test_potentialproduction_wofost72*", Wofost, WaterbalancePP),
+               ("test_waterlimitedproduction_wofost72*", Wofost, WaterbalanceFD),
+               ("test_LINGRA*_PP.yaml", LINGRA, WaterbalancePP),
+               ("test_LINGRA*_WLP.yaml", LINGRA, WaterbalanceFD),
+               ("test_LINGRA*_NWLP.yaml", LINGRA_N, SoilModuleWrapper_N_WLP_FD),
+               ]
+full_tests = [("test_phenology_wofost72*", DVS_Phenology, None),
+              ("test_assimilation_wofost72*", WOFOST_Assimilation, None),
+              ("test_partitioning_wofost72*", DVS_Partitioning, None),
+              ("test_leafdynamics_wofost72*", WOFOST_Leaf_Dynamics, None),
+              ("test_rootdynamics_wofost72*", WOFOST_Root_Dynamics, None),
+              ("test_respiration_wofost72*", WOFOST_Maintenance_Respiration, None),
+              ("test_transpiration_wofost72*", Evapotranspiration, None),
+              ]
+full_tests.extend(quick_tests)
 
 
 class PCSETestCaseYAML(unittest.TestCase):
@@ -50,7 +59,7 @@ class PCSETestCaseYAML(unittest.TestCase):
 
     def setUp(self):
         # Load YAML inputs
-        inputs = yaml.load(open(self.YAML_test_input_fname))
+        inputs = yaml.safe_load(open(self.YAML_test_input_fname))
 
         # Prepare input categories for Engine
         self.reference_results = inputs["ModelResults"]
@@ -87,14 +96,14 @@ class PCSETestCaseYAML(unittest.TestCase):
                         raise
 
 
-def suite(quick=True):
+def make_test_suite(quick=True):
     suite = unittest.TestSuite()
     test_sets = quick_tests if quick else full_tests
     for pattern, crop_simobj, soil_simobj in test_sets:
         test_class_name = "Wrapped" + crop_simobj.__class__.__name__
         wrapped_simobj = type(test_class_name, (TestSimulationObject,),
                               {"test_class": crop_simobj})
-        fnames = glob.glob(os.path.join(test_data_dir, pattern))
+        fnames = sorted(glob.glob(os.path.join(test_data_dir, pattern)))
         for i, fname in enumerate(fnames):
             if quick and i % 10 != 0:
                     continue
@@ -104,8 +113,3 @@ def suite(quick=True):
             suite.addTest(unittest.makeSuite(test_class))
 
     return suite
-
-
-if __name__ == "__main__":
-    unittest.TextTestRunner(verbosity=2).run(suite())
-

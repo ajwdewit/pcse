@@ -14,8 +14,9 @@ environment to implement crop simulation models, the tools for reading ancillary
 data (weather, soil, agromanagement) and the components for simulating biophysical
 processes such as phenology, respiration and evapotranspiration. PCSE also
 includes implementations of the
-`WOFOST <http://www.wageningenur.nl/wofost>`_ and `LINTUL3 <http://models.pps.wur.nl/models?page=1>`_
-crop simulation models
+`WOFOST <http://www.wageningenur.nl/wofost>`_ `LINGRA <https://edepot.wur.nl/336784>`_ and
+`LINTUL3 <https://models.pps.wur.nl/system/files/LINTUL-N-Shibu-article_1.pdf>`_
+crop and grassland simulation models
 which have been widely used around the world. For example, WOFOST has been implemented in
 the MARS crop yield forecasting system which is used operationally for crop monitoring and
 yield prediction in Europe and beyond.
@@ -36,20 +37,26 @@ test coverage of the implementation of the biophysical processes.
 
 What's new
 ----------
+
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    whatsnew.rst
+
+Crop models Available in PCSE
+-----------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   available_models.rst
 
 User guide
 ----------
 .. toctree::
    :maxdepth: 2
    
-   pcse_intro.rst
-   installing.rst
-   quickstart.rst
-   available_models.rst
+   user_guide.rst
 
 Reference guide
 ---------------

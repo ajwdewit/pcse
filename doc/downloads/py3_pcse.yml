@@ -4,14 +4,14 @@ dependencies:
 - pyyaml
 - numpy
 - pandas
-- python=3.6
+- python=3.8
 - pytz
 - pyyaml
 - setuptools
 - sphinx
 - sphinx_rtd_theme
 - xlrd
-- xlwt
+- openpyxl
 - requests
 - ipython
 - jupyter

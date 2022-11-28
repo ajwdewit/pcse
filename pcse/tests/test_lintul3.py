@@ -19,7 +19,7 @@ class TestLINTUL3_SpringWheat(unittest.TestCase):
     write_ref_results = False
 
     def setUp(self):
-        amgt = yaml.load(open(os.path.join(test_data_dir, "lintul3_springwheat.agro")))['AgroManagement']
+        amgt = yaml.safe_load(open(os.path.join(test_data_dir, "lintul3_springwheat.agro")))['AgroManagement']
         soil = PCSEFileReader(os.path.join(test_data_dir, "lintul3_springwheat.soil"))
         site = PCSEFileReader(os.path.join(test_data_dir, "lintul3_springwheat.site"))
         crop = PCSEFileReader(os.path.join(test_data_dir, "lintul3_springwheat.crop"))
