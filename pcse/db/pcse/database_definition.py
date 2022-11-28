@@ -44,10 +44,11 @@ def _create_PCSE_tables(metadata):
         Column('crop_no',Integer,primary_key=True,nullable=False),
         Column('variety_no',Integer,nullable=False),
         Column('year',Integer,primary_key=True,nullable=False),
-        Column('start_type',String(length=20),nullable=False),
-        Column('start_day',Date,nullable=False),
-        Column('end_type',String(length=20),nullable=False),
-        Column('end_day',Date,nullable=False),
+        Column('start_date',Date,nullable=False),
+        Column('crop_start_type', String(length=20), nullable=False),
+        Column('crop_start_date',Date,nullable=False),
+        Column('crop_end_type', String(length=20), nullable=False),
+        Column('crop_end_date',Date,nullable=False),
         Column('max_duration',Integer,nullable=False),
         schema=None)
     table_crop_calendar.create()
@@ -103,23 +104,23 @@ def _create_PCSE_tables(metadata):
         schema=None)
     table_pywofost_output.create()
 
-    table_pywofost_unittest = Table('pywofost_unittest_benchmarks',metadata,
+    table_pywofost_unittest = Table('wofost_unittest_benchmarks',metadata,
         Column('grid_no',Integer,primary_key=True,nullable=False),
         Column('crop_no',Integer,primary_key=True,nullable=False),
         Column('year',Integer,primary_key=True,nullable=False),
         Column('day',Date,primary_key=True,nullable=False),
         Column('simulation_mode',String(length=3),primary_key=True,nullable=False),
         Column('member_id',Integer,primary_key=True,nullable=False),
-        Column('dvs',NewFloat(),nullable=False),
-        Column('lai',NewFloat(),nullable=False),
-        Column('tagp',NewFloat(),nullable=False),
-        Column('twso',NewFloat(),nullable=False),
-        Column('twlv',NewFloat(),nullable=False),
-        Column('twst',NewFloat(),nullable=False),
-        Column('twrt',NewFloat(),nullable=False),
-        Column('sm',NewFloat(),nullable=False),
-        Column('tra',NewFloat(),nullable=False),
-        Column('rd',NewFloat(),nullable=False),
+        Column('DVS',NewFloat(),nullable=False),
+        Column('LAI',NewFloat(),nullable=False),
+        Column('TAGP',NewFloat(),nullable=False),
+        Column('TWSO',NewFloat(),nullable=False),
+        Column('TWLV',NewFloat(),nullable=False),
+        Column('TWST',NewFloat(),nullable=False),
+        Column('TWRT',NewFloat(),nullable=False),
+        Column('SM',NewFloat(),nullable=False),
+        Column('TRA',NewFloat(),nullable=False),
+        Column('RD',NewFloat(),nullable=False),
         schema=None)
     table_pywofost_unittest.create()
     
@@ -165,8 +166,10 @@ def _create_PCSE_tables(metadata):
     
     table_soil_type = Table('soil_type',metadata,
         Column('grid_no',Integer,primary_key=True,nullable=False),
-        Column('rooting_depth_class',Integer,primary_key=True,nullable=False),
-        Column('soil_group_no',Integer,primary_key=True,nullable=False),
+        Column('soil_type_no',Integer,primary_key=True,nullable=False),
+
+        # Column('rooting_depth_class',Integer,primary_key=True,nullable=False),
+        # Column('soil_group_no',Integer,primary_key=True,nullable=False),
         schema=None)
     table_soil_type.create()
     
@@ -191,7 +194,7 @@ def _create_PCSE_tables(metadata):
     table_egw = Table('ensemble_grid_weather',metadata,
         Column('grid_no',Integer,primary_key=True),
         Column('day',Date,primary_key=True),
-        Column('ensemble_id',Integer,primary_key=True),
+        Column('member_id',Integer,primary_key=True),
         Column('rainfall',NewFloat(),nullable=False),
         schema=None)
     table_egw.create()
@@ -236,9 +239,10 @@ def _retrieve_records_from_source(metadata):
     """Retrieves all records from all input tables in source DB"""
     
     input_tables = ['crop', 'crop_calendar', 'grid',
-                'grid_weather', 'pywofost_unittest_benchmarks',
-                'rooting_depth', 'soil_physical_group', 'soil_type',
-                'variety_parameter_value','data_for_assimilation',
+                'grid_weather', 'wofost_unittest_benchmarks',
+                #'rooting_depth',#
+                'soil_physical_group', 'soil_type',
+                'variety_parameter_value',#'data_for_assimilation',#
                 'ensemble_grid_weather','tasklist', 'site',
                 'crop_parameter_value']
     table_collection = {}
@@ -291,6 +295,7 @@ See: http://www.sqlalchemy.org/docs/06/core/engines.html#supported-databases
     installdir = os.path.dirname(os.path.abspath(__file__))
     db_location = os.path.join(installdir, "pywofost.db")
     dsn = "sqlite:///" + db_location
+    source_metadata=None
     try:
         source_engine = create_engine(dsn)
         source_metadata = MetaData(source_engine)
@@ -300,7 +305,7 @@ See: http://www.sqlalchemy.org/docs/06/core/engines.html#supported-databases
     
     # Build database
     try:
-        _create_pywofost_tables(target_metadata)
+        _create_PCSE_tables(target_metadata)
         table_collection = _retrieve_records_from_source(source_metadata)
         _fill_pywofost_tables(target_engine, target_metadata, table_collection)
         print("PyWOFOST demo database succesfully migrated!")

@@ -1,5 +1,9 @@
 .. include:: abbreviations.txt
 
+##################
+Code documentation
+##################
+
 How to read
 ===========
 
@@ -34,6 +38,7 @@ The table specifying the simulation parameters has the following columns:
     4. The physical unit of the parameter.
 
 The tables specifying state/rate variables have the following columns:
+
     1. The name of the variable.
     2. A description of the variable.
     3. Whether the variable is published in the kiosk or not: Y|N
@@ -95,48 +100,41 @@ The PCSE distribution provides several waterbalance modules:
        usable, although the source code is available in PCSE.
 
 .. autoclass:: pcse.soil.WaterbalancePP
-    :members:
 
 .. autoclass:: pcse.soil.WaterbalanceFD
-    :members:
 
 .. autoclass:: pcse.soil.SnowMAUS
-    :members:
 
-Crop simulation processes
-=========================
+Crop simulation processes for WOFOST
+====================================
 
 Phenology
 ---------
 
 .. autoclass:: pcse.crop.phenology.DVS_Phenology
-    :members:
+
 
 .. autoclass:: pcse.crop.phenology.Vernalisation
-    :members:
+
 
 Partitioning
 ------------
 
 .. autoclass:: pcse.crop.partitioning.DVS_Partitioning
-    :members:
 
 
 |CO2| Assimilation
 ------------------
 
 .. autoclass:: pcse.crop.assimilation.WOFOST_Assimilation
-    :members:
-    
+
 Maintenance respiration
 -----------------------
 .. autoclass:: pcse.crop.respiration.WOFOST_Maintenance_Respiration
-    :members:
-    
+
 Evapotranspiration
 ------------------
 .. autoclass:: pcse.crop.evapotranspiration.Evapotranspiration
-    :members:
 
 .. autofunction:: pcse.crop.evapotranspiration.SWEAF
 
@@ -144,33 +142,61 @@ Evapotranspiration
 Leaf dynamics
 -------------
 .. autoclass:: pcse.crop.leaf_dynamics.WOFOST_Leaf_Dynamics
-    :members:
 
 Root dynamics
 -------------
 .. autoclass:: pcse.crop.root_dynamics.WOFOST_Root_Dynamics
-    :members:
 
 Stem dynamics
 -------------
 .. autoclass:: pcse.crop.stem_dynamics.WOFOST_Stem_Dynamics
-    :members:
 
 Storage organ dynamics
 ----------------------
 .. autoclass:: pcse.crop.storage_organ_dynamics.WOFOST_Storage_Organ_Dynamics
-    :members:
+
+N/P/K dynamics
+--------------
+
+.. autoclass:: pcse.crop.npk_dynamics.NPK_Crop_Dynamics
+.. autoclass:: pcse.crop.nutrients.NPK_Demand_Uptake
+.. autoclass:: pcse.crop.nutrients.NPK_Stress
+.. autoclass:: pcse.crop.nutrients.NPK_Translocation
+
 
 Abiotic damage
 --------------
 .. autoclass:: pcse.crop.abioticdamage.FROSTOL
-    :members:
 
 .. autoclass:: pcse.crop.abioticdamage.CrownTemperature
-    :members:
 
-.. .. autoclass:: pcse.crop.abioticdamage.CERES_WinterKill
-..    :members:
+
+Crop simulation processes for LINGRA & LINGRA-N
+===============================================
+
+.. automodule:: pcse.crop.lingra
+
+Overall grassland model
+-----------------------
+
+.. autoclass:: pcse.crop.lingra.LINGRA
+
+Source/Sink limited growth
+--------------------------
+
+.. autoclass:: pcse.crop.lingra.SourceLimitedGrowth
+
+.. autoclass:: pcse.crop.lingra.SinkLimitedGrowth
+
+Nitrogen dynamics
+-----------------
+
+.. autoclass:: pcse.crop.lingra_ndynamics.N_Demand_Uptake
+
+.. autoclass:: pcse.crop.lingra_ndynamics.N_Stress
+
+.. autoclass:: pcse.crop.lingra_ndynamics.N_Crop_Dynamics
+
 
 .. _BaseClasses:
 
@@ -228,10 +254,8 @@ values from files or databases.
 Tools for reading input files
 -----------------------------
 
-The file_input tools contain three classes: the `CABOFileReader` for reading in
-parameter files in the CABO format,  the `CABOWeatherDataProvider` for reading
-files from the CABO weather system and the `PCSEFileReader` for reading
-files in PCSE format.
+The file_input tools contain several classes for reading weather files,
+parameter files and agromanagement files.
 
 .. _CABOFileReader:
 .. autoclass:: pcse.fileinput.CABOFileReader
@@ -270,8 +294,11 @@ must be provided to the model.
 .. _DummySoilDataProvider:
 .. autoclass:: pcse.util.DummySoilDataProvider
 
-.. _WOFOST71SiteDataProvider:
-.. autoclass:: pcse.util.WOFOST71SiteDataProvider
+.. _WOFOST72SiteDataProvider:
+.. autoclass:: pcse.util.WOFOST72SiteDataProvider
+
+.. _WOFOST80SiteDataProvider:
+.. autoclass:: pcse.util.WOFOST80SiteDataProvider
 
 
 .. _DBtools:

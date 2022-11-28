@@ -1,0 +1,58 @@
+# Experiment collection for testing the simulation of LINGRA against experimental data
+# encoding: UTF-8
+#
+# All parameter and variable names and their respective units refer to the 
+# LINGRA source code available from the PCSE framework http://github.com/ajwdewit/pcse 
+#
+# Experimental data for rye grass from the FAO experiments database described by:
+#   - Corrall, A.J., 1984. Grass growth and seasonal pattern of production under varying climatic conditions. 
+#     In: Riley, H. and A.O. Skjelvåg (Eds.), The impact of climate on grass production and quality. 
+#     Proceedings of the 10th meeting of the European Grassland Federation, 26-30 June 1984, Ås, Norway
+#   - Corrall, A.J., 1988. Prediction of production from grassland. Information Bulletin of the FAO European 
+#     Research Co-operative Network on Pastures and Field Crops (Herba), no. 1. Published by the Agronomy 
+#     Institute of the University of Florence, Italy. pp. 25-28.
+#
+# Specific use for calibration of LINGRA of the above data is described by:
+#   - Bouman, B.A.M, A.H.C.M. Schapendonk, W. Stol & D.W.G. van Kraalingen. (1996) Description of the grassland 
+#     growth model LINGRA as implemented in CGMS. https://edepot.wur.nl/336784 
+#
+# Wageningen-UR 2021, allard.dewit@wur.nl
+Metadata:
+    crop: Rye grass
+    experiment_type: Potential
+    source: FAO Subnetwork for lowland grassland project “Predicting production from grassland"
+    variables:
+        WeightABG:
+            long_title: Total accumulated weight of dry biomass
+            short_title: Total dry biomass
+            unit: kg.ha-1
+            vrange: [0.0, 20000.0]
+VariablestoSummarize:
+    - WeightABG
+Experiments:
+- LINGRA_FAO/LINGRA_FAO_experiment_000_UK2_1982.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_004_SW1_1983.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_006_SW1_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_008_SW1_1985.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_018_FR2_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_020_FR2_1985.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_027_RU1_1986.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_032_BE1_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_034_BE1_1985.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_042_ES1_1983.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_044_ES1_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_046_ES1_1985.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_050_IT1_1983.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_052_IT1_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_054_NL1_1983.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_056_NL1_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_058_IT2_1983.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_060_IT2_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_062_IT2_1985.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_064_UK1_1983.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_066_UK1_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_068_UK1_1985.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_070_NL2_1984.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_072_NL2_1985.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_074_UK2_1983.yaml
+- LINGRA_FAO/LINGRA_FAO_experiment_076_UK2_1984.yaml

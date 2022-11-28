@@ -120,19 +120,21 @@ class CrownTemperature(SimulationObject):
     def initialize(self, day, kiosk, parvalues, testing=False):
         self.kiosk = kiosk
         self._testing_ = testing
-        if not self._testing_:
-            self.params = self.Parameters(parvalues)
-            self.rates = self.RateVariables(self.kiosk)
+        self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(self.kiosk, publish=["TEMP_CROWN", "TMIN_CROWN", "TMAX_CROWN"])
 
     @prepare_rates
     def __call__(self, day, drv):
 
-        # If unit testing then directly return the prescribed crown temperature
-        if self._testing_:
-            return (0., 10., drv.TEMP_CROWN)
-
         p = self.params
         r = self.rates
+
+        # If unit testing then directly return the prescribed crown temperature
+        if self._testing_:
+            r.TMIN_CROWN = 0.
+            r.TMAX_CROWN = 10.
+            r.TEMP_CROWN = drv.TEMP_CROWN
+            return
 
         # Take snow depth from driving variables or kiosk depending on
         # ISNOWSRC and limit the snow depth on 15 cm
@@ -151,7 +153,136 @@ class CrownTemperature(SimulationObject):
             r.TMAX_CROWN = drv.TMAX
             r.TEMP_CROWN = drv.TEMP
 
-        return (r.TMIN_CROWN, r.TMAX_CROWN, r.TEMP_CROWN)
+
+class CrownTemperatureJRC(SimulationObject):
+    """JRC version of an implementation of a simple algorithm for estimating the crown temperature
+    (2cm under the soil surface) under snow.
+
+    Is is based on a simple empirical equation which estimates the daily
+    minimum, maximum and mean crown
+    temperature as a function of daily min or max temperature and the
+    snow depth in cm (sD):
+
+    :math:`SD = min(15, SD)`
+
+    and
+
+    :math:`T^{crown}_{min} = 2.0 + T_{min} * (A + B(SD - 15)^{2})`
+
+    and
+
+    :math:`T^{crown}_{max} = 2.0 + T_{max} * (A + B(SD - 15)^{2})`
+
+    and
+
+    :math:`T^{crown}_{avg} = (T^{crown}_{max} + T^{crown}_{min})/2`
+
+    At zero snow depth crown temperature is estimated close the the air
+    temperature. Increasing snow depth acts as a buffer damping the effect of
+    low air temperature on the crown temperature. The maximum value of the
+    snow depth is limited on 15cm. Typical values for A and B are 0.4 and
+    0.0018
+
+    Note that the crown temperature is only estimated if drv.TMIN<0, otherwise
+    the TMIN, TMAX and daily average temperature (TEMP) are returned.
+
+    :param day: day when model is initialized
+    :param kiosk: VariableKiosk of this instance
+    :param parvalues: `ParameterProvider` object providing parameters as
+            key/value pairs
+    :returns: a tuple containing minimum, maximum and daily average crown
+              temperature.
+
+    *Simulation parameters*
+
+    ============ ============================================== =======  ==========
+     Name         Description                                    Type     Unit
+    ============ ============================================== =======  ==========
+    ISNOWSRC     Use prescribed snow depth from driving          SSi      -
+                 variables (0) or modelled snow depth through
+                 the kiosk (1)
+    JRCCROWNTMPA A parameter in equation for crown temperature   SSi      -
+    JRCCROWNTMPB B parameter in equation for crown temperature   SSi      -
+    ============ ============================================== =======  ==========
+
+    *Rate variables*
+
+    ========== =============================================== =======  ==========
+     Name      Description                                      Pbl     Unit
+    ========== =============================================== =======  ==========
+    TEMP_CROWN  Daily average crown temperature                   N       |C|
+    TMIN_CROWN  Daily minimum crown temperature                   N       |C|
+    TMAX_CROWN  Daily maximum crown temperature                   N       |C|
+    ========== =============================================== =======  ==========
+
+    Note that the calculated crown temperatures are not real rate variables as
+    they do not pertain to rate of change. In fact they are a `derived driving
+    variable`. Nevertheless for calculating the frost damage they should
+    become available during the rate calculation step and by treating them
+    as rate variables, they can be found by a `get_variable()` call and thus
+    be defined in the list of OUTPUT_VARS in the configuration file
+
+    *External dependencies:*
+
+    ============ =============================== ========================== =====
+     Name        Description                         Provided by             Unit
+    ============ =============================== ========================== =====
+    SNOWDEPTH    Depth of snow cover.             Prescibed by driving       |cm|
+                                                  variables or simulated
+                                                  by snow cover module and
+                                                  taken from kiosk
+    ============ =============================== ========================== =====
+    """
+    # This setting is only used when running the unit tests for FROSTOL.
+    # For unit testing, FROSTOL should not rely on the CrownTemperature model,
+    # but instead use the prescribed crown temperature directly.
+    _testing_ = Bool(False)
+
+    class Parameters(ParamTemplate):
+        JRCCROWNTMPA = Float()
+        JRCCROWNTMPB = Float()
+        ISNOWSRC = Float()
+
+    class RateVariables(RatesTemplate):
+        TEMP_CROWN = Float()
+        TMIN_CROWN = Float()
+        TMAX_CROWN = Float()
+
+    def initialize(self, day, kiosk, parvalues, testing=False):
+        self.kiosk = kiosk
+        self._testing_ = testing
+        self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(self.kiosk, publish=["TEMP_CROWN", "TMIN_CROWN", "TMAX_CROWN"])
+
+    @prepare_rates
+    def __call__(self, day, drv):
+
+        p = self.params
+        r = self.rates
+
+        # If unit testing then directly return the prescribed crown temperature
+        if self._testing_:
+            r.TMIN_CROWN = 0.
+            r.TMAX_CROWN = 10.
+            r.TEMP_CROWN = drv.TEMP_CROWN
+            return
+
+        # Take snow depth from driving variables or kiosk depending on
+        # ISNOWSRC and limit the snow depth on 15 cm
+        if p.ISNOWSRC == 0:
+            SD = drv.SNOWDEPTH
+        else:
+            SD = self.kiosk["SNOWDEPTH"]
+        SD = limit(0., 15., SD)
+
+        if drv.TMIN < 0:
+            r.TMIN_CROWN = 2.0 + drv.TMIN * (p.JRCCROWNTMPA + p.JRCCROWNTMPB * (SD - 15.) ** 2)
+            r.TMAX_CROWN = 2.0 + drv.TMAX * (p.JRCCROWNTMPA + p.JRCCROWNTMPB * (SD - 15.) ** 2)
+            r.TEMP_CROWN = (r.TMIN_CROWN + r.TMAX_CROWN) / 2.
+        else:
+            r.TMIN_CROWN = drv.TMIN
+            r.TMAX_CROWN = drv.TMAX
+            r.TEMP_CROWN = drv.TEMP
 
 
 class FROSTOL(SimulationObject):
@@ -244,7 +375,6 @@ class FROSTOL(SimulationObject):
     
     http://dx.doi.org/10.1016/j.eja.2007.10.002
     """
-    crown_temperature = Instance(SimulationObject)
 
     # Helper variable for remaining crop fraction as a result of frost kill
     _CROP_FRACTION_REMAINING = Float(1.0)
@@ -278,10 +408,6 @@ class FROSTOL(SimulationObject):
     #---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues, testing=False):
 
-        # Initialize module for crown temperature
-        self.crown_temperature = CrownTemperature(day, kiosk, parvalues,
-                                                  testing)
-
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish="RF_FROST")
         self.kiosk = kiosk
@@ -305,11 +431,10 @@ class FROSTOL(SimulationObject):
         r = self.rates
         p = self.params
         s = self.states
+        k = self.kiosk
 
         # vernalisation state
         isVernalized = self.kiosk["ISVERNALISED"]
-
-        TMIN_CROWN, TMAX_CROWN, TEMP_CROWN = self.crown_temperature(day, drv)
 
         # p.ISNOWSRC=0 derive snow depth from driving variables `drv`
         # else assume snow depth is a published state variable
@@ -319,22 +444,22 @@ class FROSTOL(SimulationObject):
             snow_depth = self.kiosk["SNOWDEPTH"]
 
         # Hardening
-        if (not isVernalized) and (TEMP_CROWN < 10.):
-            xTC = limit(0., 10., TEMP_CROWN)
+        if (not isVernalized) and (k.TEMP_CROWN < 10.):
+            xTC = limit(0., 10., k.TEMP_CROWN)
             r.RH = p.FROSTOL_H * (10. - xTC)*(s.LT50T - p.LT50C)
         else:
             r.RH = 0.
 
         # Dehardening
         TCcrit = (10. if (not isVernalized) else -4.)
-        if TEMP_CROWN > TCcrit:
+        if k.TEMP_CROWN > TCcrit:
             r.RDH_TEMP = p.FROSTOL_D * (s.LT50I - s.LT50T) * \
-                         (TEMP_CROWN + 4)**3
+                         (k.TEMP_CROWN + 4)**3
         else:
             r.RDH_TEMP = 0.
 
         # Stress due to respiration under snow coverage
-        xTC = (TEMP_CROWN if TEMP_CROWN > -2.5 else -2.5)
+        xTC = (k.TEMP_CROWN if k.TEMP_CROWN > -2.5 else -2.5)
         Resp = (exp(0.84 + 0.051*xTC)-2.)/1.85
 
         Fsnow = (snow_depth - p.FROSTOL_SDBASE)/(p.FROSTOL_SDMAX - p.FROSTOL_SDBASE)
@@ -342,15 +467,15 @@ class FROSTOL(SimulationObject):
         r.RDH_RESP = p.FROSTOL_R * Resp * Fsnow
 
         # Stress due to low temperatures
-        r.RDH_TSTR = (s.LT50T - TEMP_CROWN) * \
-                      1./exp(-p.FROSTOL_S * (s.LT50T - TEMP_CROWN) - 3.74)
+        r.RDH_TSTR = (s.LT50T - k.TEMP_CROWN) * \
+                      1./exp(-p.FROSTOL_S * (s.LT50T - k.TEMP_CROWN) - 3.74)
 
         # kill factor using logistic function. Because the logistic function
         # stretches from -inf to inf, some limits must be applied. In this
         # case we assume that killfactor < 0.05 means no kill and
         # killfactor > 0.95 means complete kill.
-        if TMIN_CROWN < 0.:
-            killfactor = 1/(1 + exp((TMIN_CROWN - s.LT50T)/p.FROSTOL_KILLCF))
+        if k.TMIN_CROWN < 0.:
+            killfactor = 1/(1 + exp((k.TMIN_CROWN - s.LT50T)/p.FROSTOL_KILLCF))
             if killfactor < 0.05:
                 killfactor = 0.
             elif killfactor > 0.95:

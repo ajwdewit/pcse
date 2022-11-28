@@ -11,3 +11,4 @@ from .data_providers import SoilDataIterator
 from .data_providers import CropDataProvider
 from .data_providers import STU_Suitability
 from .data_providers import SiteDataProvider
+from .data_providers import fetch_crop_name

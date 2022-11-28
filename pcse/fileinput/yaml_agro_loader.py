@@ -18,7 +18,7 @@ class YAMLAgroManagementReader(list):
 
         with open(fname) as fp:
             try:
-                r = yaml.load(fp)
+                r = yaml.safe_load(fp)
             except yaml.YAMLError as e:
                 msg = "Failed parsing agromanagement file %s: %s" % (fname_fp, e)
                 raise exc.PCSEError(msg)

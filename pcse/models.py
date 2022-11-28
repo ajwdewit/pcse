@@ -5,28 +5,89 @@
 from .engine import Engine
 
 
-class Wofost71_PP(Engine):
-    """Convenience class for running WOFOST7.1 Potential Production.
+class Wofost72_PP(Engine):
+    """Convenience class for running WOFOST7.2 Potential Production.
 
     :param parameterprovider: A ParameterProvider instance providing all parameter values
     :param weatherdataprovider: A WeatherDataProvider object
     :param agromanagement: Agromanagement data
     """
-    config = "Wofost71_PP.conf"
+    config = "Wofost72_PP.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement, **kwargs):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config, **kwargs)
 
 
-class Wofost71_WLP_FD(Engine):
-    """Convenience class for running WOFOST7.1 water-limited production.
+class Wofost72_WLP_FD(Engine):
+    """Convenience class for running WOFOST7.2 water-limited production.
 
     :param parameterprovider: A ParameterProvider instance providing all parameter values
     :param weatherdataprovider: A WeatherDataProvider object
     :param agromanagement: Agromanagement data
     """
-    config = "Wofost71_WLP_FD.conf"
+    config = "Wofost72_WLP_FD.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class Wofost72_Phenology(Engine):
+    """Convenience class for running WOFOST7.2 phenology only.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost72_Pheno.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+# This is to ensure that old code keeps working
+Wofost71_PP = Wofost72_PP
+Wofost71_WLP_FD = Wofost72_WLP_FD
+
+
+class Wofost80_PP_beta(Engine):
+    """Convenience class for running WOFOST8.0 potential production (includes NPK dynamics)
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost80_PP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class Wofost80_WLP_FD_beta(Engine):
+    """Convenience class for running WOFOST8.0 water-limited production (includes NPK dynamics)
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost80_WLP_FD.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class Wofost80_NWLP_FD_beta(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost80_NWLP_FD.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement, **kwargs):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
@@ -55,23 +116,8 @@ class LINTUL3(Engine):
                         config=self.config)
 
 
-class FAO_WRSI_Potential(Engine):
-    """Convenience function for computing potential crop water requirements with a (modified) FAO WRSI approach.
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-
-    config = "GreenLayerCrop_PP.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-
-class FAO_WRSI_WaterLimited(Engine):
-    """Convenience function for computing actual crop water use including the Water Requirements
+class FAO_WRSI(Engine):
+    """Convenience class for computing actual crop water use using the Water Requirements
     Satisfaction Index with a (modified) FAO WRSI approach.
 
     :param parameterprovider: A ParameterProvider instance providing all parameter values
@@ -79,7 +125,44 @@ class FAO_WRSI_WaterLimited(Engine):
     :param agromanagement: Agromanagement data
     """
 
-    config = "GreenLayerCrop_WLP.conf"
+    config = "FAO_WRSI.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class LINGRA_PP(Engine):
+    config = "Lingra_PP.conf"
+    __version__ = "1.0.0"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class LINGRA_WLP_FD(Engine):
+    config = "Lingra_WLP_FD.conf"
+    __version__ = "1.0.0"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class LINGRA_NWLP_FD(Engine):
+    config = "Lingra_NWLP_FD.conf"
+    __version__ = "1.0.0"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class ALCEPAS(Engine):
+    """ALCEPAS Onion growth model.
+    """
+    config = "alcepas.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,

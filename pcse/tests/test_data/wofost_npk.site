@@ -7,8 +7,14 @@ SMLIM = 0.3  ! Limiting amount of volumetric moisture in upper soil layer [-]
 IFUNRN = 0   ! Rain infiltration as function of storm size [0/1]
 SSMAX = 0.   ! Maximum surface storage [cm]
 SSI = 0.      ! Initial surface storage [cm]
-WAV = 50     ! Initial amount of soil water [cm]
+WAV = 1     ! Initial amount of soil water [cm]
 NOTINF = 0.   ! Not infiltrating fraction of rainfall [0..1]
+CO2 = 360.
+
+* initial amounts
+NAVAILI = 0.0
+PAVAILI = 0.0
+KAVAILI = 0.0
 
 * Background supply of N [kg/ha/day]
 BG_N_SUPPLY = 0.091

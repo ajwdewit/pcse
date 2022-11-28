@@ -403,7 +403,8 @@ class Engine(BaseEngine):
         with the value '5.0' as input.
         """
         increments = {}
-        self.soil.set_variable(varname, value, increments)
+        if self.soil is not None:
+            self.soil.set_variable(varname, value, increments)
         if self.crop is not None:
             self.crop.set_variable(varname, value, increments)
 
@@ -508,8 +509,10 @@ class CGMSEngine(Engine):
 
         elif self.flag_crop_finish is True:
             # Run the finalize section of the crop and soil simulation and sub-components
-            self.crop.finalize(self.day)
-            self.soil.finalize(self.day)
+            if self.crop is not None:
+                self.crop.finalize(self.day)
+            if self.soil is not None:
+                self.soil.finalize(self.day)
 
             # Generate summary output after finalize() has been run.
             self._save_summary_output()

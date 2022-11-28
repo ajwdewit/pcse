@@ -10,6 +10,7 @@ Data providers are compatible with a CGMS 14 database schema.
 """
 import datetime as dt
 import os
+import logging
 
 import numpy as np
 import yaml
@@ -72,6 +73,12 @@ class STU_Suitability(set):
             msg = "No suitable soil type unit found for idcrop_parametrization=%s"
             raise exc.PCSEError(msg % idcrop_parametrization)
         set.__init__(self, [int(row.idstu) for row in rows])
+
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
 
 
 class WeatherObsGridDataProvider(WeatherDataProvider):
@@ -211,7 +218,7 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
                 wdc = self._make_WeatherDataContainer(row, t)
                 self._store_WeatherDataContainer(wdc, DAY)
 
-        except Exception:
+        except Exception as e:
             msg = "Failure reading meteodata for grid %s "
             self.logger.exception(msg, self.idgrid)
             raise exc.PCSEError(msg, self.idgrid)
@@ -252,6 +259,12 @@ class WeatherObsGridDataProvider(WeatherDataProvider):
         result = WeatherDataContainer(**t)
         return result
 
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
+
 
 class AgroManagementDataProvider(list):
     """Class for providing agromanagement from the CROP_CALENDAR table in a CGMS14 database.
@@ -261,19 +274,30 @@ class AgroManagementDataProvider(list):
     :param idcrop_prmtrz: Integer id of crop parametrization, maps to the idcrop_parameterization
            column in the table
     :param campaign_year: Integer campaign year, maps to the YEAR column in the table.
-        The campaign year usually refers to the year of the harvest. Thus for crops
-        crossing calendar years, the start_date can be in the previous year.
+        CGMS14 uses the unlogical contention that the year refers to the year of sowing.
+         So for a crop sown in autumn.
+    :keyword campaign_start: Optional keyword that can be used to define the start of the
+           campaign. Note that by default the campaign_start_date is set equal to the
+           crop_start_date which means that the simulation starts when the crop starts.
+           This default behaviour can be changed using this keyword. It can have multiple meanings:
+
+               - if a date object is passed, the campaign is assumed to start on this date.
+               - if an int/float is passed, the campaign_start_date is calculated as the
+                 crop_start_date minus the number of days provided by campaign_start.
+
+    For adjusting the campaign_start_Date, see also the `set_campaign_start_date(date)` method
+    to update the campaign_start_date on an existing AgroManagementDataProvider.
     """
     agro_management_template = """
-          - {0[campaign_start_date]}:
+          - {campaign_start_date}:
                 CropCalendar:
-                    crop_name: '{0[crop_name]}'
-                    variety_name: '{0[variety_name]}'
-                    crop_start_date: {0[crop_start_date]}
-                    crop_start_type: {0[start_period]}
-                    crop_end_date: {0[crop_end_date]}
-                    crop_end_type: {0[end_period]}
-                    max_duration: {0[duration]}
+                    crop_name: '{crop_name}'
+                    variety_name: '{variety_name}'
+                    crop_start_date: {crop_start_date}
+                    crop_start_type: {start_type}
+                    crop_end_date: {crop_end_date}
+                    crop_end_type: {end_type}
+                    max_duration: {max_duration}
                 TimedEvents: null
                 StateEvents: null
         """
@@ -282,98 +306,110 @@ class AgroManagementDataProvider(list):
         # Initialise
         list.__init__(self)
         self.idgrid = idgrid
-        self.idcrop_parametrization = idcrop_parametrization
-        self.crop_name = fetch_crop_name(engine, idcrop_parametrization)
+        self.idcrop = idcrop_parametrization
+        self.crop_name = fetch_crop_name(engine, self.idcrop)
+        self.variety_name = f"{self.crop_name}_{self.idcrop}_{idgrid}"
         self.campaign_year = campaign_year
-        self.amdict = {}
 
         # Use the idcrop_parametrization to search in the table crop_calendars 
         metadata = MetaData(engine)
         t = Table("crop_calendars", metadata, autoload=True)
         sm = select([t], and_(t.c.idgrid == self.idgrid,
-                              t.c.idcrop_parametrization == self.idcrop_parametrization,
+                              t.c.idcrop_parametrization == self.idcrop,
                               t.c.year == self.campaign_year))
-        sc = sm.execute()
-        row = sc.fetchone()
-        sc.close()
+        row = sm.execute().fetchone()
 
         # Process the query result - dates should be in the format 'yyyy-mm-dd'!
         if row is None:
             msg = "Failed deriving agromanagement info for grid %s" % self.idgrid
             raise exc.PCSEError(msg)
 
-        for key, value in row.items():
-            if value in ["EMERGENCE", "SOWING", "HARVEST", "MATURITY"]:
-                value = value.lower()
-            if key == "duration":
-                value = int(value)
-            self.amdict[key] = value
+        self.agro = dict(crop_name=self.crop_name, variety_name=self.variety_name)
 
-        self.conditional_datecopy("start_period", "crop_start_date", "emergence", "sowing")
-        self.conditional_datecopy("end_period", "crop_end_date", "maturity", "harvesting")
-        self.amdict["campaign_start_date"] = check_date(self.amdict["crop_start_date"])
-        self.amdict["campaign_end_date"] = check_date(self.amdict["crop_end_date"]) + dt.timedelta(days=1)
-        self.amdict["crop_name"] = self.crop_name
-        # We do not get a variety_name from the CGMS database, so we make one
-        # as <crop_name>_<grid>_<year>
-        self.amdict["variety_name"] = "%s_%s_%s" % (self.crop_name, self.idgrid, self.campaign_year)
-
-        # determine the campaign_start_date
-        if campaign_start is None:
-            self.amdict["campaign_start_date"] = self.amdict['crop_start_date']
-        elif isinstance(campaign_start, (int, float)):
-            ndays = abs(int(campaign_start))
-            self.amdict["campaign_start_date"] = self.amdict["crop_start_date"] - dt.timedelta(days=ndays)
+        # Start of the crop
+        if row.start_event == 1:
+            self.agro["crop_start_date"] = check_date(row.sowing)
+            self.agro["start_type"] = "sowing"
+        elif row.start_event == 3:
+            self.agro["crop_start_date"] = check_date(row.emergence)
+            self.agro["start_type"] = "emergence"
         else:
-            try:
-                campaign_start = check_date(campaign_start)
-                if campaign_start <= self.amdict["crop_start_date"]:
-                    self.amdict["campaign_start_date"] = campaign_start
-                else:
-                    msg = "Date (%s) specified by keyword 'campaign_start' in call to AgroManagementDataProvider " \
-                          "is later then crop_start_date defined in the CGMS database."
-                    raise exc.PCSEError(msg % campaign_start)
-            except KeyError as e:
-                msg = "Value (%s) of keyword 'campaign_start' not recognized in call to AgroManagementDataProvider."
-                raise exc.PCSEError(msg % campaign_start)
+            msg = f"Cannot find valid crop start for idcrop_parametrization {self.idcrop} and " \
+                  f"grid {idgrid} and year {campaign_year}"
+            raise exc.PCSEError(msg)
 
-        input = self._build_yaml_agromanagement()
-        self._parse_yaml(input)
+        # end of cropping season
+        if row.end_event == 2:
+            self.agro["crop_end_date"] = ""
+            self.agro["end_type"] = "maturity"
+            self.agro["max_duration"] = (check_date(row.maturity) - self.agro["crop_start_date"]).days
+            self.end_date = check_date(row.maturity)
+        elif row.end_event == 4:
+            self.agro["crop_end_date"] = check_date(row.harvesting)
+            self.agro["end_type"] = "harvest"
+            self.agro["max_duration"] = ""
+            self.end_date = check_date(row.harvesting)
+        else:
+            msg = f"Cannot find crop calendar for idcrop_parametrization: {self.idcrop} and grid {self.idgrid}"
+            raise exc.PCSEError(msg)
 
-    def conditional_datecopy(self, testkey, targetkey, value1, value2):
-        if self.amdict == None: return
-        try:
-            if self.amdict[testkey].lower() == value1.lower():
-                self.amdict[targetkey] = check_date(self.amdict[value1])
-            else:
-                self.amdict[targetkey] = check_date(self.amdict[value2])
-        except KeyError:
-            raise exc.PCSEError("Failed to add value to dictionary for key %s" % targetkey)
+        self._determine_campaign_start(campaign_start)
 
-    def _build_yaml_agromanagement(self):
-        """Builds the YAML agromanagent string"""
-
-        return self.agro_management_template.format(self.amdict)
+        # Build and parse agromanagement structure
+        agromanagement = self.agro_management_template.format(**self.agro)
+        self._parse_yaml(agromanagement)
 
     def _parse_yaml(self, input):
         """Parses the input YAML string and assigns to self"""
         try:
-            items = yaml.load(input)
+            items = yaml.safe_load(input)
         except yaml.YAMLError as e:
             msg = "Failed parsing agromanagement string %s: %s" % (input, e)
             raise exc.PCSEError(msg)
         del self[:]
         self.extend(items)
 
-    def set_campaign_start_date(self, start_date):
+    def set_campaign_start_date(self, campaign_start):
         """Updates the value for the campaign_start_date.
 
         This is useful only when the INITIAL_SOIL_WATER table in CGMS12 defines a different
         campaign_start
         """
-        self.amdict["campaign_start_date"] = check_date(start_date)
-        input = self._build_yaml_agromanagement()
-        self._parse_yaml(input)
+        self._determine_campaign_start(campaign_start)
+        agromanagement = self.agro_management_template.format(**self.agro)
+        self._parse_yaml(agromanagement)
+
+    def _determine_campaign_start(self, campaign_start):
+        """Logic for determining start of campaign
+        """
+        # Start of the campaign
+        if campaign_start is None:
+            self.agro["campaign_start_date"] = self.agro["crop_start_date"]
+
+        elif isinstance(campaign_start, dt.datetime):
+            campaign_start_date = check_date(campaign_start)
+            if campaign_start_date > self.agro["crop_start_date"]:
+                msg = f"Start date for campaign start {campaign_start_date} later than crop " \
+                      f"start date {self.agro['crop_start_date']}"
+                raise exc.PCSEError(msg)
+            self.agro["campaign_start_date"] = campaign_start_date
+
+        elif isinstance(campaign_start, (int, float)):
+            d = abs(int(campaign_start))
+            campaign_start_date = self.agro['crop_start_date'] - dt.timedelta(days=d)
+            self.agro["campaign_start_date"] = campaign_start_date
+
+        else:
+            msg = f"Unrecognized value for campaign start: {campaign_start}"
+            raise exc.PCSEError(msg)
+
+        self.start_date = self.agro["campaign_start_date"]
+
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
 
 
 class SoilDataProviderSingleLayer(dict):
@@ -389,62 +425,52 @@ class SoilDataProviderSingleLayer(dict):
     moisture content in initial rooting depth zone) is set
     to field capacity (SMFCF)
     """
-    soil_hydraulic_parameters = [("CRAIRC", "CRITICAL_AIR_CONTENT"),
-                                 ("K0", "HYDR_CONDUCT_SATUR"),
-                                 ("SOPE", "MAX_PERCOL_ROOT_ZONE"),
-                                 ("KSUB", "MAX_PERCOL_SUBSOIL")]
-    soil_moisture_content_parameters = [("SMFCF", "soil_moisture_fc"),
-                                        ("SM0", "soil_moisture_sat"),
-                                        ("SMW", "soil_moisture_wp"),
-                                        ("RDMSOL", "depth")]  # CALCULATED_ROOTING_?
+    soil_parameters = [("SMFCF", "soil_moisture_fc"),
+                       ("SM0", "soil_moisture_sat"),
+                       ("SMW", "soil_moisture_wp"),
+                       ("RDMSOL", "depth"),
+                       ("CRAIRC", "swcres"),
+                       # ("K0", "sat_hydro_conductivity"),
+                       ("SOPE", "max_percol_root_zone"),
+                       ("KSUB", "max_percol_subsoil")
+                       ]
 
     def __init__(self, engine, idstu):
-        # Initialise
-        dict.__init__(self)
-        metadata = MetaData(engine)
+        """Gets the soil moisture content parameters from the table
+         link_stu_weighted_parameters and them stores into self[] directly.
 
-        # Get the actual rooting depth [cm]
-        self._soil_moisture_content_parameters(metadata, idstu)
-        # Get the actual soil hydrological parameters.
-        self._get_soil_hydraulic_parameters(metadata, idstu)
-
-        # define SMLIM
-        self["SMLIM"] = self["SMFCF"]
-
-    def _soil_moisture_content_parameters(self, metadata, idstu):
-        """Gets the soil moisture content parameters from the table 
-         link_weighted_parameters and them stores into self[] directly.
-
-        :param metadata: An SQLAlchemy Metadata object
+        :param engine: An SQLAlchemy Engine object
         :param idstu: the id for the soil typologic unit(integer)
         """
+
+        dict.__init__(self)
+        metadata = MetaData(engine)
         t = Table("link_stu_weighted_parameters", metadata, autoload=True)
-        sc = select([t], t.c.idstu == idstu).execute()
-        row = sc.fetchone()
-        sc.close()
+        row = select([t], t.c.idstu == idstu).execute().fetchone()
         if row is None:
             msg = "No soil moisture content parameters found in table " \
                   "link_stu_weighted_parameters for idstu=%s" % idstu
             raise exc.PCSEError(msg)
 
-        for (wofost_soil_par, db_soil_par) in self.soil_moisture_content_parameters:
-            self[wofost_soil_par] = float(getattr(row, db_soil_par))
+        for (wofost_soil_par, db_soil_par) in self.soil_parameters:
+            try:
+                self[wofost_soil_par] = float(getattr(row, db_soil_par))
+            except TypeError:
+                if db_soil_par == 'swcres':
+                    msg = f"No value for critical air content, using default value of 0.041"
+                    self.logger.warning(msg)
+                    self[wofost_soil_par] = 0.041
+                else:
+                    raise
 
-    def _get_soil_hydraulic_parameters(self, metadata, idstu):
-        """Defineds the soil hydraulic parameters and stores into self[] directly.
+        # define SMLIM
+        self["SMLIM"] = self["SMFCF"]
 
-        :param metadata: An SQLAlchemy Metadata object
-        :param idstu: the soil physical group number (integer)
-        :return: None
-
-        NOTE: soil hydraulic parameters are not defined in BioMA database yet.
-              therefore, default values are used.
-        """
-        for (wofost_soil_par, db_soil_par) in self.soil_hydraulic_parameters:
-            if wofost_soil_par == "CRAIRC":
-                self[wofost_soil_par] = 0.06
-            else:
-                self[wofost_soil_par] = 10.0
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
 
 
 class SoilDataIterator(list):
@@ -468,6 +494,7 @@ class SoilDataIterator(list):
     (9050131, 625000000, 9000282, 50)
     (9050131, 625000000, 9000283, 50)
     """
+    tbl_link_sm_grid_cover = "link_smu_grid_cover"
 
     def __init__(self, engine, idgrid, idcover=1000):
         # Initialise
@@ -487,7 +514,7 @@ class SoilDataIterator(list):
     def _get_SMU_from_EMU(self, metadata, idgrid, idcover):
         """Retrieves the relevant SMU for given idgrid from table link_smu_grid_cover."""
         result = None
-        t = Table("link_smu_grid_cover", metadata, autoload=True)
+        t = Table(self.tbl_link_sm_grid_cover, metadata, autoload=True)
         sm = select([t.c.idsmu, t.c.area], and_(t.c.idgrid == self.idgrid, t.c.idcover == idcover))
         sc = sm.execute()
         result = sc.fetchall()
@@ -689,13 +716,13 @@ class CropDataProvider(dict):
         tabular_values = [pvalue if v is None else v for v in template]
         return tabular_crop_parameter, tabular_values
 
-    def __str__(self):
-        msg = ("Crop parameter values for idgrid=%s, idcrop_parametrization=%s (%s), "
-               "idvariety=%s derived from %s\n" % (self.idgrid, self.idcrop_parametrization,
-                                                      self.crop_name, self.idvariety,
-                                                      self.db_resource))
-        msg += str(self)
-        return msg
+    # def __str__(self):
+    #     msg = ("Crop parameter values for idgrid=%s, idcrop_parametrization=%s (%s), "
+    #            "idvariety=%s derived from %s\n" % (self.idgrid, self.idcrop_parametrization,
+    #                                                   self.crop_name, self.idvariety,
+    #                                                   self.db_resource))
+    #     msg += str(self)
+    #     return msg
 
 
 class SiteDataProvider(dict):
