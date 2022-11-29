@@ -138,3 +138,17 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
 
         # Calculate Pod Area Index (SAI)
         states.PAI = states.WSO * params.SPA
+
+    @prepare_states
+    def _set_variable_WSO(self, nWSO):
+        s = self.states
+        p = self.params
+        oWSO, oTWSO, oPAI = s.WSO, s.TWSO, s.PAI
+        s.WSO = nWSO
+        s.TWSO = s.DWSO + nWSO
+        s.PAI = s.WSO * p.SPA
+
+        increments = {"WSO": s.WSO - oWSO,
+                      "PAI": s.PAI - oPAI,
+                      "TWSO": s.TWSO - oTWSO}
+        return increments

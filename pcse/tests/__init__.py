@@ -29,7 +29,7 @@ def make_test_suite(dsn=None):
                                     test_agromanager.suite(),
                                     test_wofost72.suite(dsn),
                                     # test_lintul3.suite(),
-                                    test_wofost80.suite()
+                                    # test_wofost80.suite()
                                     ])
     return allsuites
 

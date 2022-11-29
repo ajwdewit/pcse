@@ -25,6 +25,7 @@ from pcse.util import reference_ET
 
 
 from pcse.base import ParameterProvider, WeatherDataProvider, WeatherDataContainer
+from pcse.util import reference_ET
 
 this_dir = Path(__file__).parent
 exp_dir = this_dir

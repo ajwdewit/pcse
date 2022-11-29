@@ -145,3 +145,21 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         # Calculate Stem Area Index (SAI)
         DVS = self.kiosk["DVS"]
         states.SAI = states.WST * params.SSATB(DVS)
+
+    @prepare_states
+    def _set_variable_WST(self, nWST):
+        s = self.states
+        p = self.params
+        k = self.kiosk
+
+        oWST = s.WST
+        oTWST = s.TWST
+        oSAI = s.SAI
+        s.WST = nWST
+        s.TWST = s.DWST + nWST
+        s.SAI = s.WST * p.SSATB(k.DVS)
+
+        increments = {"WST": s.WST - oWST,
+                      "SAI": s.SAI - oSAI,
+                      "TWST": s.TWST - oTWST}
+        return increments

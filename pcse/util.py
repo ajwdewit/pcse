@@ -1080,7 +1080,7 @@ class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
                  "PAVAILI": (None, (0, 50), float),
                  "KAVAILI": (None, (0, 250), float),
                  }
-    _required = ["WAV", "NAVAIL", "PAVAIL", "KAVAIL"]
+    _required = ["WAV", "NAVAILI", "PAVAILI", "KAVAILI"]
 
 
 def get_user_home():

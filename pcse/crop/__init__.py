@@ -15,3 +15,4 @@ from . import lintul3
 from . import lingra
 from . import lingraN
 from . import lingra_ndynamics
+from . import alcepas

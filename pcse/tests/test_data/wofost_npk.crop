@@ -228,3 +228,8 @@ KMAXLV_TB =  0.0, 0.12,   ! maximum K concentration in leaves as function of dev
             1.0, 0.04,
             2.0, 0.028,
             2.1, 0.028
+
+* Maximum uptake rates - currently set to 10 kg/ha/day
+RNUPTAKEMAX = 10.0
+RPUPTAKEMAX = 10.0
+RKUPTAKEMAX = 10.0
