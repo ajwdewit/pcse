@@ -121,8 +121,8 @@ ModelParameters:
   IDSL: 2
   DLO: 16.3
   DLC: 8.0
-  TSUM1: 958
-  TSUM2: 1030
+  TSUM1: 881.0
+  TSUM2: 873.0
   DTSMTB:
   - 0.0
   - 0.0
@@ -148,7 +148,7 @@ ModelParameters:
   - 0.0
   - 20.0
   - 0.0
-  TDWI: 100.0
+  TDWI: 284.0
   RGRLAI: 0.007
   SLATB:
   - 0.0
@@ -173,7 +173,7 @@ ModelParameters:
   - 0.45
   - 40.0
   - 0.45
-  AMAX_REF: 40.0
+  AMAX_REF: 48.7
   TMPFTB:
   - 0.0
   - 0.01
@@ -228,42 +228,40 @@ ModelParameters:
   - 0.0
   FLTB:
   - 0.0
-  - 0.65
-  - 0.1
-  - 0.65
-  - 0.25
-  - 0.7
   - 0.5
+  - 0.11
   - 0.5
-  - 0.646
-  - 0.3
-  - 0.95
+  - 0.92
+  - 0.0
+  - 1.0
+  - 0.0
+  - 1.04
   - 0.0
   - 2.0
   - 0.0
   FSTB:
   - 0.0
-  - 0.35
-  - 0.1
-  - 0.35
-  - 0.25
-  - 0.3
   - 0.5
+  - 0.11
   - 0.5
-  - 0.646
-  - 0.7
-  - 0.95
+  - 0.92
   - 1.0
   - 1.0
+  - 1.0
+  - 1.04
   - 0.0
   - 2.0
   - 0.0
   FOTB:
   - 0.0
   - 0.0
-  - 0.95
+  - 0.11
+  - 0.0
+  - 0.92
   - 0.0
   - 1.0
+  - 0.0
+  - 1.04
   - 1.0
   - 2.0
   - 1.0
@@ -308,7 +306,7 @@ ModelParameters:
   - 0.014
   NMAXRT_FR: 0.5
   NMAXST_FR: 0.5
-  NMAXSO: 0.031
+  NMAXSO: 0.02
   NRESIDLV: 0.004
   NRESIDST: 0.002
   NRESIDRT: 0.002
@@ -329,12 +327,12 @@ ModelParameters:
   - 2.5
   - 1.5
   RGRLAI_MIN: 0.004
-  REALLOC_DVS: 2.0
-  REALLOC_STEM_FRACTION: 0.0
+  REALLOC_DVS: 1.5
+  REALLOC_STEM_FRACTION: 0.2
   REALLOC_LEAF_FRACTION: 0.0
-  REALLOC_STEM_RATE: 0.0
+  REALLOC_STEM_RATE: 0.1
   REALLOC_LEAF_RATE: 0.0
-  REALLOC_EFFICIENCY: 0.0
+  REALLOC_EFFICIENCY: 0.95
   BG_N_SUPPLY: 0.068493
   CO2: 343.0
   IFUNRN: 0
