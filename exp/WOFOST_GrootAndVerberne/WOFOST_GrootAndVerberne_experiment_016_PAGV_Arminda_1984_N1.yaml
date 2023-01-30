@@ -83,8 +83,8 @@ Agromanagement:
           N_recovery: 0.7
     StateEvents: null
 ModelParameters:
-  AMAX_SLP: 32.4
-  AMAX_LNB: 0.2
+  AMAX_SLP: 3.24
+  AMAX_LNB: 2.0
   CO2EFFTB:
   - 40.0
   - 0.0
@@ -124,8 +124,8 @@ ModelParameters:
   IDSL: 2
   DLO: 16.3
   DLC: 8.0
-  TSUM1: 880.0
-  TSUM2: 870.0
+  TSUM1: 958
+  TSUM2: 1030
   DTSMTB:
   - 0.0
   - 0.0
@@ -151,7 +151,7 @@ ModelParameters:
   - 0.0
   - 20.0
   - 0.0
-  TDWI: 279.0
+  TDWI: 100.0
   RGRLAI: 0.007
   SLATB:
   - 0.0
@@ -176,7 +176,7 @@ ModelParameters:
   - 0.45
   - 40.0
   - 0.45
-  AMAX_REF: 48.7
+  AMAX_REF: 40.0
   TMPFTB:
   - 0.0
   - 0.01
@@ -231,40 +231,42 @@ ModelParameters:
   - 0.0
   FLTB:
   - 0.0
-  - 0.52
-  - 0.07
-  - 0.52
-  - 1.0
-  - 0.01
-  - 1.01
-  - 0.0
-  - 1.02
+  - 0.65
+  - 0.1
+  - 0.65
+  - 0.25
+  - 0.7
+  - 0.5
+  - 0.5
+  - 0.646
+  - 0.3
+  - 0.95
   - 0.0
   - 2.0
   - 0.0
   FSTB:
   - 0.0
-  - 0.48
-  - 0.07
-  - 0.48
+  - 0.35
+  - 0.1
+  - 0.35
+  - 0.25
+  - 0.3
+  - 0.5
+  - 0.5
+  - 0.646
+  - 0.7
+  - 0.95
   - 1.0
-  - 0.99
-  - 1.01
-  - 0.2
-  - 1.02
+  - 1.0
   - 0.0
   - 2.0
   - 0.0
   FOTB:
   - 0.0
   - 0.0
-  - 0.07
+  - 0.95
   - 0.0
   - 1.0
-  - 0.0
-  - 1.01
-  - 0.8
-  - 1.02
   - 1.0
   - 2.0
   - 1.0
@@ -309,7 +311,7 @@ ModelParameters:
   - 0.014
   NMAXRT_FR: 0.5
   NMAXST_FR: 0.5
-  NMAXSO: 0.02
+  NMAXSO: 0.031
   NRESIDLV: 0.004
   NRESIDST: 0.002
   NRESIDRT: 0.002
@@ -330,12 +332,12 @@ ModelParameters:
   - 2.5
   - 1.5
   RGRLAI_MIN: 0.004
-  REALLOC_DVS: 1.5
-  REALLOC_STEM_FRACTION: 0.2
+  REALLOC_DVS: 2.0
+  REALLOC_STEM_FRACTION: 0.0
   REALLOC_LEAF_FRACTION: 0.0
-  REALLOC_STEM_RATE: 0.1
+  REALLOC_STEM_RATE: 0.0
   REALLOC_LEAF_RATE: 0.0
-  REALLOC_EFFICIENCY: 0.95
+  REALLOC_EFFICIENCY: 0.0
   BG_N_SUPPLY: 0.068493
   CO2: 345.0
   IFUNRN: 0
@@ -343,72 +345,19 @@ ModelParameters:
   NOTINF: 0.0
   NSOILBASE: 73.97676100000001
   NSOILBASE_FR: 0.003095975232198143
-  SMLIM: 0.3
+  SMLIM: 0.523
   SSI: 0.0
   SSMAX: 0.0
   WAV: 1
   SOLNAM: EC4-fine
-  SMTAB:
-  - -1.0
-  - 0.57
-  - 1.0
-  - 0.533
-  - 1.3
-  - 0.524
-  - 1.491
-  - 0.515
-  - 2.0
-  - 0.486
-  - 2.4
-  - 0.451
-  - 2.7
-  - 0.42
-  - 3.4
-  - 0.35
-  - 4.204
-  - 0.3
-  - 6.0
-  - 0.27
   SMW: 0.115
   SMFCF: 0.403
   SM0: 0.523
   CRAIRC: 0.003
-  CONTAB:
-  - 0.0
-  - 1.033
-  - 1.0
-  - -0.824
-  - 1.3
-  - -1.155
-  - 1.491
-  - -1.398
-  - 1.7
-  - -1.523
-  - 2.0
-  - -1.959
-  - 2.4
-  - -2.495
-  - 2.7
-  - -2.886
-  - 3.0
-  - -3.276
-  - 3.4
-  - -3.77
-  - 3.7
-  - -4.131
-  - 4.0
-  - -4.481
-  - 4.204
-  - -4.745
   RDMSOL: 120.0
   K0: 10.789
   SOPE: 0.55
   KSUB: 0.37
-  SPADS: 0.05
-  SPODS: 0.025
-  SPASS: 0.1
-  SPOSS: 0.04
-  DEFLIM: -0.3
 SummaryObservations:
 - WSO: 7363.0
   WST: 8739.0

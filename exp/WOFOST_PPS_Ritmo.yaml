@@ -1,0 +1,65 @@
+# Experiment file for testing the simulation of WOFOST against experimental data
+# encoding: UTF-8
+#
+# All parameter and variable names and their respective units refer to the 
+# WOFOST 8.1 source code available from the PCSE framework https://git.wur.nl/wit015/pcse/-/tree/develop_herman 
+#
+# Experimental data for winter wheat are described by:
+# - Berghuijs, H. N. C., Silva, J. V., Rijk, B., Van Ittersum, M. K., Van Evert, F. K. & Reidsma, P. (submitted). 
+#	Catching-up with genetic progress: Simulation of potential, water-, and nitrogen-limited production for modern wheat cultivars in the Netherlands
+#	Field Crops Research.
+#
+# Specific use for calibration of WOFOST of the above data is described by:
+#   - Berghuijs H. N. C, Silva J. V, Reidsma P, De Wit, A. J. W.
+#	  Similar yield with less nitrogen? Expanding the WOFOST crop model with nitrogen-limited crop growth for winter wheat in the Netherlands.
+#     In preparation
+#
+# Wageningen-UR 2022, herman.berghuijs@wur.nl
+Metadata:
+  crop: winterwheat
+  experiment_type: water and N limited
+  source: 'Berghuijs, H. N. C., Silva, J. V., Rijk, B., Van Ittersum, M. K., Van Evert,
+    F. K. & Reidsma, P. (submitted). Catching-up with genetic progress: Simulation
+    of potential, water-, and nitrogen-limited production for modern wheat cultivars
+    in the Netherlands. Field Crops Research'
+  variables:
+    WSO:
+      long_title: Total accumulated storage organ dry weight
+      short_title: Storage organ dry weight
+      unit: kg.ha-1
+      vrange:
+      - 0.0
+      - 35000.0
+    WST:
+      long_title: Total accumulated stem and chaff dry weight
+      short_title: Storage organ weight
+      unit: kg.ha-1
+      vrange:
+      - 0.0
+      - 20000.0
+    WLV:
+      long_title: Total accumulated leaf dry weight
+      short_title: Leaf dry weight
+      unit: kg.ha-1
+      vrange:
+      - 0.0
+      - 20000.0
+    LAI:
+      long_title: Leaf area index
+      short_title: Leaf area index
+      unit: m2.m-2
+      vrange:
+      - 0.0
+      - 12.0
+VariablestoSummarize:
+- WSO
+- WST
+- WLV
+- LAI
+Experiments:
+- WOFOST_PPS//WOFOST_PPS_experiment_004_Wageningen_Ritmo_2014_N1.yaml
+- WOFOST_PPS//WOFOST_PPS_experiment_005_Wageningen_Ritmo_2014_N2.yaml
+- WOFOST_PPS//WOFOST_PPS_experiment_006_Wageningen_Ritmo_2014_N3.yaml
+- WOFOST_PPS//WOFOST_PPS_experiment_013_Wageningen_Ritmo_2015_N1.yaml
+- WOFOST_PPS//WOFOST_PPS_experiment_014_Wageningen_Ritmo_2015_N2.yaml
+- WOFOST_PPS//WOFOST_PPS_experiment_015_Wageningen_Ritmo_2015_N3.yaml

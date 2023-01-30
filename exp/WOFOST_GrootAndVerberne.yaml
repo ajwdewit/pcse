@@ -31,7 +31,7 @@ Metadata:
       - 35000.0
     WST:
       long_title: Total accumulated stem and chaff dry weight
-      short_title: Storage organ weight
+      short_title: Stem and chaff dry weight
       unit: kg.ha-1
       vrange:
       - 0.0
