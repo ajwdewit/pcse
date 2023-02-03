@@ -485,9 +485,9 @@ An example of an agromanagement definition file::
             name: DVS-based N/P/K application table
             comment: all fertilizer amounts in kg/ha
             events_table:
-            - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4}
-            - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14}
-            - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24}
+            - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
+            - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
+            - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
     - 2000-09-01:
         CropCalendar:
         TimedEvents:
@@ -514,8 +514,8 @@ An example of an agromanagement definition file::
             name:  Timed N/P/K application table
             comment: All fertilizer amounts in kg/ha
             events_table:
-            - 2001-05-25: {N_amount : 50, P_amount: 25, K_amount: 22}
-            - 2001-07-05: {N_amount : 70, P_amount: 35, K_amount: 32}
+            - 2001-05-25: {N_amount : 50, P_amount: 25, K_amount: 22, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
+            - 2001-07-05: {N_amount : 70, P_amount: 35, K_amount: 32, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
         StateEvents:
 
 Crop calendars
@@ -640,7 +640,7 @@ date::
         StateEvents:
 
 In the case that there is no harvest date provided and the crop runs till maturity, the end date from
-the crop calendar will be estimated as the crop_start_date plus the max_duration.
+the crop calendar will be estimated as the `crop_start_date` plus the `max_duration`.
 
 Note that in an agromanagement definition where the last campaign contains a definition for state events,
 a trailing empty campaign *must* be provided because otherwise the end date cannot be determined. The
