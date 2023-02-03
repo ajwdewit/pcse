@@ -52,9 +52,4 @@ include pcse/tests/test_data/NL1.997
 include pcse/tests/test_data/NL1.998
 include pcse/tests/test_data/NL1.999
 include pcse/tests/test_data/respiration_testdata.py
-include pcse/tests/test_data/wofost_npk.agro
-include pcse/tests/test_data/wofost_npk.crop
-include pcse/tests/test_data/wofost_npk_reference_results.csv
-include pcse/tests/test_data/wofost_npk.site
-include pcse/tests/test_data/wofost_npk.soil
 

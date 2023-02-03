@@ -52,7 +52,7 @@ class CropProcess(SimulationObject):
         """
         
         self.states.STATE1 += self.rates.RATE1 * delt
-        self.states.STATE2 += self.rates.RATE2 * delts
+        self.states.STATE2 += self.rates.RATE2 * delt
 
         msg = "State update finished on CropProcess on %s." % day
         self.logger.info(msg)

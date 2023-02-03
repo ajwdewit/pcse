@@ -29,8 +29,9 @@ See Also
 from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
-__stable__ = False
-__version__ = "5.5.2-dev"
+__stable__ = True
+__version__ = "5.5.4"
+
 
 import sys, os
 from . import util
@@ -93,8 +94,8 @@ if not os.path.exists(pcse_db_file):
         logger = logging.getLogger()
         msg1 = "Failed to create the PCSE demo database: %s" % e
         msg2 = "PCSE will likely be functional, but some tests and demos may fail."
-        logger.warn(msg1)
-        logger.warn(msg2)
+        logger.warning(msg1)
+        logger.warning(msg2)
 
 if not __stable__:
     print("Warning: You are running a PCSE development version:  %s" % __version__)
