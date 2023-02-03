@@ -186,8 +186,8 @@ def run_experiment_collection(collection_fname):
     df_exp_summary = pd.DataFrame()
     for i, fname in enumerate(exp_collection["Experiments"]):
         df1, df2 = run_experiment(fname)
-        df_summary = df_summary.append(df1)
-        df_exp_summary = df_exp_summary.append(df2)
+        df_summary = pd.concat([df_summary, df1])
+        df_exp_summary = pd.concat([df_exp_summary, df2])
 
     if(exp_collection["VariablestoSummarize"]==[]):
         pass
