@@ -227,6 +227,10 @@ class YAMLCropDataProvider(MultiCropDataProvider):
             raise exc.PCSEError(msg)
         crop_names = yaml.safe_load(open(fname))["available_crops"]
         crop_yaml_fnames = {crop: os.path.join(fpath, crop + ".yaml") for crop in crop_names}
+        for crop, fname in crop_yaml_fnames.items():
+            if not os.path.exists(fname):
+                msg = f"Cannot find yaml file for crop '{crop}': {fname}"
+                raise RuntimeError(msg)
         return crop_yaml_fnames
 
     def set_active_crop(self, crop_name, variety_name):

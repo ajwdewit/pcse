@@ -37,7 +37,7 @@ setup(
     download_url='http://github.com/ajwdewit/pcse/tarball/'+VERSION,
     license='EUPL',
     author=AUTHOR,
-    install_requires=['SQLAlchemy>=1.3.0',
+    install_requires=['SQLAlchemy>=1.3.0, <2.0',
                       'PyYAML>=5.1',
                       'openpyxl>=3.0.0',
                       'requests>=2.0.0',

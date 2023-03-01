@@ -14,7 +14,10 @@ from collections import namedtuple
 from bisect import bisect_left
 import textwrap
 import sqlite3
-from collections import Iterable
+if sys.version_info > (3,8):
+    from collections.abc import Iterable
+else:
+    from collections import Iterable
 
 from . import exceptions as exc
 from .traitlets import TraitType
