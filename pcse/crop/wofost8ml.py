@@ -22,6 +22,10 @@ from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
      Storage_Organ_Dynamics
 
+from .n_dynamics import N_Crop_Dynamics as N_crop
+from pcse.soil.n_soil_dynamics import N_Soil_Dynamics as N_soil
+from .nutrients.n_stress import N_Stress as N_Stress
+
 #-------------------------------------------------------------------------------
 class Wofost(SimulationObject):
     """Top level object organizing the different components of the WOFOST crop
