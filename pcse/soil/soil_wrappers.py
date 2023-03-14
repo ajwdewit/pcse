@@ -6,6 +6,7 @@ within the same model.
 """
 from pcse.base import SimulationObject
 from .classic_waterbalance import WaterbalanceFD, WaterbalancePP
+from .watfdgw import WaterBalanceLayered
 from .n_soil_dynamics import N_Soil_Dynamics, N_PotentialProduction
 from .n_soil_dynamics import N_PotentialProduction, N_Soil_Dynamics
 from ..traitlets import Instance
@@ -108,4 +109,28 @@ class SoilModuleWrapper_N(SimulationObject):
 
     def integrate(self, day, delt=1.0):
         self.WaterbalancePP.integrate(day, delt)
+        self.N_Soil_Dynamics.integrate(day, delt)
+
+class SoilModuleWrapper_NWLP_FD_multilayer(SimulationObject):
+    """This wraps the soil water balance for free drainage conditions and N balance
+    for production conditions limited by both soil water and N.
+    """
+    WaterbalanceFD = Instance(SimulationObject)
+    N_Soil_Dynamics = Instance(SimulationObject)
+
+    def initialize(self, day, kiosk, parvalues):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param parvalues: dictionary with parameter key/value pairs
+        """
+        self.WaterbalanceFD = WaterBalanceLayered(day, kiosk, parvalues)
+        self.N_Soil_Dynamics = N_Soil_Dynamics(day, kiosk, parvalues)
+
+    def calc_rates(self, day, drv):
+        self.WaterbalanceFD.calc_rates(day, drv)
+        self.N_Soil_Dynamics.calc_rates(day, drv)
+
+    def integrate(self, day, delt=1.0):
+        self.WaterbalanceFD.integrate(day, delt)
         self.N_Soil_Dynamics.integrate(day, delt)

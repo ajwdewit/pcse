@@ -251,7 +251,7 @@ class Wofost80_NWLP_FD_beta_HB(Engine):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
 
-class WOFOST_ML(Engine):
+class WOFOST7_ML(Engine):
     """Convenience class for running WOFOST8.0 nutrient and water-limited production
 
     :param parameterprovider: A ParameterProvider instance providing all parameter values
@@ -259,6 +259,19 @@ class WOFOST_ML(Engine):
     :param agromanagement: Agromanagement data
     """
     config = "Wofost7_MLWLP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+class WOFOST8_ML(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost8_MLWLP.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,

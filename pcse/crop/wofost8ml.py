@@ -4,23 +4,22 @@
 
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Unicode
+from ..traitlets import Float, Instance, Unicode
 from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
-
 from .phenology import DVS_Phenology as Phenology
-from .assimilation import WOFOST_Assimilation7 as Assimilation
-from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
-from .evapotranspiration import EvapotranspirationCO2Layered as Evapotranspiration
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
+from .leaf_dynamics import WOFOST_Leaf_Dynamics_N as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
-     Storage_Organ_Dynamics
+    Storage_Organ_Dynamics
+from .assimilation import WOFOST_Assimilation as Assimilation
+from .partitioning import DVS_Partitioning_N as Partitioning
+from .evapotranspiration import EvapotranspirationCO2Layered as Evapotranspiration
 
 from .n_dynamics import N_Crop_Dynamics as N_crop
 from pcse.soil.n_soil_dynamics import N_Soil_Dynamics as N_soil
@@ -106,6 +105,9 @@ class Wofost(SimulationObject):
     st_dynamics = Instance(SimulationObject)
     ro_dynamics = Instance(SimulationObject)
     so_dynamics = Instance(SimulationObject)
+
+    n_crop_dynamics = Instance(SimulationObject)
+    n_stress = Instance(SimulationObject)
     
     # Parameters, rates and states which are relevant at the main crop
     # simulation level
@@ -162,6 +164,9 @@ class Wofost(SimulationObject):
         self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
         self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
+
+        self.n_crop_dynamics = N_crop(day, kiosk, parvalues)
+        self.n_stress = N_Stress(day, kiosk, parvalues)
 
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk["TWLV"] + \
@@ -251,6 +256,10 @@ class Wofost(SimulationObject):
             # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
             r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST)  * p.REALLOC_EFFICIENCY
 
+
+        # Calculate N stress indices
+        self.n_stress(day, drv)
+
         # distribution over plant organ
 
         # Below-ground dry matter increase and root dynamics
@@ -261,6 +270,8 @@ class Wofost(SimulationObject):
         self.st_dynamics.calc_rates(day, drv)
         self.so_dynamics.calc_rates(day, drv)
         self.lv_dynamics.calc_rates(day, drv)
+
+        self.n_crop_dynamics.calc_rates(day, drv)
 
     #---------------------------------------------------------------------------
     @prepare_states
@@ -290,6 +301,8 @@ class Wofost(SimulationObject):
         self.so_dynamics.integrate(day, delt)
         self.st_dynamics.integrate(day, delt)
         self.lv_dynamics.integrate(day, delt)
+
+        self.n_crop_dynamics.integrate(day, delt)
 
         # Integrate total (living+dead) above-ground biomass of the crop
         states.TAGP = self.kiosk["TWLV"] + \
