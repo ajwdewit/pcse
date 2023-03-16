@@ -13,14 +13,13 @@ from .soil_profile import SoilProfile
 
 REFERENCE_TEST_RUN = False  # set by testing procedure
 
-class WaterBalananceLayered_PP(SimulationObject):
+class WaterBalanceLayered_PP(SimulationObject):
     _default_RD = Float(10.)  # default rooting depth at 10 cm
     _RDold = _default_RD
     _RDM = Float(None)
 
     # placeholders for soil object and parameter provider
     soil_profile = None
-    parameter_provider = None
 
     # Indicates that a new crop has started
     crop_start = Bool(False)
@@ -50,13 +49,17 @@ class WaterBalananceLayered_PP(SimulationObject):
             SM[il] = layer.SMFCF
             WC[il] = SM[il] * layer.Thickness
 
+        states = { "WC": WC, "SM":SM}
+        self.states = self.StateVariables(kiosk, publish=["WC", "SM"], **states)
+
     @prepare_rates
     def calc_rates(self, day, drv):
         pass
 
     @prepare_states
     def integrate(self, day, delt=1.0):
-        pass
+        self.states.SM = self.states.SM
+        self.states.WC = self.states.WC
 
 class WaterBalanceLayered(SimulationObject):
     _default_RD = Float(10.)  # default rooting depth at 10 cm
