@@ -13,9 +13,52 @@ from .soil_profile import SoilProfile
 
 REFERENCE_TEST_RUN = False  # set by testing procedure
 
+class WaterBalananceLayered_PP(SimulationObject):
+    _default_RD = Float(10.)  # default rooting depth at 10 cm
+    _RDold = _default_RD
+    _RDM = Float(None)
+
+    # placeholders for soil object and parameter provider
+    soil_profile = None
+    parameter_provider = None
+
+    # Indicates that a new crop has started
+    crop_start = Bool(False)
+
+    class Parameters(ParamTemplate):
+        pass
+
+    class StateVariables(StatesTemplate):
+        SM = Instance(np.ndarray)
+        WC = Instance(np.ndarray)
+
+    class RateVariables(RatesTemplate):
+        pass
+
+    def initialize(self, day, kiosk, parvalues):
+        self.soil_profile = SoilProfile(parvalues)
+        parvalues._soildata["soil_profile"] = self.soil_profile
+
+        # Maximum rootable depth
+        self._RDM = self.soil_profile.get_max_rootable_depth()
+        self.soil_profile.validate_max_rooting_depth(self._RDM)
+
+        SM = np.zeros(len(self.soil_profile))
+        WC = np.zeros_like(SM)
+
+        for il, layer in enumerate(self.soil_profile):
+            SM[il] = layer.SMFCF
+            WC[il] = SM[il] * layer.Thickness
+
+    @prepare_rates
+    def calc_rates(self, day, drv):
+        pass
+
+    @prepare_states
+    def integrate(self, day, delt=1.0):
+        pass
 
 class WaterBalanceLayered(SimulationObject):
-
     _default_RD = Float(10.)  # default rooting depth at 10 cm
     _RDold = _default_RD
     _RINold = Float(0.)
