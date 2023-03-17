@@ -8,7 +8,7 @@ from pcse.base import SimulationObject
 from .classic_waterbalance import WaterbalanceFD, WaterbalancePP
 from .watfdgw import WaterBalanceLayered, WaterBalanceLayered_PP
 from .n_soil_dynamics import N_Soil_Dynamics, N_PotentialProduction
-from .n_soil_dynamics import N_PotentialProduction, N_Soil_Dynamics
+from .n_soil_dynamics_layered import N_soil_dynamics_layered
 from ..traitlets import Instance
 from ..decorators import prepare_states
 
@@ -198,6 +198,30 @@ class SoilModuleWrapper_NWLP_FD_multilayer(SimulationObject):
         """
         self.WaterbalanceFD = WaterBalanceLayered(day, kiosk, parvalues)
         self.N_Soil_Dynamics = N_Soil_Dynamics(day, kiosk, parvalues)
+
+    def calc_rates(self, day, drv):
+        self.WaterbalanceFD.calc_rates(day, drv)
+        self.N_Soil_Dynamics.calc_rates(day, drv)
+
+    def integrate(self, day, delt=1.0):
+        self.WaterbalanceFD.integrate(day, delt)
+        self.N_Soil_Dynamics.integrate(day, delt)
+
+class SoilModuleWrapper_NWLP_FD_multilayer2(SimulationObject):
+    """This wraps the soil water balance for free drainage conditions and N balance
+    for production conditions limited by both soil water and N.
+    """
+    WaterbalanceFD = Instance(SimulationObject)
+    N_Soil_Dynamics = Instance(SimulationObject)
+
+    def initialize(self, day, kiosk, parvalues):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param parvalues: dictionary with parameter key/value pairs
+        """
+        self.WaterbalanceFD = WaterBalanceLayered(day, kiosk, parvalues)
+        self.N_Soil_Dynamics = N_soil_dynamics_layered(day, kiosk, parvalues)
 
     def calc_rates(self, day, drv):
         self.WaterbalanceFD.calc_rates(day, drv)
