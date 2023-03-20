@@ -22,7 +22,7 @@ from .partitioning import DVS_Partitioning_N as Partitioning
 from .evapotranspiration import EvapotranspirationCO2Layered as Evapotranspiration
 
 from .n_dynamics import N_Crop_Dynamics as N_crop
-from pcse.soil.n_soil_dynamics import N_Soil_Dynamics as N_soil
+#from pcse.soil.n_soil_dynamics import N_Soil_Dynamics as N_soil
 from .nutrients.n_stress import N_Stress as N_Stress
 
 #-------------------------------------------------------------------------------
