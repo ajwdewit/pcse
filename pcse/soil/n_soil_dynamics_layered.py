@@ -243,15 +243,19 @@ class N_soil_dynamics_layered(SimulationObject):
             AGE_am[0,il] = initial_age * self.y_to_d            
             zmax = zmin + self.soiln_profile[il].Thickness
             if(application_depth > zmax):
-                ORGMAT_am[0, il] = (layer.Thickness / application_depth) * amount
+                ORGMAT_am[0, il] = (layer.Thickness / application_depth) * f_orgmat * amount
             elif(application_depth >= zmin and application_depth <= zmax):
-                ORGMAT_am[0, il] = ((application_depth - zmin) / application_depth) * amount
+                ORGMAT_am[0, il] = ((application_depth - zmin) / application_depth) * f_orgmat * amount
             elif(application_depth < zmin):
                 ORGMAT_am[0, il] = 0
             else:
                 pass
             CORG_am[0, il] = minip_C.calculate_organic_C(ORGMAT_am[0,il])
-            NORG_am[0, il] = CORG_am[0, il] / cnratio
+
+            if(cnratio == 0):
+                NORG_am[0, il] = 0.
+            else:
+                NORG_am[0, il] = CORG_am[0, il] / cnratio
             zmin = zmax
 
         # Recreate the state variable matrices that contain both the existing amendment and the new amendments
@@ -261,22 +265,25 @@ class N_soil_dynamics_layered(SimulationObject):
         CORG = np.matrix(np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1])))
         NORG = np.matrix(np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1])))
 
-        for am in range(0, AGE.shape[0]):
-            for il in range(0, AGE.shape[1]):
-                if(am < AGE.shape[0] - 1):
-                    # Refill the matrix with the existing amendments
-                    AGE0[am, il] = s.AGE0[am, il]
-                    AGE[am, il] = s.AGE[am, il]
-                    ORGMAT[am, il] = s.ORGMAT[am, il]
-                    CORG[am, il] = s.CORG[am, il]
-                    NORG[am, il] = s.NORG[am, il]
-                else:
-                    # Add the newly added amendment
-                    AGE0[am, il] = AGE_am[0, il]
-                    AGE[am, il] = AGE_am[0, il]
-                    ORGMAT[am, il] = ORGMAT_am[0, il]
-                    CORG[am, il] = CORG_am[0, il]
-                    NORG[am, il] = NORG_am[0, il]
+        if(f_orgmat > 0):
+            for am in range(0, AGE.shape[0]):
+                for il in range(0, AGE.shape[1]):
+                    if(am < AGE.shape[0] - 1):
+                        # Refill the matrix with the existing amendments
+                        AGE0[am, il] = s.AGE0[am, il]
+                        AGE[am, il] = s.AGE[am, il]
+                        ORGMAT[am, il] = s.ORGMAT[am, il]
+                        CORG[am, il] = s.CORG[am, il]
+                        NORG[am, il] = s.NORG[am, il]
+                    else:
+                        # Add the newly added amendment
+                        AGE0[am, il] = AGE_am[0, il]
+                        AGE[am, il] = AGE_am[0, il]
+                        ORGMAT[am, il] = ORGMAT_am[0, il]
+                        CORG[am, il] = CORG_am[0, il]
+                        NORG[am, il] = NORG_am[0, il]
+        else:
+            pass
 
         s.AGE0 = AGE0
         s.AGE = AGE
@@ -284,25 +291,30 @@ class N_soil_dynamics_layered(SimulationObject):
         s.CORG = CORG
         s.NORG = NORG
 
-        ## Add newly added ammonium and nitrate
-        #NH4_amm = np.array(len(self.soiln_profile))
-        #NO3_amm = np.array(len(self.soiln_profile))
+        # Add newly added ammonium and nitrate
+        NH4 = np.zeros(len(self.soiln_profile))
+        NO3 = np.zeros(len(self.soiln_profile))
 
-        #for il in range(0, len(NH4_amm)):
-        #    if(application_depth > zmax):
-        #        NH4_amm[il] = (layer.Thickness / application_depth) * amount
-        #        NO3_amm[il] = (layer.Thickness / application_depth) * amount
-        #    elif(application_depth >= zmin and application_depth <= zmax):
-        #        NH4_amm[il] = ((application_depth - zmin) / application_depth) * amount
-        #        NO3_amm[il] = (layer.Thickness / application_depth) * amount
-        #    elif(application_depth < zmin):
-        #        NH4_amm[il] = 0
-        #        NO3_amm[il] = (layer.Thickness / application_depth) * amount
-        #    else:
-        #        pass
+        zmin = 0.
+        for il in range(0, len(NH4)):
+            layer = self.soiln_profile[il]
+            if(application_depth > zmax):
+                zmax = zmin + layer.Thickness
+                NH4[il] = s.NH4[il] + (layer.Thickness / application_depth) * f_NH4N *  amount
+                NO3[il] = s.NO3[il] + (layer.Thickness / application_depth) * f_NHO3 *  amount
+            elif(application_depth >= zmin and application_depth <= zmax):
+                NH4[il] = s.NH4[il] + ((application_depth - zmin) / application_depth) * f_NH4N  * amount
+                NO3[il] = s.NO3[il] + ((application_depth - zmin) / application_depth) * f_NO3  * amount
+            elif(application_depth < zmin):
+                NH4[il] = s.NH4[il]
+                NO3[il] = s.NO3[il]
+            else:
+                pass
+            zmin = zmax
 
-        #s.NH4+= NH4_amm
-        #s.NO3+= NO3_amm
+
+        s.NH4= NH4
+        s.NO3= NO3
 
         r.unlock()
         #r.FERT_N_SUPPLY = N_amount * N_recovery
