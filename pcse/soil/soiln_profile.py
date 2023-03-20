@@ -47,6 +47,8 @@ class SoilNLayer(HasTraits):
         self.CNRatioSOMI = layer.CNRatioSOMI
         self.FSOMI = layer.FSOMI
         self.RHOD = layer.RHOD
+        self.NO3I = layer.NO3I
+        self.NH4I = layer.NH4I
 
         # compute hash value of this layer
         self._hash = hash((tuple(layer.SMfromPF), tuple(layer.CONDfromPF)))

@@ -92,8 +92,8 @@ class N_soil_dynamics_layered(SimulationObject):
         NORG =  np.matrix(np.zeros(len(self.soiln_profile)))
         minip_C = self.SoilOrganicNModel.MINIP_C()
         for il, layer in enumerate(self.soiln_profile):
-            NH4[il] = 0.
-            NO3[il] = 0.
+            NH4[il] = layer.NH4I
+            NO3[il] = layer.NO3I
             AGE0[0,il] = self.params.A0SOM * self.y_to_d
             AGE[0,il] = self.params.A0SOM * self.y_to_d
             ORGMAT[0,il] = layer.RHOD * layer.FSOMI * layer.Thickness *  self.g_to_kg / self.cm2_to_ha
@@ -346,11 +346,11 @@ class N_soil_dynamics_layered(SimulationObject):
 
         def calculate_soil_moisture_response_nitrification_rate_constant(self, SM, SM0):
             WFPS = SM / SM0
-            fWNIT = 0.9 / (1 + np.exp(-15 *(WFPS - 0.45))) + 0.1 - 1/(1+np.exp(-50 * (WFPS - 0.95)))
+            fWNIT = 0.9 / (1. + np.exp(-15 *(WFPS - 0.45))) + 0.1 - 1/(1+np.exp(-50. * (WFPS - 0.95)))
             return fWNIT
 
         def calculate_temperature_response_nitrification_rate_constant(self, T):
-            fT = 1/(1+np.exp(-0.26*(T-17)))-1/(1+np.exp(-0.77*(T-41.9)))
+            fT = 1/(1+np.exp(-0.26*(T-17.)))-1/(1+np.exp(-0.77*(T-41.9)))
             return fT
 
     class SoilNNitrateModel():
