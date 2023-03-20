@@ -180,18 +180,6 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNH4IN = np.zeros(len(self.soiln_profile))
         r.RNH4OUT = np.zeros(len(self.soiln_profile))
 
-        # Calculate rates ammonium
-        samm = self.SoilAmmoniumNModel()
-        for il in range(0, len(self.soiln_profile)):
-            dz = self.soiln_profile[il].Thickness * self.cm_to_m
-            SM0 = self.soiln_profile[il].SM0
-            RNMIN_kg_per_m3 = r.RNORG[:,il] * self.m2_to_ha
-            cNH4 = s.NH4[il] * self.m2_to_ha / (dz * k.SM[il])
-
-            r.RNH4MIN[il] = samm.calculate_mineralization_rate(dz, RNMIN_kg_per_m3)
-            r.RNH4NITR[il] = samm.calculate_nitrification_rate(cNH4, p.KNIT_REF, k.SM[il],SM0, T)
-            r.RNH4[il] = (1/self.m2_to_ha) * dz * (r.RNH4MIN[il] - r.RNH4NITR[il])
-
         # Initialize rates for nitrate
         r.RNO3  = np.zeros(len(self.soiln_profile))
         r.RNO3NITR = np.zeros(len(self.soiln_profile))
@@ -200,20 +188,64 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNO3IN = np.zeros(len(self.soiln_profile))
         r.RNO3OUT = np.zeros(len(self.soiln_profile))
 
-        # Calculate rates nitrate
+        # Calculate N uptake
+        samm = self.SoilAmmoniumNModel()
         sni = self.SoilNNitrateModel()
+
+        if "RNuptake" in k:
+            N_demand_soil = k.RNuptake
+        else:
+            N_demand_soil = 0.
+        if "RD" in k:
+            RD = k.RD
+        else:
+            RD = 0.
+
+        NH4UPT_kg_per_ha = np.zeros(len(self.soiln_profile))
+        NO3UPT_kg_per_ha = np.zeros(len(self.soiln_profile))
+
+        zmin = 0.
+        for il in range(0, len(self.soiln_profile)):
+            layer = self.soiln_profile[il] 
+            dz = layer.Thickness 
+            zmax = zmin + dz
+            RHOD = layer.RHOD
+            RHOD_kg_per_m2 = RHOD * self.g_to_kg / self.cm3_to_m3
+            NH4_av = samm.calculate_available_NH4(p.KSORP, s.NH4[il], RD, RHOD_kg_per_m2, k.SM[il], zmax, zmin)
+            NH4UPT_kg_per_ha[il] = min(N_demand_soil, NH4_av)
+            r.RNH4UP[il] =  self.ha_to_m2 *  NH4UPT_kg_per_ha[il] / (dz * self.cm_to_m)
+            N_demand_soil -= NH4UPT_kg_per_ha[il]
+            NO3_av = sni.calculate_available_NO3(s.NO3[il], RD, zmax, zmin)
+            NO3UPT_kg_per_ha[il] = min(N_demand_soil, NO3_av)
+            N_demand_soil -= NO3UPT_kg_per_ha[il] 
+            r.RNO3UP[il] = self.ha_to_m2 *  NO3UPT_kg_per_ha[il] / (dz * self.cm_to_m)
+
+        # Calculate rates ammonium
+        samm = self.SoilAmmoniumNModel()
+        NH4PRE = s.NH4 + r.RNH4UP * delt
+
         for il in range(0, len(self.soiln_profile)):
             dz = self.soiln_profile[il].Thickness * self.cm_to_m
-            cNO3 = s.NO3[il] * self.m2_to_ha / (dz * k.SM[il])
+            SM0 = self.soiln_profile[il].SM0
+            RNMIN_kg_per_m3 = r.RNORG[:,il] * self.m2_to_ha
+            cNH4 = NH4PRE[il] * self.m2_to_ha / (dz * k.SM[il])
+            r.RNH4MIN[il] = samm.calculate_mineralization_rate(dz, RNMIN_kg_per_m3)
+            r.RNH4NITR[il] = samm.calculate_nitrification_rate(cNH4, p.KNIT_REF, k.SM[il],SM0, T)
+            r.RNH4[il] = (1/self.m2_to_ha) * dz * (r.RNH4MIN[il] - r.RNH4NITR[il] -r.RNH4UP[il])
+
+        # Calculate rates nitrate
+        sni = self.SoilNNitrateModel()
+        NO3PRE = s.NO3 + r.RNO3UP * delt
+        for il in range(0, len(self.soiln_profile)):
+            dz = self.soiln_profile[il].Thickness * self.cm_to_m
+            cNO3 = NO3PRE[il] * self.m2_to_ha / (dz * k.SM[il])
             RCORGT_kg_per_m2 = - r.RCORG.sum() * self.ha_to_m2
             SM0 = self.soiln_profile[il].SM0
             r.RNO3NITR[il] = r.RNH4NITR[il]
             r.RNO3DENITR[il] = sni.calculate_denitrification_rate(cNO3, p.KDENIT_REF, p.MRCDIS, RCORGT_kg_per_m2, k.SM[il], SM0, T, p.WFPS_CRIT)
-            r.RNO3[il] =  (1/self.m2_to_ha) * dz *  (r.RNO3NITR[il]  - r.RNO3DENITR[il])
+            r.RNO3[il] =  (1/self.m2_to_ha) * dz *  (r.RNO3NITR[il]  - r.RNO3DENITR[il] - r.RNO3UP[il])
 
-
-
-
+ 
     @prepare_states
     def integrate(self, day, delt=1.0):
         k = self.kiosk
@@ -261,7 +293,6 @@ class N_soil_dynamics_layered(SimulationObject):
 
         samm = self.SoilAmmoniumNModel()
         sni = self.SoilNNitrateModel()
-
 
         if "RD" in self.kiosk:
             RD = self.kiosk.RD
