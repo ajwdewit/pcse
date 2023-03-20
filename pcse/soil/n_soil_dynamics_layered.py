@@ -73,7 +73,8 @@ class N_soil_dynamics_layered(SimulationObject):
         KDENIT_REF = Float()       # Reference first order denitrification rate constant (d-1)
         KNIT_REF = Float()         # Reference first order nitrification rate constant (d-1)
         KSORP = Float()            # Sorption coefficient ammonium (m3 kg-1)
-        WFPS_crit = Float()        # Critical water filled pore space fraction (m3 water m-3 pore) for denitrification
+        MRCDIS = Float()           # Michaelis Menten constant for response factor denitrification to soil respiration
+        WFPS_CRIT = Float()        # Critical water filled pore space fraction (m3 water m-3 pore) for denitrification
 
     def initialize(self, day, kiosk, parvalues):
         self.kiosk  = kiosk
@@ -178,8 +179,10 @@ class N_soil_dynamics_layered(SimulationObject):
         for il in range(0, len(self.soiln_profile)):
             dz = self.soiln_profile[il].Thickness * self.cm_to_m
             cNO3 = s.NO3[il] * self.m2_to_ha / (dz * k.SM[il])
+            RCORGT_kg_per_m2 = - r.RCORG.sum() * self.ha_to_m2
+            SM0 = self.soiln_profile[il].SM0
             r.RNO3NITR[il] = r.RNH4NITR[il]
-            r.RNO3DENITR[il] = sni.calculate_denitrification_rate(cNO3, p.KDENIT_REF, k.SM[il])
+            r.RNO3DENITR[il] = sni.calculate_denitrification_rate(cNO3, p.KDENIT_REF, p.MRCDIS, RCORGT_kg_per_m2, k.SM[il], SM0, T, p.WFPS_CRIT)
             r.RNO3[il] =  (1/self.m2_to_ha) * dz *  (r.RNO3NITR[il]  - r.RNO3DENITR[il])
 
     @prepare_states
@@ -281,6 +284,26 @@ class N_soil_dynamics_layered(SimulationObject):
         s.CORG = CORG
         s.NORG = NORG
 
+        ## Add newly added ammonium and nitrate
+        #NH4_amm = np.array(len(self.soiln_profile))
+        #NO3_amm = np.array(len(self.soiln_profile))
+
+        #for il in range(0, len(NH4_amm)):
+        #    if(application_depth > zmax):
+        #        NH4_amm[il] = (layer.Thickness / application_depth) * amount
+        #        NO3_amm[il] = (layer.Thickness / application_depth) * amount
+        #    elif(application_depth >= zmin and application_depth <= zmax):
+        #        NH4_amm[il] = ((application_depth - zmin) / application_depth) * amount
+        #        NO3_amm[il] = (layer.Thickness / application_depth) * amount
+        #    elif(application_depth < zmin):
+        #        NH4_amm[il] = 0
+        #        NO3_amm[il] = (layer.Thickness / application_depth) * amount
+        #    else:
+        #        pass
+
+        #s.NH4+= NH4_amm
+        #s.NO3+= NO3_amm
+
         r.unlock()
         #r.FERT_N_SUPPLY = N_amount * N_recovery
         r.lock()
@@ -290,15 +313,6 @@ class N_soil_dynamics_layered(SimulationObject):
         def calculate_mineralization_rate(self, dz, rNMINs_layer):
             RNH4MIN = (- rNMINs_layer).sum() / dz
             return RNH4MIN
-
-        def calculate_soil_moisture_response_nitrification_rate_constant(self, SM, SM0):
-            WFPS = SM / SM0
-            fWNIT = 0.9 / (1 + np.exp(-15 *(WFPS - 0.45))) + 0.1 - 1/(1+np.exp(-50 * (WFPS - 0.95)))
-            return fWNIT
-
-        def calculate_temperature_response_nitrification_rate_constant(self, T):
-            fT = 1/(1+np.exp(-0.26*(T-17)))-1/(1+np.exp(-0.77*(T-41.9)))
-            return fT
 
         def calculate_nitrification_rate(self, cNH4, KNIT_REF, SM, SM0, T):
             fWNIT = self.calculate_soil_moisture_response_nitrification_rate_constant(SM, SM0)
@@ -318,6 +332,15 @@ class N_soil_dynamics_layered(SimulationObject):
         def calculate_NH4_netflow(self):
             return 0.
 
+        def calculate_soil_moisture_response_nitrification_rate_constant(self, SM, SM0):
+            WFPS = SM / SM0
+            fWNIT = 0.9 / (1 + np.exp(-15 *(WFPS - 0.45))) + 0.1 - 1/(1+np.exp(-50 * (WFPS - 0.95)))
+            return fWNIT
+
+        def calculate_temperature_response_nitrification_rate_constant(self, T):
+            fT = 1/(1+np.exp(-0.26*(T-17)))-1/(1+np.exp(-0.77*(T-41.9)))
+            return fT
+
     class SoilNNitrateModel():
         def calculate_nitrification_rate(self, cNH4, KNIT_REF, SM, SM0):
             fWNIT = self.calculate_soil_moisture_response_nitrification_rate_constant(SM, SM0)
@@ -325,9 +348,12 @@ class N_soil_dynamics_layered(SimulationObject):
             return RNH4NIT
 
 
-        def calculate_denitrification_rate(self, cNO3, KDENIT_REF, SM):
-            RNO3DENIT = KDENIT_REF * SM * cNO3
-            return 0.
+        def calculate_denitrification_rate(self, cNO3, KDENIT_REF, MRCDIS, RCORGT, SM, SM0, T, WFPS_CRIT):
+            fR = self.calculate_soil_respiration_response_denitrifiation_rate_constant(RCORGT, MRCDIS)
+            fW = self.calculate_soil_moisture_response_denitrification_rate_constant(SM, SM0, WFPS_CRIT)
+            fT = self.calculate_temperature_response_denitrification_rate_constant(T)
+            RNO3DENIT = fW * fT * fR * KDENIT_REF * SM * cNO3
+            return RNO3DENIT
 
         def calculate_NO3_plant_uptake_rate(self):
             return 0.
@@ -340,6 +366,23 @@ class N_soil_dynamics_layered(SimulationObject):
 
         def calculate_NO3_netflow(self):
             return 0.
+
+        def calculate_soil_moisture_response_denitrification_rate_constant(self, SM, SM0, WFPS_CRIT):
+            WFPS = SM / SM0
+            if(WFPS < WFPS_CRIT):
+                fW = 0.
+            else:
+                fW = np.power((WFPS - WFPS_CRIT)/(1 - WFPS_CRIT),2)
+            return fW
+
+        def calculate_soil_respiration_response_denitrifiation_rate_constant(self, RCORGT, MRCDIS):
+            fR = RCORGT / (MRCDIS + RCORGT)
+            return fR
+
+        def calculate_temperature_response_denitrification_rate_constant(self, T):
+            fT = 1/(1+np.exp(-0.26*(T-17)))-1/(1+np.exp(-0.77*(T-41.9)))
+            return fT
+
 
     class SoilOrganicNModel():
 
