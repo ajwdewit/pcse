@@ -119,7 +119,7 @@ class WaterBalanceLayered(SimulationObject):
 
 
     class RateVariables(RatesTemplate):
-        FLOW = Instance(np.ndarray)
+        Flow = Instance(np.ndarray)
         RIN = Float(None)
         WTRALY = Instance(np.ndarray)
         WTRA = Float(None)
@@ -250,7 +250,9 @@ class WaterBalanceLayered(SimulationObject):
         self._WCI = WC.sum()
 
         # rate variables
-        self.rates = self.RateVariables(kiosk, publish=["FLOW"])
+        self.rates = self.RateVariables(kiosk, publish=["Flow"])
+        self.rates.Flow = Flow
+
 
         # Connect to CROP_START/CROP_FINISH/IRRIGATE signals
         self._connect_signal(self._on_CROP_START, signals.crop_start)
