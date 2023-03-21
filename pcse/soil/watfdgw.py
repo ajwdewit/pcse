@@ -119,6 +119,7 @@ class WaterBalanceLayered(SimulationObject):
 
 
     class RateVariables(RatesTemplate):
+        FLOW = Instance(np.ndarray)
         RIN = Float(None)
         WTRALY = Instance(np.ndarray)
         WTRA = Float(None)
@@ -206,6 +207,7 @@ class WaterBalanceLayered(SimulationObject):
         WLOW = 0.0 ; WAVLOW = 0.0
         SM = np.zeros(len(self.soil_profile))
         WC = np.zeros_like(SM)
+        Flow = np.zeros(len(self.soil_profile) + 1)
         for il, layer in enumerate(self.soil_profile):
             if layer.rooting_status in ["rooted", "partially rooted"]:
                 # Part of the water assigned to ILR may not actually be in the rooted zone, but it will
@@ -248,7 +250,7 @@ class WaterBalanceLayered(SimulationObject):
         self._WCI = WC.sum()
 
         # rate variables
-        self.rates = self.RateVariables(kiosk)
+        self.rates = self.RateVariables(kiosk, publish=["FLOW"])
 
         # Connect to CROP_START/CROP_FINISH/IRRIGATE signals
         self._connect_signal(self._on_CROP_START, signals.crop_start)
@@ -588,6 +590,7 @@ class WaterBalanceLayered(SimulationObject):
         r.DRAINT = drv.RAIN
 
         self._RINold = r.RIN
+        r.Flow = Flow
 
     @prepare_states
     def integrate(self, day, delt):
