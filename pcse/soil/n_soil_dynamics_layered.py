@@ -265,19 +265,19 @@ class N_soil_dynamics_layered(SimulationObject):
             if(il == 0):
                 r.RNH4IN[il] = 0.
                 r.RNO3IN[il] = 0.
-                r.RNH4OUT[il] = max(0, cNH4 * k.Flow[1]) * self.cm_to_m
-                r.RNO3OUT[il] = max(0, cNO3 * k.Flow[1]) * self.cm_to_m
+                r.RNH4OUT[il] = cNH4 * max(0,  k.Flow[1]) * self.cm_to_m / dz
+                r.RNO3OUT[il] = cNO3 * max(0,  k.Flow[1]) * self.cm_to_m / dz
             else:               
-                r.RNH4IN[il] = r.RNH4OUT[il]
-                r.RNO3IN[il] = r.RNH4OUT[il]
-                r.RNH4OUT[il] = cNH4 * k.Flow[il+1] * self.cm_to_m
-                r.RNO3OUT[il] = cNO3 * k.Flow[il+1] * self.cm_to_m
+                r.RNH4IN[il] = r.RNH4OUT[il-1]
+                r.RNO3IN[il] = r.RNO3OUT[il-1]
+                r.RNH4OUT[il] = cNH4 * k.Flow[il+1] * self.cm_to_m / dz
+                r.RNO3OUT[il] = cNO3 * k.Flow[il+1] * self.cm_to_m / dz
 
-        r.RNO3[il] =  (1/self.m2_to_ha) * dz *  (r.RNO3NITR[il]  - r.RNO3DENITR[il] - r.RNO3UP[il] + r.RNO3IN[il] - r.RNO3OUT[il])
-        r.RNH4[il] =  (1/self.m2_to_ha) * dz *  (r.RNH4MIN[il] - r.RNH4NITR[il] - r.RNH4UP[il] + r.RNH4IN[il] - r.RNH4OUT[il])
+            r.RNO3[il] =  (1/self.m2_to_ha) * dz * (r.RNO3NITR[il]  - r.RNO3DENITR[il] - r.RNO3UP[il] + r.RNO3IN[il] - r.RNO3OUT[il])
+            r.RNH4[il] =  (1/self.m2_to_ha) * dz * (r.RNH4MIN[il] - r.RNH4NITR[il] - r.RNH4UP[il] + r.RNH4IN[il] - r.RNH4OUT[il])
 
-        r.RNH4LEACHCUM = - (1/self.m2_to_ha) * dz * r.RNH4OUT[-1]
-        r.RNO3LEACHCUM = - (1/self.m2_to_ha) * dz * r.RNO3OUT[-1]
+        r.RNH4LEACHCUM =  self.cm_to_m * self.soiln_profile[-1].Thickness * (1/self.m2_to_ha) * r.RNH4OUT[-1]
+        r.RNO3LEACHCUM =  self.cm_to_m * self.soiln_profile[-1].Thickness * (1/self.m2_to_ha) * r.RNO3OUT[-1]
  
     @prepare_states
     def integrate(self, day, delt=1.0):
