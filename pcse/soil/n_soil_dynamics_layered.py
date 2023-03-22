@@ -38,15 +38,17 @@ class N_soil_dynamics_layered(SimulationObject):
         NH4    = Instance(np.ndarray) # Amount of NH4-N (kg N ha-1)
         NO3    = Instance(np.ndarray) # Amount of NO3-N (kg N ha-1)
         NAVAIL = Float()  # total mineral N from soil and fertiliser  kg N ha-1
+        NDENITCUM = Float()
         NO3LEACHCUM = Float()
         NH4LEACHCUM = Float()
+        NLOSSCUM = Float()
 
         ORGMATT = Float()
         CORGT = Float()       
         NORGT = Float()
         RMINT = Float()
         NH4T = Float()
-        NO3T = Float
+        NO3T = Float()
 
     class RateVariables(RatesTemplate):
         RAGE = Instance(np.matrix)
@@ -70,6 +72,8 @@ class N_soil_dynamics_layered(SimulationObject):
 
         RNH4LEACHCUM = Float()
         RNO3LEACHCUM = Float()
+        RNDENITCUM = Float()
+        RNLOSS = Float()
 
     class Parameters(ParamTemplate):
         A0SOM = Float()            # Initial age of humus (y)
@@ -114,6 +118,8 @@ class N_soil_dynamics_layered(SimulationObject):
         NAVAIL = 0.
         NH4LEACHCUM = 0.
         NO3LEACHCUM = 0.
+        NDENITCUM = 0.
+        NLOSSCUM = 0.
 
         samm = self.SoilAmmoniumNModel()
         sni = self.SoilNNitrateModel()
@@ -132,7 +138,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
         states = {"NAVAIL": NAVAIL, "NO3": NO3, "NH4": NH4, "AGE": AGE, "AGE0": AGE0, "ORGMAT": ORGMAT, "CORG": CORG, "NORG": NORG,  
                   "ORGMATT": ORGMATT,  "CORGT": CORGT, "NORGT": NORGT, "RMINT": RMINT, "NH4T": NH4T, "NO3T": NO3T, 
-                  "NH4LEACHCUM": NH4LEACHCUM, "NO3LEACHCUM": NO3LEACHCUM}
+                  "NH4LEACHCUM": NH4LEACHCUM, "NO3LEACHCUM": NO3LEACHCUM, "NDENITCUM": NDENITCUM, "NLOSSCUM": NLOSSCUM}
         #self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMAT", "CORG", "NORG", "ORGMATT", "CORGT", "NORGT"], **states)
         self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMATT", "CORGT", "NORGT"], **states)
         self.rates = self.RateVariables(kiosk)
@@ -187,6 +193,7 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNO3UP = np.zeros(len(self.soiln_profile))
         r.RNO3IN = np.zeros(len(self.soiln_profile))
         r.RNO3OUT = np.zeros(len(self.soiln_profile))
+        r.RDENITCUM = 0.
 
         # Calculate N uptake
         samm = self.SoilAmmoniumNModel()
@@ -245,6 +252,7 @@ class N_soil_dynamics_layered(SimulationObject):
             SM0 = self.soiln_profile[il].SM0
             r.RNO3NITR[il] = r.RNH4NITR[il]
             r.RNO3DENITR[il] = sni.calculate_denitrification_rate(cNO3, p.KDENIT_REF, p.MRCDIS, RCORGT_kg_per_m2, k.SM[il], SM0, T, p.WFPS_CRIT)
+            r.RDENITCUM += (1/self.m2_to_ha) * dz * r.RNO3DENITR[il]
             r.RNO3[il] =  (1/self.m2_to_ha) * dz *  (r.RNO3NITR[il]  - r.RNO3DENITR[il] - r.RNO3UP[il])
 
         NH4PRE2 = s.NH4  + r.RNH4 * delt
@@ -278,6 +286,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
         r.RNH4LEACHCUM =  self.cm_to_m * self.soiln_profile[-1].Thickness * (1/self.m2_to_ha) * r.RNH4OUT[-1]
         r.RNO3LEACHCUM =  self.cm_to_m * self.soiln_profile[-1].Thickness * (1/self.m2_to_ha) * r.RNO3OUT[-1]
+
  
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -308,6 +317,8 @@ class N_soil_dynamics_layered(SimulationObject):
 
         NH4LEACHCUM = s.NH4LEACHCUM + r.RNH4LEACHCUM * delt
         NO3LEACHCUM = s.NO3LEACHCUM + r.RNO3LEACHCUM * delt
+        NDENITCUM = s.NDENITCUM + r.RNDENITCUM * delt
+        NLOSSCUM =  NH4LEACHCUM + NO3LEACHCUM + NDENITCUM
 
         s.AGE = AGE
         s.ORGMAT = ORGMAT
@@ -324,6 +335,8 @@ class N_soil_dynamics_layered(SimulationObject):
         s.NO3T = np.sum(s.NO3)
         s.NH4LEACHCUM = NH4LEACHCUM
         s.NO3LEACHCUM = NO3LEACHCUM
+        s.DENITCUM = NDENITCUM
+        s.NLOSSCUM = NLOSSCUM
 
         NAVAIL = 0.
 
@@ -421,7 +434,7 @@ class N_soil_dynamics_layered(SimulationObject):
             if(application_depth > zmax):
                 zmax = zmin + layer.Thickness
                 NH4[il] = s.NH4[il] + (layer.Thickness / application_depth) * f_NH4N *  amount
-                NO3[il] = s.NO3[il] + (layer.Thickness / application_depth) * f_NHO3 *  amount
+                NO3[il] = s.NO3[il] + (layer.Thickness / application_depth) * f_NO3 *  amount
             elif(application_depth >= zmin and application_depth <= zmax):
                 NH4[il] = s.NH4[il] + ((application_depth - zmin) / application_depth) * f_NH4N  * amount
                 NO3[il] = s.NO3[il] + ((application_depth - zmin) / application_depth) * f_NO3  * amount
