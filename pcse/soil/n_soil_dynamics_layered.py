@@ -30,11 +30,11 @@ class N_soil_dynamics_layered(SimulationObject):
     soiln_profile = None
 
     class StateVariables(StatesTemplate):
-        AGE0   = Instance(np.matrix) # Initial age of material (d)
-        AGE    = Instance(np.matrix) # Appearant age of material (d)
-        ORGMAT = Instance(np.matrix) # Amount of organic matter (kg ORG ha-1)
-        CORG   = Instance(np.matrix) # Amount of C in organic matter (kg C ha-1)
-        NORG   = Instance(np.matrix) # 
+        AGE0   = Instance(np.ndarray) # Initial age of material (d)
+        AGE    = Instance(np.ndarray) # Appearant age of material (d)
+        ORGMAT = Instance(np.ndarray) # Amount of organic matter (kg ORG ha-1)
+        CORG   = Instance(np.ndarray) # Amount of C in organic matter (kg C ha-1)
+        NORG   = Instance(np.ndarray) # 
         NH4    = Instance(np.ndarray) # Amount of NH4-N (kg N ha-1)
         NO3    = Instance(np.ndarray) # Amount of NO3-N (kg N ha-1)
         NAVAIL = Float()  # total mineral N from soil and fertiliser  kg N ha-1
@@ -51,10 +51,10 @@ class N_soil_dynamics_layered(SimulationObject):
         NO3T = Float()
 
     class RateVariables(RatesTemplate):
-        RAGE = Instance(np.matrix)
-        RORGMAT = Instance(np.matrix)
-        RCORG = Instance(np.matrix)
-        RNORG = Instance(np.matrix)
+        RAGE = Instance(np.ndarray)
+        RORGMAT = Instance(np.ndarray)
+        RCORG = Instance(np.ndarray)
+        RNORG = Instance(np.ndarray)
         
         RNH4 = Instance(np.ndarray)
         RNH4MIN = Instance(np.ndarray)
@@ -94,11 +94,11 @@ class N_soil_dynamics_layered(SimulationObject):
         parvalues._soildata["soil_profile"] = self.soiln_profile
         NH4 = np.zeros(len(self.soiln_profile))
         NO3 = np.zeros(len(self.soiln_profile))
-        AGE =  np.matrix(np.zeros(len(self.soiln_profile)))
-        AGE0 = np.matrix(np.zeros(len(self.soiln_profile)))
-        ORGMAT = np.matrix(np.zeros(len(self.soiln_profile)))
-        CORG =  np.matrix(np.zeros(len(self.soiln_profile)))
-        NORG =  np.matrix(np.zeros(len(self.soiln_profile)))
+        AGE =  np.zeros((1, len(self.soiln_profile)))
+        AGE0 = np.zeros_like(AGE)
+        ORGMAT = np.zeros_like(AGE)
+        CORG =  np.zeros_like(AGE)
+        NORG =  np.zeros_like(AGE)
         minip_C = self.SoilOrganicNModel.MINIP_C()
         for il, layer in enumerate(self.soiln_profile):
             NH4[il] = layer.NH4I
@@ -159,11 +159,10 @@ class N_soil_dynamics_layered(SimulationObject):
         minip_n = self.SoilOrganicNModel.MINIP_N()
 
         # initialize rates
-        r.RAGE = np.matrix(np.zeros((s.AGE.shape[0],s.AGE.shape[1])))
-        r.RAGE = np.matrix(np.zeros((s.AGE.shape[0],s.AGE.shape[1])))
-        r.RORGMAT = np.matrix(np.zeros((s.AGE.shape[0],s.AGE.shape[1])))
-        r.RCORG = np.matrix(np.zeros((s.AGE.shape[0],s.AGE.shape[1])))
-        r.RNORG = np.matrix(np.zeros((s.AGE.shape[0],s.AGE.shape[1])))
+        r.RAGE = np.zeros((1, len(self.soiln_profile)))
+        r.RORGMAT = np.zeros_like(r.RAGE)
+        r.RCORG = np.zeros_like(r.RAGE)
+        r.RNORG = np.zeros_like(r.RAGE)
 
         for am in range(0, r.RAGE.shape[0]):
             for il in range(0, r.RAGE.shape[1]):
@@ -294,10 +293,10 @@ class N_soil_dynamics_layered(SimulationObject):
 
         s.NAVAIL = s.NAVAIL
 
-        AGE =  np.matrix(np.zeros((s.AGE.shape[0], s.AGE.shape[1])))
-        ORGMAT = np.matrix(np.zeros((s.AGE.shape[0], s.AGE.shape[1])))
-        CORG = np.matrix(np.zeros((s.AGE.shape[0], s.AGE.shape[1])))
-        NORG = np.matrix(np.zeros((s.AGE.shape[0], s.AGE.shape[1])))
+        AGE =  np.zeros((1, len(self.soiln_profile)))
+        ORGMAT = np.zeros_like(AGE)
+        CORG = np.zeros_like(AGE)
+        NORG = np.zeros_like(AGE)
         NO3 = np.zeros(len(self.soiln_profile))
         NH4 = np.zeros(len(self.soiln_profile))
 
@@ -362,7 +361,7 @@ class N_soil_dynamics_layered(SimulationObject):
         s = self.states
 
         AGE0_am =  np.matrix(np.zeros(len(self.soiln_profile)))
-        AGE_am = np.matrix(np.zeros(len(self.soiln_profile)))
+        AGE_am = np.zeros((1, len(self.soiln_profile)))
         ORGMAT_am = np.matrix(np.zeros(len(self.soiln_profile)))
         CORG_am =  np.matrix(np.zeros(len(self.soiln_profile)))
         NORG_am =  np.matrix(np.zeros(len(self.soiln_profile)))
@@ -391,8 +390,8 @@ class N_soil_dynamics_layered(SimulationObject):
             zmin = zmax
 
         # Recreate the state variable matrices that contain both the existing amendment and the new amendments
+        AGE = np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1]))
         AGE0 = np.matrix(np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1])))
-        AGE = np.matrix(np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1])))
         ORGMAT = np.matrix(np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1])))
         CORG = np.matrix(np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1])))
         NORG = np.matrix(np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1])))
