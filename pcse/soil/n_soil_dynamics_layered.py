@@ -125,8 +125,7 @@ class N_soil_dynamics_layered(SimulationObject):
         sni = self.SoilNNitrateModel()
 
         zmin = 0.
-        for il in range(0, len(self.soiln_profile)):
-            layer = self.soiln_profile[il]
+        for il, layer in enumerate(self.soiln_profile):
             dz = layer.Thickness
             zmax = zmin + dz
             RHOD = layer.RHOD
@@ -212,8 +211,7 @@ class N_soil_dynamics_layered(SimulationObject):
         NO3UPT_kg_per_ha = np.zeros(len(self.soiln_profile))
 
         zmin = 0.
-        for il in range(0, len(self.soiln_profile)):
-            layer = self.soiln_profile[il] 
+        for il, layer in enumerate(self.soiln_profile):
             dz = layer.Thickness 
             zmax = zmin + dz
             RHOD = layer.RHOD
@@ -233,8 +231,7 @@ class N_soil_dynamics_layered(SimulationObject):
         NO3PRE = s.NO3 + r.RNO3UP * delt
         NH4PRE = s.NH4 + r.RNH4UP * delt
 
-        for il in range(0, len(self.soiln_profile)):
-            layer = self.soiln_profile[il] 
+        for il, layer in enumerate(self.soiln_profile):
             zmax = zmin + dz
             RHOD = layer.RHOD
             RHOD_kg_per_m2 = RHOD * self.g_to_kg / self.cm3_to_m3
@@ -348,8 +345,7 @@ class N_soil_dynamics_layered(SimulationObject):
         else:
             RD = 0.
         zmin = 0.
-        for il in range(0, len(self.soiln_profile)):
-            layer = self.soiln_profile[il]
+        for il, layer in enumerate(self.soiln_profile):
             dz = layer.Thickness
             zmax = zmin + dz
             RHOD = layer.RHOD
