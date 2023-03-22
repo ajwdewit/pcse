@@ -178,19 +178,19 @@ class N_soil_dynamics_layered(SimulationObject):
 
         # initialize rates for ammonium
         r.RNH4 = np.zeros(len(self.soiln_profile))
-        r.RNH4MIN = np.zeros_like(len(r.RNH4 )
-        r.RNH4NITR = np.zeros_like(len(r.RNH4 )
-        r.RNH4UP = np.zeros_like(len(r.RNH4 )
-        r.RNH4IN = np.zeros_like(len(r.RNH4 )
-        r.RNH4OUT = np.zeros_like(len(r.RNH4 )
+        r.RNH4MIN = np.zeros_like(r.RNH4)
+        r.RNH4NITR = np.zeros_like(r.RNH4)
+        r.RNH4UP = np.zeros_like(r.RNH4)
+        r.RNH4IN = np.zeros_like(r.RNH4)
+        r.RNH4OUT = np.zeros_like(r.RNH4)
 
         # Initialize rates for nitrate
-        r.RNO3  = np.zeros_like(len(r.RNH4 )
-        r.RNO3NITR = np.zeros_like(len(r.RNH4 )
-        r.RNO3DENITR = np.zeros_like(len(r.RNH4 )
-        r.RNO3UP = np.zeros_like(len(r.RNH4 )
-        r.RNO3IN = np.zeros_like(len(r.RNH4 )
-        r.RNO3OUT = np.zeros_like(len(r.RNH4 )
+        r.RNO3  = np.zeros_like(r.RNH4)
+        r.RNO3NITR = np.zeros_like(r.RNH4)
+        r.RNO3DENITR = np.zeros_like(r.RNH4)
+        r.RNO3UP = np.zeros_like(r.RNH4)
+        r.RNO3IN = np.zeros_like(r.RNH4)
+        r.RNO3OUT = np.zeros_like(r.RNH4)
         r.RDENITCUM = 0.
 
         # Calculate N uptake
@@ -389,29 +389,11 @@ class N_soil_dynamics_layered(SimulationObject):
                 NORG_am[0, il] = CORG_am[0, il] / cnratio
             zmin = zmax
 
-        # Recreate the state variable matrices that contain both the existing amendment and the new amendments
-        AGE = np.zeros((s.AGE.shape[0] + 1,s.AGE.shape[1]))
-        AGE0 = np.zeros_like(AGE)
-        ORGMAT = np.zeros_like(AGE)
-        CORG = np.zeros_like(AGE)
-        NORG = np.zeros_like(AGE)
-
-        for am in range(0, AGE.shape[0]):
-            for il in range(0, AGE.shape[1]):
-                if(am < AGE.shape[0] - 1):
-                    # Refill the matrix with the existing amendments
-                    AGE0[am, il] = s.AGE0[am, il]
-                    AGE[am, il] = s.AGE[am, il]
-                    ORGMAT[am, il] = s.ORGMAT[am, il]
-                    CORG[am, il] = s.CORG[am, il]
-                    NORG[am, il] = s.NORG[am, il]
-                else:
-                    # Add the newly added amendment
-                    AGE0[am, il] = AGE_am[0, il]
-                    AGE[am, il] = AGE_am[0, il]
-                    ORGMAT[am, il] = ORGMAT_am[0, il]
-                    CORG[am, il] = CORG_am[0, il]
-                    NORG[am, il] = NORG_am[0, il]
+        AGE = np.concatenate((s.AGE, AGE_am), axis = 0)
+        AGE0 = np.concatenate((s.AGE0, AGE0_am), axis = 0)
+        ORGMAT = np.concatenate((s.ORGMAT, ORGMAT_am), axis = 0)
+        CORG = np.concatenate((s.CORG, CORG_am), axis = 0)
+        NORG = np.concatenate((s.NORG, NORG_am), axis = 0)
 
         s.AGE0 = AGE0
         s.AGE = AGE
