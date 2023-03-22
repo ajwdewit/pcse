@@ -53,9 +53,13 @@ class SoilNLayer(HasTraits):
         # compute hash value of this layer
         self._hash = hash((tuple(layer.SMfromPF), tuple(layer.CONDfromPF)))
 
-    #@property
-    #def RHOD_kg_ha():
-    #    return self.RHOD 
+    @property
+    def Thickness_m(self):
+        return self.Thickness * 1e-2
+
+    @property
+    def RHOD_kg_per_m3(self):
+        return self.RHOD * 1e-3 * 1e06
 
     def _invert_pF(self, SMfromPF):
         """Inverts the SMfromPF table to get pF from SM
