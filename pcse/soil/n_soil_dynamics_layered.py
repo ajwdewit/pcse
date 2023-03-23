@@ -220,6 +220,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
         NH4PRE = s.NH4 - NH4UPT_kg_per_m2 * delt
         NO3PRE = s.NO3 - NO3UPT_kg_per_m2 * delt
+        RNO3NITR = r.RNH4NITR
 
         zmin = 0.
         for il, layer in enumerate(self.soiln_profile):
@@ -229,8 +230,8 @@ class N_soil_dynamics_layered(SimulationObject):
             r.RNH4NITR[il] = samm.calculate_nitrification_rate(p.KNIT_REF, p.KSORP, layer.Thickness_m, NH4PRE[il], layer.RHOD_kg_per_m3, k.SM[il], layer.SM0, T)
             NH4MIN_kg_per_m2[il] = r.RNH4MIN[il] * layer.Thickness_m
             NH4NIT_kg_per_m2[il] = r.RNH4NITR[il] * layer.Thickness_m
+            
             RCORGT_kg_per_m2 = - r.RCORG.sum()
-            r.RNO3NITR[il] = r.RNH4NITR[il]
             r.RNO3DENITR[il] = sni.calculate_denitrification_rate(layer.Thickness_m, NO3PRE[il], p.KDENIT_REF, p.MRCDIS, RCORGT_kg_per_m2, k.SM[il], layer.SM0, T, p.WFPS_CRIT)
             r.RDENITCUM += (1/self.m2_to_ha) * layer.Thickness_m  * r.RNO3DENITR[il]
             NO3NITR_kg_per_m2[il] =  r.RNO3NITR[il] * layer.Thickness
