@@ -105,13 +105,13 @@ class N_soil_dynamics_layered(SimulationObject):
             NO3[il] = layer.NO3I
             AGE0[0,il] = self.params.A0SOM * self.y_to_d
             AGE[0,il] = self.params.A0SOM * self.y_to_d
-            ORGMAT[0,il] = layer.RHOD_kg_per_m3 * layer.FSOMI * layer.Thickness_m / self.m2_to_ha
+            ORGMAT[0,il] = layer.RHOD_kg_per_m3 * layer.FSOMI * layer.Thickness_m
             CORG[0,il] = minip_C.calculate_organic_C(ORGMAT[0,il])
             NORG[0,il] = CORG[0, il] / layer.CNRatioSOMI
 
-        CORGT = np.sum(CORG)
-        NORGT = np.sum(NORG)
-        ORGMATT = np.sum(ORGMAT)
+        CORGT = np.sum(CORG) * (1/self.m2_to_ha)
+        NORGT = np.sum(NORG) * (1/self.m2_to_ha)
+        ORGMATT = np.sum(ORGMAT) * (1/self.m2_to_ha)
         RMINT = 0.
         NH4T = np.sum(NH4)
         NO3T = np.sum(NO3)
@@ -234,7 +234,7 @@ class N_soil_dynamics_layered(SimulationObject):
         for il, layer in enumerate(self.soiln_profile):
             zmax = zmin + layer.Thickness_m
             SM0 = layer.SM0
-            RNMIN_kg_per_m2= r.RNORG[:,il] * self.m2_to_ha
+            RNMIN_kg_per_m2 = r.RNORG[:,il] * self.m2_to_ha
 
             cNH4 = (k.SM[il] / ( p.KSORP * layer.RHOD_kg_per_m3 + k.SM[il])) * NH4PRE[il] / (layer.Thickness_m * k.SM[il])
             r.RNH4MIN[il] = samm.calculate_mineralization_rate(layer.Thickness_m, RNMIN_kg_per_m2)
@@ -322,11 +322,11 @@ class N_soil_dynamics_layered(SimulationObject):
         s.NH4 = NH4
         s.NO3 = NO3
 
-        s.ORGMATT = np.sum(s.ORGMAT)
-        s.CORGT = np.sum(s.CORG)
-        s.NORGT = np.sum(s.NORG)
-        s.RMINT += np.sum(r.RNORG) * delt
-        s.NH4T = np.sum(s.NH4)
+        s.ORGMATT = np.sum(s.ORGMAT)  * (1/self.m2_to_ha)
+        s.CORGT = np.sum(s.CORG)  * (1/self.m2_to_ha)
+        s.NORGT = np.sum(s.NORG)  * (1/self.m2_to_ha)
+        s.RMINT += np.sum(r.RNORG) * (1/self.m2_to_ha)
+        s.NH4T = np.sum(s.NH4) 
         s.NO3T = np.sum(s.NO3)
         s.NH4LEACHCUM = NH4LEACHCUM
         s.NO3LEACHCUM = NO3LEACHCUM
