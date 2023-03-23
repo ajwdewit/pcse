@@ -354,6 +354,9 @@ class N_soil_dynamics_layered(SimulationObject):
         s = self.states
         delt = 1.
 
+        samm = self.SoilAmmoniumNModel()
+        sni = self.SoilNNitrateModel()
+
         AGE_am = np.zeros((1, len(self.soiln_profile)))
         AGE0_am =  np.zeros_like(AGE_am)
         ORGMAT_am = np.zeros_like(AGE_am)
@@ -369,11 +372,11 @@ class N_soil_dynamics_layered(SimulationObject):
             zmax = zmin + self.soiln_profile[il].Thickness
             AGE0_am[0,il] = initial_age * self.y_to_d
             AGE_am[0,il] = initial_age * self.y_to_d            
-            ORGMAT_am[0, il] = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) / (1/self.m2_to_ha)
-            CORG_am[0, il] =  self.calculate_organic_carbon_application_amount(minip_C, amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) / (1/self.m2_to_ha)
-            NORG_am[0, il] = self.calculate_organic_nitrogen_application_amount(minip_C, amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) / (1/self.m2_to_ha)
-            NH4_am[il] = self.calculate_ammonium_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin)
-            NO3_am[il] = self.calculate_nitrate_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin)
+            ORGMAT_am[0, il] = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            CORG_am[0, il] =  self.calculate_organic_carbon_application_amount(minip_C, amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            NORG_am[0, il] = self.calculate_organic_nitrogen_application_amount(minip_C, amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            NH4_am[il] = samm.calculate_ammonium_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            NO3_am[il] = sni.calculate_nitrate_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha
             zmin = zmax
 
         ORGMAT = s.ORGMAT
@@ -392,8 +395,8 @@ class N_soil_dynamics_layered(SimulationObject):
         s.ORGMAT = ORGMAT
         s.CORG = CORG
         s.NORG = NORG
-        s.NH4= NH4 * self.m2_to_ha
-        s.NO3= NO3 * self.m2_to_ha
+        s.NH4= NH4
+        s.NO3= NO3
         s.lock()
 
         #r.unlock()
@@ -407,25 +410,7 @@ class N_soil_dynamics_layered(SimulationObject):
     @property
     def NO3_kg_per_m2(self):
         s = self.states
-        return s.NO3 * self.m2_to_ha
-
-    def calculate_ammonium_application_amount(self, amount, application_depth, f_NH4N, layer_thickness, zmax, zmin):
-        if(application_depth > zmax):
-            NH4_am = (layer_thickness / application_depth) * f_NH4N *  amount
-        elif(application_depth >= zmin and application_depth <= zmax):
-            NH4_am = ((application_depth - zmin) / application_depth) * f_NH4N  * amount
-        else:
-            NH4_am = 0.
-        return NH4_am
-
-    def calculate_nitrate_application_amount(self, amount, application_depth, f_NO3N, layer_thickness, zmax, zmin):
-        if(application_depth > zmax):
-            NO3_am = (layer_thickness / application_depth) * f_NO3N *  amount
-        elif(application_depth >= zmin and application_depth <= zmax):
-            NO3_am = ((application_depth - zmin) / application_depth) * f_NO3N  * amount
-        else:
-            NO3_am = 0.
-        return NO3_am           
+        return s.NO3 * self.m2_to_ha      
 
     def calculate_organic_carbon_application_amount(self, minip_C, amount, application_depth, f_orgmat, layer_thickness, zmax, zmin):
         ORGMAT_am = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer_thickness, zmax, zmin)
@@ -451,6 +436,15 @@ class N_soil_dynamics_layered(SimulationObject):
         return ORGMAT_am
 
     class SoilAmmoniumNModel():
+
+        def calculate_ammonium_application_amount(self, amount, application_depth, f_NH4N, layer_thickness, zmax, zmin):
+            if(application_depth > zmax):
+                NH4_am = (layer_thickness / application_depth) * f_NH4N *  amount
+            elif(application_depth >= zmin and application_depth <= zmax):
+                NH4_am = ((application_depth - zmin) / application_depth) * f_NH4N  * amount
+            else:
+                NH4_am = 0.
+            return NH4_am
 
         def calculate_mineralization_rate(self, dz, rNMINs_layer):
             RNH4MIN = (- rNMINs_layer).sum() / dz
@@ -494,6 +488,15 @@ class N_soil_dynamics_layered(SimulationObject):
             return fT
 
     class SoilNNitrateModel():
+
+        def calculate_nitrate_application_amount(self, amount, application_depth, f_NO3N, layer_thickness, zmax, zmin):
+            if(application_depth > zmax):
+                NO3_am = (layer_thickness / application_depth) * f_NO3N *  amount
+            elif(application_depth >= zmin and application_depth <= zmax):
+                NO3_am = ((application_depth - zmin) / application_depth) * f_NO3N  * amount
+            else:
+                NO3_am = 0.
+            return NO3_am   
 
         def calculate_available_NO3(self, NO3, RD, zmax, zmin):
             dz = zmax - zmin
