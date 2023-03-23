@@ -349,8 +349,8 @@ class N_soil_dynamics_layered(SimulationObject):
             ORGMAT_am[0, il] = sonm.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             CORG_am[0, il] =  sonm.calculate_organic_carbon_application_amount(minip_C, amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             NORG_am[0, il] = sonm.calculate_organic_nitrogen_application_amount(minip_C, amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            NH4_am[il] = samm.calculate_ammonium_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            NO3_am[il] = sni.calculate_nitrate_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            NH4_am[il] = samm.calculate_NH4_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            NO3_am[il] = sni.calculate_NO3_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha
             zmin = zmax
 
         ORGMAT = s.ORGMAT
@@ -379,7 +379,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
     class SoilAmmoniumNModel():
 
-        def calculate_ammonium_application_amount(self, amount, application_depth, f_NH4N, layer_thickness, zmax, zmin):
+        def calculate_NH4_application_amount(self, amount, application_depth, f_NH4N, layer_thickness, zmax, zmin):
             if(application_depth > zmax):
                 NH4_am = (layer_thickness / application_depth) * f_NH4N *  amount
             elif(application_depth >= zmin and application_depth <= zmax):
@@ -388,7 +388,7 @@ class N_soil_dynamics_layered(SimulationObject):
                 NH4_am = 0.
             return NH4_am
 
-        def calculate_ammonium_concentration(self, KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM):
+        def calculate_NH4_concentration(self, KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM):
             cNH4 = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4 / (layer_thickness * SM)
             return cNH4
 
@@ -407,7 +407,7 @@ class N_soil_dynamics_layered(SimulationObject):
             return RNH4MIN
 
         def calculate_nitrification_rate(self, KNIT_REF, KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM, SM0, T):
-            cNH4 = self.calculate_ammonium_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
+            cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
             fWNIT = self.calculate_soil_moisture_response_nitrification_rate_constant(SM, SM0)
             fT = self.calculate_temperature_response_nitrification_rate_constant(T)
             RNH4NIT = fWNIT * fT *  KNIT_REF * SM * cNH4
@@ -427,7 +427,7 @@ class N_soil_dynamics_layered(SimulationObject):
             return RNH4IN
 
         def calculate_NH4_outflow_rate(self, flow_m_per_d, il, KSORP, NH4, layer_thickness, RHOD_kg_per_m3, SM):
-            cNH4 = self.calculate_ammonium_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
+            cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
             if(il == 0):
                 RNH4OUT = cNH4 * max(0,  flow_m_per_d) / layer_thickness
             else:               
@@ -445,7 +445,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
     class SoilNNitrateModel():
 
-        def calculate_nitrate_application_amount(self, amount, application_depth, f_NO3N, layer_thickness, zmax, zmin):
+        def calculate_NO3_application_amount(self, amount, application_depth, f_NO3N, layer_thickness, zmax, zmin):
             if(application_depth > zmax):
                 NO3_am = (layer_thickness / application_depth) * f_NO3N *  amount
             elif(application_depth >= zmin and application_depth <= zmax):
@@ -454,7 +454,7 @@ class N_soil_dynamics_layered(SimulationObject):
                 NO3_am = 0.
             return NO3_am
 
-        def calculate_nitrate_concentration(self, layer_thickness, NO3, SM):
+        def calculate_NO3_concentration(self, layer_thickness, NO3, SM):
             cNO3 = NO3 / (layer_thickness * SM)
             return cNO3
 
@@ -474,7 +474,7 @@ class N_soil_dynamics_layered(SimulationObject):
             return RNH4NIT
 
         def calculate_denitrification_rate(self, layer_thickness, NO3, KDENIT_REF, MRCDIS, RCORGT_kg_per_m2, SM, SM0, T, WFPS_CRIT):
-            cNO3 = self.calculate_nitrate_concentration(layer_thickness, NO3, SM)
+            cNO3 = self.calculate_NO3_concentration(layer_thickness, NO3, SM)
             fR = self.calculate_soil_respiration_response_denitrifiation_rate_constant(RCORGT_kg_per_m2, MRCDIS)
             fW = self.calculate_soil_moisture_response_denitrification_rate_constant(SM, SM0, WFPS_CRIT)
             fT = self.calculate_temperature_response_denitrification_rate_constant(T)
@@ -496,7 +496,7 @@ class N_soil_dynamics_layered(SimulationObject):
             return RNO3IN
 
         def calculate_NO3_outflow_rate(self, il, flow_m_per_d, layer_thickness, NO3, SM):
-            cNO3 = self.calculate_nitrate_concentration(layer_thickness, NO3, SM)
+            cNO3 = self.calculate_NO3_concentration(layer_thickness, NO3, SM)
             if(il == 0):
                 RNO3OUT = cNO3 * max(0,  flow_m_per_d) / layer_thickness
             else:               
