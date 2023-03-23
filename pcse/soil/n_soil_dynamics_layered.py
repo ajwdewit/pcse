@@ -225,7 +225,6 @@ class N_soil_dynamics_layered(SimulationObject):
         for il, layer in enumerate(self.soiln_profile):
             zmax = zmin + layer.Thickness_m
             RNMIN_kg_per_m2 = r.RNORG[:,il]
-
             r.RNH4MIN[il] = samm.calculate_mineralization_rate(layer.Thickness_m, RNMIN_kg_per_m2)
             r.RNH4NITR[il] = samm.calculate_nitrification_rate(p.KNIT_REF, p.KSORP, layer.Thickness_m, NH4PRE[il], layer.RHOD_kg_per_m3, k.SM[il], layer.SM0, T)
             NH4MIN_kg_per_m2[il] = r.RNH4MIN[il] * layer.Thickness_m
@@ -234,7 +233,6 @@ class N_soil_dynamics_layered(SimulationObject):
             r.RNO3NITR[il] = r.RNH4NITR[il]
             r.RNO3DENITR[il] = sni.calculate_denitrification_rate(layer.Thickness_m, NO3PRE[il], p.KDENIT_REF, p.MRCDIS, RCORGT_kg_per_m2, k.SM[il], layer.SM0, T, p.WFPS_CRIT)
             r.RDENITCUM += (1/self.m2_to_ha) * layer.Thickness_m  * r.RNO3DENITR[il]
-
             NO3NITR_kg_per_m2[il] =  r.RNO3NITR[il] * layer.Thickness
             NO3DENIT_kg_per_m2[il] = r.RNO3DENITR[il] * layer.Thickness
 
@@ -244,22 +242,12 @@ class N_soil_dynamics_layered(SimulationObject):
         # Calculate flow rates
         flow_m_per_d = k.Flow * self.cm_to_m
 
-        zmin = 0
         for il in range(0, len(NO3PRE)):
-            layer = self.soiln_profile[il] 
-            cNH4 = (k.SM[il] / ( p.KSORP * layer.RHOD_kg_per_m3 + k.SM[il])) * NH4PRE2[il] / (layer.Thickness_m * k.SM[il])
-            cNO3 = NO3PRE2[il] / (layer.Thickness_m * k.SM[il])
-
-            if(il == 0):
-                r.RNH4IN[il] = 0.
-                r.RNO3IN[il] = 0.
-                r.RNH4OUT[il] = cNH4 * max(0,  flow_m_per_d[1]) / layer.Thickness_m 
-                r.RNO3OUT[il] = cNO3 * max(0,  flow_m_per_d[1]) / layer.Thickness_m 
-            else:               
-                r.RNH4IN[il] = r.RNH4OUT[il-1]
-                r.RNO3IN[il] = r.RNO3OUT[il-1]
-                r.RNH4OUT[il] = cNH4 * flow_m_per_d[il+1] / layer.Thickness_m 
-                r.RNO3OUT[il] = cNO3 * flow_m_per_d[il+1] / layer.Thickness_m 
+            layer = self.soiln_profile[il]
+            r.RNH4OUT[il] = samm.calculate_NH4_outflow_rate(flow_m_per_d[il+1], il, p.KSORP, NH4PRE2[il], layer.Thickness_m, layer.RHOD_kg_per_m3, k.SM[il])
+            r.RNO3OUT[il] = sni.calculate_NO3_outflow_rate(il, flow_m_per_d[il+1], layer.Thickness_m, NO3PRE2[il], k.SM[il])
+            r.RNH4IN[il] = samm.calculate_NH4_inflow_rate(il, r.RNH4OUT[il-1])
+            r.RNO3IN[il] = sni.calculate_NO3_inflow_rate(il, r.RNO3OUT[il-1])
 
         r.RNO3 = layer.Thickness_m  * (r.RNO3NITR - r.RNO3DENITR - r.RNO3UP + r.RNO3IN - r.RNO3OUT)
         r.RNH4 = layer.Thickness_m  * (r.RNH4MIN - r.RNH4NITR - r.RNH4UP + r.RNH4IN - r.RNH4OUT)
@@ -404,6 +392,16 @@ class N_soil_dynamics_layered(SimulationObject):
             cNH4 = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4 / (layer_thickness * SM)
             return cNH4
 
+        def calculate_available_NH4(self, KSORP, NH4, RD, RHOD_kg_per_m3, SM, zmax, zmin):
+            dz = zmax - zmin
+            if(RD <= zmin):
+                NH4_avail = 0.
+            elif(RD > zmax):
+                NH4_avail = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
+            else:
+                NH4_avail = ((RD - zmin)/ dz) * (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
+            return NH4_avail
+
         def calculate_mineralization_rate(self, dz, rNMINs_layer):
             RNH4MIN = (- rNMINs_layer).sum() / dz
             return RNH4MIN
@@ -414,16 +412,6 @@ class N_soil_dynamics_layered(SimulationObject):
             fT = self.calculate_temperature_response_nitrification_rate_constant(T)
             RNH4NIT = fWNIT * fT *  KNIT_REF * SM * cNH4
             return RNH4NIT
-
-        def calculate_available_NH4(self, KSORP, NH4, RD, RHOD_kg_per_m3, SM, zmax, zmin):
-            dz = zmax - zmin
-            if(RD <= zmin):
-                NH4_avail = 0.
-            elif(RD > zmax):
-                NH4_avail = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
-            else:
-                NH4_avail = ((RD - zmin)/ dz) * (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
-            return NH4_avail
 
         def calculate_NH4_plant_uptake_rate(self, KSORP, N_demand_soil, NH4, RD_m, RHOD_kg_per_m3, SM, zmax, zmin):
             NH4_av = self.calculate_available_NH4(KSORP, NH4, RD_m, RHOD_kg_per_m3, SM, zmax, zmin)
@@ -504,7 +492,7 @@ class N_soil_dynamics_layered(SimulationObject):
             if(il == 0):
                 RNO3IN = 0.
             else:               
-                RNO3IN = RNO3OUT
+                RNO3IN = RNO3OUT_above
             return RNO3IN
 
         def calculate_NO3_outflow_rate(self, il, flow_m_per_d, layer_thickness, NO3, SM):
