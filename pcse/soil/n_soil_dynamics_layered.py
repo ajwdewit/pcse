@@ -356,6 +356,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
         samm = self.SoilAmmoniumNModel()
         sni = self.SoilNNitrateModel()
+        sonm = self.SoilOrganicNModel()
 
         AGE_am = np.zeros((1, len(self.soiln_profile)))
         AGE0_am =  np.zeros_like(AGE_am)
@@ -372,9 +373,9 @@ class N_soil_dynamics_layered(SimulationObject):
             zmax = zmin + self.soiln_profile[il].Thickness
             AGE0_am[0,il] = initial_age * self.y_to_d
             AGE_am[0,il] = initial_age * self.y_to_d            
-            ORGMAT_am[0, il] = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            CORG_am[0, il] =  self.calculate_organic_carbon_application_amount(minip_C, amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            NORG_am[0, il] = self.calculate_organic_nitrogen_application_amount(minip_C, amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            ORGMAT_am[0, il] = sonm.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            CORG_am[0, il] =  sonm.calculate_organic_carbon_application_amount(minip_C, amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            NORG_am[0, il] = sonm.calculate_organic_nitrogen_application_amount(minip_C, amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             NH4_am[il] = samm.calculate_ammonium_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha
             NO3_am[il] = sni.calculate_nitrate_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha
             zmin = zmax
@@ -402,38 +403,6 @@ class N_soil_dynamics_layered(SimulationObject):
         #r.unlock()
         ##r.FERT_N_SUPPLY = N_amount * N_recovery
         #r.lock()
-    @property
-    def NH4_kg_per_m2(self):
-        s = self.states
-        return s.NH4 * self.m2_to_ha
-
-    @property
-    def NO3_kg_per_m2(self):
-        s = self.states
-        return s.NO3 * self.m2_to_ha      
-
-    def calculate_organic_carbon_application_amount(self, minip_C, amount, application_depth, f_orgmat, layer_thickness, zmax, zmin):
-        ORGMAT_am = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer_thickness, zmax, zmin)
-        CORG_am = minip_C.calculate_organic_C(ORGMAT_am)
-        return CORG_am
-
-    def calculate_organic_nitrogen_application_amount(self, minip_C, amount, application_depth, cnratio, f_orgmat, layer_thickness, zmax, zmin):
-        ORGMAT_am = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer_thickness, zmax, zmin)
-        CORG_am = minip_C.calculate_organic_C(ORGMAT_am)
-        if(cnratio == 0):
-            NORG_am = 0.
-        else:
-            NORG_am = CORG_am / cnratio
-        return NORG_am
-
-    def calculate_organic_material_application_amount(self, amount, application_depth, f_orgmat, layer_thickness, zmax, zmin):
-        if(application_depth > zmax):
-            ORGMAT_am = (layer_thickness / application_depth) * f_orgmat * amount
-        elif(application_depth >= zmin and application_depth <= zmax):
-            ORGMAT_am = ((application_depth - zmin) / application_depth) * f_orgmat * amount
-        else:
-            ORGMAT_am = 0
-        return ORGMAT_am
 
     class SoilAmmoniumNModel():
 
@@ -550,6 +519,29 @@ class N_soil_dynamics_layered(SimulationObject):
 
 
     class SoilOrganicNModel():
+
+        def calculate_organic_carbon_application_amount(self, minip_C, amount, application_depth, f_orgmat, layer_thickness, zmax, zmin):
+            ORGMAT_am = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer_thickness, zmax, zmin)
+            CORG_am = minip_C.calculate_organic_C(ORGMAT_am)
+            return CORG_am
+
+        def calculate_organic_nitrogen_application_amount(self, minip_C, amount, application_depth, cnratio, f_orgmat, layer_thickness, zmax, zmin):
+            ORGMAT_am = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer_thickness, zmax, zmin)
+            CORG_am = minip_C.calculate_organic_C(ORGMAT_am)
+            if(cnratio == 0):
+                NORG_am = 0.
+            else:
+                NORG_am = CORG_am / cnratio
+            return NORG_am
+
+        def calculate_organic_material_application_amount(self, amount, application_depth, f_orgmat, layer_thickness, zmax, zmin):
+            if(application_depth > zmax):
+                ORGMAT_am = (layer_thickness / application_depth) * f_orgmat * amount
+            elif(application_depth >= zmin and application_depth <= zmax):
+                ORGMAT_am = ((application_depth - zmin) / application_depth) * f_orgmat * amount
+            else:
+                ORGMAT_am = 0
+            return ORGMAT_am
 
         class Janssen():
             m = 1.6
