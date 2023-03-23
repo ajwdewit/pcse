@@ -255,7 +255,6 @@ class N_soil_dynamics_layered(SimulationObject):
 
         r.RNH4LEACHCUM =  self.soiln_profile[-1].Thickness_m * (1/self.m2_to_ha) * r.RNH4OUT[-1]
         r.RNO3LEACHCUM =  self.soiln_profile[-1].Thickness_m * (1/self.m2_to_ha) * r.RNO3OUT[-1]
-
  
     @prepare_states
     def integrate(self, day, delt=1.0):
