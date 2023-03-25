@@ -17,6 +17,10 @@ class N_soil_dynamics_layered(SimulationObject):
     NAVAIL just remains 100 kg/ha whatever the crop takes.
     """
 
+    # Placeholders
+    _RNO3AM = None
+    _RNH4AM = None
+
     # Unit conversions
     g_to_kg = 1e-3
     cm_to_m = 1e-2
@@ -62,6 +66,7 @@ class N_soil_dynamics_layered(SimulationObject):
         RNH4UP = Instance(np.ndarray)
         RNH4IN = Instance(np.ndarray)
         RNH4OUT = Instance(np.ndarray)
+        RNH4AM = Instance(np.ndarray)
 
         RNO3 = Instance(np.ndarray)
         RNO3NITR = Instance(np.ndarray)
@@ -69,6 +74,7 @@ class N_soil_dynamics_layered(SimulationObject):
         RNO3UP = Instance(np.ndarray)
         RNO3IN = Instance(np.ndarray)
         RNO3OUT = Instance(np.ndarray)
+        RNO3AM = Instance(np.ndarray)
 
         RNH4LEACHCUM = Float()
         RNO3LEACHCUM = Float()
@@ -136,6 +142,10 @@ class N_soil_dynamics_layered(SimulationObject):
                   "ORGMATT": ORGMATT,  "CORGT": CORGT, "NORGT": NORGT, "RMINT": RMINT, "NH4T": NH4T, "NO3T": NO3T, 
                   "NH4LEACHCUM": NH4LEACHCUM, "NO3LEACHCUM": NO3LEACHCUM, "NDENITCUM": NDENITCUM, "NLOSSCUM": NLOSSCUM}
         #self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMAT", "CORG", "NORG", "ORGMATT", "CORGT", "NORGT"], **states)
+
+        self._RNH4AM = np.zeros_like(NH4)
+        self._RNO3AM = np.zeros_like(NO3)
+
         self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMATT", "CORGT", "NORGT"], **states)
         self.rates = self.RateVariables(kiosk)
 
@@ -183,6 +193,9 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNH4IN = np.zeros_like(r.RNH4)
         r.RNH4OUT = np.zeros_like(r.RNH4)
 
+        r.RNH4AM = self._RNH4AM
+        self._RNH4AM = np.zeros_like(r.RNH4)
+
         # Initialize rates for nitrate
         r.RNO3  = np.zeros_like(r.RNH4)
         r.RNO3NITR = np.zeros_like(r.RNH4)
@@ -191,6 +204,10 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNO3IN = np.zeros_like(r.RNH4)
         r.RNO3OUT = np.zeros_like(r.RNH4)
         r.RDENITCUM = 0.
+
+        r.RNO3AM = self._RNO3AM
+        self._RNO3AM = np.zeros_like(r.RNH4)
+
 
         if "RNuptake" in k:
             N_demand_soil = k.RNuptake * self.m2_to_ha
@@ -220,7 +237,6 @@ class N_soil_dynamics_layered(SimulationObject):
 
         NH4PRE = s.NH4 - NH4UPT_kg_per_m2 * delt
         NO3PRE = s.NO3 - NO3UPT_kg_per_m2 * delt
-        RNO3NITR = r.RNH4NITR
 
         zmin = 0.
         for il, layer in enumerate(self.soiln_profile):
@@ -228,6 +244,7 @@ class N_soil_dynamics_layered(SimulationObject):
             RNMIN_kg_per_m2 = r.RNORG[:,il]
             r.RNH4MIN[il] = samm.calculate_mineralization_rate(layer.Thickness_m, RNMIN_kg_per_m2)
             r.RNH4NITR[il] = samm.calculate_nitrification_rate(p.KNIT_REF, p.KSORP, layer.Thickness_m, NH4PRE[il], layer.RHOD_kg_per_m3, k.SM[il], layer.SM0, T)
+            r.RNO3NITR[il] = r.RNH4NITR[il]
             NH4MIN_kg_per_m2[il] = r.RNH4MIN[il] * layer.Thickness_m
             NH4NIT_kg_per_m2[il] = r.RNH4NITR[il] * layer.Thickness_m
             
@@ -249,9 +266,8 @@ class N_soil_dynamics_layered(SimulationObject):
             r.RNO3OUT[il] = sni.calculate_NO3_outflow_rate(il, flow_m_per_d[il+1], layer.Thickness_m, NO3PRE2[il], k.SM[il])
             r.RNH4IN[il] = samm.calculate_NH4_inflow_rate(il, r.RNH4OUT[il-1])
             r.RNO3IN[il] = sni.calculate_NO3_inflow_rate(il, r.RNO3OUT[il-1])
-
-        r.RNO3 = layer.Thickness_m  * (r.RNO3NITR - r.RNO3DENITR - r.RNO3UP + r.RNO3IN - r.RNO3OUT)
-        r.RNH4 = layer.Thickness_m  * (r.RNH4MIN - r.RNH4NITR - r.RNH4UP + r.RNH4IN - r.RNH4OUT)
+            r.RNO3[il] = layer.Thickness_m  * (r.RNO3AM[il] + r.RNO3NITR[il] - r.RNO3DENITR[il] - r.RNO3UP[il] + r.RNO3IN[il] - r.RNO3OUT[il])
+            r.RNH4[il] = layer.Thickness_m  * (r.RNH4AM[il] + r.RNH4MIN[il] - r.RNH4NITR[il] - r.RNH4UP[il] + r.RNH4IN[il] - r.RNH4OUT[il])
 
         r.RNH4LEACHCUM =  self.soiln_profile[-1].Thickness_m * (1/self.m2_to_ha) * r.RNH4OUT[-1]
         r.RNO3LEACHCUM =  self.soiln_profile[-1].Thickness_m * (1/self.m2_to_ha) * r.RNO3OUT[-1]
@@ -279,7 +295,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
         for il in range(0, len(s.NH4)):
             NH4[il] = s.NH4[il] + r.RNH4[il] * delt
-            NO3[il] = s.NO3[il] + r.RNO3[il] * delt
+            NO3[il] = s.NO3[il] + r.RNO3[il]* delt
 
         NH4LEACHCUM = s.NH4LEACHCUM + r.RNH4LEACHCUM * delt
         NO3LEACHCUM = s.NO3LEACHCUM + r.RNO3LEACHCUM * delt
@@ -336,8 +352,8 @@ class N_soil_dynamics_layered(SimulationObject):
         ORGMAT_am = np.zeros_like(AGE_am)
         CORG_am =  np.zeros_like(AGE_am)
         NORG_am =  np.zeros_like(AGE_am)
-        NH4_am = np.zeros(len(self.soiln_profile))
-        NO3_am = np.zeros_like(NH4_am)
+        RNH4_am = np.zeros_like(s.NH4)
+        RNO3_am = np.zeros_like(s.NO3)
 
         # Make matrix for new amendment
         zmin = 0.
@@ -349,8 +365,8 @@ class N_soil_dynamics_layered(SimulationObject):
             ORGMAT_am[0, il] = sonm.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             CORG_am[0, il] =  sonm.calculate_organic_carbon_application_amount(minip_C, amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             NORG_am[0, il] = sonm.calculate_organic_nitrogen_application_amount(minip_C, amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            NH4_am[il] = samm.calculate_NH4_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            NO3_am[il] = sni.calculate_NO3_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            RNH4_am[il] = samm.calculate_NH4_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha / layer.Thickness_m
+            RNO3_am[il] = sni.calculate_NO3_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha / layer.Thickness_m
             zmin = zmax
 
         ORGMAT = s.ORGMAT
@@ -360,8 +376,8 @@ class N_soil_dynamics_layered(SimulationObject):
         ORGMAT = np.concatenate((ORGMAT, ORGMAT_am), axis = 0)
         CORG = np.concatenate((s.CORG, CORG_am), axis = 0)
         NORG = np.concatenate((s.NORG, NORG_am), axis = 0)
-        NH4 = s.NH4 + NH4_am * delt
-        NO3 = s.NO3 + NO3_am * delt
+        #NH4 = s.NH4 + NH4_am * delt
+        #NO3 = s.NO3 + NO3_am * delt
 
         s.unlock()
         s.AGE0 = AGE0
@@ -369,12 +385,17 @@ class N_soil_dynamics_layered(SimulationObject):
         s.ORGMAT = ORGMAT
         s.CORG = CORG
         s.NORG = NORG
-        s.NH4= NH4
-        s.NO3= NO3
+        #s.NH4= NH4
+        #s.NO3= NO3
         s.lock()
 
+        self._RNH4AM = RNH4_am
+        self._RNO3AM = RNO3_am
+
         #r.unlock()
-        ##r.FERT_N_SUPPLY = N_amount * N_recovery
+        ###r.FERT_N_SUPPLY = N_amount * N_recovery
+        #r.RNH4AM = RNH4_am
+        #r.NO3AM = RNO3_am
         #r.lock()
 
     class SoilAmmoniumNModel():
