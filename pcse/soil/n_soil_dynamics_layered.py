@@ -60,9 +60,9 @@ class N_soil_dynamics_layered(SimulationObject):
 
     class RateVariables(RatesTemplate):
         RAGE = Instance(np.ndarray)
-        RORGMAT = Instance(np.ndarray)
-        RCORG = Instance(np.ndarray)
-        RNORG = Instance(np.ndarray)
+        RORGMATDIS = Instance(np.ndarray)
+        RCORGDIS = Instance(np.ndarray)
+        RNORGDIS = Instance(np.ndarray)
 
         RAGEAM = Instance(np.ndarray)
         RORGMATAM = Instance(np.ndarray)
@@ -181,21 +181,21 @@ class N_soil_dynamics_layered(SimulationObject):
 
         # initialize rates
         r.RAGE = np.zeros_like(s.AGE)
-        r.RORGMAT = np.zeros_like(r.RAGE)
-        r.RCORG = np.zeros_like(r.RAGE)
-        r.RNORG = np.zeros_like(r.RAGE)
+        r.RORGMATDIS = np.zeros_like(r.RAGE)
+        r.RCORGDIS = np.zeros_like(r.RAGE)
+        r.RNORGDIS = np.zeros_like(r.RAGE)
 
         for am in range(0, r.RAGE.shape[0]):
             for il in range(0, r.RAGE.shape[1]):
                 r.RAGE[am,il] = janssen.calculate_increase_apparent_age_rate(delt, T)
                 if(s.ORGMAT[am, il] > 0):
-                    r.RORGMAT[am,il] = janssen.calculate_dissimilation_rate_OM(s.ORGMAT[am,il], s.AGE0[am,il], s.AGE[am,il])
-                    r.RCORG[am,il] = minip_c.calculate_dissimilation_rate_C(janssen, s.ORGMAT[am,il], s.AGE0[am,il], s.AGE[am,il], T)
-                    r.RNORG[am,il] = minip_n.calculate_dissimilation_rate_N(janssen, minip_c, s.ORGMAT[am,il], s.NORG[am,il], s.AGE0[am,il], p.FASDIS, p.CNRatioBio, s.AGE[am,il], T)
+                    r.RORGMATDIS[am,il] = janssen.calculate_dissimilation_rate_OM(s.ORGMAT[am,il], s.AGE0[am,il], s.AGE[am,il])
+                    r.RCORGDIS[am,il] = minip_c.calculate_dissimilation_rate_C(janssen, s.ORGMAT[am,il], s.AGE0[am,il], s.AGE[am,il], T)
+                    r.RNORGDIS[am,il] = minip_n.calculate_dissimilation_rate_N(janssen, minip_c, s.ORGMAT[am,il], s.NORG[am,il], s.AGE0[am,il], p.FASDIS, p.CNRatioBio, s.AGE[am,il], T)
                 else:
-                    r.RORGMAT[am,il] = 0.
-                    r.RCORG[am,il] = 0.
-                    r.RNORG[am,il] = 0.
+                    r.RORGMATDIS[am,il] = 0.
+                    r.RCORGDIS[am,il] = 0.
+                    r.RNORGDIS[am,il] = 0.
         
         r.RAGEAM = self._RAGEAM
         r.ORGMATAM = self._RORGMATAM
@@ -263,14 +263,14 @@ class N_soil_dynamics_layered(SimulationObject):
         zmin = 0.
         for il, layer in enumerate(self.soiln_profile):
             zmax = zmin + layer.Thickness_m
-            RNMIN_kg_per_m2 = r.RNORG[:,il]
+            RNMIN_kg_per_m2 = r.RNORGDIS[:,il]
             r.RNH4MIN[il] = samm.calculate_mineralization_rate(layer.Thickness_m, RNMIN_kg_per_m2)
             r.RNH4NITR[il] = samm.calculate_nitrification_rate(p.KNIT_REF, p.KSORP, layer.Thickness_m, NH4PRE[il], layer.RHOD_kg_per_m3, k.SM[il], layer.SM0, T)
             r.RNO3NITR[il] = r.RNH4NITR[il]
             NH4MIN_kg_per_m2[il] = r.RNH4MIN[il] * layer.Thickness_m
             NH4NIT_kg_per_m2[il] = r.RNH4NITR[il] * layer.Thickness_m
             
-            RCORGT_kg_per_m2 = - r.RCORG.sum()
+            RCORGT_kg_per_m2 = r.RCORGDIS.sum()
             r.RNO3DENITR[il] = sni.calculate_denitrification_rate(layer.Thickness_m, NO3PRE[il], p.KDENIT_REF, p.MRCDIS, RCORGT_kg_per_m2, k.SM[il], layer.SM0, T, p.WFPS_CRIT)
             r.RDENITCUM += (1/self.m2_to_ha) * layer.Thickness_m  * r.RNO3DENITR[il]
             NO3NITR_kg_per_m2[il] =  r.RNO3NITR[il] * layer.Thickness
@@ -311,9 +311,9 @@ class N_soil_dynamics_layered(SimulationObject):
         for am in range(0, r.RAGE.shape[0]):
             for il in range(0, r.RAGE.shape[1]):
                 AGE[am, il] = s.AGE[am,il] + (r.RAGEAM[am, il] + r.RAGE[am, il]) * delt
-                ORGMAT[am, il] = s.ORGMAT[am,il] + (-r.RORGMAT[am, il] + r.ORGMATAM[am, il]) * delt 
-                CORG[am, il] = s.CORG[am,il] + (-r.RCORG[am, il] + r.CORGAM[am, il]) * delt 
-                NORG[am, il] = s.NORG[am, il] + (-r.RNORG[am, il] + r.NORGAM[am, il]) * delt 
+                ORGMAT[am, il] = s.ORGMAT[am,il] + (-r.RORGMATDIS[am, il] + r.ORGMATAM[am, il]) * delt 
+                CORG[am, il] = s.CORG[am,il] + (-r.RCORGDIS[am, il] + r.CORGAM[am, il]) * delt 
+                NORG[am, il] = s.NORG[am, il] + (-r.RNORGDIS[am, il] + r.NORGAM[am, il]) * delt 
 
         for il in range(0, len(s.NH4)):
             NH4[il] = s.NH4[il] + r.RNH4[il] * delt
@@ -334,7 +334,7 @@ class N_soil_dynamics_layered(SimulationObject):
         s.ORGMATT = np.sum(ORGMAT)  * (1/self.m2_to_ha)
         s.CORGT = np.sum(CORG)  * (1/self.m2_to_ha)
         s.NORGT = np.sum(NORG)  * (1/self.m2_to_ha)
-        s.RMINT += np.sum(r.RNORG) * (1/self.m2_to_ha)
+        s.RMINT += np.sum(r.RNORGDIS) * (1/self.m2_to_ha)
         s.NH4T = np.sum(s.NH4) * (1/self.m2_to_ha)
         s.NO3T = np.sum(s.NO3) * (1/self.m2_to_ha)
         s.NH4LEACHCUM = NH4LEACHCUM
