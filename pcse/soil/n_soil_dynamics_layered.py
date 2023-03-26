@@ -20,6 +20,9 @@ class N_soil_dynamics_layered(SimulationObject):
     # Placeholders
     _RNO3AM = None
     _RNH4AM = None
+    _RORGMATAM = None
+    _RCORGAM = None
+    _RNORGAM = None
 
     # Unit conversions
     g_to_kg = 1e-3
@@ -59,6 +62,10 @@ class N_soil_dynamics_layered(SimulationObject):
         RORGMAT = Instance(np.ndarray)
         RCORG = Instance(np.ndarray)
         RNORG = Instance(np.ndarray)
+
+        RORGMATAM = Instance(np.ndarray)
+        RCORGAM = Instance(np.ndarray)
+        RNORGAM = Instance(np.ndarray)
         
         RNH4 = Instance(np.ndarray)
         RNH4MIN = Instance(np.ndarray)
@@ -142,7 +149,9 @@ class N_soil_dynamics_layered(SimulationObject):
                   "ORGMATT": ORGMATT,  "CORGT": CORGT, "NORGT": NORGT, "RMINT": RMINT, "NH4T": NH4T, "NO3T": NO3T, 
                   "NH4LEACHCUM": NH4LEACHCUM, "NO3LEACHCUM": NO3LEACHCUM, "NDENITCUM": NDENITCUM, "NLOSSCUM": NLOSSCUM}
         #self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMAT", "CORG", "NORG", "ORGMATT", "CORGT", "NORGT"], **states)
-
+        self._RORGMATAM = np.zeros_like(ORGMAT)
+        self._RCORGAM = np.zeros_like(CORG)
+        self._RNORGAM = np.zeros_like(NORG)
         self._RNH4AM = np.zeros_like(NH4)
         self._RNO3AM = np.zeros_like(NO3)
 
@@ -184,6 +193,14 @@ class N_soil_dynamics_layered(SimulationObject):
                     r.RORGMAT[am,il] = 0.
                     r.RCORG[am,il] = 0.
                     r.RNORG[am,il] = 0.
+
+        r.ORGMATAM = self._RORGMATAM
+        r.CORGAM = self._RCORGAM
+        r.NORGAM = self._RNORGAM
+
+        self._RORGMATAM = np.zeros_like(r.ORGMATAM)
+        self._RCORGAM = np.zeros_like(r.CORGAM)
+        self._RNORGAM = np.zeros_like(r.NORGAM)
 
         # initialize rates for ammonium
         r.RNH4 = np.zeros(len(self.soiln_profile))
@@ -289,9 +306,9 @@ class N_soil_dynamics_layered(SimulationObject):
         for am in range(0, r.RAGE.shape[0]):
             for il in range(0, r.RAGE.shape[1]):
                 AGE[am, il] = s.AGE[am,il] + r.RAGE[am, il] * delt
-                ORGMAT[am, il] = s.ORGMAT[am,il] + r.RORGMAT[am, il] * delt
-                CORG[am, il] = s.CORG[am,il] + r.RCORG[am, il] * delt
-                NORG[am, il] = s.NORG[am, il] + r.RNORG[am, il] * delt
+                ORGMAT[am, il] = s.ORGMAT[am,il] + (r.RORGMAT[am, il] + r.ORGMATAM[am, il]) * delt 
+                CORG[am, il] = s.CORG[am,il] + (r.RCORG[am, il] + r.CORGAM[am, il]) * delt 
+                NORG[am, il] = s.NORG[am, il] + (r.RNORG[am, il] + r.NORGAM[am, il]) * delt 
 
         for il in range(0, len(s.NH4)):
             NH4[il] = s.NH4[il] + r.RNH4[il] * delt
@@ -349,9 +366,9 @@ class N_soil_dynamics_layered(SimulationObject):
 
         AGE_am = np.zeros((1, len(self.soiln_profile)))
         AGE0_am =  np.zeros_like(AGE_am)
-        ORGMAT_am = np.zeros_like(AGE_am)
-        CORG_am =  np.zeros_like(AGE_am)
-        NORG_am =  np.zeros_like(AGE_am)
+        RORGMAT_am = np.zeros_like(AGE_am)
+        RCORG_am =  np.zeros_like(AGE_am)
+        RNORG_am =  np.zeros_like(AGE_am)
         RNH4_am = np.zeros_like(s.NH4)
         RNO3_am = np.zeros_like(s.NO3)
 
@@ -362,33 +379,31 @@ class N_soil_dynamics_layered(SimulationObject):
             zmax = zmin + self.soiln_profile[il].Thickness
             AGE0_am[0,il] = initial_age * self.y_to_d
             AGE_am[0,il] = initial_age * self.y_to_d            
-            ORGMAT_am[0, il] = sonm.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            CORG_am[0, il] =  sonm.calculate_organic_carbon_application_amount(minip_C, amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            NORG_am[0, il] = sonm.calculate_organic_nitrogen_application_amount(minip_C, amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            RORGMAT_am[0, il] = sonm.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            RCORG_am[0, il] =  sonm.calculate_organic_carbon_application_amount(minip_C, amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            RNORG_am[0, il] = sonm.calculate_organic_nitrogen_application_amount(minip_C, amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             RNH4_am[il] = samm.calculate_NH4_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha / layer.Thickness_m
             RNO3_am[il] = sni.calculate_NO3_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha / layer.Thickness_m
             zmin = zmax
 
-        ORGMAT = s.ORGMAT
-
         AGE = np.concatenate((s.AGE, AGE_am), axis = 0)
         AGE0 = np.concatenate((s.AGE0, AGE0_am), axis = 0)
-        ORGMAT = np.concatenate((ORGMAT, ORGMAT_am), axis = 0)
-        CORG = np.concatenate((s.CORG, CORG_am), axis = 0)
-        NORG = np.concatenate((s.NORG, NORG_am), axis = 0)
+        s.ORGMAT = np.concatenate((s.ORGMAT, np.zeros((1, len(self.soiln_profile)))), axis = 0)
+        s.CORG = np.concatenate((s.CORG, np.zeros((1, len(self.soiln_profile)))), axis = 0)
+        s.NORG = np.concatenate((s.NORG, np.zeros((1, len(self.soiln_profile)))), axis = 0)
+        RORGMATAM = np.concatenate((self._RORGMATAM, RORGMAT_am), axis = 0)
+        RCORGAM = np.concatenate((self._RCORGAM, RCORG_am), axis = 0)
+        RNORGAM = np.concatenate(( self._RNORGAM, RNORG_am), axis = 0)
         #NH4 = s.NH4 + NH4_am * delt
         #NO3 = s.NO3 + NO3_am * delt
-
-        s.unlock()
         s.AGE0 = AGE0
         s.AGE = AGE
-        s.ORGMAT = ORGMAT
-        s.CORG = CORG
-        s.NORG = NORG
-        #s.NH4= NH4
-        #s.NO3= NO3
-        s.lock()
-
+        #s.ORGMAT = ORGMAT
+        #s.CORG = CORG
+        #s.NORG = NORG
+        self._RORGMATAM = RORGMATAM
+        self._RCORGAM = RCORGAM
+        self._RNORGAM = RNORGAM
         self._RNH4AM = RNH4_am
         self._RNO3AM = RNO3_am
 
