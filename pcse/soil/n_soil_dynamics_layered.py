@@ -311,9 +311,9 @@ class N_soil_dynamics_layered(SimulationObject):
         for am in range(0, r.RAGE.shape[0]):
             for il in range(0, r.RAGE.shape[1]):
                 AGE[am, il] = s.AGE[am,il] + (r.RAGEAM[am, il] + r.RAGE[am, il]) * delt
-                ORGMAT[am, il] = s.ORGMAT[am,il] + (r.RORGMAT[am, il] + r.ORGMATAM[am, il]) * delt 
-                CORG[am, il] = s.CORG[am,il] + (r.RCORG[am, il] + r.CORGAM[am, il]) * delt 
-                NORG[am, il] = s.NORG[am, il] + (r.RNORG[am, il] + r.NORGAM[am, il]) * delt 
+                ORGMAT[am, il] = s.ORGMAT[am,il] + (-r.RORGMAT[am, il] + r.ORGMATAM[am, il]) * delt 
+                CORG[am, il] = s.CORG[am,il] + (-r.RCORG[am, il] + r.CORGAM[am, il]) * delt 
+                NORG[am, il] = s.NORG[am, il] + (-r.RNORG[am, il] + r.NORGAM[am, il]) * delt 
 
         for il in range(0, len(s.NH4)):
             NH4[il] = s.NH4[il] + r.RNH4[il] * delt
@@ -609,12 +609,12 @@ class N_soil_dynamics_layered(SimulationObject):
 
             def calculate_dissimilation_rate_OM(self, OM, a, t): 
                 k = self.calculate_relative_dissimilation_rate_OM(a, t)
-                rate = - k * OM
+                rate = k * OM
                 return rate
 
             def calculate_dissimilation_rate_OM_T(self, OM, a, t, T):
                 k = self.calculate_relative_dissimilation_rate_OM_T(a, t, T)
-                rate = - k * OM
+                rate = k * OM
                 return rate
 
             def calculate_temperature_response_dissimilation_rate(self, T):
@@ -633,7 +633,7 @@ class N_soil_dynamics_layered(SimulationObject):
             def calculate_dissimilation_rate_C(self, janssen, OM, a, t, T):
                 k = janssen.calculate_relative_dissimilation_rate_OM_T(a, t, T)
                 Corg = self.calculate_organic_C(OM)
-                rate = -k * Corg
+                rate = k * Corg
                 return rate
 
             def calculate_total_conversion_rate_C(self, janssen, OM, a, f_ass_dis, t, T):
