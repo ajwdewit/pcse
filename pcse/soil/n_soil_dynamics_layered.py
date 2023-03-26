@@ -401,25 +401,14 @@ class N_soil_dynamics_layered(SimulationObject):
         RORGMATAM = np.concatenate((self._RORGMATAM, RORGMAT_am), axis = 0)
         RCORGAM = np.concatenate((self._RCORGAM, RCORG_am), axis = 0)
         RNORGAM = np.concatenate(( self._RNORGAM, RNORG_am), axis = 0)
-        #NH4 = s.NH4 + NH4_am * delt
-        #NO3 = s.NO3 + NO3_am * delt
+
         s.AGE0 = AGE0
-        #s.AGE = AGE
-        #s.ORGMAT = ORGMAT
-        #s.CORG = CORG
-        #s.NORG = NORG
         self._RAGEAM = RAGEAM
         self._RORGMATAM = RORGMATAM
         self._RCORGAM = RCORGAM
         self._RNORGAM = RNORGAM
         self._RNH4AM = RNH4_am
         self._RNO3AM = RNO3_am
-
-        #r.unlock()
-        ###r.FERT_N_SUPPLY = N_amount * N_recovery
-        #r.RNH4AM = RNH4_am
-        #r.NO3AM = RNO3_am
-        #r.lock()
 
     class SoilAmmoniumNModel():
 
