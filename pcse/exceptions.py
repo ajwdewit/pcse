@@ -36,3 +36,9 @@ class SoilOrganicCarbonBalanceError(PCSEError):
 
 class SoilOrganicNitrogenBalanceError(PCSEError):
     "Raised when soil organic nitrogen balance does not close"
+
+class SoilAmmoniumBalanceError(PCSEError):
+    "Raised when soil ammonium balance does not close"
+
+class SoilNitrateBalanceError(PCSEError):
+    "Raised when soil nitrate balance does not close"

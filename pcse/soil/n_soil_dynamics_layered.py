@@ -407,20 +407,23 @@ class N_soil_dynamics_layered(SimulationObject):
 
         ORGMATBAL = self._ORGMATI.sum() - s.ORGMAT.sum() + s.RORGMATAMTT - s.RORGMATDISTT
         if(abs(ORGMATBAL) > 0.0001):
-            msg = "Organic matter balance is not closing on %s with checksum: %f" % (day, ORGMATBAL)
+            msg = "Organic matter mass balance is not closing on %s with checksum: %f" % (day, ORGMATBAL)
             raise exc.SoilOrganicMatterBalanceError(msg)
 
         CORGBAL = self._CORGI.sum() - s.CORG.sum() + s.RCORGAMTT - s.RCORGDISTT
         if(abs(CORGBAL) > 0.0001):
-            msg = "Organic carbon balance is not closing on %s with checksum: %f" % (day, CORGBAL)
+            msg = "Organic carbon mass balance is not closing on %s with checksum: %f" % (day, CORGBAL)
             raise exc.SoilOrganicCarbonBalanceError(msg)
 
         NORGBAL = self._NORGI.sum() - s.NORG.sum() + s.RNORGAMTT - s.RNORGDISTT
         if(abs(NORGBAL) > 0.0001):
-            msg = "Organic carbon balance is not closing on %s with checksum: %f" % (day, NORGBAL)
+            msg = "Organic carbon mass balance is not closing on %s with checksum: %f" % (day, NORGBAL)
             raise exc.SoilOrganicNitrogenBalanceError(msg)
 
-        NH4BAL = self._NH4I - s.NH4.sum()
+        NH4BAL = self._NH4I.sum() - s.NH4.sum() + s.RNH4AMTT + s.RNH4INTT + s.RNH4MINTT - s.RNH4NITRTT - s.RNH4OUTTT - s.RNH4UPTT
+        if(abs(NH4BAL) > 0.0001):
+            msg = "NH4-N mass balance is not closing on %s with checksum: %f" % (day, NH4BAL)
+            raise exc.SoilAmmoniumBalanceError(msg)
 
 
     def _on_APPLY_N(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None, f_NH4N = None, f_NO3 = None, initial_age =None):
