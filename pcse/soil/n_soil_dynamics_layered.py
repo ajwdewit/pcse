@@ -563,11 +563,6 @@ class N_soil_dynamics_layered(SimulationObject):
                 NO3_avail_layer = ((RD - zmin)/ dz) * NO3 
             return NO3_avail_layer
 
-        def calculate_nitrification_rate(self, cNH4, KNIT_REF, layer_thickness, SM, SM0):
-            fWNIT = self.calculate_soil_moisture_response_nitrification_rate_constant(SM, SM0)
-            RNH4NIT = fWNIT * KNIT_REF * SM * cNH4 * layer_thickness
-            return RNH4NIT
-
         def calculate_denitrification_rate(self, layer_thickness, NO3, KDENIT_REF, MRCDIS, RCORGT_kg_per_m2, SM, SM0, T, WFPS_CRIT):
             cNO3 = self.calculate_NO3_concentration(layer_thickness, NO3, SM)
             fR = self.calculate_soil_respiration_response_denitrifiation_rate_constant(RCORGT_kg_per_m2, MRCDIS)
