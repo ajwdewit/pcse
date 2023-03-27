@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
+from email.mime import application
 import numpy as np
 from .. import exceptions as exc
 from pcse.traitlets import Float
@@ -371,8 +372,7 @@ class N_soil_dynamics_layered(SimulationObject):
         delt = 1.
 
         # Create model components
-        samm = self.SoilInorganicNModel.SoilAmmoniumNModel()
-        sni = self.SoilInorganicNModel.SoilNNitrateModel()
+        sinm = self.SoilInorganicNModel()
         sonm = self.SoilOrganicNModel()
 
         # Initialize ammendment rates
@@ -390,12 +390,11 @@ class N_soil_dynamics_layered(SimulationObject):
         for il, layer in enumerate(self.soiln_profile):
             zmax = zmin + self.soiln_profile[il].Thickness
             AGE0_am[0,il] = initial_age * self.y_to_d
-            RAGE_am[0,il] = initial_age * self.y_to_d            
+            RAGE_am[0,il] = initial_age * self.y_to_d                     
             RORGMAT_am[0, il] = sonm.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             RCORG_am[0, il] =  sonm.calculate_organic_carbon_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             RNORG_am[0, il] = sonm.calculate_organic_nitrogen_application_amount(amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            RNH4_am[il] = samm.calculate_NH4_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            RNO3_am[il] = sni.calculate_NO3_application_amount(amount, application_depth, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            RNH4_am[il], RNO3_am[il] = sinm.calculate_N_application_amounts(self.soiln_profile, amount, application_depth, f_NH4N, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha
             zmin = zmax
 
         # Add a new column to the state variables for organic ammendments to add the new ammendment.
@@ -486,6 +485,20 @@ class N_soil_dynamics_layered(SimulationObject):
             raise exc.SoilAmmoniumBalanceError(msg)
 
     class SoilInorganicNModel():
+        def calculate_N_application_amounts(self, soiln_profile, amount, application_depth, f_NH4N, f_NO3N, layer_thickness, zmax, zmin):
+            samm = self.SoilAmmoniumNModel()
+            sni = self.SoilNNitrateModel()
+            RNH4_am = np.zeros(len(self.soiln_profile))
+            RNO3_am = np.zeros_like(RNH4_am)
+
+            for il, layer in enumerate(self.soiln_profile):
+                zmax = zmin + self.soiln_profile[il].Thickness
+                RNH4_am[il] = samm.calculate_NH4_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha
+                RNO3_am[il] = sni.calculate_NO3_application_amount(amount, application_depth, f_NO3N, layer.Thickness, zmax, zmin) * self.m2_to_ha
+                zmin = zmax
+
+            return RNH4_am, RNO3_am
+
         def calculate_flow_rates(self, soiln_profile, flow_m_per_d, KSORP, NH4, NO3, SM):
             samm = self.SoilAmmoniumNModel()
             sni = self.SoilNNitrateModel()
