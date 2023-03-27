@@ -31,5 +31,8 @@ class WeatherDataProviderError(PCSEError):
 class SoilOrganicMatterBalanceError(PCSEError):
     "Raised when soil organic matter balance does not close"
 
-class SoilCarbonBalanceError(PCSEError):
+class SoilOrganicCarbonBalanceError(PCSEError):
     "Raised when soil organic carbon balance does not close"
+
+class SoilOrganicNitrogenBalanceError(PCSEError):
+    "Raised when soil organic nitrogen balance does not close"
