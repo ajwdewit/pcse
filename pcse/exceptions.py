@@ -27,3 +27,9 @@ class VariableKioskError(PCSEError):
     
 class WeatherDataProviderError(PCSEError):
     "Raised when problems occur with the WeatherDataProviders" 
+
+class SoilOrganicMatterBalanceError(PCSEError):
+    "Raised when soil organic matter balance does not close"
+
+class SoilCarbonBalanceError(PCSEError):
+    "Raised when soil organic carbon balance does not close"

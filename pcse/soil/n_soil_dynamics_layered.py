@@ -3,6 +3,7 @@
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
 import numpy as np
+from .. import exceptions as exc
 from pcse.traitlets import Float
 from pcse.decorators import prepare_rates, prepare_states
 from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
@@ -16,6 +17,11 @@ class N_soil_dynamics_layered(SimulationObject):
 
     NAVAIL just remains 100 kg/ha whatever the crop takes.
     """
+
+    # Placeholders initial values
+    _ORGMATI = None
+    _CORGI = None
+
 
     # Placeholders
     _RNO3AM = None
@@ -50,6 +56,11 @@ class N_soil_dynamics_layered(SimulationObject):
         NO3LEACHCUM = Float()
         NH4LEACHCUM = Float()
         NLOSSCUM = Float()
+
+        RORGMATDISTT = Float()
+        RORGMATAMTT = Float()
+        RCORGDISTT = Float()
+        RCORGAMTT = Float()
 
         ORGMATT = Float()
         CORGT = Float()       
@@ -124,6 +135,11 @@ class N_soil_dynamics_layered(SimulationObject):
             CORG[0,il] = minip_C.calculate_organic_C(ORGMAT[0,il])
             NORG[0,il] = CORG[0, il] / layer.CNRatioSOMI
 
+        RORGMATDISTT = 0.
+        RORGMATAMTT = 0.
+        RCORGDISTT = 0.
+        RCORGAMTT = 0.
+
         CORGT = np.sum(CORG) / self.m2_to_ha
         NORGT = np.sum(NORG) / self.m2_to_ha
         ORGMATT = np.sum(ORGMAT) / self.m2_to_ha
@@ -149,8 +165,13 @@ class N_soil_dynamics_layered(SimulationObject):
 
         states = {"NAVAIL": NAVAIL, "NO3": NO3, "NH4": NH4, "AGE": AGE, "AGE0": AGE0, "ORGMAT": ORGMAT, "CORG": CORG, "NORG": NORG,  
                   "ORGMATT": ORGMATT,  "CORGT": CORGT, "NORGT": NORGT, "RMINT": RMINT, "NH4T": NH4T, "NO3T": NO3T, 
+                  "RORGMATAMTT": RORGMATAMTT, "RORGMATDISTT": RORGMATDISTT, "RCORGAMTT": RCORGAMTT, "RCORGDISTT": RCORGDISTT,
                   "NH4LEACHCUM": NH4LEACHCUM, "NO3LEACHCUM": NO3LEACHCUM, "NDENITCUM": NDENITCUM, "NLOSSCUM": NLOSSCUM}
         #self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMAT", "CORG", "NORG", "ORGMATT", "CORGT", "NORGT"], **states)
+
+        self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMATT", "CORGT", "NORGT"], **states)
+        self.rates = self.RateVariables(kiosk)
+
         self._RAGEAM = np.zeros_like(AGE)
         self._RORGMATAM = np.zeros_like(ORGMAT)
         self._RCORGAM = np.zeros_like(CORG)
@@ -158,8 +179,8 @@ class N_soil_dynamics_layered(SimulationObject):
         self._RNH4AM = np.zeros_like(NH4)
         self._RNO3AM = np.zeros_like(NO3)
 
-        self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMATT", "CORGT", "NORGT"], **states)
-        self.rates = self.RateVariables(kiosk)
+        self._ORGMATI = ORGMAT
+        self._CORGI = CORG
 
         self._connect_signal(self._on_APPLY_N, signals.apply_n)
 
@@ -198,13 +219,13 @@ class N_soil_dynamics_layered(SimulationObject):
                     r.RNORGDIS[am,il] = 0.
         
         r.RAGEAM = self._RAGEAM
-        r.ORGMATAM = self._RORGMATAM
-        r.CORGAM = self._RCORGAM
+        r.RORGMATAM = self._RORGMATAM
+        r.RCORGAM = self._RCORGAM
         r.NORGAM = self._RNORGAM
 
         self._RAGEAM = np.zeros_like(s.AGE)
-        self._RORGMATAM = np.zeros_like(r.ORGMATAM)
-        self._RCORGAM = np.zeros_like(r.CORGAM)
+        self._RORGMATAM = np.zeros_like(r.RORGMATAM)
+        self._RCORGAM = np.zeros_like(r.RCORGAM)
         self._RNORGAM = np.zeros_like(r.NORGAM)
 
         # initialize rates for ammonium
@@ -311,8 +332,8 @@ class N_soil_dynamics_layered(SimulationObject):
         for am in range(0, r.RAGE.shape[0]):
             for il in range(0, r.RAGE.shape[1]):
                 AGE[am, il] = s.AGE[am,il] + (r.RAGEAM[am, il] + r.RAGE[am, il]) * delt
-                ORGMAT[am, il] = s.ORGMAT[am,il] + (-r.RORGMATDIS[am, il] + r.ORGMATAM[am, il]) * delt 
-                CORG[am, il] = s.CORG[am,il] + (-r.RCORGDIS[am, il] + r.CORGAM[am, il]) * delt 
+                ORGMAT[am, il] = s.ORGMAT[am,il] + (-r.RORGMATDIS[am, il] + r.RORGMATAM[am, il]) * delt 
+                CORG[am, il] = s.CORG[am,il] + (-r.RCORGDIS[am, il] + r.RCORGAM[am, il]) * delt 
                 NORG[am, il] = s.NORG[am, il] + (-r.RNORGDIS[am, il] + r.NORGAM[am, il]) * delt 
 
         for il in range(0, len(s.NH4)):
@@ -330,6 +351,11 @@ class N_soil_dynamics_layered(SimulationObject):
         s.NORG = NORG
         s.NH4 = NH4
         s.NO3 = NO3
+
+        s.RORGMATAMTT += delt * r.RORGMATAM.sum()
+        s.RORGMATDISTT += delt * r.RORGMATDIS.sum()
+        s.RCORGAMTT += delt * r.RCORGAM.sum()
+        s.RCORGDISTT += delt * r.RCORGDIS.sum()
 
         s.ORGMATT = np.sum(ORGMAT)  * (1/self.m2_to_ha)
         s.CORGT = np.sum(CORG)  * (1/self.m2_to_ha)
@@ -359,6 +385,17 @@ class N_soil_dynamics_layered(SimulationObject):
             zmin = zmax
 
         s.NAVAIL = NAVAIL / self.m2_to_ha
+
+        ORGMATBAL = self._ORGMATI.sum() - s.ORGMAT.sum() + s.RORGMATAMTT - s.RORGMATDISTT
+        if(abs(ORGMATBAL) > 0.0001):
+            msg = "Organic matter balance is not closing on %s with checksum: %f" % (day, ORGMATBAL)
+            raise exc.SoilOrganicMatterBalanceError(msg)
+
+        CORGMATBAL = self._CORGI.sum() - s.CORG.sum() + s.RCORGAMTT - s.RCORGDISTT
+        if(abs(ORGMATBAL) > 0.0001):
+            msg = "Organic carbon balance is not closing on %s with checksum: %f" % (day, ORGMATBAL)
+            raise exc.SoilCarbonBalanceError(msg)
+
 
     def _on_APPLY_N(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None, f_NH4N = None, f_NO3 = None, initial_age =None):
         r = self.rates
