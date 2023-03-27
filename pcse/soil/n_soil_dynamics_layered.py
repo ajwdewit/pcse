@@ -394,8 +394,9 @@ class N_soil_dynamics_layered(SimulationObject):
             RORGMAT_am[0, il] = sonm.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             RCORG_am[0, il] =  sonm.calculate_organic_carbon_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
             RNORG_am[0, il] = sonm.calculate_organic_nitrogen_application_amount(amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            RNH4_am[il], RNO3_am[il] = sinm.calculate_N_application_amounts(self.soiln_profile, amount, application_depth, f_NH4N, f_NO3, layer.Thickness, zmax, zmin) * self.m2_to_ha
             zmin = zmax
+
+        RNH4_am, RNO3_am  = np.array(sinm.calculate_N_application_amounts(self.soiln_profile, amount, application_depth, f_NH4N, f_NO3)) * self.m2_to_ha
 
         # Add a new column to the state variables for organic ammendments to add the new ammendment.
         s.AGE0 = np.concatenate((s.AGE0, AGE0_am), axis = 0)
@@ -485,18 +486,17 @@ class N_soil_dynamics_layered(SimulationObject):
             raise exc.SoilAmmoniumBalanceError(msg)
 
     class SoilInorganicNModel():
-        def calculate_N_application_amounts(self, soiln_profile, amount, application_depth, f_NH4N, f_NO3N, layer_thickness, zmax, zmin):
+        def calculate_N_application_amounts(self, soiln_profile, amount, application_depth, f_NH4N, f_NO3N):
             samm = self.SoilAmmoniumNModel()
             sni = self.SoilNNitrateModel()
-            RNH4_am = np.zeros(len(self.soiln_profile))
+            RNH4_am = np.zeros(len(soiln_profile))
             RNO3_am = np.zeros_like(RNH4_am)
-
-            for il, layer in enumerate(self.soiln_profile):
-                zmax = zmin + self.soiln_profile[il].Thickness
-                RNH4_am[il] = samm.calculate_NH4_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin) * self.m2_to_ha
-                RNO3_am[il] = sni.calculate_NO3_application_amount(amount, application_depth, f_NO3N, layer.Thickness, zmax, zmin) * self.m2_to_ha
+            zmin = 0
+            for il, layer in enumerate(soiln_profile):
+                zmax = zmin + soiln_profile[il].Thickness
+                RNH4_am[il] = samm.calculate_NH4_application_amount(amount, application_depth, f_NH4N, layer.Thickness, zmax, zmin)
+                RNO3_am[il] = sni.calculate_NO3_application_amount(amount, application_depth, f_NO3N, layer.Thickness, zmax, zmin)
                 zmin = zmax
-
             return RNH4_am, RNO3_am
 
         def calculate_flow_rates(self, soiln_profile, flow_m_per_d, KSORP, NH4, NO3, SM):
