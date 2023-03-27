@@ -292,8 +292,9 @@ class N_soil_dynamics_layered(SimulationObject):
         for il, layer in enumerate(self.soiln_profile):
             zmax = zmin + layer.Thickness_m
             r.RNH4UP[il] = samm.calculate_NH4_plant_uptake_rate(p.KSORP, N_demand_soil, s.NH4[il], RD_m, layer.RHOD_kg_per_m3, k.SM[il], zmax, zmin)
-            N_demand_soil -= NH4UPT_kg_per_m2[il]
+            N_demand_soil -= r.RNH4UP[il] * layer.Thickness_m
             r.RNO3UP[il] = sni.calculate_NO3_plant_uptake_rate(N_demand_soil, s.NO3[il], RD_m, zmax, zmin)
+            N_demand_soil -= r.RNO3UP[il]  * layer.Thickness_m
             zmin = zmax
 
         # Calculate reactions ammonium and nitrate
