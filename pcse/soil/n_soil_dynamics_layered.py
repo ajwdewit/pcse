@@ -366,7 +366,7 @@ class N_soil_dynamics_layered(SimulationObject):
         s.NLOSSCUM = NLOSSCUM
 
 
-    def _on_APPLY_N(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None, f_NH4N = None, f_NO3 = None, initial_age =None):
+    def _on_APPLY_N(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None, f_NH4N = None, f_NO3N = None, initial_age =None):
         r = self.rates
         s = self.states
         delt = 1.
@@ -386,7 +386,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
         AGE0_am[0,:] = initial_age * self.y_to_d
         RAGE_am[0,:] = initial_age * self.y_to_d    
-        RNH4_am, RNO3_am  = np.array(sinm.calculate_N_application_amounts(self.soiln_profile, amount, application_depth, f_NH4N, f_NO3)) * self.m2_to_ha
+        RNH4_am, RNO3_am  = np.array(sinm.calculate_N_application_amounts(self.soiln_profile, amount, application_depth, f_NH4N, f_NO3N)) * self.m2_to_ha
         RORGMAT_am, RCORG_am, RNORG_am =  np.array(sonm.calculate_application_rates(self.soiln_profile, amount, application_depth, cnratio, f_orgmat)) * self.m2_to_ha
 
         # Add a new column to the state variables for organic ammendments to add the new ammendment.
