@@ -384,19 +384,10 @@ class N_soil_dynamics_layered(SimulationObject):
         RNH4_am = np.zeros_like(s.NH4)
         RNO3_am = np.zeros_like(s.NO3)
 
-        # Make matrix for new amendment
-        zmin = 0.
-        minip_C = self.SoilOrganicNModel.MINIP_C()
-        for il, layer in enumerate(self.soiln_profile):
-            zmax = zmin + self.soiln_profile[il].Thickness
-            AGE0_am[0,il] = initial_age * self.y_to_d
-            RAGE_am[0,il] = initial_age * self.y_to_d                     
-            RORGMAT_am[0, il] = sonm.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            RCORG_am[0, il] =  sonm.calculate_organic_carbon_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            RNORG_am[0, il] = sonm.calculate_organic_nitrogen_application_amount(amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin) * self.m2_to_ha
-            zmin = zmax
-
+        AGE0_am[0,:] = initial_age * self.y_to_d
+        RAGE_am[0,:] = initial_age * self.y_to_d    
         RNH4_am, RNO3_am  = np.array(sinm.calculate_N_application_amounts(self.soiln_profile, amount, application_depth, f_NH4N, f_NO3)) * self.m2_to_ha
+        RORGMAT_am, RCORG_am, RNORG_am =  np.array(sonm.calculate_application_rates(self.soiln_profile, amount, application_depth, cnratio, f_orgmat)) * self.m2_to_ha
 
         # Add a new column to the state variables for organic ammendments to add the new ammendment.
         s.AGE0 = np.concatenate((s.AGE0, AGE0_am), axis = 0)
@@ -718,6 +709,21 @@ class N_soil_dynamics_layered(SimulationObject):
                 for il in range(0, AGE.shape[1]):
                     RAGEAG[am,il] = janssen.calculate_increase_apparent_age_rate(delt, T)
             return RAGEAG
+
+        def calculate_application_rates(self, soiln_profile, amount, application_depth, cnratio, f_orgmat):
+            RORGMAT_am = np.zeros((1, len(soiln_profile)))
+            RCORG_am =  np.zeros_like(RORGMAT_am)
+            RNORG_am =  np.zeros_like(RORGMAT_am)
+
+            zmin = 0.
+            for il, layer in enumerate(soiln_profile):
+                zmax = zmin +  soiln_profile[il].Thickness
+                RORGMAT_am[0, il] = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin)
+                RCORG_am[0, il] =  self.calculate_organic_carbon_application_amount(amount, application_depth, f_orgmat, layer.Thickness, zmax, zmin)
+                RNORG_am[0, il] = self.calculate_organic_nitrogen_application_amount(amount, application_depth, cnratio, f_orgmat, layer.Thickness, zmax, zmin)
+                zmin = zmax
+
+            return RORGMAT_am, RCORG_am, RNORG_am
 
         def calculate_dissimilation_rates(self, AGE, AGE0, CNRatioBio, FASDIS, NORG, ORGMAT, T):
             RORGMATDIS = np.zeros_like(AGE)
