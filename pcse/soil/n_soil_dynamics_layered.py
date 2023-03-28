@@ -128,7 +128,8 @@ class N_soil_dynamics_layered(SimulationObject):
 
     class Parameters(ParamTemplate):
         A0SOM = Float()             # Initial age of humus (y)
-        CNRatioBio = Float()        # C:N Ratio of microbial biomass (kg C kg-1 N)
+        CNRatioBio = Float()        # C:N ratio of microbial biomass (kg C kg-1 N)
+        CNRatioSOMI = Float()       # Initial C:N ratio of humus (kg C kg-1 kg N)
         FASDIS = Float()            # Fraction of assimilation to dissimilation (kg ORG kg-1 ORG)
         KDENIT_REF = Float()        # Reference first order denitrification rate constant (d-1)
         KNIT_REF = Float()          # Reference first order nitrification rate constant (d-1)
@@ -163,7 +164,7 @@ class N_soil_dynamics_layered(SimulationObject):
             AGE[0,il] = self.params.A0SOM * self.y_to_d
             ORGMAT[0,il] = layer.RHOD_kg_per_m3 * layer.FSOMI * layer.Thickness_m
             CORG[0,il] = minip_C.calculate_organic_C(ORGMAT[0,il])
-            NORG[0,il] = CORG[0, il] / layer.CNRatioSOMI
+            NORG[0,il] = CORG[0, il] / self.params.CNRatioSOMI
 
         # Initialize state variables to check the mass balance of organic matter
         RORGMATDISTT = 0.
