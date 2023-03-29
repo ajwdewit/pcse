@@ -224,8 +224,9 @@ class N_soil_dynamics_layered(SimulationObject):
 
         # Get external state variable (in meters)
         RD_m = self.get_root_length(k)
-        SM = self.get_soil_moisture_content(k)        
-        NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM) / self.m2_to_ha
+        SM = self.get_soil_moisture_content(k)
+        TRALYIL = self.get_transpiration_rate_layer(k, SM)
+        NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM, TRALYIL) / self.m2_to_ha
 
         self._RAGEAM = np.zeros_like(AGE)
         self._RORGMATAM = np.zeros_like(ORGMAT)
@@ -262,6 +263,7 @@ class N_soil_dynamics_layered(SimulationObject):
         RD_m = self.get_root_length(k)
         SM = self.get_soil_moisture_content(k)
         T = drv.TEMP
+        TRALY = self.get_transpiration_rate_layer(k, SM)
 
         # Collect ammendment rates
         r.RAGEAM = self._RAGEAM
@@ -292,7 +294,7 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNORG = r.RNORGAM - r.RNORGDIS
 
         # Calculate N uptake rates
-        r.RNH4UP, r.RNO3UP = sinm.calculate_N_uptake_rates(self.soiln_profile, delt, p.KSORP, N_demand_soil, s.NH4, s.NO3, RD_m, SM)
+        r.RNH4UP, r.RNO3UP = sinm.calculate_N_uptake_rates(self.soiln_profile, delt, p.KSORP, N_demand_soil, s.NH4, s.NO3, RD_m, SM, TRALY)
 
         # Calculate remaining amounts of NH4-N and NO3-N after uptake and calculate chemical conversion
         NH4PRE = s.NH4 - r.RNH4UP.sum() * delt
@@ -345,9 +347,10 @@ class N_soil_dynamics_layered(SimulationObject):
         # Get external state variable
         RD_m = self.get_root_length(k)
         SM = self.get_soil_moisture_content(k)
+        TRALYIL = self.get_soil_moisture_content(k)
 
         # Calculate the amount of N available for root uptake in the next time step
-        s.NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM) / self.m2_to_ha
+        s.NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM, TRALYIL) / self.m2_to_ha
         self.check_mass_balances(day, delt)
 
         # Set output variables
@@ -408,6 +411,13 @@ class N_soil_dynamics_layered(SimulationObject):
     def get_soil_moisture_content(self, k):
         SM = k.SM
         return SM
+
+    def get_transpiration_rate_layer(self, k, SM):
+        if "TRALY" in k:
+            TRALY = k.TRALY * self.cm_to_m
+        else:
+            TRALY = np.zeros(len(SM))
+        return TRALY
 
     def get_water_flow_rates(self, k):
         flow_m_per_d = k.Flow * self.cm_to_m
@@ -505,20 +515,20 @@ class N_soil_dynamics_layered(SimulationObject):
             RNO3NITR, RNO3DENITR = sni.calculate_NO3_reaction_rates(soiln_profile, KDENIT_REF, MRCDIS, NO3, RCORGDIS, RNH4NITR, SM, T, WFPS_CRIT)  
             return RNH4MIN, RNH4NITR, RNO3NITR, RNO3DENITR
 
-        def calculate_NAVAIL(self, soiln_profile, KSORP, NH4, NO3, RD_m, SM):
+        def calculate_NAVAIL(self, soiln_profile, KSORP, NH4, NO3, RD_m, TRALYIL, SM):
             samm = self.SoilAmmoniumNModel()
             sni = self.SoilNNitrateModel()
             zmin = 0.
             NAVAIL = 0.
             for il, layer in enumerate(soiln_profile):
                 zmax = zmin + layer.Thickness_m
-                NH4_avail_layer = samm.calculate_available_NH4(KSORP, NH4[il], RD_m, layer.RHOD_kg_per_m3, SM[il], zmax, zmin)
-                NO3_avail_layer = sni.calculate_available_NO3(NO3[il], RD_m, zmax, zmin)     
+                NH4_avail_layer = samm.calculate_available_NH4(KSORP, NH4[il], RD_m, layer.RHOD_kg_per_m3, SM[il], TRALYIL, zmax, zmin)
+                NO3_avail_layer = sni.calculate_available_NO3(NO3[il], RD_m, TRALYIL, zmax, zmin)     
                 NAVAIL += (NH4_avail_layer + NO3_avail_layer)
                 zmin = zmax
             return NAVAIL
 
-        def calculate_N_uptake_rates(self, soiln_profile, delt, KSORP, N_demand_soil, NH4, NO3, RD_m, SM):
+        def calculate_N_uptake_rates(self, soiln_profile, delt, KSORP, N_demand_soil, NH4, NO3, RD_m, SM, TRALY):
             RNH4UP = np.zeros_like(NH4)
             RNO3UP = np.zeros_like(NO3)
             samm = self.SoilAmmoniumNModel()
@@ -526,9 +536,9 @@ class N_soil_dynamics_layered(SimulationObject):
             zmin = 0.
             for il, layer in enumerate(soiln_profile):
                 zmax = zmin + layer.Thickness_m
-                RNH4UP[il] = samm.calculate_NH4_plant_uptake_rate(KSORP, N_demand_soil, NH4[il], RD_m, layer.RHOD_kg_per_m3, SM[il], zmax, zmin)
+                RNH4UP[il] = samm.calculate_NH4_plant_uptake_rate(KSORP, N_demand_soil, NH4[il], RD_m, layer.RHOD_kg_per_m3, SM[il], TRALY[il], zmax, zmin)
                 N_demand_soil-= RNH4UP[il] * delt
-                RNO3UP[il] = sni.calculate_NO3_plant_uptake_rate(N_demand_soil, NO3[il], RD_m, zmax, zmin)
+                RNO3UP[il] = sni.calculate_NO3_plant_uptake_rate(N_demand_soil, NO3[il], RD_m, TRALY[il], zmax, zmin)
                 N_demand_soil-= RNO3UP[il] * delt
                 zmin = zmax
             return RNH4UP, RNO3UP  
@@ -565,7 +575,7 @@ class N_soil_dynamics_layered(SimulationObject):
                 cNH4 = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4 / (layer_thickness * SM)
                 return cNH4
 
-            def calculate_available_NH4(self, KSORP, NH4, RD, RHOD_kg_per_m3, SM, zmax, zmin):
+            def calculate_available_NH4(self, KSORP, NH4, RD, RHOD_kg_per_m3, SM, TRALYIL, zmax, zmin):
                 dz = zmax - zmin
                 if(RD <= zmin):
                     NH4_avail = 0.
@@ -586,8 +596,8 @@ class N_soil_dynamics_layered(SimulationObject):
                 RNH4NIT = fWNIT * fT *  KNIT_REF * SM * cNH4 * layer_thickness
                 return RNH4NIT
 
-            def calculate_NH4_plant_uptake_rate(self, KSORP, N_demand_soil, NH4, RD_m, RHOD_kg_per_m3, SM, zmax, zmin):
-                NH4_av = self.calculate_available_NH4(KSORP, NH4, RD_m, RHOD_kg_per_m3, SM, zmax, zmin)
+            def calculate_NH4_plant_uptake_rate(self, KSORP, N_demand_soil, NH4, RD_m, RHOD_kg_per_m3, SM, TRALYIL, zmax, zmin):
+                NH4_av = self.calculate_available_NH4(KSORP, NH4, RD_m, RHOD_kg_per_m3, SM, TRALYIL, zmax, zmin)
                 RNH4UP = min(N_demand_soil, NH4_av)
                 return RNH4UP
 
@@ -646,7 +656,7 @@ class N_soil_dynamics_layered(SimulationObject):
                 cNO3 = NO3 / (layer_thickness * SM)
                 return cNO3
 
-            def calculate_available_NO3(self, NO3, RD, zmax, zmin):
+            def calculate_available_NO3(self, NO3, RD, TRALYIL, zmax, zmin):
                 dz = zmax - zmin
                 if(RD <= zmin):
                     NO3_avail_layer = 0.
@@ -664,8 +674,8 @@ class N_soil_dynamics_layered(SimulationObject):
                 RNO3DENIT = fW * fT * fR * KDENIT_REF * SM * cNO3 * layer_thickness
                 return RNO3DENIT
 
-            def calculate_NO3_plant_uptake_rate(self, N_demand_soil, NO3, RD_m, zmax, zmin):
-                NO3_av = self.calculate_available_NO3(NO3, RD_m, zmax, zmin)
+            def calculate_NO3_plant_uptake_rate(self, N_demand_soil, NO3, RD_m, TRALYIL, zmax, zmin):
+                NO3_av = self.calculate_available_NO3(NO3, RD_m, TRALYIL, zmax, zmin)
                 NO3UPT_kg_per_m2 = min(N_demand_soil, NO3_av)
                 N_demand_soil -= NO3UPT_kg_per_m2
                 RNO3UP = NO3UPT_kg_per_m2
