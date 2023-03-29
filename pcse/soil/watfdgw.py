@@ -50,7 +50,7 @@ class WaterBalanceLayered_PP(SimulationObject):
             WC[il] = SM[il] * layer.Thickness
 
         states = { "WC": WC, "SM":SM}
-        self.states = self.StateVariables(kiosk, publish=["WC", "SM"], **states)
+        self.states = self.StateVariables(kiosk, publish=["WC", "SM", "WTRALY"], **states)
 
     @prepare_rates
     def calc_rates(self, day, drv):
