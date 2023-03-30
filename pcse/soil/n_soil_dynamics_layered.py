@@ -348,7 +348,7 @@ class N_soil_dynamics_layered(SimulationObject):
         # Get external state variable
         RD_m = self.get_root_length(k)
         SM = self.get_soil_moisture_content(k)
-        TRALY = self.get_soil_moisture_content(k)
+        TRALY = self.get_transpiration_rate_layer(k, SM)
 
         # Calculate the amount of N available for root uptake in the next time step
         s.NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM, TRALY, p.TSCF_N) / self.m2_to_ha
@@ -414,7 +414,7 @@ class N_soil_dynamics_layered(SimulationObject):
         return SM
 
     def get_transpiration_rate_layer(self, k, SM):
-        if "TRALY" in k:
+        if "RNuptake" in k:
             TRALY = k.TRALY * self.cm_to_m
         else:
             TRALY = np.zeros(len(SM))
@@ -573,7 +573,7 @@ class N_soil_dynamics_layered(SimulationObject):
                 return NH4_am
 
             def calculate_NH4_concentration(self, KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM):
-                cNH4 = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4 / (layer_thickness * SM)
+                cNH4 = (1 / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4 / layer_thickness
                 return cNH4
 
             def calculate_available_NH4(self, KSORP, NH4, RD, RHOD_kg_per_m3, SM, TRALYIL, TSCF_N, zmax, zmin):
@@ -583,11 +583,11 @@ class N_soil_dynamics_layered(SimulationObject):
                 if(RD <= zmin):
                     NH4_avail = 0.
                 elif(RD > zmax):
-                    #NH4_avail = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
-                    NH4_avail = TSCF_N * TRALYIL * cNH4
+                    NH4_avail = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
+                    #NH4_avail = TSCF_N * TRALYIL * cNH4
                 else:
-                    #NH4_avail = ((RD - zmin)/ layer_thickness) * (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
-                    NH4_avail = ((RD - zmin)/ layer_thickness) * TSCF_N * TRALYIL * cNH4
+                    NH4_avail = ((RD - zmin)/ layer_thickness) * (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
+                    #NH4_avail = ((RD - zmin)/ layer_thickness) * TSCF_N * TRALYIL * cNH4
                 return NH4_avail
 
             def calculate_mineralization_rate(self, rNMINs_layer):
@@ -603,8 +603,18 @@ class N_soil_dynamics_layered(SimulationObject):
 
             def calculate_NH4_plant_uptake_rate(self, KSORP, N_demand_soil, NH4, RD_m, RHOD_kg_per_m3, SM, TRALYIL, TCSF_N, zmax, zmin):
                 NH4_av = self.calculate_available_NH4(KSORP, NH4, RD_m, RHOD_kg_per_m3, SM, TRALYIL, TCSF_N, zmax, zmin)
+
+                #layer_thickness = zmax - zmin
+                #cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
+
+                ## NO3 uptake limited by mass transport
+                #PNH4UpTran = TCSF_N * TRALYIL * cNH4
+                #RNH4UP = min(N_demand_soil, PNH4UpTran)
+
+                ##RNH4UP = min(N_demand_soil, NH4_av)
+                #return RNH4UP
                 RNH4UP = min(N_demand_soil, NH4_av)
-                return RNH4UP
+                return NH4_av
 
             def calculate_NH4_inflow_rate(self, il, RNH4OUT_above):
                 if(il == 0):
@@ -667,11 +677,9 @@ class N_soil_dynamics_layered(SimulationObject):
                 if(RD <= zmin):
                     NO3_avail_layer = 0.
                 elif(RD > zmax):
-                    #NO3_avail_layer = NO3
-                    NO3_avail_layer = TSCF_N * TRALYIL * cNO3
+                    NO3_avail_layer = NO3
                 else:
-                    #NO3_avail_layer = ((RD - zmin)/ layer_thickness) * NO3 
-                    NO3_avail_layer = TSCF_N * TRALYIL * cNO3
+                    NO3_avail_layer = ((RD - zmin)/ layer_thickness) * NO3 
                 return NO3_avail_layer
 
             def calculate_denitrification_rate(self, layer_thickness, NO3, KDENIT_REF, MRCDIS, RCORGT_kg_per_m2, SM, SM0, T, WFPS_CRIT):
@@ -682,11 +690,17 @@ class N_soil_dynamics_layered(SimulationObject):
                 RNO3DENIT = fW * fT * fR * KDENIT_REF * SM * cNO3 * layer_thickness
                 return RNO3DENIT
 
-            def calculate_NO3_plant_uptake_rate(self, N_demand_soil, NO3, RD_m, SM, TRALYIL, TSCF_N, zmax, zmin):
-                NO3_av = self.calculate_available_NO3(NO3, RD_m, SM, TRALYIL, TSCF_N, zmax, zmin)
-                NO3UPT_kg_per_m2 = min(N_demand_soil, NO3_av)
-                N_demand_soil -= NO3UPT_kg_per_m2
-                RNO3UP = NO3UPT_kg_per_m2
+            def calculate_NO3_plant_uptake_rate(self, N_demand_soil, NO3, RD_m, SM, TRALYIL, TCSF_N, zmax, zmin):
+                NO3_av = self.calculate_available_NO3(NO3, RD_m, SM, TRALYIL, TCSF_N, zmax, zmin)
+                #layer_thickness = zmax - zmin
+
+                #cNO3 = self.calculate_NO3_concentration(layer_thickness, NO3, SM)
+
+                ## NO3 uptake limited by mass transport
+                #PNO3UpTran = TCSF_N * TRALYIL * cNO3
+                #RNO3UP = min(N_demand_soil, PNO3UpTran)
+
+                RNO3UP = min(N_demand_soil, NO3_av)
                 return RNO3UP
 
             def calculate_NO3_inflow_rate(self, il, RNO3OUT_above):
