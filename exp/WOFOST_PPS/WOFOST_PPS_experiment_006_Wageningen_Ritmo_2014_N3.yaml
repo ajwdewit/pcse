@@ -45,7 +45,7 @@ Metadata:
     in the Netherlands. Field Crops Research'
 Model:
   module: pcse.models
-  model: Wofost80_NWLP_FD_beta_HB
+  model: Wofost81_NWLP_FD
 Agromanagement:
 - 2013-10-23:
     CropCalendar:

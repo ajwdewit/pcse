@@ -107,6 +107,47 @@ class Wofost80_NWLP_FD_beta(Engine):
                         config=self.config)
 
 
+class Wofost81_PP(Engine):
+    """Convenience class for running WOFOST8.1 potential production (includes NPK dynamics)
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost81_PP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class Wofost81_WLP_FD(Engine):
+    """Convenience class for running WOFOST8.0 water-limited production (includes NPK dynamics)
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost81_WLP_FD.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+class Wofost81_NWLP_FD(Engine):
+    """Convenience class for running WOFOST8.1 nitrogen and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost81_NWLP_FD.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
 class LINTUL3(Engine):
     """The LINTUL model (Light INTerception and UtiLisation) is a simple general crop model,
     which simulates dry matter production as the result of light interception and utilization
@@ -171,82 +212,3 @@ class LINGRA_NWLP_FD(Engine):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
 
-class Wofost72_PP_HB(Engine):
-    """Convenience class for running WOFOST7.2 Potential Production.
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost72_PP_HB.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-class Wofost72_WLP_HB(Engine):
-    """Convenience class for running WOFOST7.2 Potential Production.
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost72_WLP_HB.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-class Wofost80_PP_beta_HB(Engine):
-    """Convenience class for running WOFOST8.0 potential production (includes NPK dynamics)
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_PP_HB.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-class Wofost80_WLP_FD_beta_HB(Engine):
-    """Convenience class for running WOFOST8.0 nutrient and water-limited production
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_WLP_FD_HB.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-
-class Wofost80_N_beta_HB(Engine):
-    """Convenience class for running WOFOST8.0 nitrogen-limited production 
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_N_HB.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-
-class Wofost80_NWLP_FD_beta_HB(Engine):
-    """Convenience class for running WOFOST8.0 nutrient and water-limited production
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_NWLP_FD_HB.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)

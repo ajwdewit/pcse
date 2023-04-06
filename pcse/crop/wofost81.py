@@ -12,22 +12,21 @@ from .phenology import DVS_Phenology as Phenology
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics_N as Leaf_Dynamics
+from .leaf_dynamics import WOFOST81_Leaf_Dynamics as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
     Storage_Organ_Dynamics
-from .assimilation import WOFOST_Assimilation as Assimilation
+from .assimilation import WOFOST8_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_N as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
 
 from .n_dynamics import N_Crop_Dynamics as N_crop
-from pcse.soil.n_soil_dynamics import N_Soil_Dynamics as N_soil
 from .nutrients.n_stress import N_Stress as N_Stress
 
 
-class Wofost80(SimulationObject):
+class Wofost81(SimulationObject):
     
-    """Top level object organizing the different components of the WOFOST crop
-    simulation including the implementation of N/P/K dynamics.
+    """Top level object organizing the different components of the WOFOST 8.1 crop
+    simulation including the implementation of advanced N dynamics.
             
     The CropSimulation object organizes the different processes of the crop
     simulation. Moreover, it contains the parameters, rate and state variables
@@ -43,8 +42,8 @@ class Wofost80(SimulationObject):
         7. Stem dynamics (self.st_dynamics)
         8. Root dynamics (self.ro_dynamics)
         9. Storage organ dynamics (self.so_dynamics)
-        10. N/P/K crop dynamics (self.n_crop_dynamics)
-        12. N/P/K stress (self.n_stress)
+        10. N crop dynamics (self.n_crop_dynamics)
+        12. N stress (self.n_stress)
 
     **Simulation parameters:**
     

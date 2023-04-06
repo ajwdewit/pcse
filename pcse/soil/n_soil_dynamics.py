@@ -162,12 +162,12 @@ class N_Soil_Dynamics(SimulationObject):
         p = self.params
         k = self.kiosk
 
-        r.RNSOIL = -max(0., min(p.NSOILBASE_FR * self.NSOILI, s.NSOIL))
+        r.RNSOIL = max(0., min(p.NSOILBASE_FR * self.NSOILI, s.NSOIL))
 
         # Check uptake rates from crop, if a crop is actually growing
         RNuptake = k.RNuptake if "RNuptake" in self.kiosk else 0.
 
-        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - RNuptake - r.RNSOIL
+        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - RNuptake + r.RNSOIL
         
     @prepare_states
     def integrate(self, day, delt=1.0):

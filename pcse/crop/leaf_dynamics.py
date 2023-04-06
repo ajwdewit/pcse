@@ -13,7 +13,7 @@ from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 
-class WOFOST_Leaf_Dynamics(SimulationObject):
+class WOFOST72_Leaf_Dynamics(SimulationObject):
     """Leaf dynamics for the WOFOST crop model.
     
     Implementation of biomass partitioning to leaves, growth and senenscence
@@ -447,7 +447,7 @@ class CSDM_Leaf_Dynamics(SimulationObject):
                               crop_delete=True)
 
 
-class WOFOST_Leaf_Dynamics_N(SimulationObject):
+class WOFOST81_Leaf_Dynamics(SimulationObject):
     """Leaf dynamics for the WOFOST crop model including leaf response to
     N stress.
 

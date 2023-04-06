@@ -12,19 +12,19 @@ from .. import signals
 from .. import exceptions as exc
 
 from .phenology import DVS_Phenology as Phenology
-from .assimilation import WOFOST_Assimilation7 as Assimilation
+from .assimilation import WOFOST7_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .evapotranspiration import Evapotranspiration
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
+from .leaf_dynamics import WOFOST72_Leaf_Dynamics as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
      Storage_Organ_Dynamics
 
 
-class Wofost(SimulationObject):
-    """Top level object organizing the different components of the WOFOST crop
+class Wofost72(SimulationObject):
+    """Top level object organizing the different components of the WOFOST 7.2 crop
     simulation.
             
     The CropSimulation object organizes the different processes of the crop
@@ -92,10 +92,6 @@ class Wofost(SimulationObject):
 
     """
 
-    # Placeholders for biomass available for reallocation
-    _WLV_REALLOC = Float(None)
-    _WST_REALLOC = Float(None)
-    
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
     part  = Instance(SimulationObject)
@@ -114,12 +110,6 @@ class Wofost(SimulationObject):
         CVO = Float(-99.)
         CVR = Float(-99.)
         CVS = Float(-99.)
-        REALLOC_DVS = Float(2.0)
-        REALLOC_STEM_FRACTION = Float(0.)
-        REALLOC_LEAF_FRACTION = Float(0.)
-        REALLOC_STEM_RATE = Float(0.)
-        REALLOC_LEAF_RATE = Float(0.)
-        REALLOC_EFFICIENCY = Float(0.)
 
     class StateVariables(StatesTemplate):
         TAGP  = Float(-99.)
@@ -137,9 +127,9 @@ class Wofost(SimulationObject):
         ASRC = Float(-99.)
         DMI = Float(-99.)
         ADMI = Float(-99.)
-        REALLOC_LV = Float(0.)
-        REALLOC_ST = Float(0.)
-        REALLOC_SO = Float(0.)
+        REALLOC_LV = Float()
+        REALLOC_ST = Float()
+        REALLOC_SO = Float()
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -232,25 +222,12 @@ class Wofost(SimulationObject):
         self._check_carbon_balance(day, r.DMI, r.GASS, r.MRES,
                                    CVF, pf)
 
-        # Reallocation from stems/leaves
-        if k.DVS < p.REALLOC_DVS:
-            r.REALLOC_LV = 0.0
-            r.REALLOC_ST = 0.0
-            r.REALLOC_SO = 0.0
-        else:
-            if self._WST_REALLOC is None:  # Start of reallocation, compute max reallocatable biomass
-                self._WST_REALLOC = k.WST * p.REALLOC_STEM_FRACTION
-                self._WLV_REALLOC = k.WLV * p.REALLOC_LEAF_FRACTION
-            # Reallocation rate in terms of loss of stem/leaf dry matter
-            r.REALLOC_LV = self._WLV_REALLOC * p.REALLOC_LEAF_RATE
-            r.REALLOC_ST = self._WST_REALLOC * p.REALLOC_STEM_RATE
-            # Reallocation rate in terms of increase in storage organs taking
-            # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
-            r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST)  * p.REALLOC_EFFICIENCY
- 
+        # Reallocation from stems/leaves not implemented for WOFOST7.2
+        r.REALLOC_LV = 0.0
+        r.REALLOC_ST = 0.0
+        r.REALLOC_SO = 0.0
 
         # distribution over plant organ
-
         # Below-ground dry matter increase and root dynamics
         self.ro_dynamics.calc_rates(day, drv)
         # Aboveground dry matter increase and distribution over stems,

@@ -12,7 +12,7 @@ from .. import signals
 from .. import exceptions as exc
 
 from .phenology import DVS_Phenology as Phenology
-from .assimilation import WOFOST_Assimilation as Assimilation
+from .assimilation import WOFOST8_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .evapotranspiration import Evapotranspiration
@@ -20,7 +20,7 @@ from .abioticdamage import FROSTOL
 from .abioticdamage import CrownTemperature
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
+from .leaf_dynamics import WOFOST72_Leaf_Dynamics as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
      Storage_Organ_Dynamics
 

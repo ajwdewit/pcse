@@ -56,7 +56,7 @@ Metadata:
     for nitrogen dynamics in the soil. Fertilizer Research 27(2-3): 349-383'
 Model:
   module: pcse.models
-  model: Wofost80_NWLP_FD_beta_HB
+  model: Wofost81_NWLP_FD
 Agromanagement:
 - 1982-10-19:
     CropCalendar:

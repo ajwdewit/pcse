@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Copyright (c) 2004-2023 Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+# Herman Berghuijs (herman.berghuijs@wur.nl) March 2023
 """SimulationObjects implementing |CO2| Assimilation for use with PCSE.
 """
 from __future__ import print_function
@@ -19,7 +20,8 @@ except ImportError as exc:
     ftotass = fastro = None
 
 
-def totass(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
+def totass8(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI,
+            NLV, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     """ This routine calculates the daily total gross CO2 assimilation by
     performing a Gaussian integration over time. At three different times of
     the day, irradiance is computed and used to calculate the instantaneous
@@ -27,23 +29,29 @@ def totass(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV,
     on this routine is given by Spitters et al. (1988). AMAX is calculated in
     routine assim.
 
-    FORMAL PARAMETERS:  (I=input,O=output,C=control,IN=init,T=time)
-    name   type meaning                                    units  class
-    ----   ---- -------                                    -----  -----
-    DAYL    R4  Astronomical daylength (base = 0 degrees)     h      I
-    AMAX    R4  Assimilation rate at light saturation      kg CO2/   I
+    FORMAL    PARAMETERS:  (I=input,O=output,C=control,IN=init,T=time)
+    name     meaning                                      units         class
+    -------- ------------------------------------------   -----------   -----
+    AMAX_LNB Specific leaf nitrogen below which there is
+             no gross photosynthesis                      |kg ha-1|       I
+    AMAX_REF Maximum leaf CO2 assim. rate under reference
+             conditions and high specific leaf nitrogen.  |kg ha-1 hr-1|  I
+    AMAX_SLP Slope of linear response of AMAX to specific
+             leaf N content at reference conditions       |kg hr-1 / kg|  I
+    DAYL     Astronomical daylength (base = 0 degrees)    h               I
+    AMAX     Assimilation rate at light saturation        kg CO2/         I
                                                           ha leaf/h
-    EFF     R4  Initial light use efficiency              kg CO2/J/  I
+    EFF      Initial light use efficiency                 kg CO2/J/       I
                                                           ha/h m2 s
-    LAI     R4  Leaf area index                             ha/ha    I
-    KDIF    R4  Extinction coefficient for diffuse light             I
-    AVRAD   R4  Daily shortwave radiation                  J m-2 d-1 I
-    DIFPP   R4  Diffuse irradiation perpendicular to direction of
-                light                                      J m-2 s-1 I
-    DSINBE  R4  Daily total of effective solar height         s      I
-    SINLD   R4  Seasonal offset of sine of solar height       -      I
-    COSLD   R4  Amplitude of sine of solar height             -      I
-    DTGA    R4  Daily total gross assimilation           kg CO2/ha/d O
+    LAI      Leaf area index                              ha/ha           I
+    KDIF     Extinction coefficient for diffuse light                     I
+    AVRAD    Daily shortwave radiation                    J m-2 d-1       I
+    DIFPP    Diffuse irradiation perpendicular to
+             direction of light                           J m-2 s-1       I
+    DSINBE   Daily total of effective solar height        s               I
+    SINLD    Seasonal offset of sine of solar height      -               I
+    COSLD    Amplitude of sine of solar height            -               I
+    DTGA     Daily total gross assimilation               kg CO2/ha/d     O
 
     Authors: Daniel van Kraalingen
     Date   : April 1991
@@ -70,14 +78,14 @@ def totass(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV,
             PAR    = 0.5*AVRAD*SINB*(1.+0.4*SINB)/DSINBE
             PARDIF = min(PAR,SINB*DIFPP)
             PARDIR = PAR-PARDIF
-            FGROS = assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF)
+            FGROS = assim8(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF)
             DTGA += FGROS*WGAUSS[i]
     DTGA *= DAYL
 
     return DTGA
 
 
-def assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
+def assim8(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, SINB, PARDIR, PARDIF):
     """This routine calculates the gross CO2 assimilation rate of
     the whole crop, FGROS, by performing a Gaussian integration
     over depth in the crop canopy. At three different depths in
@@ -157,9 +165,9 @@ def assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, 
     FGROS  = FGROS*LAI
     return FGROS
 
-class WOFOST_Assimilation(SimulationObject):
-    """Class implementing a WOFOST/SUCROS style assimilation routine including
-    effect of changes in atmospheric CO2 concentration.
+class WOFOST8_Assimilation(SimulationObject):
+    """Class implementing a WOFOST/SUCROS style assimilation routine for WOFOST8
+    including effect of changes in atmospheric CO2 concentration and leaf N content.
 
     WOFOST calculates the daily gross |CO2| assimilation rate of a crop
     from the absorbed radiation and the photosynthesis-light response curve
@@ -168,8 +176,6 @@ class WOFOST_Assimilation(SimulationObject):
     radiation and the leaf area. Daily gross |CO2| assimilation is obtained
     by integrating the assimilation rates over the leaf layers and over the
     day.
-
-
 
     *Simulation parameters* (To be provided in cropdata dictionary):
 
@@ -276,7 +282,7 @@ class WOFOST_Assimilation(SimulationObject):
         CO2EFFTB = p.CO2EFFTB(p.CO2)        
         EFF  = p.EFFTB(drv.DTEMP) * CO2EFFTB
 
-        DTGA = totass(p.AMAX_LNB, p.AMAX_REF, p.AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, p.KN, LAI, NLV, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
+        DTGA = totass8(p.AMAX_LNB, p.AMAX_REF, p.AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, p.KN, LAI, NLV, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
         DTGA *= p.TMNFTB(TMINRA)
@@ -292,23 +298,25 @@ def totass7(DAYL, AMAX, EFF, LAI, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     the day, irradiance is computed and used to calculate the instantaneous
     canopy assimilation, whereafter integration takes place. More information
     on this routine is given by Spitters et al. (1988).
+
     FORMAL PARAMETERS:  (I=input,O=output,C=control,IN=init,T=time)
-    name   type meaning                                    units  class
-    ----   ---- -------                                    -----  -----
-    DAYL    R4  Astronomical daylength (base = 0 degrees)     h      I
-    AMAX    R4  Assimilation rate at light saturation      kg CO2/   I
-                                                          ha leaf/h
-    EFF     R4  Initial light use efficiency              kg CO2/J/  I
-                                                          ha/h m2 s
-    LAI     R4  Leaf area index                             ha/ha    I
-    KDIF    R4  Extinction coefficient for diffuse light             I
-    AVRAD   R4  Daily shortwave radiation                  J m-2 d-1 I
-    DIFPP   R4  Diffuse irradiation perpendicular to direction of
-                light                                      J m-2 s-1 I
-    DSINBE  R4  Daily total of effective solar height         s      I
-    SINLD   R4  Seasonal offset of sine of solar height       -      I
-    COSLD   R4  Amplitude of sine of solar height             -      I
-    DTGA    R4  Daily total gross assimilation           kg CO2/ha/d O
+    name   meaning                                    units  class
+    ----   -------                                    -----  -----
+    DAYL   Astronomical daylength (base = 0 degrees)     h      I
+    AMAX   Assimilation rate at light saturation      kg CO2/   I
+                                                     ha leaf/h
+    EFF    Initial light use efficiency              kg CO2/J/  I
+                                                     ha/h m2 s
+    LAI    Leaf area index                             ha/ha    I
+    KDIF   Extinction coefficient for diffuse light             I
+    AVRAD  Daily shortwave radiation                  J m-2 d-1 I
+    DIFPP  Diffuse irradiation perpendicular to direction of
+           light                                      J m-2 s-1 I
+    DSINBE Daily total of effective solar height         s      I
+    SINLD  Seasonal offset of sine of solar height       -      I
+    COSLD  Amplitude of sine of solar height             -      I
+    DTGA   Daily total gross assimilation           kg CO2/ha/d O
+
     Authors: Daniel van Kraalingen
     Date   : April 1991
     Python version:
@@ -349,6 +357,7 @@ def assim7(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     and PARDIF are calculated in routine TOTASS.
     Subroutines and functions called: none.
     Called by routine TOTASS.
+
     Author: D.W.G. van Kraalingen, 1986
     Python version:
     Allard de Wit, 2011
@@ -399,8 +408,8 @@ def assim7(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     FGROS  = FGROS*LAI
     return FGROS
 
-class WOFOST_Assimilation7(SimulationObject):
-    """Class implementing a WOFOST/SUCROS style assimilation routine.
+class WOFOST7_Assimilation(SimulationObject):
+    """Class implementing a WOFOST/SUCROS style assimilation routine for WOFOST 7.
     
     WOFOST calculates the daily gross |CO2| assimilation rate of a crop
     from the absorbed radiation and the photosynthesis-light response curve
