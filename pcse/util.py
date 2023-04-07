@@ -14,7 +14,10 @@ from collections import namedtuple
 from bisect import bisect_left
 import textwrap
 import sqlite3
-from collections import Iterable
+if sys.version_info > (3,8):
+    from collections.abc import Iterable
+else:
+    from collections import Iterable
 
 from . import exceptions as exc
 from .traitlets import TraitType
@@ -1080,7 +1083,7 @@ class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
                  "PAVAILI": (None, (0, 50), float),
                  "KAVAILI": (None, (0, 250), float),
                  }
-    _required = ["WAV", "NAVAIL", "PAVAIL", "KAVAIL"]
+    _required = ["WAV", "NAVAILI", "PAVAILI", "KAVAILI"]
 
 
 def get_user_home():

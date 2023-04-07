@@ -6,18 +6,15 @@
 In general these classes are not to be used directly, but are to be subclassed
 when creating PCSE simulation units.
 """
-import types
+import sys
 import logging
-from datetime import date
-import pickle
-from collections import Counter, MutableMapping
+from collections import Counter
+if sys.version_info > (3, 8):
+    from collections.abc import MutableMapping
+else:
+    from collections import MutableMapping
 
-from ..traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
-from ..pydispatch import dispatcher
-from ..util import Afgen
 from .. import exceptions as exc
-from ..settings import settings
-from .variablekiosk import VariableKiosk
 
 
 class ParameterProvider(MutableMapping):
@@ -43,7 +40,6 @@ class ParameterProvider(MutableMapping):
     _cropdata = dict()
     _timerdata = dict()
     _override = dict()
-    _unique_parameters = list()
     _iter = 0  # Counter for iterator
     _ncrops_activated = 0  # Counts the number of times `set_crop_type()` has been called.
 
@@ -136,7 +132,7 @@ class ParameterProvider(MutableMapping):
             if varname in self:
                 self._override[varname] = value
             else:
-                msg = "Cannot override '%s', parameter does not exist." % varname
+                msg = "Cannot override '%s', parameter does not already exist." % varname
                 raise exc.PCSEError(msg)
         else:
             self._override[varname] = value

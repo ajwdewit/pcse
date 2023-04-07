@@ -153,6 +153,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
 
         if force_reload or not self._load_cache_file(self.fp_csv_fname):
             with open(csv_fname, 'r') as csv_file:
+                csv_file.readline()  # Skip first line
                 self._read_meta(csv_file)
                 self._read_observations(csv_file, delimiter)
             self._write_cache_file(self.fp_csv_fname)

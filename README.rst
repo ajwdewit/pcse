@@ -59,8 +59,6 @@ Testing PCSE
 The PCSE package has some built-in tests that can used to test if any PCSE installation is
 producing the correct outputs::
 
-.. code-block:: doscon
-
     >>> pcse.test()
     runTest (pcse.tests.test_abioticdamage.Test_FROSTOL) ... ok
     runTest (pcse.tests.test_partitioning.Test_DVS_Partitioning) ... ok
@@ -89,8 +87,6 @@ git repository of PCSE. The latter also includes tests of the LINGRA model
 which are not included in the internal tests. The tests can be execute through
 the `tests` package::
 
-.. code-block:: doscon
-
     (py3_pcse) $ python -m tests
     runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_potentialproduction_wofost72_01.yaml) ... ok
     runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_potentialproduction_wofost72_11.yaml) ... ok
@@ -116,8 +112,6 @@ the `tests` package::
 
 By default this runs a limited selection of tests. The full test suite can be run with::
 
-.. code-block:: doscon
-
     (py3_pcse) $ python -m tests --full
 
 But this will take at least 30 minutes to complete.
@@ -135,8 +129,6 @@ conditions. Tt is expected that more experimental data will be collected and sto
 reference set to compare model results.
 
 Running the experiments is similar to running the unit tests::
-
-.. code-block:: doscon
 
     (py3_pcse) $ python -m exp
     Writing expriment results to: /tmp/exp_results
