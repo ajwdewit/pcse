@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
-from ..traitlets import Float, Int, Instance, Dict
-from ..decorators import prepare_rates, prepare_states
+from ..traitlets import Float
 from ..base import ParamTemplate, SimulationObject, RatesTemplate
 from ..util import AfgenTrait
 
@@ -95,13 +94,13 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
         
     def __call__(self, day, drv):
         p = self.params
-        kk = self.kiosk
+        k = self.kiosk
         
-        RMRES = (p.RMR * kk["WRT"] +
-                 p.RML * kk["WLV"] +
-                 p.RMS * kk["WST"] +
-                 p.RMO * kk["WSO"])
-        RMRES *= p.RFSETB(kk["DVS"])
+        RMRES = (p.RMR * k.WRT +
+                 p.RML * k.WLV +
+                 p.RMS * k.WST +
+                 p.RMO * k.WSO)
+        RMRES *= p.RFSETB(k.DVS)
         TEFF = p.Q10**((drv.TEMP-25.)/10.)
         self.rates.PMRES = RMRES * TEFF
         return self.rates.PMRES

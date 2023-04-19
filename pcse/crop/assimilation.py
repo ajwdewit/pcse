@@ -14,10 +14,10 @@ from ..util import limit, astro, doy, AfgenTrait
 from ..base import ParamTemplate, SimulationObject, RatesTemplate
 
 try:
-    from ..futil import totass as ftotass
+    from ..futil import totass as ftotass7
     from ..futil import astro as fastro
 except ImportError as exc:
-    ftotass = fastro = None
+    ftotass7 = fastro7 = None
 
 
 def totass8(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI,
@@ -60,7 +60,7 @@ def totass8(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI,
     Authors: Allard de Wit
     Date   : September 2011
 
-    Update calculation AMAX:
+    Update calculation AMAX using canopy N content:
     Author: Herman Berghuijs
     Date:   September 2022
 
@@ -98,13 +98,13 @@ def assim8(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF,
     using the specific leaf nitrogen
 
     Subroutines and functions called: none.
-    Called by routine TOTASS.
+    Called by routine TOTASS8.
 
     Author: D.W.G. van Kraalingen, 1986
-    Updated: H.N.C. Berghuijs, 2022
 
     Python version:
     Allard de Wit, 2011
+    Updated: H.N.C. Berghuijs, 2022
     """
 
     # Gauss points and weights
@@ -167,15 +167,18 @@ def assim8(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF,
 
 class WOFOST8_Assimilation(SimulationObject):
     """Class implementing a WOFOST/SUCROS style assimilation routine for WOFOST8
-    including effect of changes in atmospheric CO2 concentration and leaf N content.
+    including effect of changes in atmospheric |CO2| concentration and leaf N
+    content.
 
-    WOFOST calculates the daily gross |CO2| assimilation rate of a crop
+    WOFOST8.1 calculates the daily gross |CO2| assimilation rate of a crop
     from the absorbed radiation and the photosynthesis-light response curve
-    of individual leaves. This response is dependent on temperature and
+    of individual leaves. This response is dependent on temperature, Leaf N
+    concentration and
     leaf age. The absorbed radiation is calculated from the total incoming
     radiation and the leaf area. Daily gross |CO2| assimilation is obtained
-    by integrating the assimilation rates over the leaf layers and over the
-    day.
+    by integrating the assimilation rates over the canopy depth and over the
+    day. Moreover, a decreasing N concentration is assumed going deeper into
+    the canopy.
 
     *Simulation parameters* (To be provided in cropdata dictionary):
 
@@ -203,11 +206,12 @@ class WOFOST8_Assimilation(SimulationObject):
     CO2EFFTB   Correction factor for EFF given atmos-         TCr      -
                pheric CO2 concentration.
     CO2        Atmopheric CO2 concentration                   SCr      ppm
+    KN         TODO: describe KN parameter
     =========  ============================================= =======  ============
 
     *State and rate variables*
 
-    `WOFOST_Assimilation` has no state/rate variables, but calculates the
+    `WOFOST8_Assimilation` has no state/rate variables, but calculates the
     rate of assimilation which is returned directly from the `__call__()`
     method.
 
@@ -489,7 +493,7 @@ class WOFOST7_Assimilation(SimulationObject):
     
     def __call__(self, day, drv):
         # Check if fortran versions can be used otherwise use native python
-        if ftotass is not None:
+        if ftotass7 is not None:
             self.rates.PGASS = self.___call__fortran(day, drv)
         else:
             self.rates.PGASS = self.__call__python(day, drv)
@@ -516,7 +520,7 @@ class WOFOST7_Assimilation(SimulationObject):
         AMAX *= p.TMPFTB(drv.DTEMP)
         KDIF = p.KDIFTB(k.DVS)
         EFF = p.EFFTB(drv.DTEMP)
-        DTGA = ftotass(DAYL, AMAX, EFF, k.LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
+        DTGA = ftotass7(DAYL, AMAX, EFF, k.LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
 
         # correction for low minimum temperature potential
         DTGA *= p.TMNFTB(TMINRA)

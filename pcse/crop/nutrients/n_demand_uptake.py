@@ -6,7 +6,7 @@ from collections import namedtuple
 
 from ...base import StatesTemplate, ParamTemplate, SimulationObject, RatesTemplate
 from ...decorators import prepare_rates, prepare_states
-from ...traitlets import HasTraits, Float, Int, Instance
+from ...traitlets import HasTraits, Float, Int
 from ...util import AfgenTrait
 
 MaxNutrientConcentrations = namedtuple("MaxNutrientConcentrations",
@@ -16,7 +16,7 @@ class N_Demand_Uptake(SimulationObject):
     """Calculates the crop N demand and its uptake from the soil.
 
     Crop N demand is calculated as the difference between the actual N
-   (kg N per kg biomass) in the vegetative plant organs (leaves, stems and roots) 
+    (kg N per kg biomass) in the vegetative plant organs (leaves, stems and roots)
     and the maximum N concentration for each organ. N uptake is then 
     estimated as the minimum of supply from the soil and demand from the crop.
 
@@ -26,7 +26,7 @@ class N_Demand_Uptake(SimulationObject):
 
     The N demand of the storage organs is calculated in a somewhat
     different way because it is assumed that the demand from the storage
-    organs is fulfilled by translocation of N/P/K from the leaves, stems
+    organs is fulfilled by translocation of N from the leaves, stems
     and roots. Therefore the uptake of the storage organs is calculated
     as the minimum of the daily translocatable N supply and the demand from
     the storage organs.
@@ -103,12 +103,10 @@ class N_Demand_Uptake(SimulationObject):
     class Parameters(ParamTemplate):
         NMAXLV_TB = AfgenTrait()  # maximum N concentration in leaves as function of dvs        
         DVS_N_TRANSL = Float(-99.)
-
         NMAXRT_FR = Float(-99.)  # maximum N concentration in roots as fraction of maximum N concentration in leaves
         NMAXST_FR = Float(-99.)  # maximum N concentration in stems as fraction of maximum N concentration in leaves        
         NMAXSO = Float(-99.)  # maximum P concentration in storage organs [kg N kg-1 dry biomass]        
         TCNT = Float(-99.)  # time coefficient for N translocation to storage organs [days]
-
         NFIX_FR = Float(-99.)  # fraction of crop nitrogen uptake by biological fixation
         RNUPTAKEMAX = Float()  # Maximum N uptake rate
         NRESIDLV = Float(-99.)  # residual N fraction in leaves [kg N kg-1 dry biomass]
@@ -120,21 +118,17 @@ class N_Demand_Uptake(SimulationObject):
         RNtranslocationST = Float(-99.)  # N translocation rate from stems [kg ha-1 d-1]
         RNtranslocationRT = Float(-99.)  # N translocation rate from roots [kg ha-1 d-1]
         RNtranslocation = Float(-99.)    # N translocation rate to storage organs [kg ha-1 d-1]
-
         RNuptakeLV = Float(-99.)  # N uptake rates in organs [kg ha-1 d -1]
         RNuptakeST = Float(-99.)
         RNuptakeRT = Float(-99.)
         RNuptakeSO = Float(-99.)
-
         RNuptake = Float(-99.)  # Total N uptake rates [kg ha-1 d -1]
         RNfixation = Float(-99.)  # Total N fixated
-
         NdemandLV = Float(-99.)  # N demand in organs [kg ha-1]
         NdemandST = Float(-99.)
         NdemandRT = Float(-99.)
         NdemandSO = Float(-99.)
-
-        Ndemand = Float()  # Total N/P/K demand of the crop
+        Ndemand = Float()  # Total N demand of the crop
 
     class StateVariables(StatesTemplate):
         NtranslocatableLV = Float(-99.)  # translocatable N amount in leaves [kg N ha-1]
@@ -166,7 +160,6 @@ class N_Demand_Uptake(SimulationObject):
         k = self.kiosk
         s = self.states
 
-        delt = 1.0
         mc = self._compute_N_max_concentrations()
 
         # No nutrients are absorbed when severe water shortage occurs i.e. RFTRA <= 0.01
@@ -175,7 +168,9 @@ class N_Demand_Uptake(SimulationObject):
         else:
             NutrientLIMIT = 0.
 
-        # N demand [kg ha-1]
+        # N demand [kg ha-1], Note that we are pre-integrating here so the N demand by the growth
+        # rate has to be multiplied by delt.
+        delt = 1.0
         r.NdemandLV = max(mc.NMAXLV * k.WLV - k.NamountLV, 0.) + max(k.GRLV * mc.NMAXLV, 0) * delt
         r.NdemandST = max(mc.NMAXST * k.WST - k.NamountST, 0.) + max(k.GRST * mc.NMAXST, 0) * delt
         r.NdemandRT = max(mc.NMAXRT * k.WRT - k.NamountRT, 0.) + max(k.GRRT * mc.NMAXRT, 0) * delt
@@ -188,7 +183,7 @@ class N_Demand_Uptake(SimulationObject):
         r.RNfixation = (max(0., p.NFIX_FR * r.Ndemand) * NutrientLIMIT)
 
         # Calculate translocatable nitrogen in different organs
-        if(k.DVS < p.DVS_N_TRANSL):
+        if k.DVS < p.DVS_N_TRANSL :
             s.NTranslocatableLV = 0.
             s.NTranslocatableRT = 0.
             s.NTranslocatableST = 0.
@@ -201,7 +196,7 @@ class N_Demand_Uptake(SimulationObject):
 
         r.RNtranslocation = min(r.NdemandSO/delt, s.NTranslocatable / p.TCNT)
 
-        if(s.NTranslocatable == 0):
+        if s.NTranslocatable == 0:
             r.RNtranslocationLV = 0.
             r.RNtranslocationRT = 0.
             r.RNtranslocationST = 0.

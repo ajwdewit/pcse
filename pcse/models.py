@@ -33,20 +33,6 @@ class Wofost72_WLP_FD(Engine):
                         config=self.config)
 
 
-class Wofost80_NWLP_FD(Engine):
-    """Convenience class for running WOFOST8.0 nutrient and water-limited production
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_NWLP_FD.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-
 class Wofost72_Phenology(Engine):
     """Convenience class for running WOFOST7.2 phenology only.
 
@@ -66,49 +52,8 @@ Wofost71_PP = Wofost72_PP
 Wofost71_WLP_FD = Wofost72_WLP_FD
 
 
-class Wofost80_PP_beta(Engine):
-    """Convenience class for running WOFOST8.0 potential production (includes NPK dynamics)
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_PP.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-
-class Wofost80_WLP_FD_beta(Engine):
-    """Convenience class for running WOFOST8.0 water-limited production (includes NPK dynamics)
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_WLP_FD.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-class Wofost80_NWLP_FD_beta(Engine):
-    """Convenience class for running WOFOST8.0 nutrient and water-limited production
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_NWLP_FD.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-
 class Wofost81_PP(Engine):
-    """Convenience class for running WOFOST8.1 potential production (includes NPK dynamics)
+    """Convenience class for running WOFOST8.1 potential production (includes N dynamics)
 
     :param parameterprovider: A ParameterProvider instance providing all parameter values
     :param weatherdataprovider: A WeatherDataProvider object
@@ -187,6 +132,12 @@ class FAO_WRSI(Engine):
 
 
 class LINGRA_PP(Engine):
+    """An implementation of the LINGRA model for potential production conditions.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
     config = "Lingra_PP.conf"
     __version__ = "1.0.0"
 
@@ -196,6 +147,12 @@ class LINGRA_PP(Engine):
 
 
 class LINGRA_WLP_FD(Engine):
+    """An implementation of the LINGRA model for water-limited production conditions.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
     config = "Lingra_WLP_FD.conf"
     __version__ = "1.0.0"
 
@@ -205,6 +162,12 @@ class LINGRA_WLP_FD(Engine):
 
 
 class LINGRA_NWLP_FD(Engine):
+    """An implementation of the LINGRA model for water and nitrogen limited production conditions.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
     config = "Lingra_NWLP_FD.conf"
     __version__ = "1.0.0"
 
@@ -213,7 +176,12 @@ class LINGRA_NWLP_FD(Engine):
                         config=self.config)
 
 class ALCEPAS(Engine):
-    """ALCEPAS Onion growth model.
+    """ALCEPAS Onion growth model for potential production conditions.
+
+    For the model description, see:
+
+    ALCEPAS, an onion growth model based on SUCROS87.I. Development of the model.
+     C.L.M. De Visser. 1993. https://doi.org/10.1080/14620316.1994.11516482
     """
     config = "alcepas.conf"
 

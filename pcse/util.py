@@ -918,7 +918,7 @@ class DummySoilDataProvider(dict):
     """This class is to provide some dummy soil parameters for potential production simulation.
 
     Simulation of potential production levels is independent of the soil. Nevertheless, the model
-    does not some parameter values. This data provider provides some hard coded parameter values for
+    does require some parameter values. This data provider provides some hard coded parameter values for
     this situation.
     """
     _defaults = {"SMFCF":0.3,

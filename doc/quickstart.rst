@@ -1,11 +1,13 @@
 Getting started
 ===============
 
-This guide will help you install PCSE as well as provide
-some examples to get you started with modelling. The examples are currently focused on applying
-the WOFOST and LINTUL3 crop simulation models, although other crop simulation models may become available within
-PCSE in the future.
+This guide will help you go through some examples to get you started with modelling. The examples are
+currently focused on applying the WOFOST and LINTUL3 crop simulation models, although other crop simulation
+models may become available within PCSE in the future.
 
+Note that many more examples are available in the `collection of PCSE notebooks`_ on github.
+
+.. _collection of PCSE notebooks: https://github.com/ajwdewit/pcse_notebooks
 
 An interactive PCSE/WOFOST session
 ==================================
@@ -16,7 +18,7 @@ connects to a the demo database which contains meteorologic data, soil data,
 crop data and management data for a grid location in South-Spain.
 
 Initializing PCSE/WOFOST and advancing model state
-..................................................
+--------------------------------------------------
 
 Let's start a WOFOST object for modelling winter-wheat (crop=1) on a
 location in South-Spain (grid 31031) for the year 2000 under water-limited
@@ -38,7 +40,8 @@ number of days to simulate can be specified as well::
     >>> wofost_object.run(days=10)
 
 Getting information about state and rate variables
-..................................................
+--------------------------------------------------
+
 Retrieving information about the calculated model states or rates 
 can be done with the `get_variable()` method on a PCSE object.
 For example, to retrieve the leaf area index value in the current
@@ -178,7 +181,7 @@ as a simple python dictionary. However, it is more convenient to use the
 :ref:`WOFOST71SiteDataProvider <WOFOST71SiteDataProvider>` that documents the
 site parameters and provides sensible defaults::
 
-    >>> from pcse.util import WOFOST71SiteDataProvider
+    >>> from pcse.util import WOFOST72SiteDataProvider
     >>> sitedata = WOFOST71SiteDataProvider(WAV=100, CO2=360)
     >>> print(sitedata)
     {'SMLIM': 0.4, 'NOTINF': 0, 'CO2': 360.0, 'SSI': 0.0, 'SSMAX': 0.0, 'IFUNRN': 0, 'WAV': 100.0}
@@ -266,8 +269,8 @@ are provided in `pcse.models`. For the sugarbeet example we will import
 the WOFOST model for water-limited simulation under freely draining soil
 conditions::
 
-    >>> from pcse.models import Wofost71_WLP_FD
-    >>> wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
+    >>> from pcse.models import Wofost72_WLP_FD
+    >>> wofsim = Wofost72_WLP_FD(parameters, wdp, agromanagement)
 
 We can then run the simulation and show some final results such as the anthesis and
 harvest dates (DOA, DOH), total biomass (TAGP) and maximum LAI (LAIMAX).

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2021 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2021
+# TODO: remove code duplication between lingra and lingraN
 """Implementation of the LINGRA-N grassland simulation model
 
 This module provides an implementation of the LINGRA-N (LINtul GRAssland)

@@ -459,10 +459,16 @@ class CGMSEngine(Engine):
     flag_crop_delete = False
 
     def run(self, days=1):
+        """run() is not supported in the CGMSEngine, use: run_till(<date>)
+        """
+
         msg = "run() is not supported in the CGMSEngine, use: run_till(<date>)"
         raise NotImplementedError(msg)
 
     def run_till_terminate(self):
+        """run_till_terminate() is not supported in the CGMSEngine, use: run_till(<date>)
+        """
+
         msg = "run_till_terminate() is not supported in the CGMSEngine, use: run_till(<date>)"
         raise NotImplementedError(msg)
 

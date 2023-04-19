@@ -9,12 +9,11 @@ Classes defined here:
 """
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Bool
+from ..traitlets import Float, Instance, Enum, Bool
 from ..decorators import prepare_rates, prepare_states
 
 from ..util import limit, daylength, AfgenTrait
-from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-     SimulationObject, VariableKiosk
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, SimulationObject
 from .. import signals
 from .. import exceptions as exc
 
@@ -116,7 +115,6 @@ class Vernalisation(SimulationObject):
         ISVERNALISED =  Bool()              # True when VERNSAT is reached and
                                             # Forced when DVS > VERNDVS
 
-    #---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -132,34 +130,34 @@ class Vernalisation(SimulationObject):
         self.states = self.StateVariables(kiosk, VERN=0., VERNFAC=0.,
                                           DOV=None, ISVERNALISED=False,
                                           publish=["ISVERNALISED"])
-    #---------------------------------------------------------------------------
+
     @prepare_rates
     def calc_rates(self, day, drv):
-        rates = self.rates
-        states = self.states
-        params = self.params
+        r = self.rates
+        s = self.states
+        p = self.params
+        k = self.kiosk
 
-        DVS = self.kiosk["DVS"]
-        if not states.ISVERNALISED:
-            if DVS < params.VERNDVS:
-                rates.VERNR = params.VERNRTB(drv.TEMP)
-                r = (states.VERN - params.VERNBASE)/(params.VERNSAT-params.VERNBASE)
-                rates.VERNFAC = limit(0., 1., r)
+        if not s.ISVERNALISED:
+            if k.DVS < p.VERNDVS:
+                r.VERNR = p.VERNRTB(drv.TEMP)
+                r = (s.VERN - p.VERNBASE)/(p.VERNSAT-p.VERNBASE)
+                r.VERNFAC = limit(0., 1., r)
             else:
-                rates.VERNR = 0.
-                rates.VERNFAC = 1.0
+                r.VERNR = 0.
+                r.VERNFAC = 1.0
                 self._force_vernalisation = True
         else:
-            rates.VERNR = 0.
-            rates.VERNFAC = 1.0
-    #---------------------------------------------------------------------------
+            r.VERNR = 0.
+            r.VERNFAC = 1.0
+
     @prepare_states
     def integrate(self, day, delt=1.0):
         states = self.states
         rates = self.rates
         params = self.params
         
-        states.VERN += rates.VERNR
+        states.VERN += rates.VERNR * delt
         
         if states.VERN >= params.VERNSAT:  # Vernalisation requirements reached
             states.ISVERNALISED = True
@@ -182,7 +180,6 @@ class Vernalisation(SimulationObject):
         else:  # Reduction factor for phenologic development
             states.ISVERNALISED = False
 
-#-------------------------------------------------------------------------------
 class DVS_Phenology(SimulationObject):
     """Implements the algorithms for phenologic development in WOFOST.
     
@@ -285,13 +282,11 @@ class DVS_Phenology(SimulationObject):
         CROP_START_TYPE = Enum(["sowing", "emergence"])
         CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"])
 
-    #-------------------------------------------------------------------------------
     class RateVariables(RatesTemplate):
         DTSUME = Float(-99.)  # increase in temperature sum for emergence
         DTSUM  = Float(-99.)  # increase in temperature sum
         DVR    = Float(-99.)  # development rate
 
-    #-------------------------------------------------------------------------------
     class StateVariables(StatesTemplate):
         DVS = Float(-99.)  # Development stage
         TSUM = Float(-99.)  # Temperature sum state
@@ -304,7 +299,6 @@ class DVS_Phenology(SimulationObject):
         DOH = Instance(datetime.date) # Day of harvest
         STAGE = Enum(["emerging", "vegetative", "reproductive", "mature"])
 
-    #---------------------------------------------------------------------------
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -321,16 +315,23 @@ class DVS_Phenology(SimulationObject):
 
         # Define initial states
         DVS, DOS, DOE, STAGE = self._get_initial_stage(day)
-        self.states = self.StateVariables(kiosk, publish="DVS",
-                                          TSUM=0., TSUME=0., DVS=DVS,
-                                          DOS=DOS, DOE=DOE, DOA=None, DOM=None,
-                                          DOH=None, STAGE=STAGE)
+        s = dict(
+            TSUM=0.,
+            TSUME=0.,
+            DVS=DVS,
+            DOS=DOS,
+            DOE=DOE,
+            DOA=None,
+            DOM=None,
+            DOH=None,
+            STAGE=STAGE
+        )
+        self.states = self.StateVariables(kiosk, publish="DVS", **s)
 
         # initialize vernalisation for IDSL=2
         if self.params.IDSL >= 2:
             self.vernalisation = Vernalisation(day, kiosk, parvalues)
     
-    #---------------------------------------------------------------------------
     def _get_initial_stage(self, day):
         """"""
         p = self.params
@@ -358,7 +359,6 @@ class DVS_Phenology(SimulationObject):
             
         return DVS, DOS, DOE, STAGE
 
-    #---------------------------------------------------------------------------
     @prepare_rates
     def calc_rates(self, day, drv):
         """Calculates the rates for phenological development
@@ -406,7 +406,6 @@ class DVS_Phenology(SimulationObject):
         msg = "Finished rate calculation for %s"
         self.logger.debug(msg % day)
         
-    #---------------------------------------------------------------------------
     @prepare_states
     def integrate(self, day, delt=1.0):
         """Updates the state variable and checks for phenologic stages
@@ -424,9 +423,9 @@ class DVS_Phenology(SimulationObject):
                 self.vernalisation.touch()
 
         # Integrate phenologic states
-        s.TSUME += r.DTSUME
-        s.DVS += r.DVR
-        s.TSUM += r.DTSUM
+        s.TSUME += r.DTSUME * delt
+        s.DVS += r.DVR * delt
+        s.TSUM += r.DTSUM * delt
 
         # Check if a new stage is reached
         if s.STAGE == "emerging":
@@ -450,7 +449,6 @@ class DVS_Phenology(SimulationObject):
         msg = "Finished state integration for %s"
         self.logger.debug(msg % day)
 
-    #---------------------------------------------------------------------------
     def _next_stage(self, day):
         """Moves states.STAGE to the next phenological stage"""
         s = self.states
@@ -485,7 +483,6 @@ class DVS_Phenology(SimulationObject):
         msg = "Changed phenological stage '%s' to '%s' on %s"
         self.logger.info(msg % (current_STAGE, s.STAGE, day))
 
-    #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, finish_type=None):
         """Handler for setting day of harvest (DOH). Although DOH is not
         strictly related to phenology (but to management) this is the most

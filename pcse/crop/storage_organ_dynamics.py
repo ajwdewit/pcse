@@ -2,16 +2,15 @@
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 
-from ..traitlets import Float, Int, Instance
+from ..traitlets import Float
 from ..decorators import prepare_rates, prepare_states
-from ..util import limit
-from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject, VariableKiosk
+from ..base import ParamTemplate, StatesTemplate, RatesTemplate, SimulationObject
+
 
 class WOFOST_Storage_Organ_Dynamics(SimulationObject):
     """Implementation of storage organ dynamics.
     
-    Storage organs are the most simple component of the plant in WOFOST and
+    Storage organs are the simplest component of the plant in WOFOST and
     consist of a static pool of biomass. Growth of the storage organs is the
     result of assimilate partitioning. Death of storage organs is not
     implemented and the corresponding rate variable (DRSO) is always set to
@@ -95,49 +94,39 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         self.rates  = self.RateVariables(kiosk, publish = ["GRSO"])
         self.kiosk = kiosk
         
-        # INITIAL STATES
-        params = self.params
-        # Initial storage organ biomass
-        FO = self.kiosk["FO"]
-        FR = self.kiosk["FR"]
-        WSO  = (params.TDWI * (1-FR)) * FO
-        DWSO = 0.
-        TWSO = WSO + DWSO
-        # Initial Pod Area Index
-        PAI = WSO * params.SPA
+        p = self.params
+        k = self.kiosk
 
-        self.states = self.StateVariables(kiosk, publish=["TWSO","WSO","PAI"],
-                                          WSO=WSO, DWSO=DWSO, TWSO=TWSO,
-                                          PAI=PAI)
+        WSO  = (p.TDWI * (1 - k.FR)) * k.FO
+        s = dict(
+            WSO = WSO,
+            DWSO = 0.,
+            TWSO = WSO,
+            # Initial Pod Area Index
+            PAI = WSO * p.SPA
+        )
+        self.states = self.StateVariables(kiosk, publish=["TWSO","WSO","PAI"], **s)
 
     @prepare_rates
     def calc_rates(self, day, drv):
-        rates  = self.rates
-        states = self.states
-        params = self.params
+        r  = self.rates
         k = self.kiosk
         
-        FO = self.kiosk["FO"]
-        ADMI = self.kiosk["ADMI"]
-
         # Growth/death rate organs
-        rates.GRSO = ADMI * FO
-        rates.DRSO = 0.0
-        rates.GWSO = rates.GRSO - rates.DRSO + k.REALLOC_SO
+        r.GRSO = k.ADMI * k.FO
+        r.DRSO = 0.0
+        r.GWSO = r.GRSO - r.DRSO + k.REALLOC_SO
 
     @prepare_states
     def integrate(self, day, delt=1.0):
-        params = self.params
-        rates = self.rates
-        states = self.states
+        p = self.params
+        r = self.rates
+        s = self.states
 
-        # Stem biomass (living, dead, total)
-        states.WSO += rates.GWSO
-        states.DWSO += rates.DRSO
-        states.TWSO = states.WSO + states.DWSO
-
-        # Calculate Pod Area Index (SAI)
-        states.PAI = states.WSO * params.SPA
+        s.WSO += r.GWSO
+        s.DWSO += r.DRSO
+        s.TWSO = s.WSO + s.DWSO
+        s.PAI = s.WSO * p.SPA
 
     @prepare_states
     def _set_variable_WSO(self, nWSO):

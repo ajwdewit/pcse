@@ -156,11 +156,17 @@ class Wofost72(SimulationObject):
 
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
-        self.states = self.StateVariables(kiosk,
-                                          publish=["TAGP", "GASST", "MREST", "HI"],
-                                          TAGP=TAGP, GASST=0.0, MREST=0.0,
-                                          CTRAT=0.0, CEVST=0.0, HI=0.0,
-                                          DOF=None, FINISH_TYPE=None)
+        s = dict(
+            TAGP=TAGP,
+            GASST=0.0,
+            MREST=0.0,
+            CTRAT=0.0,
+            CEVST=0.0,
+            HI=0.0,
+            DOF=None,
+            FINISH_TYPE=None
+        )
+        self.states = self.StateVariables(kiosk, publish=["TAGP", "GASST", "MREST", "HI"], **s)
 
         # Check partitioning of TDWI over plant organs
         checksum = parvalues["TDWI"] - self.states.TAGP - self.kiosk["TWRT"]
@@ -250,7 +256,7 @@ class Wofost72(SimulationObject):
 
         # if before emergence there is no need to continue
         # because only the phenology is running.
-        # Just run a touch() to to ensure that all state variables are available
+        # Just run a touch() to ensure that all state variables are available
         # in the kiosk
         if crop_stage == "emerging":
             self.touch()
@@ -269,12 +275,12 @@ class Wofost72(SimulationObject):
         states.TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
 
         # total gross assimilation and maintenance respiration 
-        states.GASST += rates.GASS
-        states.MREST += rates.MRES
+        states.GASST += rates.GASS * delt
+        states.MREST += rates.MRES * delt
         
         # total crop transpiration and soil evaporation
-        states.CTRAT += self.kiosk.TRA
-        states.CEVST += self.kiosk.EVS
+        states.CTRAT += self.kiosk.TRA * delt
+        states.CEVST += self.kiosk.EVS * delt
 
     @prepare_states
     def finalize(self, day):

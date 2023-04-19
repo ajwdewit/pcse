@@ -1,6 +1,27 @@
+.. include:: abbreviations.txt
 #####################################
 An overview of new features and fixes
 #####################################
+
+**********************
+What's new in PCSE 5.6
+**********************
+
+PCSE 5.6 (April 2023) has the following new features:
+
+- WOFOST 8.1 is released in PCSE 5.6. WOFOST 8.1 supersedes WOFOST 8.0-beta and focuses only on
+  nitrogen, dropping the simulation of P/K demand. The treatment of N limitation in WOFOST has been
+  changed completely: where N limitation in 8.0-beta was based on an empirical reduction function
+  based on the nitrogen nutrition index (NNI), WOFOST 8.1 directly relates |CO2| assimilation to
+  the leaf nitrogen content by reducing the photosynthesis to light reponse curve. This fits much
+  more elegantly with the |CO2| assimilation approach used by WOFOST. Moreover, the origin of the
+  parameters used by WOFOST 8.0-beta was largely unknown and the model results were unvalidated.
+  Instead, WOFOST 8.1 has been tested against
+  a comprehensive dataset for wheat and is currently being tested against a dataset for potato.
+  Users relying on WOFOST 8.0-beta will need to keep using PCSE 5.5.5.
+- A depreciation error has been fixed that gave problems with using python 3.10
+- The ExcelWeatherDataProvider now uses only .XLSX files. Old style .XLS files need to be converted to .XLSX
+
 
 **********************
 What's new in PCSE 5.5

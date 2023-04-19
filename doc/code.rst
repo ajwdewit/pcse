@@ -84,8 +84,11 @@ The Timer
 .. autoclass:: pcse.timer.Timer
     :members:
 
+Soil modules
+============
+
 The waterbalance
-================
+----------------
 
 The PCSE distribution provides several waterbalance modules:
     1. WaterbalancePP which is used for simulation under non-water-limited
@@ -105,6 +108,29 @@ The PCSE distribution provides several waterbalance modules:
 
 .. autoclass:: pcse.soil.SnowMAUS
 
+Soil N modules
+--------------
+
+PCSE provides two modules for estimating soil available nitrogen.
+
+.. autoclass:: pcse.soil.N_Soil_Dynamics
+
+.. autoclass:: pcse.soil.N_PotentialProduction
+
+
+Wrapper modules
+---------------
+
+Modules that combine the water balance and soil N modules for potential,
+water-limited and water + nitrogen limited growth.
+
+.. autoclass:: pcse.soil.SoilModuleWrapper_PP
+
+.. autoclass:: pcse.soil.SoilModuleWrapper_WLP_FD
+
+.. autoclass:: pcse.soil.SoilModuleWrapper_N_WLP_FD
+
+
 Crop simulation processes for WOFOST
 ====================================
 
@@ -122,11 +148,17 @@ Partitioning
 
 .. autoclass:: pcse.crop.partitioning.DVS_Partitioning
 
+.. autoclass:: pcse.crop.partitioning.DVS_Partitioning_N
+
+
 
 |CO2| Assimilation
 ------------------
 
-.. autoclass:: pcse.crop.assimilation.WOFOST_Assimilation
+.. autoclass:: pcse.crop.assimilation.WOFOST7_Assimilation
+
+.. autoclass:: pcse.crop.assimilation.WOFOST8_Assimilation
+
 
 Maintenance respiration
 -----------------------
@@ -136,16 +168,24 @@ Evapotranspiration
 ------------------
 .. autoclass:: pcse.crop.evapotranspiration.Evapotranspiration
 
+.. autoclass:: pcse.crop.evapotranspiration.EvapotranspirationCO2
+
 .. autofunction:: pcse.crop.evapotranspiration.SWEAF
 
     
 Leaf dynamics
 -------------
-.. autoclass:: pcse.crop.leaf_dynamics.WOFOST_Leaf_Dynamics
+.. autoclass:: pcse.crop.leaf_dynamics.WOFOST72_Leaf_Dynamics
+
+.. autoclass:: pcse.crop.leaf_dynamics.WOFOST81_Leaf_Dynamics
+
+.. autoclass:: pcse.crop.leaf_dynamics.CSDM_Leaf_Dynamics
 
 Root dynamics
 -------------
 .. autoclass:: pcse.crop.root_dynamics.WOFOST_Root_Dynamics
+
+.. autoclass:: pcse.crop.root_dynamics.Simple_Root_Dynamics
 
 Stem dynamics
 -------------
@@ -155,13 +195,13 @@ Storage organ dynamics
 ----------------------
 .. autoclass:: pcse.crop.storage_organ_dynamics.WOFOST_Storage_Organ_Dynamics
 
-N/P/K dynamics
---------------
+N dynamics
+----------
 
-.. autoclass:: pcse.crop.npk_dynamics.NPK_Crop_Dynamics
-.. autoclass:: pcse.crop.nutrients.NPK_Demand_Uptake
-.. autoclass:: pcse.crop.nutrients.NPK_Stress
-.. autoclass:: pcse.crop.nutrients.NPK_Translocation
+.. autoclass:: pcse.crop.n_dynamics.N_Crop_Dynamics
+.. autoclass:: pcse.crop.nutrients.N_Demand_Uptake
+.. autoclass:: pcse.crop.nutrients.N_Stress
+
 
 
 Abiotic damage
@@ -282,8 +322,10 @@ parameter files and agromanagement files.
 .. autoclass:: pcse.fileinput.YAMLCropDataProvider
 
 
-Simple or dummy data providers
-------------------------------
+.. _SiteDP:
+
+Site and default data providers
+-------------------------------
 
 This class of data providers can be used to provide parameter values in cases
 where separate files or a database is not needed or not practical. An example

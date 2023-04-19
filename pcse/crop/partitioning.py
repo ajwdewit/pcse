@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+#
+# Adding the impact of N on partitioning
+# Herman Berghuijs (herman.berghuijs@wur.nl), April 2023
 from collections import namedtuple
 from math import exp
 
@@ -160,11 +163,12 @@ class DVS_Partitioning(SimulationObject):
         return self.states.PF
 
 
+# TODO: Ask Herman about this module, seems not doing anything with N stress
 class DVS_Partitioning_N(SimulationObject):
     """Class for assimilate partitioning based on development stage (`DVS`)
     with influence of N stress.
 
-    `DVS_Partitioning_NPK` calculates the partitioning of the assimilates to roots,
+    `DVS_Partitioning_N` calculates the partitioning of the assimilates to roots,
     stems, leaves and storage organs using fixed partitioning tables as a
     function of crop development stage. The only different with the normal
     partitioning class is the effect of nitrogen stress on partitioning to

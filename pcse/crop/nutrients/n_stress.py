@@ -8,14 +8,14 @@ Class to calculate nitrogen stress factors:
 """
 
 from ...traitlets import Float
-from ...util import limit, AfgenTrait
+from ...util import AfgenTrait
 from ...base import ParamTemplate, SimulationObject, RatesTemplate
 from ...decorators import prepare_rates
 
 class N_Stress(SimulationObject):
     """Implementation of N stress calculation through [N]nutrition index.
 
-    HB 20220405 A lot of changes have been done in this subroutine. It needs to be redocumented.
+    # TODO: HB 20220405 A lot of changes have been done in this subroutine. It needs to be redocumented.
 
     ============  ============================================= ======================
      Name          Description                                   Unit

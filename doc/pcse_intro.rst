@@ -28,7 +28,7 @@ several interesting features:
 
 * Implementation in pure Python. The core system has a small number of dependencies outside the Python standard
   library. However many data providers require certain packages to be installed. Most of these can be automatically
-  installed from the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `xlrd`, `openpyxl`, `requests`) and in
+  installed from the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `openpyxl`, `requests`) and in
   processing of the output of models is most easily done with `pandas` DataFrames.
 
 * Modular design allowing you to add or change components relatively quickly with a simple but powerful approach
@@ -47,7 +47,7 @@ several interesting features:
 Why Python
 ----------
 PCSE was first and foremost developed from a scientific need, to be able to quickly adapt models and test ideas.
-In science, Python is quickly becoming a tool for implementing algorithms, visualization and explorative analysis
+In science, Python is a well established tool for implementing algorithms, visualization and explorative analysis
 due to its clear syntax and ease of use. An additional advantage is that the C implementation of Python
 can be easily interfaced with routines written in FORTRAN and therefore many FORTRAN routines can be reused by
 simulation models written with PCSE.
@@ -58,9 +58,10 @@ visualisation (e.g. MatPlotLib, Chaco), distributed computing (e.g. IPython, pyM
 Rpy or Rserve. Finally, Python is an Open Source interpreted programming language that
 runs on almost any hardware and operating system.
 
-Given the above considerations, it was quickly recognized that Python was a good choice. Although, PCSE was
+Although PCSE was
 developed for scientific purposes, it has already been implemented for tasks in production environments and has been
-embedded in container-based web services.
+embedded in container-based web services. Finally, although PCSE was developed for C python, a stripped-down version
+of PCSE can also run under IronPython making the integration with the .NET platform possible.
 
 History of PCSE
 ---------------
@@ -77,7 +78,7 @@ Limitations of PCSE
 
 PCSE also has its limitations, in fact there are several:
 
-* Speed: flexibility comes a at a price; PCSE is considerably slower than equivalent models written in FORTRAN or
+* Speed: flexibility comes at a price; PCSE is considerably slower than equivalent models written in FORTRAN or
   another compiled language.
 
 * The simulation approach in PCSE is currently limited to rectangular (Euler) integration with a fixed daily

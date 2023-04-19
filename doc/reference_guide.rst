@@ -8,7 +8,8 @@ An overview of PCSE
 
 The Python Crop Simulation Environment builds on the heritage
 provided by the earlier approaches developed in Wageningen,
-notably the Fortran Simulation Environment. The `FSE manual <http://edepot.wur.nl/35555>`_
+notably the Fortran Simulation Translator (FST) and Fortran Simulation Environment (FSE).
+The `FSE manual <http://edepot.wur.nl/35555>`_
 (van Kraalingen, 1995) provides a very good overview on the principles of Euler integration
 and its application to crop simulation models. Therefore, we will not discuss this in detail
 here.
@@ -350,7 +351,7 @@ of the `ParamTemplate` class.  Although parameters can be specified as part
 of the SimulationObject definition directly, subclassing them from `ParamTemplate` has a few
 advantages. First of all, parameters must be initialized and a missing parameter will lead to
 an exception being raised with a clear message. Secondly, parameters are initialized as read-only
-attributes which cannot be changed during the simulation. So occasionally overwriting a
+attributes which cannot be changed during the simulation. So accidentally overwriting a
 parameter value is impossible this way.
 
 The model parameters are initialized by the calling the Parameters class definition
@@ -459,7 +460,9 @@ for fodder maize sown at 2001-04-15 with two series of timed events (one for irr
 one for N/P/K application) and no state events. The end date of the simulation in this case
 will be 2001-11-01 (2001-04-15 + 200 days).
 
-An example of an agromanagement definition file::
+An example of an agromanagement definition file:
+
+.. code-block:: yaml
 
     AgroManagement:
     - 1999-08-01:
@@ -476,8 +479,8 @@ An example of an agromanagement definition file::
             name:  Timed irrigation events
             comment: All irrigation amounts in cm
             events_table:
-            - 2000-05-25: {amount: 3.0, efficiency=0.7}
-            - 2000-06-30: {amount: 2.5, efficiency=0.7}
+            - 2000-05-25: {amount: 3.0, efficiency: 0.7}
+            - 2000-06-30: {amount: 2.5, efficiency: 0.7}
         StateEvents:
         -   event_signal: apply_npk
             event_state: DVS
@@ -485,9 +488,9 @@ An example of an agromanagement definition file::
             name: DVS-based N/P/K application table
             comment: all fertilizer amounts in kg/ha
             events_table:
-            - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
-            - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
-            - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
+            - 0.3: {N_amount: 1, P_amount: 3, K_amount: 4, N_recovery: 0.7, P_recovery: 0.7, K_recovery: 0.7}
+            - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14, N_recovery: 0.7, P_recovery: 0.7, K_recovery: 0.7}
+            - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24, N_recovery: 0.7, P_recovery: 0.7, K_recovery: 0.7}
     - 2000-09-01:
         CropCalendar:
         TimedEvents:
@@ -506,16 +509,16 @@ An example of an agromanagement definition file::
             name:  Timed irrigation events
             comment: All irrigation amounts in cm
             events_table:
-            - 2001-06-01: {amount: 2.0, efficiency=0.7}
-            - 2001-07-21: {amount: 5.0, efficiency=0.7}
-            - 2001-08-18: {amount: 3.0, efficiency=0.7}
-            - 2001-09-19: {amount: 2.5, efficiency=0.7}
+            - 2001-06-01: {amount: 2.0, efficiency: 0.7}
+            - 2001-07-21: {amount: 5.0, efficiency: 0.7}
+            - 2001-08-18: {amount: 3.0, efficiency: 0.7}
+            - 2001-09-19: {amount: 2.5, efficiency: 0.7}
         -   event_signal: apply_npk
             name:  Timed N/P/K application table
             comment: All fertilizer amounts in kg/ha
             events_table:
-            - 2001-05-25: {N_amount : 50, P_amount: 25, K_amount: 22, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
-            - 2001-07-05: {N_amount : 70, P_amount: 35, K_amount: 32, N_recovery=0.7, P_recovery=0.7, K_recovery=0.7}
+            - 2001-05-25: {N_amount: 50, P_amount: 25, K_amount: 22, N_recovery: 0.7, P_recovery: 0.7, K_recovery: 0.7}
+            - 2001-07-05: {N_amount: 70, P_amount: 35, K_amount: 32, N_recovery: 0.7, P_recovery: 0.7, K_recovery: 0.7}
         StateEvents:
 
 Crop calendars
@@ -595,7 +598,9 @@ getting the end date is more complicated because there are several possibilities
 The first option is to explicitly define the end date of the simulation by adding a
 'trailing empty campaign' to the agromanagement definition.
 An example of an agromanagement definition with a 'trailing empty campaigns' (YAML format) is
-given below. This example will run the simulation until 2001-01-01::
+given below. This example will run the simulation until 2001-01-01:
+
+.. code-block:: yaml
 
     Version: 1.0.0
     AgroManagement:
@@ -616,7 +621,9 @@ given below. This example will run the simulation until 2001-01-01::
 The second option is that there is no trailing empty campaign and in that case the end date of the simulation
 is retrieved from the crop calendar and/or the timed events that are scheduled. In the example below, the
 end date will be 2000-08-05 as this is the harvest date and there are no timed events scheduled after this
-date::
+date:
+
+.. code-block:: yaml
 
     Version: 1.0.0
     AgroManagement:
@@ -645,7 +652,9 @@ the crop calendar will be estimated as the `crop_start_date` plus the `max_durat
 Note that in an agromanagement definition where the last campaign contains a definition for state events,
 a trailing empty campaign *must* be provided because otherwise the end date cannot be determined. The
 following campaign definition is valid (though silly) but there is no way to determine the end date
-of the simulation. Therefore, this definition will lead to an error::
+of the simulation. Therefore, this definition will lead to an error:
+
+.. code-block:: yaml
 
     Version: 1.0
     AgroManagement:
@@ -950,20 +959,29 @@ implemented in the different versions of the `European Crop Growth Monitoring Sy
 :ref:`CGMS8 <CGMS8tools>` database, a :ref:`CGMS12 <CGMS12tools>` database and
 a :ref:`CGMS14 <CGMS14tools>` database.
 
-Finally, there is the global weather data provided by the agroclimatology from the
+Third, there is the global weather data provided by the agroclimatology from the
 `NASA Power database`_ at a resolution of 1x1 degree. PCSE provides the
 :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
 the NASA Power data from the internet for a given latitude and longitude.
 
+Finally, there is a WeatherDataProvider available as part of the `AgERA5Tools`_ package. AgERA5Tools
+can be used to set up a mirror for the `AgERA5`_ weather database. The latter is available from the Copernicus
+Climate Data Store. PCSE models can therefore make use of AgERA5 data very easily. See the documentation for
+AgERA5Tools for more details.
+
 .. _CABO Weather System: http://edepot.wur.nl/43010
 .. _NASA Power database: http://power.larc.nasa.gov
 .. _European Crop Growth Monitoring System: http://marswiki.jrc.ec.europa.eu/agri4castwiki/index.php/Weather_Monitoring
-
+.. _AgERA5Tools: https://agera5tools.readthedocs.io
+.. _AgERA5: https://doi.org/10.24381/cds.6c68c9bb
 
 .. _Data providers for parameter values:
 
-Data providers for crop parameter values
-----------------------------------------
+Data providers for model parameters
+-----------------------------------
+
+Crop parameters
+...............
 
 PCSE has a specific data provider for crop parameters: the YAMLCropDataprovider.
 The difference with the generic data providers is that
@@ -971,10 +989,13 @@ this data provider can read and store the parameter sets for multiple
 crops while the generic data providers only can hold a single set.
 This crop data providers is therefore suitable
 for running crop rotations with different crop types as the data provider
-can switch the active crop.
+can switch the active crop. Note that the YAMLCropDataProvider is configured
+by default to read the parameter files for the WOFOST model. However, the code
+itself is crop independent and can be used as well for other parameter sets with
+the same structure such as the parameters for the LINGRA grassland model.
 
 The most basic use is to call YAMLCropDataProvider with no parameters. It will
-than pull the crop parameters from the github repository at
+than pull the crop parameters for the WOFOST model from the github repository at
 https://github.com/ajwdewit/WOFOST_crop_parameters::
 
     >>> from pcse.fileinput import YAMLCropDataProvider
@@ -1034,27 +1055,25 @@ be stressed that this is *not* possible when parameters are retrieved from a URL
 and there is a risk that parameters are loaded from an outdated cache file. In that
 case use `force_reload=True` to force loading the parameters from the URL.
 
+Data providers for site parameters
+..................................
+
+Site parameters are an ancillary class of parameters which are often site specific but not
+necessarily crop or soil related. Examples are the atmospheric |CO2| concentration or the layer
+of water that can be stored as surface storage before running off. Many of those parameters
+will consist of default values or values that will be manually defined. Therefore PCSE
+provides a SiteDataProvider for each model in PCSE. The SiteDataProvider lists the required
+parameters, provides sensible defaults where possible and applies range checks on parameter
+values. Also see the code description for site dataprovider: :ref:`SiteDP`
 
 Generic data providers for parameters
--------------------------------------
+.....................................
 
 PCSE provides several modules for retrieving parameter values for use in simulation models.
 The general concept that is used by all data providers for parameters is that they return a
 python dictionary object with the parameter names and values as key/value pairs. This concept
 is independent of the source where the parameters come from, either a file, a relational database or
-an internet source. It also means that parameters can be easily defined or changed on the command prompt,
-which is useful when iterating over loops and changing parameter files at each iteration.
-For example when showing the impact of a change in a crop parameter one could easily do::
-
-    >>> from pcse.fileinput import CABOFileReader
-    >>> import numpy as np
-    >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
-    >>> cropdata = CABOFileReader(cropfile)
-    >>> TSUM1_values = np.arange(800, 1200, 25)
-    >>> for tsum1 in TSUM1_values:
-            cropdata["TSUM1"] = tsum1
-            # code needed to run the simulation goes here
-
+an internet source.
 
 PCSE provides two file-based data providers for reading parameters. The first one is the
 :ref:`CABOFileReader <CABOFileReader>` which reads parameter file in the CABO format that was
@@ -1066,6 +1085,9 @@ Finally, several data providers exist for retrieving crop, soil and site paramet
 of the Crop Growth Monitoring System including data providers for a
 :ref:`CGMS8 <CGMS8tools>`, :ref:`CGMS12 <CGMS12tools>` and :ref:`CGMS14/CGMS18 <CGMS14tools>` databases.
 
+
+Encapsulating soil, crop and site parameters
+--------------------------------------------
 
 As described earlier, PCSE needs parameters to define the soil, the crop and and additional
 ancillary class of parameters called 'site'. Nevertheless, the different modules in PCSE have

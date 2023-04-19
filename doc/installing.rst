@@ -4,14 +4,13 @@ Installing PCSE
 Requirements and dependencies
 -----------------------------
 
-PCSE is being developed on Ubuntu Linux 18.04 and Windows 10 using python 3.7 and python 3.8
+PCSE is being developed on Ubuntu Linux 20.04 and Windows 10 using python 3.8 and python 3.10.
 As Python is a platform independent language, PCSE works equally well on Linux, Windows or Mac OSX.
 Before installing PCSE, Python itself must be installed on your system which we will demonstrate
 below. PCSE has a number of dependencies on other python packages which are the following::
 
-- SQLAlchemy>=0.8.0
-- PyYAML>=3.11
-- xlrd>=0.9.3
+- SQLAlchemy>=1.3, <2.0
+- PyYAML>=5.1
 - openpyxl>=3.0
 - requests>=2.0.0
 - pandas>=0.20
@@ -84,10 +83,8 @@ After installing MiniConda you should open a command box and check that conda is
                    offline mode : False
 
 Now we will use a Conda environment file to recreate the python environment that we use to develop and run
-PCSE. First you should download the conda environment file which comes in two flavours, an
-environment for running PCSE on python 3 (:download:`downloads/py3_pcse.yml`) and one for python 2
-(:download:`downloads/py2_pcse.yml`). It is strongly recommended to use the python 3 version as python 2
-is not maintained anymore. Both environments include the Jupyter notebook and IPython which are
+PCSE. First you should download the conda environment file: :download:`downloads/py3_pcse.yml`.
+The environments include pandas, the Jupyter notebook and IPython which are
 needed for running the `getting started` section and the example notebooks. Save the environment file
 on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
 using the command ``conda env create`` and tell conda to use the environment file for python3 with the
@@ -114,9 +111,7 @@ option ``-f p3_pcse.yml`` as show below:
     # * for power-users using bash, you must source
     #
 
-You can then activate your environment (note the addition of ``(py3_pcse)`` on your command prompt):
-
-.. code-block:: doscon
+You can then activate your environment (note the addition of ``(py3_pcse)`` on your command prompt)::
 
     D:\temp\make_env>activate py3_pcse
     Deactivating environment "C:\Miniconda3"...
@@ -199,7 +194,7 @@ recreated next time you import PCSE.
 
 For running the internal tests of the PCSE package we need to start python and import pcse:
 
-.. code-block:: doscon
+.. code-block:: python
 
     (py3_pcse) D:\temp\make_env>python
     Python 3.6.5 (default, Aug 14 2018, 19:12:50) [MSC v.1900 32 bit (Intel)] :: Anaconda, Inc. on win32
@@ -208,7 +203,7 @@ For running the internal tests of the PCSE package we need to start python and i
     Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db ... OK
     >>>
 
-Next, the tests can be executed by calling the `test()` function at the top of the package::
+Next, the tests can be executed by calling the `test()` function at the top of the package:
 
 .. code-block:: doscon
 
@@ -243,11 +238,9 @@ Next, the tests can be executed by calling the `test()` function at the top of t
     runTest (pcse.tests.test_wofost.TestWaterlimitedWinterWheat) ... ok
     runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
     runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
-    runTest (pcse.tests.test_wofost80.TestWOFOST80_Potential_WinterWheat) ... ok
-    runTest (pcse.tests.test_wofost80.TestWOFOST80_WaterLimited_WinterWheat) ... ok
 
     ----------------------------------------------------------------------
-    Ran 32 tests in 39.809s
+    Ran 30 tests in 39.809s
 
     OK
 
@@ -262,4 +255,67 @@ Moreover, SQLAlchemy may complain with a warning that can be safely ignored::
     Dialect sqlite+pysqlite does *not* support Decimal objects natively, and SQLAlchemy must
     convert from floating point - rounding errors and other issues may occur. Please consider
     storing Decimal numbers as strings or integers on this platform for lossless storage.
+
+
+
+On top of the built-in tests, a larger suite of tests is available in the
+git repository of PCSE. The latter also includes tests of the LINGRA model
+which are not included in the internal tests. The tests can be execute through
+the `tests` package::
+
+    (py3_pcse) $ python -m tests
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_potentialproduction_wofost72_01.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_potentialproduction_wofost72_11.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_potentialproduction_wofost72_21.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_potentialproduction_wofost72_31.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_potentialproduction_wofost72_41.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_waterlimitedproduction_wofost72_01.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_waterlimitedproduction_wofost72_11.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_waterlimitedproduction_wofost72_21.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_waterlimitedproduction_wofost72_31.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_waterlimitedproduction_wofost72_41.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_LINGRA_Belgium-Michamps-1986_PP.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_LINGRA_Netherlands-Zegveld-1986_PP.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_LINGRA_Belgium-Michamps-1986_WLP.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_LINGRA_Netherlands-Zegveld-1986_WLP.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_LINGRA_Belgium-Michamps-1986_NWLP.yaml) ... ok
+    runTest (tests.run_tests./home/wit015/Sources/python/pcse/tests/test_data/test_LINGRA_Netherlands-Zegveld-1986_NWLP.yaml) ... ok
+
+    ----------------------------------------------------------------------
+    Ran 16 tests in 101.956s
+
+    OK
+
+By default this runs a limited selection of tests. The full test suite can be run with::
+
+    (py3_pcse) $ python -m tests --full
+
+But this will take at least 30 minutes to complete.
+
+
+Comparing PCSE models against experiments
+-----------------------------------------
+
+Starting with PCSE 5.5, there is an additional folder `exp` inside the repository which contains experimental
+data which can be used to compare the results from a PCSE model against. Experiments are collected in an
+'experimental collection' which contains references to experiments that belong together. For example, all
+experiments for potato for a given variety. Currently, experimental data are available for comparing against
+grassland simulations with the LINGRA model and for comparing winter-wheat observations against the WOFOST 8.1
+model. It is expected that more experimental data will be collected and stored here in order to have a
+reference set to compare model results.
+
+Running the experiments is similar to running the unit tests::
+
+    (py3_pcse) $ python -m exp
+    Writing expriment results to: /tmp/exp_results
+    Processing collection for Rye grass: Potential
+      - Processing experiment: LINGRA_FAO/LINGRA_FAO_experiment_000_UK2_1982.yaml
+      - Processing experiment: LINGRA_FAO/LINGRA_FAO_experiment_004_SW1_1983.yaml
+      - Processing experiment: LINGRA_FAO/LINGRA_FAO_experiment_006_SW1_1984.yaml
+
+    ...
+
+This will generate figures of simulated vs observed data in order to assess how the model
+performs against experimental data. In the future, this will be extended to include a
+report with error values.
 

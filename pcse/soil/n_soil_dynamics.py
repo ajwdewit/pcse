@@ -11,7 +11,7 @@ from pcse import signals
 
 
 class N_PotentialProduction(SimulationObject):
-    """Provides unlimited soil N/P/K for potential production simulations.
+    """Provides unlimited soil N for potential production simulations.
 
     NAVAIL just remains 100 kg/ha whatever the crop takes.
     """

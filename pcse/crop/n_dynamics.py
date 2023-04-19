@@ -125,64 +125,67 @@ class N_Crop_Dynamics(SimulationObject):
         # Initialize components of the npk_crop_dynamics
         self.demand_uptake = N_Demand_Uptake(day, kiosk, parvalues)
 
-        # INITIAL STATES
-        params = self.params
+        p = self.params
         k = kiosk
+        self.NamountLVI = k.WLV * p.NMAXLV_TB(k.DVS)
+        self.NamountSTI = k.WST * p.NMAXLV_TB(k.DVS) * p.NMAXST_FR
+        self.NamountRTI = k.WRT * p.NMAXLV_TB(k.DVS) * p.NMAXRT_FR
+        self.NamountSOI = 0.
 
-        # Initial amounts
-        self.NamountLVI = NamountLV = k.WLV * params.NMAXLV_TB(k.DVS)
-        self.NamountSTI = NamountST = k.WST * params.NMAXLV_TB(k.DVS) * params.NMAXST_FR
-        self.NamountRTI = NamountRT = k.WRT * params.NMAXLV_TB(k.DVS) * params.NMAXRT_FR
-        self.NamountSOI = NamountSO = 0.
+        s = dict(
+            NamountLV=self.NamountLVI,
+            NamountST=self.NamountSTI,
+            NamountRT=self.NamountRTI,
+            NamountSO=self.NamountSOI,
+            NuptakeTotal=0,
+            NfixTotal=0.,
+            NlossesTotal=0
+        )
         
-        self.states = self.StateVariables(kiosk,
-                        publish=["NamountLV", "NamountST", "NamountRT", "NamountSO"],
-                        NamountLV=NamountLV, NamountST=NamountST, NamountRT=NamountRT, NamountSO=NamountSO,
-                        NuptakeTotal=0, NfixTotal=0.,
-                        NlossesTotal=0)
+        self.states = self.StateVariables(kiosk, publish=["NamountLV", "NamountST", "NamountRT", "NamountSO"], **s)
 
     @prepare_rates
     def calc_rates(self, day, drv):
-        rates = self.rates
-        params = self.params
+        r = self.rates
+        p = self.params
         k = self.kiosk
         
         self.demand_uptake.calc_rates(day, drv)
 
         # Compute loss of NPK due to death of plant material
-        rates.RNdeathLV = params.NRESIDLV * k.DRLV
-        rates.RNdeathST = params.NRESIDST * k.DRST
-        rates.RNdeathRT = params.NRESIDRT * k.DRRT
+        r.RNdeathLV = p.NRESIDLV * k.DRLV
+        r.RNdeathST = p.NRESIDST * k.DRST
+        r.RNdeathRT = p.NRESIDRT * k.DRRT
 
         # N rates in leaves, stems, root and storage organs computed as
         # uptake - translocation - death.
         # except for storage organs which only take up as a result of translocation.
-        rates.RNamountLV = k.RNuptakeLV - k.RNtranslocationLV - rates.RNdeathLV
-        rates.RNamountST = k.RNuptakeST - k.RNtranslocationST - rates.RNdeathST
-        rates.RNamountRT = k.RNuptakeRT - k.RNtranslocationRT - rates.RNdeathRT
-        rates.RNamountSO = k.RNuptakeSO + k.RNtranslocation        
-        rates.RNloss = rates.RNdeathLV + rates.RNdeathST + rates.RNdeathRT
+        r.RNamountLV = k.RNuptakeLV - k.RNtranslocationLV - r.RNdeathLV
+        r.RNamountST = k.RNuptakeST - k.RNtranslocationST - r.RNdeathST
+        r.RNamountRT = k.RNuptakeRT - k.RNtranslocationRT - r.RNdeathRT
+        r.RNamountSO = k.RNuptakeSO + k.RNtranslocation
+        r.RNloss = r.RNdeathLV + r.RNdeathST + r.RNdeathRT
 
         self._check_N_balance(day)
         
     @prepare_states
     def integrate(self, day, delt=1.0):
-        rates = self.rates
-        states = self.states
+        r = self.rates
+        s = self.states
         k = self.kiosk
 
         # N amount in leaves, stems, root and storage organs
-        states.NamountLV += rates.RNamountLV
-        states.NamountST += rates.RNamountST
-        states.NamountRT += rates.RNamountRT
-        states.NamountSO += rates.RNamountSO
+        s.NamountLV += r.RNamountLV * delt
+        s.NamountST += r.RNamountST * delt
+        s.NamountRT += r.RNamountRT * delt
+        s.NamountSO += r.RNamountSO * delt
                 
         self.demand_uptake.integrate(day, delt)
 
         # total NPK uptake from soil
-        states.NuptakeTotal += k.RNuptake
-        states.NfixTotal += k.RNfixation        
-        states.NlossesTotal += rates.RNloss
+        s.NuptakeTotal += k.RNuptake * delt
+        s.NfixTotal += k.RNfixation * delt
+        s.NlossesTotal += r.RNloss * delt
 
     def _check_N_balance(self, day):
         s = self.states

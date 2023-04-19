@@ -13,6 +13,7 @@ from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 
+
 class WOFOST72_Leaf_Dynamics(SimulationObject):
     """Leaf dynamics for the WOFOST crop model.
     
@@ -154,34 +155,31 @@ class WOFOST72_Leaf_Dynamics(SimulationObject):
         self.params = self.Parameters(parvalues)
         self.rates  = self.RateVariables(kiosk)
 
-        # CALCULATE INITIAL STATE VARIABLES
-        params = self.params
-        FL  = self.kiosk["FL"]
-        FR  = self.kiosk["FR"]
-        DVS = self.kiosk["DVS"]
+        p = self.params
+        k = self.kiosk
 
         # Initial leaf biomass
-        WLV  = (params.TDWI * (1-FR)) * FL
-        DWLV = 0.
-        TWLV = WLV + DWLV
-
-        # First leaf class (SLA, age and weight)
-        SLA   = deque([params.SLATB(DVS)])
-        LVAGE = deque([0.])
-        LV    = deque([WLV])
+        WLV  = (p.TDWI * (1-k.FR)) * k.FL
 
         # Initial values for leaf area
-        LAIEM  = LV[0] * SLA[0]
-        LASUM  = LAIEM
-        LAIEXP = LAIEM
-        LAIMAX = LAIEM
-        LAI    = LASUM + self.kiosk["SAI"] + self.kiosk["PAI"]
+        LAIEM  = WLV * p.SLATB(k.DVS)
 
-        # Initialize StateVariables object
-        self.states = self.StateVariables(kiosk, publish=["LAI","TWLV","WLV"],
-                                          LV=LV, SLA=SLA, LVAGE=LVAGE, LAIEM=LAIEM,
-                                          LASUM=LASUM, LAIEXP=LAIEXP, LAIMAX=LAIMAX,
-                                          LAI=LAI, WLV=WLV, DWLV=DWLV, TWLV=TWLV)
+        s = dict(
+            WLV=WLV,
+            DWLV = 0.,
+            TWLV = WLV,
+            # First leaf class (SLA, age and weight)
+            SLA = deque([p.SLATB(k.DVS)]),
+            LVAGE = deque([0.]),
+            LV = deque([WLV]),
+            LAIEM = LAIEM,
+            LASUM = LAIEM,
+            LAIEXP = LAIEM,
+            LAIMAX = LAIEM,
+            LAI = LAIEM + k.SAI + k.PAI
+        )
+
+        self.states = self.StateVariables(kiosk, publish=["LAI","TWLV","WLV"], **s)
 
     def _calc_LAI(self):
         # Total leaf area Index as sum of leaf, pod and stem area
@@ -204,8 +202,7 @@ class WOFOST72_Leaf_Dynamics(SimulationObject):
         r.DSLV1 = s.WLV * (1. - k.RFTRA) * p.PERDL
 
         # death due to self shading cause by high LAI
-        DVS = self.kiosk["DVS"]
-        LAICR = 3.2/p.KDIFTB(DVS)
+        LAICR = 3.2/p.KDIFTB(k.DVS)
         r.DSLV2 = s.WLV * limit(0., 0.03, 0.03*(s.LAI-LAICR)/LAICR)
 
         # Death of leaves due to frost damage as determined by
@@ -219,7 +216,7 @@ class WOFOST72_Leaf_Dynamics(SimulationObject):
         r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3)
 
         # Determine how much leaf biomass classes have to die in states.LV,
-        # given the a life span > SPAN, these classes will be accumulated
+        # given the life span > SPAN, these classes will be accumulated
         # in DALV.
         # Note that the actual leaf death is imposed on the array LV during the
         # state integration step.
@@ -236,7 +233,7 @@ class WOFOST72_Leaf_Dynamics(SimulationObject):
         r.FYSAGE = max(0., (drv.TEMP - p.TBASE)/(35. - p.TBASE))
 
         # specific leaf area of leaves per time step
-        r.SLAT = p.SLATB(DVS)
+        r.SLAT = p.SLATB(k.DVS)
 
         # leaf area not to exceed exponential growth curve
         if s.LAIEXP < 6.:
@@ -246,28 +243,28 @@ class WOFOST72_Leaf_Dynamics(SimulationObject):
             r.GLASOL = r.GRLV * r.SLAT
             # sink-limited increase in leaf area
             GLA = min(r.GLAIEX, r.GLASOL)
-            # adjustment of specific leaf area of youngest leaf class
+            # adjustment of specific leaf area of the youngest leaf class
             if r.GRLV > 0.:
                 r.SLAT = GLA/r.GRLV
 
     @prepare_states
     def integrate(self, day, delt=1.0):
-        params = self.params
-        rates = self.rates
-        states = self.states
+        p = self.params
+        r = self.rates
+        s = self.states
 
         # --------- leave death ---------
-        tLV = array('d', states.LV)
-        tSLA = array('d', states.SLA)
-        tLVAGE = array('d', states.LVAGE)
-        tDRLV = rates.DRLV
+        tLV = array('d', s.LV)
+        tSLA = array('d', s.SLA)
+        tLVAGE = array('d', s.LVAGE)
+        tDRLV = r.DRLV
 
         # leaf death is imposed on leaves by removing leave classes from the
         # right side of the deque. 
-        for LVweigth in reversed(states.LV):
+        for LVweight in reversed(s.LV):
             if tDRLV > 0.:
-                if tDRLV >= LVweigth: # remove complete leaf class from deque
-                    tDRLV -= LVweigth
+                if tDRLV >= LVweight: # remove complete leaf class from deque
+                    tDRLV -= LVweight
                     tLV.pop()
                     tLVAGE.pop()
                     tSLA.pop()
@@ -278,28 +275,28 @@ class WOFOST72_Leaf_Dynamics(SimulationObject):
                 break
 
         # Integration of physiological age
-        tLVAGE = deque([age + rates.FYSAGE for age in tLVAGE])
+        tLVAGE = deque([age + r.FYSAGE for age in tLVAGE])
         tLV = deque(tLV)
         tSLA = deque(tSLA)
 
         # --------- leave growth ---------
         # new leaves in class 1
-        tLV.appendleft(rates.GRLV)
-        tSLA.appendleft(rates.SLAT)
+        tLV.appendleft(r.GRLV)
+        tSLA.appendleft(r.SLAT)
         tLVAGE.appendleft(0.)
 
         # calculation of new leaf area
-        states.LASUM = sum([lv*sla for lv, sla in zip(tLV, tSLA)])
-        states.LAI = self._calc_LAI()
-        states.LAIMAX = max(states.LAI, states.LAIMAX)
+        s.LASUM = sum([lv*sla for lv, sla in zip(tLV, tSLA)])
+        s.LAI = self._calc_LAI()
+        s.LAIMAX = max(s.LAI, s.LAIMAX)
 
         # exponential growth curve
-        states.LAIEXP += rates.GLAIEX
+        s.LAIEXP += r.GLAIEX
 
         # Update leaf biomass states
-        states.WLV  = sum(tLV)
-        states.DWLV += rates.DRLV
-        states.TWLV = states.WLV + states.DWLV
+        s.WLV  = sum(tLV)
+        s.DWLV += r.DRLV
+        s.TWLV = s.WLV + s.DWLV
 
         # Store final leaf biomass deques
         self.states.LV = tLV
@@ -308,48 +305,50 @@ class WOFOST72_Leaf_Dynamics(SimulationObject):
 
     @prepare_states
     def _set_variable_LAI(self, nLAI):
-        """Updates the value of LAI to to the new value provided as input.
+        """Updates the value of LAI to the new value provided as input.
 
         Related state variables will be updated as well and the increments
         to all adjusted state variables will be returned as a dict.
         """
-        states = self.states
+        s = self.states
+        k = self.kiosk
 
         # Store old values of states
-        oWLV = states.WLV
-        oLAI = states.LAI
-        oTWLV = states.TWLV
-        oLASUM = states.LASUM
+        oWLV = s.WLV
+        oLAI = s.LAI
+        oTWLV = s.TWLV
+        oLASUM = s.LASUM
 
         # Reduce oLAI for pod and stem area. SAI and PAI will not be adjusted
         # because this is often only a small component of the total leaf
         # area. For all current crop files in WOFOST SPA and SSA are zero
         # anyway
-        SAI = self.kiosk["SAI"]
-        PAI = self.kiosk["PAI"]
+        SAI = k.SAI
+        PAI = k.PAI
         adj_nLAI = max(nLAI - SAI - PAI, 0.)
         adj_oLAI = max(oLAI - SAI - PAI, 0.)
 
         # LAI Adjustment factor for leaf biomass LV (rLAI)
         if adj_oLAI > 0:
             rLAI = adj_nLAI/adj_oLAI
-            LV = [lv*rLAI for lv in states.LV]
+            LV = [lv*rLAI for lv in s.LV]
         # If adj_oLAI == 0 then add the leave biomass directly to the
         # youngest leave age class (LV[0])
         else:
-            LV = [nLAI/states.SLA[0]]
+            LV = [nLAI/s.SLA[0]]
 
-        states.LASUM = sum([lv*sla for lv, sla in zip(LV, states.SLA)])
-        states.LV = deque(LV)
-        states.LAI = self._calc_LAI()
-        states.WLV = sum(states.LV)
-        states.TWLV = states.WLV + states.DWLV
+        s.LASUM = sum([lv*sla for lv, sla in zip(LV, s.SLA)])
+        s.LV = deque(LV)
+        s.LAI = self._calc_LAI()
+        s.WLV = sum(s.LV)
+        s.TWLV = s.WLV + s.DWLV
 
-        increments = {"LAI": states.LAI - oLAI,
-                      "LAISUM":states.LASUM - oLASUM,
-                      "WLV": states.WLV - oWLV,
-                      "TWLV": states.TWLV - oTWLV}
+        increments = {"LAI": s.LAI - oLAI,
+                      "LAISUM":s.LASUM - oLASUM,
+                      "WLV": s.WLV - oWLV,
+                      "TWLV": s.TWLV - oTWLV}
         return increments
+
 
 class CSDM_Leaf_Dynamics(SimulationObject):
     """Leaf dynamics according to the Canopy Structure Dynamic Model.
@@ -451,7 +450,7 @@ class WOFOST81_Leaf_Dynamics(SimulationObject):
     """Leaf dynamics for the WOFOST crop model including leaf response to
     N stress.
 
-    # HB 20220405: This function was changed quite a bit and needs redocumentation.
+    # TODO HB 20220405: This function was changed quite a bit and needs redocumentation.
 
     Implementation of biomass partitioning to leaves, growth and senenscence
     of leaves. WOFOST keeps track of the biomass that has been partitioned to
@@ -467,7 +466,7 @@ class WOFOST81_Leaf_Dynamics(SimulationObject):
 
     Finally, leaf expansion (SLA) can be influenced by nutrient stress.
 
-    *Simulation parameters* (provide in cropdata dictionary)
+    *Simulation parameters*
 
     =======  ============================================= =======  ============
      Name     Description                                   Type     Unit
@@ -592,40 +591,44 @@ class WOFOST81_Leaf_Dynamics(SimulationObject):
         GLAIEX = Float(-99.)
         GLASOL = Float(-99.)
 
-    def initialize(self, day, kiosk, cropdata):
+    def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
-        :param cropdata: dictionary with WOFOST cropdata key/value pairs
+        :param parvalues: dictionary with WOFOST cropdata key/value pairs
         """
 
         self.kiosk = kiosk
-        self.params = self.Parameters(cropdata)
-        self.rates = self.RateVariables(kiosk,publish=["DRLV", "GRLV"])
+        self.params = self.Parameters(parvalues)
+        self.rates = self.RateVariables(kiosk, publish=["DRLV", "GRLV"])
 
         # CALCULATE INITIAL STATE VARIABLES
         p = self.params
         k = self.kiosk
+
         # Initial leaf biomass
         WLV = (p.TDWI * (1-k.FR)) * k.FL
-        DWLV = 0.
-        TWLV = WLV + DWLV
 
-        # First leaf class (SLA, age and weight)
-        SLA = deque([p.SLATB(k.DVS)])
-        LVAGE = deque([0.])
-        LV = deque([WLV])
+        # # Initial values for leaf area
+        LAIEM = WLV * p.SLATB(k.DVS)
 
-        # Initial values for leaf area
-        LAIEM = LV[0] * SLA[0]
-        LASUM = LAIEM
-        LAIEXP = LAIEM
-        LAIMAX = LAIEM
-        LAI = LASUM + k.SAI + k.PAI
+        s = dict(
+            WLV=WLV,
+            DWLV = 0.,
+            TWLV = WLV,
+            # First leaf class (SLA, age and weight)
+            SLA = deque([p.SLATB(k.DVS)]),
+            LVAGE = deque([0.]),
+            LV = deque([WLV]),
+            LAIEM = LAIEM,
+            LASUM = LAIEM,
+            LAIEXP = LAIEM,
+            LAIMAX = LAIEM,
+            LAI = LAIEM + k.SAI + k.PAI
+        )
 
         # Initialize StateVariables object
-        self.states = self.StateVariables(kiosk, publish=["LAI", "TWLV", "WLV"], LV=LV, SLA=SLA, LVAGE=LVAGE,
-            LAIEM=LAIEM, LASUM=LASUM, LAIEXP=LAIEXP, LAIMAX=LAIMAX, LAI=LAI, WLV=WLV, DWLV=DWLV, TWLV=TWLV)
+        self.states = self.StateVariables(kiosk, publish=["LAI", "TWLV", "WLV"], **s)
 
     def _calc_LAI(self):
         # Total leaf area Index as sum of leaf, pod and stem area
@@ -658,7 +661,7 @@ class WOFOST81_Leaf_Dynamics(SimulationObject):
             r.DSLV3 = 0.
 
         # Determine how much leaf biomass classes have to die in states.LV,
-        # given the a life span > SPAN, these classes will be accumulated
+        # given the life span > SPAN, these classes will be accumulated
         # in DALV.
         # Note that the actual leaf death is imposed on the array LV during the
         # state integration step.
@@ -668,7 +671,7 @@ class WOFOST81_Leaf_Dynamics(SimulationObject):
                 DALV += lv
         r.DALV = DALV
 
-        # Suggestion Allard accelarete ageing:
+        # Suggestion Allard accelerate ageing:
         r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3)
         r.DALV = min(DALV * k.NSLLV, k.WLV)
 
@@ -677,9 +680,6 @@ class WOFOST81_Leaf_Dynamics(SimulationObject):
 
         # physiologic ageing of leaves per time step
         r.FYSAGE = max(0., (drv.TEMP - p.TBASE)/(35. - p.TBASE))
-
-        ## added IS
-        ## correction SLA due to nutrient stress
 
         ## specific leaf area of leaves per time step
         r.SLAT = p.SLATB(k.DVS)
@@ -700,7 +700,7 @@ class WOFOST81_Leaf_Dynamics(SimulationObject):
             r.GLASOL = r.GRLV * r.SLAT
             # sink-limited increase in leaf area
             GLA = min(r.GLAIEX, r.GLASOL)
-            # adjustment of specific leaf area of youngest leaf class
+            # adjustment of specific leaf area of the youngest leaf class
             if r.GRLV > 0.:
                 r.SLAT = GLA/r.GRLV
 
@@ -719,10 +719,10 @@ class WOFOST81_Leaf_Dynamics(SimulationObject):
 
         # leaf death is imposed on leaves by removing leave classes from the
         # right side of the deque.
-        for LVweigth in reversed(s.LV):
+        for LVweight in reversed(s.LV):
             if tDRLV > 0.:
-                if tDRLV >= LVweigth: # remove complete leaf class from deque
-                    tDRLV -= LVweigth
+                if tDRLV >= LVweight: # remove complete leaf class from deque
+                    tDRLV -= LVweight
                     tLV.pop()
                     tLVAGE.pop()
                     tSLA.pop()

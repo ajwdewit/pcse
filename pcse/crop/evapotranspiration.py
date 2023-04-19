@@ -9,7 +9,7 @@ from ..traitlets import Float, Int, Instance, Bool
 from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
                          SimulationObject
-from ..util import limit, merge_dict, AfgenTrait
+from ..util import limit, AfgenTrait
 
 
 def SWEAF(ET0, DEPNR):
@@ -421,7 +421,7 @@ class EvapotranspirationCO2(SimulationObject):
     """Calculation of evaporation (water and soil) and transpiration rates
     taking into account the CO2 effect on crop transpiration.
 
-    *Simulation parameters* (To be provided in cropdata dictionary):
+    *Simulation parameters*:
 
     ======== ============================================= =======  ============
      Name     Description                                   Type     Unit
@@ -501,7 +501,7 @@ class EvapotranspirationCO2(SimulationObject):
         CFET    = Float(-99.)
         DEPNR   = Float(-99.)
         KDIFTB  = AfgenTrait()
-        IAIRDU  = Float(-99.)
+        IAIRDU  = Int()
         IOX     = Float(-99.)
         CRAIRC  = Float(-99.)
         SM0     = Float(-99.)
@@ -515,7 +515,6 @@ class EvapotranspirationCO2(SimulationObject):
         EVSMX = Float(-99.)
         TRAMX = Float(-99.)
         TRA   = Float(-99.)
-        TRALY = Instance(array.array)
         IDOS  = Bool(False)
         IDWS  = Bool(False)
         RFWS = Float(-99.)
@@ -536,7 +535,7 @@ class EvapotranspirationCO2(SimulationObject):
 
         self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["EVWMX","EVSMX", "TRAMX","TRA","TRALY", "RFTRA"])
+        self.rates = self.RateVariables(kiosk, publish=["EVWMX","EVSMX", "TRAMX","TRA", "RFTRA"])
         self.states = self.StateVariables(kiosk, IDOST=-999, IDWST=-999)
 
     @prepare_rates

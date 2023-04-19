@@ -2,11 +2,11 @@
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 
-from ..traitlets import Float, Int, Instance
+from ..traitlets import Float
 from ..decorators import prepare_rates, prepare_states
-from ..util import limit, AfgenTrait
+from ..util import AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject, VariableKiosk
+    SimulationObject
 
 class WOFOST_Stem_Dynamics(SimulationObject):
     """Implementation of stem biomass dynamics.
@@ -100,51 +100,45 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         self.rates  = self.RateVariables(kiosk, publish=["DRST", "GRST"])
         self.kiosk  = kiosk
 
-        # INITIAL STATES
-        params = self.params
-        # Set initial stem biomass
-        FS = self.kiosk["FS"]
-        FR = self.kiosk["FR"]
-        WST  = (params.TDWI * (1-FR)) * FS
-        DWST = 0.
-        TWST = WST + DWST
-        # Initial Stem Area Index
-        DVS = self.kiosk["DVS"]
-        SAI = WST * params.SSATB(DVS)
+        p = self.params
+        k = self.kiosk
 
-        self.states = self.StateVariables(kiosk, publish=["TWST","WST","SAI"],
-                                          WST=WST, DWST=DWST, TWST=TWST, SAI=SAI)
+        WST = (p.TDWI * (1 - k.FR)) * k.FS
+        s = dict(
+            WST  = WST,
+            DWST = 0.,
+            TWST = WST,
+            SAI = WST * p.SSATB(k.DVS)
+        )
+
+        self.states = self.StateVariables(kiosk, publish=["TWST","WST","SAI"], **s)
 
     @prepare_rates
     def calc_rates(self, day, drv):
-        rates  = self.rates
-        states = self.states
-        params = self.params
+        r  = self.rates
+        s = self.states
+        p = self.params
         k = self.kiosk
         
-        DVS = self.kiosk["DVS"]
-        FS = self.kiosk["FS"]
-        ADMI = self.kiosk["ADMI"]
-
         # Growth/death rate stems
-        rates.GRST = ADMI * FS
-        rates.DRST = params.RDRSTB(DVS) * states.WST
-        rates.GWST = rates.GRST - rates.DRST - k.REALLOC_ST
+        r.GRST = k.ADMI * k.FS
+        r.DRST = p.RDRSTB(k.DVS) * s.WST
+        r.GWST = r.GRST - r.DRST - k.REALLOC_ST
 
     @prepare_states
     def integrate(self, day, delt=1.0):
-        params = self.params
-        rates = self.rates
-        states = self.states
+        p = self.params
+        r = self.rates
+        s = self.states
+        k = self.kiosk
 
         # Stem biomass (living, dead, total)
-        states.WST += rates.GWST
-        states.DWST += rates.DRST
-        states.TWST = states.WST + states.DWST
+        s.WST += r.GWST
+        s.DWST += r.DRST
+        s.TWST = s.WST + s.DWST
 
         # Calculate Stem Area Index (SAI)
-        DVS = self.kiosk["DVS"]
-        states.SAI = states.WST * params.SSATB(DVS)
+        s.SAI = s.WST * p.SSATB(k.DVS)
 
     @prepare_states
     def _set_variable_WST(self, nWST):

@@ -3,11 +3,11 @@
 # Allard de Wit (allard.dewit@wur.nl), April 2014
 from copy import deepcopy
 
-from ..traitlets import Float, Int, Instance
+from ..traitlets import Float, Int
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit, merge_dict, AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
-    SimulationObject, VariableKiosk
+    SimulationObject
     
 
 
@@ -141,20 +141,17 @@ class WOFOST_Root_Dynamics(SimulationObject):
         self.rates = self.RateVariables(kiosk, publish=["DRRT", "GRRT"])
         self.kiosk = kiosk
         
-        # INITIAL STATES
-        params = self.params
-        # Initial root depth states
-        rdmax = max(params.RDI, min(params.RDMCR, params.RDMSOL))
-        RDM = rdmax
-        RD = params.RDI
-        # initial root biomass states
-        WRT  = params.TDWI * self.kiosk.FR
-        DWRT = 0.
-        TWRT = WRT + DWRT
+        p = self.params
+        s = dict(
+            RDM = max(p.RDI, min(p.RDMCR, p.RDMSOL)),
+            RD = p.RDI,
+            # initial root biomass states
+            WRT  = p.TDWI * self.kiosk.FR,
+            DWRT = 0.,
+            TWRT = p.TDWI * self.kiosk.FR
+        )
 
-        self.states = self.StateVariables(kiosk, publish=["RD","WRT", "TWRT"],
-                                          RD=RD, RDM=RDM, WRT=WRT, DWRT=DWRT,
-                                          TWRT=TWRT)
+        self.states = self.StateVariables(kiosk, publish=["RD","WRT", "TWRT"], **s)
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -170,7 +167,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
         
         # Increase in root depth
         r.RR = min((s.RDM - s.RD), p.RRI)
-        # Do not let the roots growth if partioning to the roots
+        # Do not let the roots growth if partitioning to the roots
         # (variable FR) is zero.
         if k.FR == 0.:
             r.RR = 0.
@@ -193,7 +190,7 @@ class WOFOST_Root_Dynamics(SimulationObject):
 
     @prepare_states
     def _set_variable_WRT(self, nWRT):
-        """Updates the value of WRT to to the new value provided as input.
+        """Updates the value of WRT to the new value provided as input.
 
         Related state variables will be updated as well and the increments
         to all adjusted state variables will be returned as a dict.
@@ -285,16 +282,14 @@ class Simple_Root_Dynamics(SimulationObject):
         self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
         
-        # INITIAL STATES
-        params = self.params
+        p = self.params
+        s = dict(
+            RDM = max(p.RDI, min(p.RDMCR, p.RDMSOL)),
+            RD = p.RDI
+        )
 
-        # Initial root depth states
-        rdmax = max(params.RDI, min(params.RDMCR, params.RDMSOL))
-        RDM = rdmax
-        RD = params.RDI
+        self.states = self.StateVariables(kiosk, publish=["RD"], **s)
 
-        self.states = self.StateVariables(kiosk, publish=["RD"],
-                                          RD=RD, RDM=RDM)
     @prepare_rates
     def calc_rates(self, day, drv):
         params = self.params
