@@ -315,7 +315,7 @@ class N_soil_dynamics_layered(SimulationObject):
         # Calculate output rate variables for N loss
         r.RNH4LEACHCUM =  (1/self.m2_to_ha) * r.RNH4OUT[-1]
         r.RNO3LEACHCUM =  (1/self.m2_to_ha) * r.RNO3OUT[-1]
-        r.RDENITCUM = (1/self.m2_to_ha) * r.RNO3DENITR.sum()
+        r.RNDENITCUM = (1/self.m2_to_ha) * r.RNO3DENITR.sum()
  
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -367,7 +367,7 @@ class N_soil_dynamics_layered(SimulationObject):
         NLOSSCUM =  NH4LEACHCUM + NO3LEACHCUM + NDENITCUM
         s.NH4LEACHCUM = NH4LEACHCUM
         s.NO3LEACHCUM = NO3LEACHCUM
-        s.DENITCUM = NDENITCUM
+        s.NDENITCUM = NDENITCUM
         s.NLOSSCUM = NLOSSCUM
 
 
@@ -388,6 +388,10 @@ class N_soil_dynamics_layered(SimulationObject):
         RNORG_am =  np.zeros_like(RAGE_am)
         RNH4_am = np.zeros_like(s.NH4)
         RNO3_am = np.zeros_like(s.NO3)
+
+        # Prevents that a part of the N is not applied if the application depth is less than thickness of the upper layer
+        if(application_depth < self.soiln_profile[0].Thickness):
+            application_depth = self.soiln_profile[0].Thickness
 
         AGE0_am[0,:] = initial_age * self.y_to_d
         RAGE_am[0,:] = initial_age * self.y_to_d    
@@ -823,14 +827,14 @@ class N_soil_dynamics_layered(SimulationObject):
             def calculate_relative_dissimilation_rate_OM(self, a, t):
                 m = self.m
                 b = self.b   
-                k = b * pow((a + t)/self.y_to_d, -m) / self.y_to_d
+                k = b * pow(a/self.y_to_d, -m) / self.y_to_d
                 return k
 
             def calculate_relative_dissimilation_rate_OM_T(self, a, t, T):
                 m = self.m
                 b = self.b   
                 f_T = self.calculate_temperature_response_dissimilation_rate(T)
-                k = b  * f_T * pow((a + t * f_T)/self.y_to_d, -m) / self.y_to_d
+                k = b * f_T * pow(t/self.y_to_d, -m) / self.y_to_d
                 return k
 
             def calculate_dissimilation_rate_OM(self, OM, a, t): 
