@@ -131,6 +131,8 @@ class Wofost(SimulationObject):
         HI    = Float(-99.)
         DOF = Instance(datetime.date)
         FINISH_TYPE = Unicode(allow_none=True)
+        LV_REALLOCATED = Float(0.)
+        ST_REALLOCATED = Float(0.)
 
     class RateVariables(RatesTemplate):
         GASS  = Float(-99.)
@@ -141,6 +143,9 @@ class Wofost(SimulationObject):
         REALLOC_LV = Float(0.)
         REALLOC_ST = Float(0.)
         REALLOC_SO = Float(0.)
+        RLV_REALLOCATED = Float(0.)
+        RST_REALLOCATED = Float(0.)
+
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -168,6 +173,7 @@ class Wofost(SimulationObject):
         self.n_crop_dynamics = N_crop(day, kiosk, parvalues)
         self.n_stress = N_Stress(day, kiosk, parvalues)
 
+
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk["TWLV"] + \
                self.kiosk["TWST"] + \
@@ -175,7 +181,7 @@ class Wofost(SimulationObject):
         self.states = self.StateVariables(kiosk,
                                           publish=["TAGP", "GASST", "MREST", "HI"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0,
-                                          CTRAT=0.0, HI=0.0,
+                                          CTRAT=0.0, HI=0.0, LV_REALLOCATED = 0., ST_REALLOCATED = 0.,
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
@@ -250,8 +256,15 @@ class Wofost(SimulationObject):
                 self._WST_REALLOC = k.WST * p.REALLOC_STEM_FRACTION
                 self._WLV_REALLOC = k.WLV * p.REALLOC_LEAF_FRACTION
             # Reallocation rate in terms of loss of stem/leaf dry matter
-            r.REALLOC_LV = self._WLV_REALLOC * p.REALLOC_LEAF_RATE
-            r.REALLOC_ST = self._WST_REALLOC * p.REALLOC_STEM_RATE
+            if(self.states.LV_REALLOCATED < self._WLV_REALLOC):
+                r.REALLOC_LV = min(self._WLV_REALLOC * p.REALLOC_LEAF_RATE, self._WLV_REALLOC - self.states.LEAF_REALLOCATED)
+            else:
+                r.REALLOC_LV = 0.
+
+            if(self.states.ST_REALLOCATED < self._WST_REALLOC):
+                r.REALLOC_ST = min(self._WST_REALLOC * p.REALLOC_STEM_RATE, self._WST_REALLOC - self.states.ST_REALLOCATED)
+            else:
+                r.REALLOC_ST = 0.
             # Reallocation rate in terms of increase in storage organs taking
             # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
             r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST)  * p.REALLOC_EFFICIENCY
@@ -308,6 +321,10 @@ class Wofost(SimulationObject):
         states.TAGP = self.kiosk["TWLV"] + \
                       self.kiosk["TWST"] + \
                       self.kiosk["TWSO"]
+
+        #
+        states.LV_REALLOCATED += rates.REALLOC_LV * delt
+        states.ST_REALLOCATED += rates.REALLOC_ST * delt
 
         # total gross assimilation and maintenance respiration 
         states.GASST += rates.GASS
