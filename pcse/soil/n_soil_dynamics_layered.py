@@ -611,14 +611,13 @@ class N_soil_dynamics_layered(SimulationObject):
                 #layer_thickness = zmax - zmin
                 #cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
 
-                ## NO3 uptake limited by mass transport
+                ## NH4 uptake limited by mass transport
                 #PNH4UpTran = TCSF_N * TRALYIL * cNH4
                 #RNH4UP = min(N_demand_soil, PNH4UpTran)
 
-                ##RNH4UP = min(N_demand_soil, NH4_av)
-                #return RNH4UP
                 RNH4UP = min(N_demand_soil, NH4_av)
-                return NH4_av
+                #RNH4UP = min(N_demand_soil, NH4_av)
+                return RNH4UP
 
             def calculate_NH4_inflow_rate(self, il, RNH4OUT_above):
                 if(il == 0):
@@ -774,7 +773,7 @@ class N_soil_dynamics_layered(SimulationObject):
                 for il in range(0, AGE.shape[1]):
                     #r.RAGE[am,il] = janssen.calculate_increase_apparent_age_rate(delt, T)
                     if(ORGMAT[am, il] > 0):
-                        RORGMATDIS[am,il] = janssen.calculate_dissimilation_rate_OM(ORGMAT[am,il], AGE0[am,il], AGE[am,il])
+                        RORGMATDIS[am,il] = janssen.calculate_dissimilation_rate_OM_T(ORGMAT[am,il], AGE0[am,il], AGE[am,il], T)
                         RCORGDIS[am,il] = minip_c.calculate_dissimilation_rate_C(janssen, ORGMAT[am,il], AGE0[am,il], AGE[am,il], T)
                         RNORGDIS[am,il] = minip_n.calculate_dissimilation_rate_N(janssen, minip_c, ORGMAT[am,il], NORG[am,il], AGE0[am,il], FASDIS, CNRatioBio, AGE[am,il], T)
                     else:
@@ -814,7 +813,7 @@ class N_soil_dynamics_layered(SimulationObject):
             y_to_d = 365.25
 
             def calculate_increase_apparent_age_rate(self, dt, T):
-                f_T = self.calculate_temperature_response_dissimilation_rate(T)
+                f_T = self.calculate_temperature_response_dissimilation_rate_Yang(T)
                 dA = f_T * dt
                 return dA
 
@@ -824,23 +823,12 @@ class N_soil_dynamics_layered(SimulationObject):
                 OM = OM0 * np.exp((b/(m-1)) * (pow((a + t)/self.y_to_d,(1-m)) - pow((a/self.y_to_d),1-m)))
                 return OM
 
-            def calculate_relative_dissimilation_rate_OM(self, a, t):
-                m = self.m
-                b = self.b   
-                k = b * pow(a/self.y_to_d, -m) / self.y_to_d
-                return k
-
             def calculate_relative_dissimilation_rate_OM_T(self, a, t, T):
                 m = self.m
                 b = self.b   
-                f_T = self.calculate_temperature_response_dissimilation_rate(T)
+                f_T = self.calculate_temperature_response_dissimilation_rate_Yang(T)
                 k = b * f_T * pow(t/self.y_to_d, -m) / self.y_to_d
                 return k
-
-            def calculate_dissimilation_rate_OM(self, OM, a, t): 
-                k = self.calculate_relative_dissimilation_rate_OM(a, t)
-                rate = k * OM
-                return rate
 
             def calculate_dissimilation_rate_OM_T(self, OM, a, t, T):
                 k = self.calculate_relative_dissimilation_rate_OM_T(a, t, T)
@@ -849,6 +837,17 @@ class N_soil_dynamics_layered(SimulationObject):
 
             def calculate_temperature_response_dissimilation_rate(self, T):
                 f_T = pow(2, (T-9)/9)
+                return f_T
+
+            def calculate_temperature_response_dissimilation_rate_Yang(self, T):
+                if(T < -1):
+                    f_T = 0.
+                elif(T < 9.):
+                    f_T = 0.09 * (T + 1)
+                elif(T < 27.):
+                    f_T = 0.88 * pow(2, (T-9)/9)
+                else:
+                    f_T = 3.5
                 return f_T
 
         class MINIP_C(object):
