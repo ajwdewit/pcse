@@ -250,7 +250,7 @@ class WaterBalanceLayered(SimulationObject):
         self._WCI = WC.sum()
 
         # rate variables
-        self.rates = self.RateVariables(kiosk, publish=["Flow"])
+        self.rates = self.RateVariables(kiosk, publish=["RIN", "Flow"])
         self.rates.Flow = Flow
 
 
