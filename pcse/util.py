@@ -1096,7 +1096,8 @@ def get_user_home():
         user = os.getenv("USERNAME")
         if user is not None:
             user_home = os.path.expanduser("~")
-    elif platform.system() == "Linux":
+    # For Linux of Mac
+    elif platform.system() == "Linux" or platform.system() == 'Darwin':
         user = os.getenv("USER")
         if user is not None:
             user_home = os.path.expanduser("~")
