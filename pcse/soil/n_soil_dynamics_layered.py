@@ -307,15 +307,20 @@ class N_soil_dynamics_layered(SimulationObject):
         # Calculate N uptake rates
         r.RNH4UP, r.RNO3UP = sinm.calculate_N_uptake_rates(self.soiln_profile, delt, p.KSORP, N_demand_soil, s.NH4, s.NO3, RD_m, SM, TRALY, p.TSCF_N)
 
+
         # Calculate remaining amounts of NH4-N and NO3-N after uptake and calculate chemical conversion
-        NH4PRE = s.NH4 - r.RNH4UP.sum() * delt
-        NO3PRE = s.NO3 - r.RNO3UP.sum() * delt
+        NH4PRE = s.NH4 - r.RNH4UP * delt
+        NO3PRE = s.NO3 - r.RNO3UP * delt
         r.RNH4MIN, r.RNH4NITR, r.RNO3NITR, r.RNO3DENITR =  sinm.calculate_reaction_rates(self.soiln_profile, p.KDENIT_REF, p.KNIT_REF, 
                                                                                          p.KSORP, p.MRCDIS, NH4PRE, NO3PRE, r.RCORGDIS, r.RNORGDIS, SM, T, p.WFPS_CRIT)
+
+        for NH4p in NH4PRE:
+            if(NH4p < 0):
+                print(day)
       
         # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic N flow rates between layers
-        NH4PRE2 = NH4PRE + (r.RNH4MIN.sum() - r.RNH4NITR.sum()) * delt
-        NO3PRE2 = NO3PRE + (r.RNO3NITR.sum() - r.RNO3DENITR.sum()) * delt
+        NH4PRE2 = NH4PRE + (r.RNH4MIN - r.RNH4NITR) * delt
+        NO3PRE2 = NO3PRE + (r.RNO3NITR - r.RNO3DENITR) * delt
         r.RNH4IN, r.RNH4OUT, r.RNO3IN, r.RNO3OUT = sinm.calculate_flow_rates(self.soiln_profile, flow_m_per_d, p.KSORP, NH4PRE2, NO3PRE2, SM)
 
         # Calculate deposition rates
@@ -329,6 +334,10 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNH4LEACHCUM =  (1/self.m2_to_ha) * r.RNH4OUT[-1]
         r.RNO3LEACHCUM =  (1/self.m2_to_ha) * r.RNO3OUT[-1]
         r.RNDENITCUM = (1/self.m2_to_ha) * r.RNO3DENITR.sum()
+
+        for NH4 in s.NH4:
+            if(NH4 < 0):
+                print(day)
  
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -382,7 +391,6 @@ class N_soil_dynamics_layered(SimulationObject):
         s.NO3LEACHCUM = NO3LEACHCUM
         s.NDENITCUM = NDENITCUM
         s.NLOSSCUM = NLOSSCUM
-
 
     def _on_APPLY_N(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None, f_NH4N = None, f_NO3N = None, initial_age =None):
         r = self.rates
@@ -544,7 +552,7 @@ class N_soil_dynamics_layered(SimulationObject):
             samm = self.SoilAmmoniumNModel()
             sni = self.SoilNNitrateModel()
             RNH4MIN, RNH4NITR = samm.calculate_NH4_reaction_rates(soiln_profile, KNIT_REF, KSORP, NH4, RNORGDIS, SM, T)
-            RNO3NITR, RNO3DENITR = sni.calculate_NO3_reaction_rates(soiln_profile, KDENIT_REF, MRCDIS, NO3, RCORGDIS, RNH4NITR, SM, T, WFPS_CRIT)             
+            RNO3NITR, RNO3DENITR = sni.calculate_NO3_reaction_rates(soiln_profile, KDENIT_REF, MRCDIS, NO3, RCORGDIS, RNH4NITR, SM, T, WFPS_CRIT)           
             return RNH4MIN, RNH4NITR, RNO3NITR, RNO3DENITR
 
         def calculate_NAVAIL(self, soiln_profile, KSORP, NH4, NO3, RD_m, SM, TRALY, TSCF_N):
@@ -646,12 +654,12 @@ class N_soil_dynamics_layered(SimulationObject):
             def calculate_NH4_plant_uptake_rate(self, KSORP, N_demand_soil, NH4, RD_m, RHOD_kg_per_m3, SM, TRALYIL, TCSF_N, zmax, zmin):
                 NH4_av = self.calculate_available_NH4(KSORP, NH4, RD_m, RHOD_kg_per_m3, SM, TRALYIL, TCSF_N, zmax, zmin)
 
-                # SWAP
-                layer_thickness = zmax - zmin
-                cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
-                # NH4 uptake limited by mass transport
-                PNH4UpTran = TCSF_N * TRALYIL * cNH4
-                RNH4UP = min(N_demand_soil, PNH4UpTran, NH4_av)
+                ## SWAP
+                #layer_thickness = zmax - zmin
+                #cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
+                ## NH4 uptake limited by mass transport
+                #PNH4UpTran = TCSF_N * TRALYIL * cNH4
+                #RNH4UP = min(N_demand_soil, PNH4UpTran, NH4_av)
 
                 # Old
                 RNH4UP = min(N_demand_soil, NH4_av)
@@ -876,8 +884,8 @@ class N_soil_dynamics_layered(SimulationObject):
             def calculate_relative_dissimilation_rate_OM_T(self, a, t, T):
                 m = self.m
                 b = self.b   
-                f_T = self.calculate_temperature_response_dissimilation_rate_Yang(T)
-                k = b * f_T * pow(t/self.y_to_d, -m) / self.y_to_d
+                #f_T = self.calculate_temperature_response_dissimilation_rate_Yang(T)
+                k = b *  pow(t/self.y_to_d, -m) / self.y_to_d
                 return k
 
             def calculate_dissimilation_rate_OM_T(self, OM, a, t, T):
