@@ -141,8 +141,8 @@ class Vernalisation(SimulationObject):
         if not s.ISVERNALISED:
             if k.DVS < p.VERNDVS:
                 r.VERNR = p.VERNRTB(drv.TEMP)
-                r = (s.VERN - p.VERNBASE)/(p.VERNSAT-p.VERNBASE)
-                r.VERNFAC = limit(0., 1., r)
+                vernfac = (s.VERN - p.VERNBASE)/(p.VERNSAT-p.VERNBASE)
+                r.VERNFAC = limit(0., 1., vernfac)
             else:
                 r.VERNR = 0.
                 r.VERNFAC = 1.0
