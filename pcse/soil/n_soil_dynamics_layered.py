@@ -3,6 +3,7 @@
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
 from email.mime import application
+from symbol import pass_stmt
 import numpy as np
 from .. import exceptions as exc
 from pcse.traitlets import Float
@@ -264,6 +265,7 @@ class N_soil_dynamics_layered(SimulationObject):
         p = self.params
 
         delt = 1.0
+        print(day)
 
         # Initialize model components
         sonm = self.SoilOrganicNModel()
@@ -612,14 +614,50 @@ class N_soil_dynamics_layered(SimulationObject):
                     RNH4NITR[il] = self.calculate_nitrification_rate(KNITREF, KSORP, layer.Thickness_m, NH4[il], layer.RHOD_kg_per_m3, SM[il], layer.SM0, T)
                 return RNH4MIN, RNH4NITR
 
+            #def calculate_NH4_flow_rates(self, soiln_profile, flow_m_per_d, KSORP, NH4, SM):
+            #    RNH4IN = np.zeros_like(NH4)
+            #    RNH4OUT = np.zeros_like(NH4)
+            #    for il in range(0, len(NH4)):
+            #        layer = soiln_profile[il]
+            #        RNH4OUT[il] = self.calculate_NH4_outflow_rate(flow_m_per_d[il+1], il, KSORP, NH4[il], layer.Thickness_m, layer.RHOD_kg_per_m3, SM[il])
+            #        RNH4IN[il] = self.calculate_NH4_inflow_rate(il, RNH4OUT[il-1])
+            #    return RNH4IN, RNH4OUT
+
             def calculate_NH4_flow_rates(self, soiln_profile, flow_m_per_d, KSORP, NH4, SM):
+                cNH4Kwel = 0.
+
                 RNH4IN = np.zeros_like(NH4)
                 RNH4OUT = np.zeros_like(NH4)
                 for il in range(0, len(NH4)):
                     layer = soiln_profile[il]
-                    RNH4OUT[il] = self.calculate_NH4_outflow_rate(flow_m_per_d[il+1], il, KSORP, NH4[il], layer.Thickness_m, layer.RHOD_kg_per_m3, SM[il])
-                    RNH4IN[il] = self.calculate_NH4_inflow_rate(il, RNH4OUT[il-1])
+                    dz = layer.Thickness_m
+                    RHOD_kg_per_m3 = layer.RHOD_kg_per_m3
+                    cNH4 = self.calculate_NH4_concentration(KSORP, dz, NH4[il], RHOD_kg_per_m3, SM[il])
+                    if(flow_m_per_d[il] >= 0.):
+                        if(il == 0):
+                            RNH4IN[il] = 0.
+                            RNH4OUT[il] = flow_m_per_d[il + 1] * cNH4
+                        else:
+                            RNH4IN[il] = RNH4OUT[il-1]
+                            RNH4OUT[il] = flow_m_per_d[il + 1] * cNH4
+                    else:
+                        pass                
+
+                for il in reversed(range(0, len(NH4))): 
+                    if(flow_m_per_d[il] < 0):
+                        layer = soiln_profile[il]
+                        dz = layer.Thickness_m
+                        RHOD_kg_per_m3 = layer.RHOD_kg_per_m3
+                        cNH4 = self.calculate_NH4_concentration(KSORP, dz, NH4[il], RHOD_kg_per_m3, SM[il])
+                        if(il == len(NH4) - 1):
+                            # Assuming that the NH4 concentration in kwel equals 0
+                            RNH4IN[il] = cNH4Kwel * - flow_m_per_d[il + 1] 
+                            RNH4OUT[il] = cNH4 * - flow_m_per_d[il]
+                        else:
+                            RNH4IN[il] = RNH4OUT[il + 1]
+                            RNH4OUT[il] = cNH4 * - flow_m_per_d[il]
                 return RNH4IN, RNH4OUT
+
 
             def calculate_NH4_application_amount(self, amount, application_depth, f_NH4N, layer_thickness, zmax, zmin):
                 if(application_depth > zmax):
@@ -710,13 +748,48 @@ class N_soil_dynamics_layered(SimulationObject):
                         RNO3DEPOS[il] = 0.
                 return RNO3DEPOS
 
+            #def calculate_NO3_flow_rates(self, soiln_profile, flow_m_per_d, NO3, SM):
+            #    RNO3OUT = np.zeros_like(NO3)
+            #    RNO3IN = np.zeros_like(NO3)
+            #    for il in range(0, len(NO3)):
+            #        layer = soiln_profile[il]
+            #        RNO3OUT[il] = self.calculate_NO3_outflow_rate(il, flow_m_per_d[il+1], layer.Thickness_m, NO3[il], SM[il])
+            #        RNO3IN[il] = self.calculate_NO3_inflow_rate(il, RNO3OUT[il-1])
+            #    return RNO3IN, RNO3OUT
+
             def calculate_NO3_flow_rates(self, soiln_profile, flow_m_per_d, NO3, SM):
-                RNO3OUT = np.zeros_like(NO3)
+                cNO3Kwel = 0.
+
                 RNO3IN = np.zeros_like(NO3)
+                RNO3OUT = np.zeros_like(NO3)
                 for il in range(0, len(NO3)):
                     layer = soiln_profile[il]
-                    RNO3OUT[il] = self.calculate_NO3_outflow_rate(il, flow_m_per_d[il+1], layer.Thickness_m, NO3[il], SM[il])
-                    RNO3IN[il] = self.calculate_NO3_inflow_rate(il, RNO3OUT[il-1])
+                    dz = layer.Thickness_m
+                    RHOD_kg_per_m3 = layer.RHOD_kg_per_m3
+                    cNO3 = self.calculate_NO3_concentration(dz, NO3[il], SM[il])
+                    if(flow_m_per_d[il] >= 0.):
+                        if(il == 0):
+                            RNO3IN[il] = 0.
+                            RNO3OUT[il] = flow_m_per_d[il + 1] * cNO3
+                        else:
+                            RNO3IN[il] = RNO3OUT[il-1]
+                            RNO3OUT[il] = flow_m_per_d[il + 1] * cNO3
+                    else:
+                        pass                
+
+                for il in reversed(range(0, len(NO3))): 
+                    if(flow_m_per_d[il] < 0):
+                        layer = soiln_profile[il]
+                        dz = layer.Thickness_m
+                        RHOD_kg_per_m3 = layer.RHOD_kg_per_m3
+                        cNO3 = self.calculate_NO3_concentration(dz, NO3[il], SM[il])
+                        if(il == len(NO3) - 1):
+                            # Assuming that the NO3 concentration in kwel equals 0
+                            RNO3IN[il] = cNO3Kwel * - flow_m_per_d[il + 1] 
+                            RNO3OUT[il] = cNO3 * - flow_m_per_d[il]
+                        else:
+                            RNO3IN[il] = RNO3OUT[il + 1]
+                            RNO3OUT[il] = cNO3 * - flow_m_per_d[il]
                 return RNO3IN, RNO3OUT
 
             def calculate_NO3_reaction_rates(self, soiln_profile, KDENIT_REF, MRCDIS, NO3, RCORGDIS, RNH4NITR, SM, T, WFPS_CRIT):
