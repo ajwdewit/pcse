@@ -682,11 +682,11 @@ class N_soil_dynamics_layered(SimulationObject):
 
             def calculate_NH4_outflow_rate(self, flow_m_per_d, il, KSORP, NH4, layer_thickness, RHOD_kg_per_m3, SM):
                 cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
-                #if(il == 0):
-                #    RNH4OUT = cNH4 * max(0,  flow_m_per_d)
-                #else:               
-                #    RNH4OUT = cNH4 * flow_m_per_d
-                RNH4OUT = cNH4 * max(0,  flow_m_per_d)
+                if(il == 0):
+                    RNH4OUT = cNH4 * max(0,  flow_m_per_d)
+                else:               
+                    RNH4OUT = cNH4 * flow_m_per_d
+                #RNH4OUT = cNH4 * max(0,  flow_m_per_d)
                 return RNH4OUT
 
             def calculate_soil_moisture_response_nitrification_rate_constant(self, SM, SM0):
