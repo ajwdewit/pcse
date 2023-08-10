@@ -13,6 +13,8 @@ from pcse import signals
 from ..traitlets import Float, Int, Instance, Bool
 from .soiln_profile import SoilNProfile
 
+import datetime as dt
+
 class N_soil_dynamics_layered(SimulationObject):
     """Provides unlimited soil N/P/K for potential production simulations.
 
@@ -304,6 +306,13 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RCORG = r.RCORGAM - r.RCORGDIS
         r.RNORG = r.RNORGAM - r.RNORGDIS
 
+        for NH4s in s.NH4:
+            if(NH4s < 0):
+                print(day)
+
+        #if(day == dt.date(2020,4,24)):
+        #   print(0)
+
         # Calculate N uptake rates
         r.RNH4UP, r.RNO3UP = sinm.calculate_N_uptake_rates(self.soiln_profile, delt, p.KSORP, N_demand_soil, s.NH4, s.NO3, RD_m, SM, TRALY, p.TSCF_N)
 
@@ -314,9 +323,6 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNH4MIN, r.RNH4NITR, r.RNO3NITR, r.RNO3DENITR =  sinm.calculate_reaction_rates(self.soiln_profile, p.KDENIT_REF, p.KNIT_REF, 
                                                                                          p.KSORP, p.MRCDIS, NH4PRE, NO3PRE, r.RCORGDIS, r.RNORGDIS, SM, T, p.WFPS_CRIT)
 
-        for NH4p in NH4PRE:
-            if(NH4p < 0):
-                print(day)
       
         # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic N flow rates between layers
         NH4PRE2 = NH4PRE + (r.RNH4MIN - r.RNH4NITR) * delt
@@ -334,10 +340,6 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RNH4LEACHCUM =  (1/self.m2_to_ha) * r.RNH4OUT[-1]
         r.RNO3LEACHCUM =  (1/self.m2_to_ha) * r.RNO3OUT[-1]
         r.RNDENITCUM = (1/self.m2_to_ha) * r.RNO3DENITR.sum()
-
-        for NH4 in s.NH4:
-            if(NH4 < 0):
-                print(day)
  
     @prepare_states
     def integrate(self, day, delt=1.0):
@@ -674,10 +676,11 @@ class N_soil_dynamics_layered(SimulationObject):
 
             def calculate_NH4_outflow_rate(self, flow_m_per_d, il, KSORP, NH4, layer_thickness, RHOD_kg_per_m3, SM):
                 cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
-                if(il == 0):
-                    RNH4OUT = cNH4 * max(0,  flow_m_per_d)
-                else:               
-                    RNH4OUT = cNH4 * flow_m_per_d
+                #if(il == 0):
+                #    RNH4OUT = cNH4 * max(0,  flow_m_per_d)
+                #else:               
+                #    RNH4OUT = cNH4 * flow_m_per_d
+                RNH4OUT = cNH4 * max(0,  flow_m_per_d)
                 return RNH4OUT
 
             def calculate_soil_moisture_response_nitrification_rate_constant(self, SM, SM0):
