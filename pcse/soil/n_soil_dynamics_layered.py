@@ -320,14 +320,14 @@ class N_soil_dynamics_layered(SimulationObject):
         # For each layer: if the net mineralization rate is negative (net immobilization) and there is not enough NH4-N in the layer to be taken up by
         # the organic matter, only the amount of N that remains after denitrification is available for immobilization. RNORGDIS is updated as well 
         # to close the N balance again.
-        for il, layer in enumerate(self.soiln_profile):
-            if(NH4PRE[il] + (r.RNH4MIN[il] - r.RNH4NITR[il]) * delt < 0):
-                r.RNH4MIN[il] = NH4PRE[il] - r.RNH4NITR[il]
-                RNORDIST = r.RNORGDIS[:,il].sum()
-                for iam in range(0,len(r.RNORGDIS[:,il])):
-                    r.RNORGDIS[iam,il] = (r.RNH4MIN[il] / RNORDIST) * r.RNORGDIS[iam,il]
-                print(day)
-            r.RNORG = r.RNORGAM - r.RNORGDIS
+        #for il, layer in enumerate(self.soiln_profile):
+        #    if(NH4PRE[il] + (r.RNH4MIN[il] - r.RNH4NITR[il]) * delt < 0):
+        #        r.RNH4MIN[il] = NH4PRE[il] - r.RNH4NITR[il]
+        #        RNORDIST = r.RNORGDIS[:,il].sum()
+        #        for iam in range(0,len(r.RNORGDIS[:,il])):
+        #            r.RNORGDIS[iam,il] = (r.RNH4MIN[il] / RNORDIST) * r.RNORGDIS[iam,il]
+        #        print(day)
+        #    r.RNORG = r.RNORGAM - r.RNORGDIS
 
       
         # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic N flow rates between layers
@@ -682,11 +682,12 @@ class N_soil_dynamics_layered(SimulationObject):
 
             def calculate_NH4_outflow_rate(self, flow_m_per_d, il, KSORP, NH4, layer_thickness, RHOD_kg_per_m3, SM):
                 cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
-                #if(il == 0):
-                #    RNH4OUT = cNH4 * max(0,  flow_m_per_d)
-                #else:               
-                #    RNH4OUT = cNH4 * flow_m_per_d
-                RNH4OUT = cNH4 * max(0,  flow_m_per_d)
+                if(il == 0):
+                    RNH4OUT = cNH4 * max(0,  flow_m_per_d)
+                else:               
+                    RNH4OUT = cNH4 * flow_m_per_d
+                #RNH4OUT = cNH4 * max(0,  flow_m_per_d)
+                RNH4OUT = cNH4 * flow_m_per_d
                 return RNH4OUT
 
             def calculate_soil_moisture_response_nitrification_rate_constant(self, SM, SM0):
