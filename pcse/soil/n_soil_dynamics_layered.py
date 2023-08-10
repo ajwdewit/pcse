@@ -306,13 +306,6 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RCORG = r.RCORGAM - r.RCORGDIS
         r.RNORG = r.RNORGAM - r.RNORGDIS
 
-        for NH4s in s.NH4:
-            if(NH4s < 0):
-                print(day)
-
-        #if(day == dt.date(2020,4,24)):
-        #   print(0)
-
         # Calculate N uptake rates
         r.RNH4UP, r.RNO3UP = sinm.calculate_N_uptake_rates(self.soiln_profile, delt, p.KSORP, N_demand_soil, s.NH4, s.NO3, RD_m, SM, TRALY, p.TSCF_N)
 
@@ -322,6 +315,19 @@ class N_soil_dynamics_layered(SimulationObject):
         NO3PRE = s.NO3 - r.RNO3UP * delt
         r.RNH4MIN, r.RNH4NITR, r.RNO3NITR, r.RNO3DENITR =  sinm.calculate_reaction_rates(self.soiln_profile, p.KDENIT_REF, p.KNIT_REF, 
                                                                                          p.KSORP, p.MRCDIS, NH4PRE, NO3PRE, r.RCORGDIS, r.RNORGDIS, SM, T, p.WFPS_CRIT)
+
+
+        # For each layer: if the net mineralization rate is negative (net immobilization) and there is not enough NH4-N in the layer to be taken up by
+        # the organic matter, only the amount of N that remains after denitrification is available for immobilization. RNORGDIS is updated as well 
+        # to close the N balance again.
+        for il, layer in enumerate(self.soiln_profile):
+            if(NH4PRE[il] + (r.RNH4MIN[il] - r.RNH4NITR[il]) * delt < 0):
+                r.RNH4MIN[il] = NH4PRE[il] - r.RNH4NITR[il]
+                RNORDIST = r.RNORGDIS[:,il].sum()
+                for iam in range(0,len(r.RNORGDIS[:,il])):
+                    r.RNORGDIS[iam,il] = (r.RNH4MIN[il] / RNORDIST) * r.RNORGDIS[iam,il]
+                print(day)
+            r.RNORG = r.RNORGAM - r.RNORGDIS
 
       
         # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic N flow rates between layers
