@@ -633,11 +633,11 @@ class N_soil_dynamics_layered(SimulationObject):
                     cNH4 = self.calculate_NH4_concentration(KSORP, dz, NH4[il], RHOD_kg_per_m3, SM[il])
                     if(flow_m_per_d[il] >= 0.):
                         if(il == 0):
-                            RNH4IN[il] = 0.
-                            RNH4OUT[il] = flow_m_per_d[il + 1] * cNH4
+                            RNH4IN[il] += 0.
+                            RNH4OUT[il] += flow_m_per_d[il + 1] * cNH4
                         else:
-                            RNH4IN[il] = RNH4OUT[il-1]
-                            RNH4OUT[il] = flow_m_per_d[il + 1] * cNH4
+                            RNH4IN[il] += RNH4OUT[il-1]
+                            RNH4OUT[il] += flow_m_per_d[il + 1] * cNH4
                     else:
                         pass                
 
@@ -649,11 +649,11 @@ class N_soil_dynamics_layered(SimulationObject):
                         cNH4 = self.calculate_NH4_concentration(KSORP, dz, NH4[il], RHOD_kg_per_m3, SM[il])
                         if(il == len(NH4) - 1):
                             # Assuming that the NH4 concentration in kwel equals 0
-                            RNH4IN[il] = cNH4Kwel * - flow_m_per_d[il + 1] 
-                            RNH4OUT[il] = cNH4 * - flow_m_per_d[il]
+                            RNH4IN[il] += cNH4Kwel * - flow_m_per_d[il + 1] 
+                            RNH4OUT[il] += cNH4 * - flow_m_per_d[il]
                         else:
-                            RNH4IN[il] = RNH4OUT[il + 1]
-                            RNH4OUT[il] = cNH4 * - flow_m_per_d[il]
+                            RNH4IN[il] += RNH4OUT[il + 1]
+                            RNH4OUT[il] += cNH4 * - flow_m_per_d[il]
                 return RNH4IN, RNH4OUT
 
 
@@ -767,11 +767,11 @@ class N_soil_dynamics_layered(SimulationObject):
                     cNO3 = self.calculate_NO3_concentration(dz, NO3[il], SM[il])
                     if(flow_m_per_d[il] >= 0.):
                         if(il == 0):
-                            RNO3IN[il] = 0.
-                            RNO3OUT[il] = flow_m_per_d[il + 1] * cNO3
+                            RNO3IN[il] += 0.
+                            RNO3OUT[il] += flow_m_per_d[il + 1] * cNO3
                         else:
-                            RNO3IN[il] = RNO3OUT[il-1]
-                            RNO3OUT[il] = flow_m_per_d[il + 1] * cNO3
+                            RNO3IN[il] += RNO3OUT[il-1]
+                            RNO3OUT[il] += flow_m_per_d[il + 1] * cNO3
                     else:
                         pass                
 
@@ -783,11 +783,11 @@ class N_soil_dynamics_layered(SimulationObject):
                         cNO3 = self.calculate_NO3_concentration(dz, NO3[il], SM[il])
                         if(il == len(NO3) - 1):
                             # Assuming that the NO3 concentration in kwel equals 0
-                            RNO3IN[il] = cNO3Kwel * - flow_m_per_d[il + 1] 
-                            RNO3OUT[il] = cNO3 * - flow_m_per_d[il]
+                            RNO3IN[il] += cNO3Kwel * - flow_m_per_d[il + 1] 
+                            RNO3OUT[il] += cNO3 * - flow_m_per_d[il]
                         else:
-                            RNO3IN[il] = RNO3OUT[il + 1]
-                            RNO3OUT[il] = cNO3 * - flow_m_per_d[il]
+                            RNO3IN[il] += RNO3OUT[il + 1]
+                            RNO3OUT[il] += cNO3 * - flow_m_per_d[il]
                 return RNO3IN, RNO3OUT
 
             def calculate_NO3_reaction_rates(self, soiln_profile, KDENIT_REF, MRCDIS, NO3, RCORGDIS, RNH4NITR, SM, T, WFPS_CRIT):
