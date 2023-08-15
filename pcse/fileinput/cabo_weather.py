@@ -257,14 +257,14 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                 continue
                 
             # Determine positions and y values for interpolation (x, xp, yp)
-            xrange = np.arange(self.potential_records, dtype=np.float)
+            xrange = np.arange(self.potential_records, dtype=np.float64)
             x  = xrange[index]
             xp = xrange[(timeseries_hasdata == 1)]
             yp = timeseries[(timeseries_hasdata == 1)]
             y_int = np.interp(x,xp,yp)
 
             # put interpolated values back into tmp_data
-            self.tmp_data[i, x.astype(np.int)] = y_int
+            self.tmp_data[i, x.astype(np.int32)] = y_int
     
 
     def _make_WeatherDataContainers(self):

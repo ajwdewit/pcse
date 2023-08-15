@@ -4,6 +4,7 @@
 """Miscellaneous utilities for PCSE
 """
 import os, sys
+from pathlib import Path
 import datetime
 import copy
 import platform
@@ -741,14 +742,15 @@ class ConfigurationLoader(object):
 
     def __init__(self, config):
 
-        if not isinstance(config, str):
-            msg = ("Keyword 'config' should provide the name of the file " +
+        if not isinstance(config, str, Path):
+            msg = ("Keyword 'config' should provide the name of the file (string or pathlib.Path)" +
                    "storing the configuration of the model PCSE should run.")
             raise exc.PCSEError(msg)
 
         # check if model configuration file is an absolute or relative path. If
         # not assume that it is located in the 'conf/' folder in the PCSE
         # distribution
+        config = str(config)
         if os.path.isabs(config):
             mconf = config
         elif config.startswith("."):
@@ -1096,7 +1098,7 @@ def get_user_home():
         user = os.getenv("USERNAME")
         if user is not None:
             user_home = os.path.expanduser("~")
-    elif platform.system() == "Linux":
+    elif platform.system() == "Linux" or platform.system() == "Darwin":
         user = os.getenv("USER")
         if user is not None:
             user_home = os.path.expanduser("~")
