@@ -3,6 +3,7 @@
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
 from email.mime import application
+from re import L
 from symbol import pass_stmt
 import numpy as np
 from .. import exceptions as exc
@@ -136,7 +137,6 @@ class N_soil_dynamics_layered(SimulationObject):
     class Parameters(ParamTemplate):
         A0SOM = Float()             # Initial age of humus (y)
         CNRatioBio = Float()        # C:N ratio of microbial biomass (kg C kg-1 N)
-        #CNRatioSOMI = Float()       # Initial C:N ratio of humus (kg C kg-1 kg N)
         FASDIS = Float()            # Fraction of assimilation to dissimilation (kg ORG kg-1 ORG)
         KDENIT_REF = Float()        # Reference first order denitrification rate constant (d-1)
         KNIT_REF = Float()          # Reference first order nitrification rate constant (d-1)
@@ -276,8 +276,12 @@ class N_soil_dynamics_layered(SimulationObject):
         N_demand_soil = self.get_N_demand(k)
         RD_m = self.get_root_length(k)
         SM = self.get_soil_moisture_content(k)
+        pF = self.get_pF(self.soiln_profile, SM)
         T = drv.TEMP
         TRALY = self.get_transpiration_rate_layer(k, SM)
+
+        # Get soil pH
+        pH = self.get_pH(self.soiln_profile)
 
         # Collect ammendment rates
         r.RAGEAM = self._RAGEAM
@@ -296,10 +300,10 @@ class N_soil_dynamics_layered(SimulationObject):
         self._RNO3AM = np.zeros_like(r.RNH4)
 
         # Calculate increase aparent age of each ammendment
-        r.RAGEAG = sonm.calculate_apparent_age_increase_rate(s.AGE, delt, T)
+        r.RAGEAG = sonm.calculate_apparent_age_increase_rate(s.AGE, delt, pF, pH, T)
 
         # Calculate dissimilation rates of each ammendment
-        r.RORGMATDIS, r.RCORGDIS, r.RNORGDIS = sonm.calculate_dissimilation_rates(s.AGE, s.AGE0, p.CNRatioBio, p.FASDIS, s.NORG, s.ORGMAT, T)
+        r.RORGMATDIS, r.RCORGDIS, r.RNORGDIS = sonm.calculate_dissimilation_rates(s.AGE, s.AGE0, p.CNRatioBio, p.FASDIS, s.NORG, s.ORGMAT, pF, pH, T)
 
         # Calculate rates of change apparent age, organic matter, organic C, and organic N
         r.RAGE = r.RAGEAG + r.RAGEAM
@@ -309,7 +313,6 @@ class N_soil_dynamics_layered(SimulationObject):
 
         # Calculate N uptake rates
         r.RNH4UP, r.RNO3UP = sinm.calculate_N_uptake_rates(self.soiln_profile, delt, p.KSORP, N_demand_soil, s.NH4, s.NO3, RD_m, SM, TRALY, p.TSCF_N)
-
 
         # Calculate remaining amounts of NH4-N and NO3-N after uptake and calculate chemical conversion
         NH4PRE = s.NH4 - r.RNH4UP * delt
@@ -329,14 +332,14 @@ class N_soil_dynamics_layered(SimulationObject):
                     r.RNORGDIS[iam,il] = (r.RNH4MIN[il] / RNORDIST) * r.RNORGDIS[iam,il]
             r.RNORG = r.RNORGAM - r.RNORGDIS
 
-      
-        # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic N flow rates between layers
-        NH4PRE2 = NH4PRE + (r.RNH4MIN - r.RNH4NITR) * delt
-        NO3PRE2 = NO3PRE + (r.RNO3NITR - r.RNO3DENITR) * delt
-        r.RNH4IN, r.RNH4OUT, r.RNO3IN, r.RNO3OUT = sinm.calculate_flow_rates(self.soiln_profile, flow_m_per_d, p.KSORP, NH4PRE2, NO3PRE2, SM)
-
         # Calculate deposition rates
         r.RNH4DEPOS, r.RNO3DEPOS = sinm.calculate_deposition_rates(self.soiln_profile, infiltration_rate_m_per_d, s.NH4, p.NH4Conc, s.NO3, p.NO3Conc)
+
+        # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic N flow rates between layers
+        NH4PRE2 = NH4PRE + (r.RNH4AM + r.RNH4MIN + r.RNH4DEPOS - r.RNH4NITR) * delt
+        NO3PRE2 = NO3PRE + (r.RNO3AM + r.RNO3NITR + r.RNO3DEPOS  - r.RNO3DENITR) * delt
+        r.RNH4IN, r.RNH4OUT, r.RNO3IN, r.RNO3OUT = sinm.calculate_flow_rates(self.soiln_profile, flow_m_per_d, p.KSORP, NH4PRE2, NO3PRE2, SM)
+
 
         # Calculate rates of change NH4-N and NO3-N
         r.RNH4 = r.RNH4AM + r.RNH4MIN + r.RNH4DEPOS - r.RNH4NITR - r.RNH4UP + r.RNH4IN - r.RNH4OUT
@@ -378,6 +381,7 @@ class N_soil_dynamics_layered(SimulationObject):
         # Get external state variable
         RD_m = self.get_root_length(k)
         SM = self.get_soil_moisture_content(k)
+
         TRALY = self.get_transpiration_rate_layer(k, SM)
 
         # Calculate the amount of N available for root uptake in the next time step
@@ -445,6 +449,18 @@ class N_soil_dynamics_layered(SimulationObject):
     def get_infiltration_rate(self, k):
         infiltration_rate_m_per_d = k.RIN  * self.cm_to_m
         return infiltration_rate_m_per_d
+
+    def get_pF(self, soiln_profile, SM):
+        pF = np.zeros_like(SM)
+        for il, layer in enumerate(soiln_profile):
+            pF[il] = layer.PFfromSM(SM[il])
+        return pF
+
+    def get_pH(self, soiln_profile):
+        pH = np.zeros(len(soiln_profile))
+        for il, layer in enumerate(soiln_profile):
+            pH[il] = layer.Soil_pH
+        return pH
 
     def get_soil_moisture_content(self, k):
         SM = k.SM
@@ -612,48 +628,43 @@ class N_soil_dynamics_layered(SimulationObject):
                     RNH4NITR[il] = self.calculate_nitrification_rate(KNITREF, KSORP, layer.Thickness_m, NH4[il], layer.RHOD_kg_per_m3, SM[il], layer.SM0, T)
                 return RNH4MIN, RNH4NITR
 
-            #def calculate_NH4_flow_rates(self, soiln_profile, flow_m_per_d, KSORP, NH4, SM):
-            #    RNH4IN = np.zeros_like(NH4)
-            #    RNH4OUT = np.zeros_like(NH4)
-            #    for il in range(0, len(NH4)):
-            #        layer = soiln_profile[il]
-            #        RNH4OUT[il] = self.calculate_NH4_outflow_rate(flow_m_per_d[il+1], il, KSORP, NH4[il], layer.Thickness_m, layer.RHOD_kg_per_m3, SM[il])
-            #        RNH4IN[il] = self.calculate_NH4_inflow_rate(il, RNH4OUT[il-1])
-            #    return RNH4IN, RNH4OUT
-
             def calculate_NH4_flow_rates(self, soiln_profile, flow_m_per_d, KSORP, NH4, SM):
                 cNH4Kwel = 0.
 
                 RNH4IN = np.zeros_like(NH4)
                 RNH4OUT = np.zeros_like(NH4)
-                for il in range(0, len(NH4)):
-                    layer = soiln_profile[il]
-                    dz = layer.Thickness_m
-                    RHOD_kg_per_m3 = layer.RHOD_kg_per_m3
-                    cNH4 = self.calculate_NH4_concentration(KSORP, dz, NH4[il], RHOD_kg_per_m3, SM[il])
+                RHOD = np.zeros_like(NH4)
+                cNH4 = np.zeros_like(NH4)
+                dz = np.zeros_like(NH4)
+
+                # Downward flow
+                for il, layer in enumerate(soiln_profile):
+                    RHOD[il] = layer.RHOD_kg_per_m3
+                    dz[il] = layer.Thickness_m
+                    cNH4[il] =  self.calculate_NH4_concentration(KSORP, dz[il], NH4[il], RHOD[il], SM[il])
+
+                for il in range(0,len(soiln_profile)):
                     if(flow_m_per_d[il] >= 0.):
                         if(il == 0):
                             RNH4IN[il] += 0.
-                            RNH4OUT[il] += flow_m_per_d[il + 1] * cNH4
                         else:
-                            RNH4IN[il] += RNH4OUT[il-1]
-                            RNH4OUT[il] += flow_m_per_d[il + 1] * cNH4
-                    else:
-                        pass                
+                            RNH4IN[il] += flow_m_per_d[il] * cNH4[il - 1]
+                            RNH4OUT[il-1] += flow_m_per_d[il] * cNH4[il - 1]
+                if(flow_m_per_d[len(NH4) - 1] >= 0.):
+                    RNH4OUT[len(NH4) - 1] += flow_m_per_d[len(NH4)] * cNH4[len(NH4) - 1]
 
-                for il in reversed(range(0, len(NH4))): 
-                    if(flow_m_per_d[il] < 0):
-                        layer = soiln_profile[il]
-                        dz = layer.Thickness_m
-                        RHOD_kg_per_m3 = layer.RHOD_kg_per_m3
-                        cNH4 = self.calculate_NH4_concentration(KSORP, dz, NH4[il], RHOD_kg_per_m3, SM[il])
+                ## Upward flow
+                for il in reversed(range(0,len(soiln_profile))):
+                    if(flow_m_per_d[il + 1] < 0.):
                         if(il == len(NH4) - 1):
-                            # Assuming that the NH4 concentration in kwel equals 0
-                            RNH4IN[il] += cNH4Kwel * - flow_m_per_d[il + 1] 
-                            RNH4OUT[il] += cNH4 * - flow_m_per_d[il]
+                            RNH4IN[il] += - flow_m_per_d[il + 1] * cNH4Kwel
                         else:
-                            RNH4IN[il] += RNH4OUT[il + 1]
-                            RNH4OUT[il] += cNH4 * - flow_m_per_d[il]
+                            RNH4IN[il] += - flow_m_per_d[il + 1] * cNH4[il + 1]
+                            RNH4OUT[il + 1] += - flow_m_per_d[il + 1] * cNH4[il + 1]
+                if(flow_m_per_d[0] < 0.):
+                    RNH4OUT[0] += - flow_m_per_d[0] * cNH4[0]
+                else:
+                    RNH4OUT[0] += 0.
                 return RNH4IN, RNH4OUT
 
 
@@ -678,10 +689,8 @@ class N_soil_dynamics_layered(SimulationObject):
                     NH4_avail = 0.
                 elif(RD > zmax):
                     NH4_avail = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
-                    #NH4_avail = TSCF_N * TRALYIL * cNH4
                 else:
                     NH4_avail = ((RD - zmin)/ layer_thickness) * (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
-                    #NH4_avail = ((RD - zmin)/ layer_thickness) * TSCF_N * TRALYIL * cNH4
                 return NH4_avail
 
             def calculate_mineralization_rate(self, rNMINs_layer):
@@ -697,33 +706,8 @@ class N_soil_dynamics_layered(SimulationObject):
 
             def calculate_NH4_plant_uptake_rate(self, KSORP, N_demand_soil, NH4, RD_m, RHOD_kg_per_m3, SM, TRALYIL, TCSF_N, zmax, zmin):
                 NH4_av = self.calculate_available_NH4(KSORP, NH4, RD_m, RHOD_kg_per_m3, SM, TRALYIL, TCSF_N, zmax, zmin)
-
-                ## SWAP
-                #layer_thickness = zmax - zmin
-                #cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
-                ## NH4 uptake limited by mass transport
-                #PNH4UpTran = TCSF_N * TRALYIL * cNH4
-                #RNH4UP = min(N_demand_soil, PNH4UpTran, NH4_av)
-
-                # Old
                 RNH4UP = min(N_demand_soil, NH4_av)
                 return RNH4UP
-
-            def calculate_NH4_inflow_rate(self, il, RNH4OUT_above):
-                if(il == 0):
-                    RNH4IN = 0.
-                else:               
-                    RNH4IN = RNH4OUT_above
-                return RNH4IN
-
-            def calculate_NH4_outflow_rate(self, flow_m_per_d, il, KSORP, NH4, layer_thickness, RHOD_kg_per_m3, SM):
-                cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
-                if(il == 0):
-                    RNH4OUT = cNH4 * max(0,  flow_m_per_d)
-                else:               
-                    RNH4OUT = cNH4 * flow_m_per_d
-                #RNH4OUT = cNH4 * max(0,  flow_m_per_d)
-                return RNH4OUT
 
             def calculate_soil_moisture_response_nitrification_rate_constant(self, SM, SM0):
                 WFPS = SM / SM0
@@ -746,49 +730,45 @@ class N_soil_dynamics_layered(SimulationObject):
                         RNO3DEPOS[il] = 0.
                 return RNO3DEPOS
 
-            #def calculate_NO3_flow_rates(self, soiln_profile, flow_m_per_d, NO3, SM):
-            #    RNO3OUT = np.zeros_like(NO3)
-            #    RNO3IN = np.zeros_like(NO3)
-            #    for il in range(0, len(NO3)):
-            #        layer = soiln_profile[il]
-            #        RNO3OUT[il] = self.calculate_NO3_outflow_rate(il, flow_m_per_d[il+1], layer.Thickness_m, NO3[il], SM[il])
-            #        RNO3IN[il] = self.calculate_NO3_inflow_rate(il, RNO3OUT[il-1])
-            #    return RNO3IN, RNO3OUT
 
             def calculate_NO3_flow_rates(self, soiln_profile, flow_m_per_d, NO3, SM):
                 cNO3Kwel = 0.
 
                 RNO3IN = np.zeros_like(NO3)
                 RNO3OUT = np.zeros_like(NO3)
-                for il in range(0, len(NO3)):
-                    layer = soiln_profile[il]
-                    dz = layer.Thickness_m
-                    RHOD_kg_per_m3 = layer.RHOD_kg_per_m3
-                    cNO3 = self.calculate_NO3_concentration(dz, NO3[il], SM[il])
+                cNO3 = np.zeros_like(NO3)
+                dz = np.zeros_like(NO3)
+
+                # Downward flow
+                for il, layer in enumerate(soiln_profile):
+                    dz[il] = layer.Thickness_m
+                    cNO3[il] =  self.calculate_NO3_concentration(dz[il], NO3[il], SM[il])
+
+                for il in range(0,len(soiln_profile)):
                     if(flow_m_per_d[il] >= 0.):
                         if(il == 0):
                             RNO3IN[il] += 0.
-                            RNO3OUT[il] += flow_m_per_d[il + 1] * cNO3
                         else:
-                            RNO3IN[il] += RNO3OUT[il-1]
-                            RNO3OUT[il] += flow_m_per_d[il + 1] * cNO3
-                    else:
-                        pass                
+                            RNO3IN[il] += flow_m_per_d[il] * cNO3[il - 1]
+                            RNO3OUT[il-1] += flow_m_per_d[il] * cNO3[il - 1]
+                if(flow_m_per_d[len(NO3) - 1] >= 0.):
+                    RNO3OUT[len(NO3) - 1] += flow_m_per_d[len(NO3)] * cNO3[len(NO3) - 1]
+                else:
+                    RNO3OUT[len(NO3) - 1] += 0
 
-                for il in reversed(range(0, len(NO3))): 
-                    if(flow_m_per_d[il] < 0):
-                        layer = soiln_profile[il]
-                        dz = layer.Thickness_m
-                        RHOD_kg_per_m3 = layer.RHOD_kg_per_m3
-                        cNO3 = self.calculate_NO3_concentration(dz, NO3[il], SM[il])
+                # Upward flow
+                for il in reversed(range(0,len(soiln_profile))):
+                    if(flow_m_per_d[il + 1] < 0.):
                         if(il == len(NO3) - 1):
-                            # Assuming that the NO3 concentration in kwel equals 0
-                            RNO3IN[il] += cNO3Kwel * - flow_m_per_d[il + 1] 
-                            RNO3OUT[il] += cNO3 * - flow_m_per_d[il]
+                            RNO3IN[il] += - flow_m_per_d[il + 1] * cNO3Kwel
                         else:
-                            RNO3IN[il] += RNO3OUT[il + 1]
-                            RNO3OUT[il] += cNO3 * - flow_m_per_d[il]
-                return RNO3IN, RNO3OUT
+                            RNO3IN[il] += - flow_m_per_d[il + 1] * cNO3[il + 1]
+                            RNO3OUT[il + 1] += - flow_m_per_d[il + 1] * cNO3[il + 1]
+                if(flow_m_per_d[0] < 0.):
+                    RNO3OUT[0] += - flow_m_per_d[0] * cNO3[0]
+                else:
+                    RNO3OUT[0] += 0.
+                return RNO3IN, RNO3OUT                    
 
             def calculate_NO3_reaction_rates(self, soiln_profile, KDENIT_REF, MRCDIS, NO3, RCORGDIS, RNH4NITR, SM, T, WFPS_CRIT):
                 RNO3NITR = np.zeros_like(NO3)     
@@ -844,21 +824,6 @@ class N_soil_dynamics_layered(SimulationObject):
                 RNO3UP = min(N_demand_soil, NO3_av)
                 return RNO3UP
 
-            def calculate_NO3_inflow_rate(self, il, RNO3OUT_above):
-                if(il == 0):
-                    RNO3IN = 0.
-                else:               
-                    RNO3IN = RNO3OUT_above
-                return RNO3IN
-
-            def calculate_NO3_outflow_rate(self, il, flow_m_per_d, layer_thickness, NO3, SM):
-                cNO3 = self.calculate_NO3_concentration(layer_thickness, NO3, SM)
-                if(il == 0):
-                    RNO3OUT = cNO3 * max(0,  flow_m_per_d)
-                else:               
-                    RNO3OUT = cNO3 * flow_m_per_d
-                return RNO3OUT
-
             def calculate_soil_moisture_response_denitrification_rate_constant(self, SM, SM0, WFPS_CRIT):
                 WFPS = SM / SM0
                 if(WFPS < WFPS_CRIT):
@@ -876,12 +841,12 @@ class N_soil_dynamics_layered(SimulationObject):
                 return fT
 
     class SoilOrganicNModel():
-        def calculate_apparent_age_increase_rate(self, AGE, delt, T):
+        def calculate_apparent_age_increase_rate(self, AGE, delt, pF, pH, T):
             RAGEAG = np.zeros_like(AGE)
             janssen = self.Janssen()
             for am in range(0, AGE.shape[0]):
                 for il in range(0, AGE.shape[1]):
-                    RAGEAG[am,il] = janssen.calculate_increase_apparent_age_rate(delt, T)
+                    RAGEAG[am,il] = janssen.calculate_increase_apparent_age_rate(delt, pF[il], pH[il], T)
             return RAGEAG
 
         def calculate_application_rates(self, soiln_profile, amount, application_depth, cnratio, f_orgmat):
@@ -899,7 +864,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
             return RORGMAT_am, RCORG_am, RNORG_am
 
-        def calculate_dissimilation_rates(self, AGE, AGE0, CNRatioBio, FASDIS, NORG, ORGMAT, T):
+        def calculate_dissimilation_rates(self, AGE, AGE0, CNRatioBio, FASDIS, NORG, ORGMAT, pF, pH, T):
             RORGMATDIS = np.zeros_like(AGE)
             RCORGDIS = np.zeros_like(AGE)
             RNORGDIS = np.zeros_like(AGE)
@@ -909,11 +874,10 @@ class N_soil_dynamics_layered(SimulationObject):
 
             for am in range(0, AGE.shape[0]):
                 for il in range(0, AGE.shape[1]):
-                    #r.RAGE[am,il] = janssen.calculate_increase_apparent_age_rate(delt, T)
                     if(ORGMAT[am, il] > 0):
-                        RORGMATDIS[am,il] = janssen.calculate_dissimilation_rate_OM_T(ORGMAT[am,il], AGE0[am,il], AGE[am,il], T)
-                        RCORGDIS[am,il] = minip_c.calculate_dissimilation_rate_C(janssen, ORGMAT[am,il], AGE0[am,il], AGE[am,il], T)
-                        RNORGDIS[am,il] = minip_n.calculate_dissimilation_rate_N(janssen, minip_c, ORGMAT[am,il], NORG[am,il], AGE0[am,il], FASDIS, CNRatioBio, AGE[am,il], T)
+                        RORGMATDIS[am,il] = janssen.calculate_dissimilation_rate_OM_T(ORGMAT[am,il], AGE0[am,il], AGE[am,il], pF[il], pH[il], T)
+                        RCORGDIS[am,il] = minip_c.calculate_dissimilation_rate_C(janssen, ORGMAT[am,il], AGE0[am,il], AGE[am,il], pF[il], pH[il], T)
+                        RNORGDIS[am,il] = minip_n.calculate_dissimilation_rate_N(janssen, minip_c, ORGMAT[am,il], NORG[am,il], AGE0[am,il], FASDIS, CNRatioBio, AGE[am,il], pF[il], pH[il], T)
                     else:
                         RORGMATDIS[am,il] = 0.
                         RCORGDIS[am,il] = 0.                    
@@ -950,9 +914,11 @@ class N_soil_dynamics_layered(SimulationObject):
             b = 2.82
             y_to_d = 365.25
 
-            def calculate_increase_apparent_age_rate(self, dt, T):
+            def calculate_increase_apparent_age_rate(self, dt, pF, pH, T):
+                f_pH = self.calculate_pH_response_dissimilation_rate(pH)
                 f_T = self.calculate_temperature_response_dissimilation_rate_Yang(T)
-                dA = f_T * dt
+                f_SM = self.calculate_soil_moisture_response_dissimilation_rate(pF)
+                dA = f_pH * f_T * f_SM * dt
                 return dA
 
             def calculate_organic_matter_amount_analytical(self, a, OM0, t):
@@ -961,17 +927,33 @@ class N_soil_dynamics_layered(SimulationObject):
                 OM = OM0 * np.exp((b/(m-1)) * (pow((a + t)/self.y_to_d,(1-m)) - pow((a/self.y_to_d),1-m)))
                 return OM
 
-            def calculate_relative_dissimilation_rate_OM_T(self, a, t, T):
+            def calculate_relative_dissimilation_rate_OM_T(self, a, t, pF, pH, T):
                 m = self.m
-                b = self.b   
-                #f_T = self.calculate_temperature_response_dissimilation_rate_Yang(T)
-                k = b *  pow(t/self.y_to_d, -m) / self.y_to_d
+                b = self.b
+                f_pH = self.calculate_pH_response_dissimilation_rate(pH)
+                f_T = self.calculate_temperature_response_dissimilation_rate_Yang(T)
+                f_SM = self.calculate_soil_moisture_response_dissimilation_rate(pF)
+                k = f_pH * f_T * f_SM * b *  pow(t/self.y_to_d, -m) / self.y_to_d
+                #k = b *  pow(t/self.y_to_d, -m) / self.y_to_d
                 return k
 
-            def calculate_dissimilation_rate_OM_T(self, OM, a, t, T):
-                k = self.calculate_relative_dissimilation_rate_OM_T(a, t, T)
+            def calculate_dissimilation_rate_OM_T(self, OM, a, t, pF, pH, T):
+                k = self.calculate_relative_dissimilation_rate_OM_T(a, t, pF, pH, T)
                 rate = k * OM
                 return rate
+
+            def calculate_soil_moisture_response_dissimilation_rate(self, pF):
+                if(pF < 2.7):
+                    f_SM = 1.0
+                elif(pF < 4.2):
+                    f_SM = 1.0 * (4.2 - pF) / (4.2 - 2.7)
+                else:
+                    f_SM = 0.
+                return f_SM
+
+            def calculate_pH_response_dissimilation_rate(self, pH):
+                f_pH = 1 / (1 + np.exp(-1.5 * (pH - 4)))
+                return f_pH
 
             def calculate_temperature_response_dissimilation_rate(self, T):
                 f_T = pow(2, (T-9)/9)
@@ -992,20 +974,20 @@ class N_soil_dynamics_layered(SimulationObject):
             OM_to_C = 0.58
             y_to_d = 365.
 
-            def calculate_assimilation_rate(self, janssen, OM, a, f_ass_dis, t, T):
-                r_disc = self.calculate_dissimilation_rate_C(janssen, OM, a, t, T)
+            def calculate_assimilation_rate(self, janssen, OM, a, f_ass_dis, t, pF, pH, T):
+                r_disc = self.calculate_dissimilation_rate_C(janssen, OM, a, t, pF, pH, T)
                 r_ass = r_disc * f_ass_dis
                 return r_ass
     
-            def calculate_dissimilation_rate_C(self, janssen, OM, a, t, T):
-                k = janssen.calculate_relative_dissimilation_rate_OM_T(a, t, T)
+            def calculate_dissimilation_rate_C(self, janssen, OM, a, t, pF, pH, T):
+                k = janssen.calculate_relative_dissimilation_rate_OM_T(a, t, pF, pH, T)
                 Corg = self.calculate_organic_C(OM)
                 rate = k * Corg
                 return rate
 
-            def calculate_total_conversion_rate_C(self, janssen, OM, a, f_ass_dis, t, T):
-                r_dis_C = self.calculate_dissimilation_rate_C(janssen, OM, a, t, T)
-                r_ass_C = self.calculate_assimilation_rate(janssen, OM, a, f_ass_dis, t, T)
+            def calculate_total_conversion_rate_C(self, janssen, OM, a, f_ass_dis, t, pF, pH, T):
+                r_dis_C = self.calculate_dissimilation_rate_C(janssen, OM, a, t, pF, pH, T)
+                r_ass_C = self.calculate_assimilation_rate(janssen, OM, a, f_ass_dis, t, pF, pH, T)
                 r_conv_C = r_dis_C + r_ass_C
                 return r_conv_C
 
@@ -1015,19 +997,19 @@ class N_soil_dynamics_layered(SimulationObject):
 
         class MINIP_N(object):    
 
-            def calculate_total_conversion_rate_N(self, janssen, minip_c, OM, Norg, a, f_ass_dis, t, T):
-                r_conv_C = minip_c.calculate_total_conversion_rate_C(janssen, OM, a, f_ass_dis, t, T)
+            def calculate_total_conversion_rate_N(self, janssen, minip_c, OM, Norg, a, f_ass_dis, t, pF, pH, T):
+                r_conv_C = minip_c.calculate_total_conversion_rate_C(janssen, OM, a, f_ass_dis, t, pF, pH, T)
                 C = minip_c.calculate_organic_C(OM)
                 r_conv_N = r_conv_C * (Norg/C)
                 return r_conv_N
 
-            def calculate_assimilation_rate_N(self, janssen, minip_c, OM, a, f_ass_dis, f_C_N_microbial, t, T):
-                r_ass_C = minip_c.calculate_assimilation_rate(janssen, OM, a, f_ass_dis, t, T)
+            def calculate_assimilation_rate_N(self, janssen, minip_c, OM, a, f_ass_dis, f_C_N_microbial, t, pF, pH, T):
+                r_ass_C = minip_c.calculate_assimilation_rate(janssen, OM, a, f_ass_dis, t, pF, pH, T)
                 r_ass_N = r_ass_C/f_C_N_microbial
                 return r_ass_N
 
-            def calculate_dissimilation_rate_N(self, janssen, minip_c, OM, Norg, a, f_ass_dis, f_C_N_microbial, t, T):
-                r_ass_N = self.calculate_assimilation_rate_N(janssen, minip_c, OM, a, f_ass_dis, f_C_N_microbial, t, T)
-                r_conv_N = self.calculate_total_conversion_rate_N(janssen, minip_c, OM, Norg, a, f_ass_dis, t, T)
+            def calculate_dissimilation_rate_N(self, janssen, minip_c, OM, Norg, a, f_ass_dis, f_C_N_microbial, t, pF, pH, T):
+                r_ass_N = self.calculate_assimilation_rate_N(janssen, minip_c, OM, a, f_ass_dis, f_C_N_microbial, t, pF, pH, T)
+                r_conv_N = self.calculate_total_conversion_rate_N(janssen, minip_c, OM, Norg, a, f_ass_dis, t, pF, pH, T)
                 r_diss_N = r_conv_N - r_ass_N
                 return r_diss_N

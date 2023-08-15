@@ -43,6 +43,7 @@ class SoilNLayer(HasTraits):
         self.SMFCF = self.SMfromPF(PFFieldCapacity)
         self.SMW = self.SMfromPF(PFWiltingPoint)
         self.rooting_status = None
+        self.Soil_pH = layer.Soil_pH
 
         self.CNRatioSOMI = layer.CNRatioSOMI
         self.FSOMI = layer.FSOMI
