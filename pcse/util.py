@@ -51,8 +51,8 @@ def reference_ET(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
         TMIN    -  Minimum temperature                              C
         TMAX    -  Maximum temperature                              C
         IRRAD   -  Daily shortwave radiation                     J m-2 d-1
-        VAP     -  24 hour average vapour pressure                 hPa
-        WIND    -  24 hour average windspeed at 2 meter            m/s
+        VAP     -  24-hour average vapour pressure                 hPa
+        WIND    -  24-hour average windspeed at 2 meter            m/s
         ANGSTA  -  Empirical constant in Angstrom formula           -
         ANGSTB  -  Empirical constant in Angstrom formula           -
         ETMODEL -  Indicates if the canopy reference ET should     PM|P
@@ -68,7 +68,7 @@ def reference_ET(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
         ET0     -  Penman or Penman-Monteith potential evapotranspiration from a
                    crop canopy [mm/d]
 
-.. note:: The Penman-Monteith algorithm is valid only for a reference canopy and
+.. note:: The Penman-Monteith algorithm is valid only for a reference canopy, and
     therefore it is not used to calculate the reference values for bare soil and
     open water (ES0, E0).
 
@@ -135,8 +135,8 @@ def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
         TMIN    -  Minimum temperature                            C
         TMAX    -  Maximum temperature                            C      
         AVRAD   -  Daily shortwave radiation                   J m-2 d-1 
-        VAP     -  24 hour average vapour pressure               hPa     
-        WIND2   -  24 hour average windspeed at 2 meter          m/s     
+        VAP     -  24-hour average vapour pressure               hPa
+        WIND2   -  24-hour average windspeed at 2 meter          m/s
         ANGSTA  -  Empirical constant in Angstrom formula         -
         ANGSTB  -  Empirical constant in Angstrom formula         -
 
@@ -227,8 +227,8 @@ def penman_monteith(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
         TMIN  - Minimum temperature                            C
         TMAX  - Maximum temperature                            C
         AVRAD - Daily shortwave radiation                   J m-2 d-1
-        VAP   - 24 hour average vapour pressure               hPa
-        WIND2 - 24 hour average windspeed at 2 meter          m/s
+        VAP   - 24-hour average vapour pressure               hPa
+        WIND2 - 24-hour average windspeed at 2 meter          m/s
 
     Output is:
 
@@ -361,7 +361,7 @@ def ea_from_tdew(tdew):
     tdew - dewpoint temperature [deg C]
     """
     # Raise exception:
-    if (tdew < -95.0 or tdew > 65.0):
+    if tdew < -95.0 or tdew > 65.0:
         # Are these reasonable bounds?
         msg = 'tdew=%g is not in range -95 to +60 deg C' % tdew
         raise ValueError(msg)
@@ -416,19 +416,19 @@ def doy(day):
         raise RuntimeError(msg)
 
 
-def limit(min, max, v):
+def limit(vmin, vmax, v):
     """limits the range of v between min and max
     """
 
-    if min > max:
-        raise RuntimeError("Min value (%f) larger than max (%f)" % (min, max))
+    if vmin > vmax:
+        raise RuntimeError("Min value (%f) larger than max (%f)" % (vmin, vmax))
     
-    if v < min:       # V below range: return min
-        return min
-    elif v < max:     # v within range: return v
+    if v < vmin:       # V below range: return min
+        return vmin
+    elif v < vmax:     # v within range: return v
         return v
     else:             # v above range: return max
-        return max
+        return vmax
 
 
 def daylength(day, latitude, angle=-4, _cache={}):
@@ -585,7 +585,7 @@ def astro(day, latitude, radiation, _cache={}):
         ATMTR = 0.
 
     # estimate fraction diffuse irradiation
-    if (ATMTR > 0.75):
+    if ATMTR > 0.75:
         FRDIF = 0.23
     elif (ATMTR <= 0.75) and (ATMTR > 0.35):
         FRDIF = 1.33-1.46*ATMTR
@@ -607,10 +607,7 @@ class Afgen(object):
     
     :param tbl_xy: List or array of XY value pairs describing the function
         the X values should be mononically increasing.
-    :param unit: The interpolated values is returned with given
-        `unit <http://pypi.python.org/pypi/Unum/4.1.0>`_ assigned,
-        defaults to None if Unum is not used.
-    
+
     Returns the interpolated value provided with the 
     absicca value at which the interpolation should take place.
     
@@ -646,7 +643,6 @@ class Afgen(object):
         
         # Check for breaks in the series where the ascending sequence stops.
         # Only 0 or 1 breaks are allowed. Use the XOR operator '^' here
-        n = len(x_asc)
         sum_break = sum([1 if (x0 ^ x1) else 0 for x0,x1 in zip(x_asc, x_asc[1:])])
         if sum_break == 0:
             x = x_list
@@ -665,10 +661,8 @@ class Afgen(object):
         
         return x, y            
 
-    def __init__(self, tbl_xy, unit=None):
+    def __init__(self, tbl_xy):
         
-        self.unit = unit
-
         x_list, y_list = self._check_x_ascending(tbl_xy)
         x_list = self.x_list = list(map(float, x_list))
         y_list = self.y_list = list(map(float, y_list))
@@ -684,10 +678,6 @@ class Afgen(object):
 
         i = bisect_left(self.x_list, x) - 1
         v = self.y_list[i] + self.slopes[i] * (x - self.x_list[i])
-
-        # if a unum unit is defined, multiply with a unit
-        if self.unit is not None:
-            v *= self.unit
 
         return v
 
@@ -742,7 +732,7 @@ class ConfigurationLoader(object):
 
     def __init__(self, config):
 
-        if not isinstance(config, str, Path):
+        if not isinstance(config, (str, Path)):
             msg = ("Keyword 'config' should provide the name of the file (string or pathlib.Path)" +
                    "storing the configuration of the model PCSE should run.")
             raise exc.PCSEError(msg)
@@ -820,7 +810,7 @@ def is_a_month(day):
         if day == datetime.date(day.year, day.month, 31):
             return True
     else:
-        if (day == datetime.date(day.year, day.month+1, 1) - \
+        if (day == datetime.date(day.year, day.month+1, 1) -
                    datetime.timedelta(days=1)):
             return True
     return False
@@ -933,6 +923,7 @@ class DummySoilDataProvider(dict):
                  "KSUB":10.}
 
     def __init__(self):
+        dict.__init__(self)
         self.update(self._defaults)
 
 
@@ -1051,7 +1042,7 @@ class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
                         or green manure).
         - NSOILBASE_FR  Daily fraction of soil N coming available through mineralization
         - BG_P_SUPPLY   Background P supply in kg/ha/day. Usually this is mainly through deposition
-                        of dust and an order of magnitude smaller then N deposition. Default 0.0
+                        of dust and an order of magnitude smaller than N deposition. Default 0.0
         - PSOILBASE     Base P amount available in the soil.
         - PSOILBASE_FR  Daily fraction of soil P coming available through mineralization
         - BG_K_SUPPLY   Background P supply in kg/ha/day. Default 0.0
