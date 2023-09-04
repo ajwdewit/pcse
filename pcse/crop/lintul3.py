@@ -761,10 +761,12 @@ class Lintul3(SimulationObject):
     def dryMatterPartitioningFractions(self, NPART, TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT):
         """
         Purpose: Dry matter partitioning fractions: leaves, stem and storage organs.
-        Obsolete subroutine name: SUBPAR                  
+        Obsolete subroutine name: SUBPAR
         """
-      
-        if(TRANRF  <  NNI):
+
+        p = self.params
+        NRF = exp(-p.NLUE * (1.0 - NNI))
+        if(TRANRF  <  NRF):
             #  Water stress is more severe as compared to nitrogen stress and
             #  partitioning will follow the original assumptions of LINTUL2*
             FRTMOD = max(1., 1./(TRANRF+0.5))
@@ -803,18 +805,21 @@ class Lintul3(SimulationObject):
         canopy.
         Obsolete subroutine name: GROWTH 
         """
+        
         p = self.params
         PARINT = 0.5 * DTR * (1.- exp(-p.K * self.states.LAI))
         RGROWTH = p.LUE * PARINT
-        
-        if(TRANRF  <=  NNI):
+        NRF = exp(-p.NLUE * (1.0 - NNI))
+        GRF = 1.0
+        if(TRANRF  <=  NRF):
             #  Water stress is more severe as compared to nitrogen stress and
             #  partitioning will follow the original assumptions of LINTUL2*
-            RGROWTH *= TRANRF
+            GRF = TRANRF
         else:
             #  Nitrogen stress is more severe as compared to water stress and the
             #  less partitioning to leaves will go to the roots*
-            RGROWTH *= exp(-p.NLUE * (1.0 - NNI))
+            GRF = NRF
+        RGROWTH *= GRF
         return RGROWTH
 
     def relativeGrowthRates(self, RGROWTH, FLV, FRT, FST, FSO, DLV, DRRT):
