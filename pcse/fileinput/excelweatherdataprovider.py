@@ -170,7 +170,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                             raise ValueError()
 
                     if label == "IRRAD" and self.has_sunshine is True:
-                        if 0 < value < 24:
+                        if 0 <= value <= 24:
                             # Use Angstrom equation to convert sunshine duration to radiation in J/m2/day
                             value = angstrom(d["DAY"], self.latitude, value, self.angstA, self.angstB)
                             value /= 1000.  # convert to kJ/m2/day for compatibility with obs_conversion function
