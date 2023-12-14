@@ -46,13 +46,13 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     at: http://power.larc.nasa.gov/common/AgroclimatologyMethodology/Agro_Methodology_Content.html
 
     The `NASAPowerWeatherDataProvider` retrieves the weather from the
-    th NASA POWER API and does the necessary conversions to be compatible
+    NASA POWER API and does the necessary conversions to be compatible
     with PCSE. After the data has been retrieved and stored, the contents
     are dumped to a binary cache file. If another request is made for the
     same location, the cache file is loaded instead of a full request to the
     NASA Power server.
 
-    Cache files are used until they are older then 90 days. After 90 days
+    Cache files are used until they are older than 90 days. After 90 days
     the NASAPowerWeatherDataProvider will make a new request to obtain
     more recent data from the NASA POWER server. If this request fails
     it will fall back to the existing cache file. The update of the cache
@@ -60,7 +60,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
     Finally, note that any latitude/longitude within a 0.5x0.5 degrees grid box
     will yield the same weather data, e.g. there is no difference between
-    lat/lon 5.3/52.1 and lat/lon 5.1/52.4. Nevertheless slight differences
+    lat/lon 5.3/52.1 and lat/lon 5.1/52.4. Nevertheless, slight differences
     in PCSE simulations may occur due to small differences in day length.
 
     """
