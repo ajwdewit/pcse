@@ -43,7 +43,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     WOFOST in the past.
 
     For more information on the NASA POWER database see the documentation
-    at: http://power.larc.nasa.gov/common/AgroclimatologyMethodology/Agro_Methodology_Content.html
+    at: https://power.larc.nasa.gov/docs/methodology/
 
     The `NASAPowerWeatherDataProvider` retrieves the weather from the
     NASA POWER API and does the necessary conversions to be compatible
