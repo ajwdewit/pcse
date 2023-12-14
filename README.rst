@@ -125,7 +125,7 @@ data which can be used to compare the results from a PCSE model against. Experim
 'experimental collection' which contains references to experiments that belong together. For example, all
 experiments for potato for a given variety. Currently, the available experiments are limited to grassland for the
 LINGRA model and consist of two collections. One for grassland under irrigated conditions and one for rain-fed
-conditions. Tt is expected that more experimental data will be collected and stored here in order to have a
+conditions. It is expected that more experimental data will be collected and stored here in order to have a
 reference set to compare model results.
 
 Running the experiments is similar to running the unit tests::
