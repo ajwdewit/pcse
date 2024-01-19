@@ -13,7 +13,7 @@ from pcse.settings.settings
 For example, to use the settings in a module under 'crop':
 
     from ..settings import settings
-    print settings.METEO_CACHE_DIR
+    print(settings.METEO_CACHE_DIR)
 
 Settings that are not ALL-CAPS will generate a warning. To avoid warnings
 for everything that is not a setting (such as imported modules), prepend

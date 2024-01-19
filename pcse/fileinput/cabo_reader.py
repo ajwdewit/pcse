@@ -13,10 +13,10 @@ class LengthError(PCSEError):
 
 class DuplicateError(PCSEError):
     pass
-    
+
 class CABOFileReader(dict):
     """Reads CABO files with model parameter definitions.
-    
+
     The parameter definitions of Wageningen crop models are generally
     written in the CABO format. This class reads the contents, parses
     the parameter names/values and returns them as a dictionary.
@@ -31,32 +31,32 @@ class CABOFileReader(dict):
     The header of the CABO file (marked with ** at the first line) is
     read and can be retrieved by the get_header() method or just by
     a print on the returned dictionary.
-    
+
     *Example*
-    
+
     A parameter file 'parfile.cab' which looks like this::
-    
+
         ** CROP DATA FILE for use with WOFOST Version 5.4, June 1992
         **
         ** WHEAT, WINTER 102
-        ** Regions: Ireland, central en southern UK (R72-R79), 
+        ** Regions: Ireland, central en southern UK (R72-R79),
         **          Netherlands (not R47), northern Germany (R11-R14)
         CRPNAM='Winter wheat 102, Ireland, N-U.K., Netherlands, N-Germany'
         CROP_NO=99
         TBASEM   = -10.0    ! lower threshold temp. for emergence [cel]
-        DTSMTB   =   0.00,    0.00,     ! daily increase in temp. sum 
+        DTSMTB   =   0.00,    0.00,     ! daily increase in temp. sum
                     30.00,   30.00,     ! as function of av. temp. [cel; cel d]
                     45.00,   30.00
         ** maximum and minimum concentrations of N, P, and K
         ** in storage organs        in vegetative organs [kg kg-1]
         NMINSO   =   0.0110 ;       NMINVE   =   0.0030
-    
+
     Can be read with the following statements::
-    
+
         >>>fileparameters = CABOFileReader('parfile.cab')
-        >>>print fileparameters['CROP_NO']
+        >>>print(fileparameters['CROP_NO'])
         99
-        >>>print fileparameters
+        >>>print(fileparameters)
         ** CROP DATA FILE for use with WOFOST Version 5.4, June 1992
         **
         ** WHEAT, WINTER 102
@@ -83,7 +83,7 @@ class CABOFileReader(dict):
             if len(line)>0:
                 t.append(line)
         return t
-        
+
     def _remove_inline_comments(self, filecontents):
         t = []
         for line in filecontents:
@@ -92,7 +92,7 @@ class CABOFileReader(dict):
             if len(line) > 0:
                 t.append(line)
         return t
-    
+
     def _is_comment(self, line):
         if line.startswith("*"):
             return True
@@ -100,7 +100,7 @@ class CABOFileReader(dict):
             return False
 
     def _find_header(self, filecontents):
-        """Parses and strips header marked with '*' at the beginning of 
+        """Parses and strips header marked with '*' at the beginning of
         the file. Further lines marked with '*' are deleted."""
 
         header = []
@@ -119,7 +119,7 @@ class CABOFileReader(dict):
                 else:
                     other_contents.append(line)
         return (header, other_contents)
- 
+
     def _parse_table_values(self, parstr):
         """Parses table parameter into a list of floats."""
 
@@ -135,13 +135,13 @@ class CABOFileReader(dict):
             value = float(vstr)
             tblvalues.append(value)
         return tblvalues
-        
+
     def _find_parameter_sections(self, filecontents):
         "returns the sections defining float, string and table parameters."
         scalars = ""
         strings = ""
         tables = ""
-        
+
         for line in filecontents:
             if line.find("'") != -1: # string parameter
                 strings += (line + " ")
@@ -149,9 +149,9 @@ class CABOFileReader(dict):
                 tables += (line + " ")
             else:
                 scalars += (line + " ")
-                
+
         return scalars, strings, tables
-       
+
     def _find_individual_pardefs(self, regexp, parsections):
         """Splits the string into individual parameters definitions.
         """
@@ -164,7 +164,7 @@ class CABOFileReader(dict):
                   ("Failed to parse:\n %s" % rest)
             raise PCSEError(msg)
         return par_definitions
-        
+
     def __init__(self, fname):
         with open(fname) as fp:
             filecontents = fp.readlines()
@@ -197,7 +197,7 @@ class CABOFileReader(dict):
                     value = int(valuestr)
                 self[parname] = value
             except (ValueError) as exc:
-                msg = "Failed to parse parameter, value: %s, %s" 
+                msg = "Failed to parse parameter, value: %s, %s"
                 raise PCSEError(msg % (parstr, valuestr))
 
         for parstr in string_defs:
@@ -207,7 +207,7 @@ class CABOFileReader(dict):
                 value = (valuestr.replace("'","")).replace('"','')
                 self[parname] = value
             except (ValueError) as exc:
-                msg = "Failed to parse parameter, value: %s, %s" 
+                msg = "Failed to parse parameter, value: %s, %s"
                 raise PCSEError(msg % (parstr, valuestr))
 
         for parstr in table_defs:
@@ -222,7 +222,7 @@ class CABOFileReader(dict):
             except (LengthError) as exc:
                 msg = "Failed to parse table parameter %s: %s. \n" % (parname, valuestr)
                 msg += "Table parameter should contain at least 4 values "
-                msg += "instead got %i" 
+                msg += "instead got %i"
                 raise PCSEError(msg % exc.value[0])
             except (XYPairsError) as exc:
                 msg = "Failed to parse table parameter %s: %s\n" % (parname, valuestr)

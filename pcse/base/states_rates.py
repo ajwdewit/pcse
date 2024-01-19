@@ -242,9 +242,9 @@ class StatesTemplate(StatesRatesCommon):
         ...
         >>> s1 = StateVariables(k, StateA=0., StateB=78, StateC=date(2003,7,3),
         ...                     publish="StateC")
-        >>> print s1.StateA, s1.StateB, s1.StateC
+        >>> print(s1.StateA, s1.StateB, s1.StateC)
         0.0 78 2003-07-03
-        >>> print k
+        >>> print(k)
         Contents of VariableKiosk:
          * Registered state variables: 3
          * Published state variables: 1 with values:

@@ -7,13 +7,13 @@ import textwrap
 
 class PCSEFileReader(dict):
     """Reader for parameter files in the PCSE format.
-    
+
     This class is a replacement for the `CABOFileReader`. The latter can be
     used for reading parameter files in the CABO format, however this format
     has rather severe limitations: it only supports string, integer, float
     and array parameters. There is no support for specifying parameters with
     dates for example (other then specifying them as a string).
-    
+
     The `PCSEFileReader` is a much more versatile tool for creating parameter
     files because it leverages the power of the python interpreter for
     processing parameter files through the `execfile` functionality in python.
@@ -24,22 +24,22 @@ class PCSEFileReader(dict):
     :returns: dictionary object with parameter key/value pairs.
 
     *Example*
-    
+
     Below is an example of a parameter file 'parfile.pcse'. Parameters can
     be defined the 'CABO'-way, but also advanced functionality can be used by
     importing modules, defining parameters as dates or numpy arrays and even
     applying function on arrays (in this case `np.sin`)::
 
         \"\"\"This is the header of my parameter file.
-        
+
         This file is derived from the following sources
         * dummy file for demonstrating the PCSEFileReader
         * contains examples how to leverage dates, arrays and functions, etc.
         \"\"\"
-        
+
         import numpy as np
         import datetime as dt
-        
+
         TSUM1 = 1100
         TSUM2 = 900
         DTSMTB = [ 0., 0.,
@@ -51,16 +51,16 @@ class PCSEFileReader(dict):
         CROP_START_DATE = dt.date(2010,5,14)
 
     Can be read with the following statements::
-    
+
         >>>fileparameters = PCSEFileReader('parfile.pcse')
-        >>>print fileparameters['TSUM1']
+        >>>print(fileparameters['TSUM1'])
         1100
-        >>>print fileparameters['CROP_START_DATE']
+        >>>print(fileparameters['CROP_START_DATE'])
         2010-05-14
-        >>>print fileparameters
+        >>>print(fileparameters)
         PCSE parameter file contents loaded from:
         D:\\UserData\\pcse_examples\\parfile.pw
-        
+
         This is the header of my parameter file.
 
         This file is derived from the following sources
@@ -75,10 +75,10 @@ class PCSEFileReader(dict):
           -0.54402111 -0.99999021] (<type 'numpy.ndarray'>)
         TSUM1: 1100 (<type 'int'>)
     """
-    
+
     def __init__(self, fname):
         dict.__init__(self)
-        
+
         # Construct full path to parameter file and check file existence
         cwd = os.getcwd()
         self.fname_fp = os.path.normpath(os.path.join(cwd, fname))
@@ -89,13 +89,13 @@ class PCSEFileReader(dict):
         # compile and execute the contents of the file
         bytecode = compile(open(self.fname_fp).read(), self.fname_fp, 'exec')
         exec(bytecode, {}, self)
-        
+
         # Remove any members in self that are python modules
         keys = list(self.keys())
         for k in keys:
             if inspect.ismodule(self[k]):
                 self.pop(k)
-        
+
         # If the file has a header (e.g. __doc__) store it.
         if "__doc__" in self:
             header = self.pop("__doc__")
