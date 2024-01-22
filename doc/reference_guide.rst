@@ -756,7 +756,7 @@ with an example::
             self._connect_signal(self.handle_mysignal, mysignal)
 
         def handle_mysignal(self, arg1, arg2):
-            print "Value of arg1, arg2: %s, %s" % (arg1, arg2)
+            print("Value of arg1, arg2: %s, %s" % (arg1, arg2))
 
         def send_mysignal(self):
             self._send_signal(signal=mysignal, arg2="A", arg1=2.5)
@@ -902,7 +902,7 @@ While individual weather elements can be accessed through the standard dotted py
 Finally, for convenience the WeatherDataProvider can also be called with a string representing a date.
 This string can in the format YYYYMMDD or YYYYDDD::
 
-    >>> print wdp("20060703")
+    >>> print(wdp("20060703"))
     Weather data for 2006-07-03 (DAY)
     IRRAD:  29290000.00  J/m2/day
      TMIN:        17.20   Celsius
@@ -919,7 +919,7 @@ This string can in the format YYYYMMDD or YYYYDDD::
 
 or in the format YYYYDDD::
 
-    >>> print wdp("2006183")
+    >>> print(wdp("2006183"))
     Weather data for 2006-07-03 (DAY)
     IRRAD:  29290000.00  J/m2/day
      TMIN:        17.20   Celsius
