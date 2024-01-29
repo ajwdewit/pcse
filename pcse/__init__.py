@@ -29,7 +29,7 @@ See Also
 from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
-__stable__ = False
+__stable__ = True
 __version__ = "5.5.6"
 
 
