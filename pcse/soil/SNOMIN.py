@@ -480,7 +480,7 @@ class SNOMIN(SimulationObject):
         ================== =====================================================  ===================
         amount             Amount of material in amendment                        kg material ha-1
         application_depth  Depth over which the amendment is applied in the soil  cm
-        cnratio            C:N ratio of organic matter in material                kg C kg-1 N kg-1 OM
+        cnratio            C:N ratio of organic matter in material                kg C kg-1 N
         initial_age        Initial apparent age of organic matter in material     y
         f_NH4N             Fraction of NH4+-N in material                         kg NH4+-N kg-1 material
         f_NO3N             Fraction of NO3--N in material                         kg NO3--N kg-1 material                        

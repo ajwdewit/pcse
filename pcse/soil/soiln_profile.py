@@ -21,8 +21,27 @@ class pFCurve(Afgen):
 class SoilNLayer(HasTraits):
     """
     Contains the intrinsic and derived properties for each soil layer that are used by
-    SNOMIN. The following properties are defined for each layer.
+    SNOMIN. The following properties are read from the *.soil input file or derived from
+    variables that area read from this dfile and defined for each layer:
+
+    =============== ================================================ =====================
+    Name             Description                                     Unit
+    =============== ================================================ =====================
+    CNRatioSOMI     Initial C:N ratio of soil organic matter         kg C kg-1 N
+    FSOMI           Initial fraction of soil organic matter in soil  kg OM kg-1 soil
+    PFFieldCapacity pF value for which the soil moisture content is 
+                    at field capacity                                -
+    PFWiltingPoint  pF value for which the soil moisture content is 
+                    at its permanent wilting point                   -
+    RHOD            Bulk density of the soil                         g soil cm-3 soil
+    SMfromPF        Table function that describes the soil moisture 
+                    content as a function of pF                      m3 water m-3 soil, -
+    SMsat           Soil moisture content at saturation              m3 water m-3 soil
+    Soil_pH         pH of the soil layer                             -
+    Thickness       Layer thickness                                  cm
+    =============== ================================================ =====================
     """
+
     SMfromPF = Instance(pFCurve)  # soil moisture content as function of pF
     PFfromSM = Instance(Afgen)  # Inverse from SMfromPF
     SMsat = Float()  # Saturation soil moisture content
