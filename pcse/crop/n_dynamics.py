@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Herman Berghuijs (herman.berghuijs@wur.nl) and Allard de Wit (allard.dewit@wur.nl), April 2024
 
 from .. import exceptions as exc
 from ..traitlets import Float, Int, Instance
