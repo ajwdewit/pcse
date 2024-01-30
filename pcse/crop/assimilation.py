@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), January 2024
 """SimulationObjects implementing |CO2| Assimilation for use with PCSE.
 """
 from __future__ import print_function
@@ -54,7 +54,7 @@ def totass(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV,
 
     Update calculation AMAX:
     Author: Herman Berghuijs
-    Date:   September 2022
+    Date:   January 2024
 
     """
     # Gauss points and weights
@@ -93,7 +93,7 @@ def assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, 
     Called by routine TOTASS.
 
     Author: D.W.G. van Kraalingen, 1986
-    Updated: H.N.C. Berghuijs, 2022
+    Updated: H.N.C. Berghuijs, 2024
 
     Python version:
     Allard de Wit, 2011
@@ -118,13 +118,10 @@ def assim(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, 
 
         # Calculate AMAX with gradient in canopy ORYZA
         if(LAI >= 0.01):
-            #SLN = (NLV / (LAI * 10)) * LAI * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
             SLN = NLV * KN * exp(-KN * LAIC) / (1 - exp(-KN * LAI))
         else:
-            #SLN = (NLV / (LAI * 10))
             SLN = NLV/LAI
 
-        #AMAX =  CO2AMAX * TMPF * min(AMAX_REF , max(0, AMAX_SLP * (SLN - AMAX_LNB)))
         AMAX =  CO2AMAX * TMPF * min(AMAX_REF , max(0, AMAX_SLP * (SLN - AMAX_LNB)))
 
         # absorbed diffuse radiation (VISDF),light from direct
