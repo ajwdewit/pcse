@@ -318,9 +318,8 @@ class Wofost80(SimulationObject):
         self.n_crop_dynamics.integrate(day, delt)
 
         # Integrate total (living+dead) above-ground biomass of the crop
-        states.TAGP = self.kiosk.TWLV + \
-                      self.kiosk.TWST + \
-                      self.kiosk.TWSO
+
+
 
         # total gross assimilation and maintenance respiration 
         states.GASST += rates.GASS

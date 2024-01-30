@@ -327,9 +327,9 @@ class Wofost(SimulationObject):
         self.n_crop_dynamics.integrate(day, delt)
 
         # Integrate total (living+dead) above-ground biomass of the crop
-        states.TAGP = self.kiosk["TWLV"] + \
-                      self.kiosk["TWST"] + \
-                      self.kiosk["TWSO"]
+        states.TAGP = self.kiosk.TWLV + \
+                      self.kiosk.TWST + \
+                      self.kiosk.TWSO
 
         #
         states.LV_REALLOCATED += rates.REALLOC_LV * delt
@@ -340,7 +340,7 @@ class Wofost(SimulationObject):
         states.MREST += rates.MRES
         
         # total crop transpiration (CTRAT)
-        states.CTRAT += self.kiosk["TRA"]
+        states.CTRAT += self.kiosk.TRA
         
     #---------------------------------------------------------------------------
     @prepare_states
@@ -348,7 +348,7 @@ class Wofost(SimulationObject):
 
         # Calculate Harvest Index
         if self.states.TAGP > 0:
-            self.states.HI = self.kiosk["TWSO"]/self.states.TAGP
+            self.states.HI = self.kiosk.TWSO/self.states.TAGP
         else:
             msg = "Cannot calculate Harvest Index because TAGP=0"
             self.logger.warning(msg)
