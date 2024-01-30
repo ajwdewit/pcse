@@ -24,10 +24,13 @@ class SoilNLayer(HasTraits):
     SNOMIN. The following properties are read from the *.soil input file or derived from
     variables that area read from this dfile and defined for each layer:
 
-    =============== ================================================ =====================
+    =============== ================================================ =======================
     Name             Description                                     Unit
-    =============== ================================================ =====================
+    =============== ================================================ =======================
     CNRatioSOMI     Initial C:N ratio of soil organic matter         kg C kg-1 N
+    CONDfromPF      Table function of the 10-base logarithm of the 
+                    unsaturated hydraulic conductivity as a function 
+                    of pF                                            log10(cm water d-1), -
     FSOMI           Initial fraction of soil organic matter in soil  kg OM kg-1 soil
     PFFieldCapacity pF value for which the soil moisture content is 
                     at field capacity                                -
@@ -39,7 +42,7 @@ class SoilNLayer(HasTraits):
     SMsat           Soil moisture content at saturation              m3 water m-3 soil
     Soil_pH         pH of the soil layer                             -
     Thickness       Layer thickness                                  cm
-    =============== ================================================ =====================
+    =============== ================================================ =======================
     """
 
     SMfromPF = Instance(pFCurve)  # soil moisture content as function of pF
