@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Herman Berghuijs (herman.berghuijs@wur.nl) and Allard de Wit (allard.dewit@wur.nl), January 2024
+
 from math import sqrt
 import numpy as np
 from dotmap import DotMap
