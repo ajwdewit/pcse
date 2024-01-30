@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), January 2024
 
 from .engine import Engine
 
@@ -197,59 +197,59 @@ class Wofost72_WLP_HB(Engine):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
 
-class Wofost80_PP_beta_HB(Engine):
-    """Convenience class for running WOFOST8.0 potential production (includes NPK dynamics)
+# class Wofost80_PP_beta_HB(Engine):
+#     """Convenience class for running WOFOST8.0 potential production (includes NPK dynamics)
 
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_PP_HB.conf"
+#     :param parameterprovider: A ParameterProvider instance providing all parameter values
+#     :param weatherdataprovider: A WeatherDataProvider object
+#     :param agromanagement: Agromanagement data
+#     """
+#     config = "Wofost80_PP_HB.conf"
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
+#     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+#         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+#                         config=self.config)
 
-class Wofost80_WLP_FD_beta_HB(Engine):
-    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+# class Wofost80_WLP_FD_beta_HB(Engine):
+#     """Convenience class for running WOFOST8.0 nutrient and water-limited production
 
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_WLP_FD_HB.conf"
+#     :param parameterprovider: A ParameterProvider instance providing all parameter values
+#     :param weatherdataprovider: A WeatherDataProvider object
+#     :param agromanagement: Agromanagement data
+#     """
+#     config = "Wofost80_WLP_FD_HB.conf"
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
-
-
-class Wofost80_N_beta_HB(Engine):
-    """Convenience class for running WOFOST8.0 nitrogen-limited production 
-
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_N_HB.conf"
-
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
+#     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+#         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+#                         config=self.config)
 
 
-class Wofost80_NWLP_FD_beta_HB(Engine):
-    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+# class Wofost80_N_beta_HB(Engine):
+#     """Convenience class for running WOFOST8.0 nitrogen-limited production 
 
-    :param parameterprovider: A ParameterProvider instance providing all parameter values
-    :param weatherdataprovider: A WeatherDataProvider object
-    :param agromanagement: Agromanagement data
-    """
-    config = "Wofost80_NWLP_FD_HB.conf"
+#     :param parameterprovider: A ParameterProvider instance providing all parameter values
+#     :param weatherdataprovider: A WeatherDataProvider object
+#     :param agromanagement: Agromanagement data
+#     """
+#     config = "Wofost80_N_HB.conf"
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
-        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
+#     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+#         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+#                         config=self.config)
+
+
+# class Wofost80_NWLP_FD_beta_HB(Engine):
+#     """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+#     :param parameterprovider: A ParameterProvider instance providing all parameter values
+#     :param weatherdataprovider: A WeatherDataProvider object
+#     :param agromanagement: Agromanagement data
+#     """
+#     config = "Wofost80_NWLP_FD_HB.conf"
+
+#     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+#         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+#                         config=self.config)
 
 class WOFOST7_ML(Engine):
     """Convenience class for running WOFOST8.0 nutrient and water-limited production
