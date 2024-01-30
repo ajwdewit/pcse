@@ -146,7 +146,7 @@ class N_soil_dynamics_layered(SimulationObject):
         NH4Conc = Float()           # NH4-N concentration in rain water (mg N L-1)
         NO3I = Instance(list)       # Initial amount of NO3-N (kg N ha-1)
         NH4I = Instance(list)       # Initial amount of NH4-N (kg N ha-1)
-        TSCF_N = Float()            # Transpiration concentration stream factor (-)
+        # TSCF_N = Float()            # Transpiration concentration stream factor (-)
         WFPS_CRIT = Float()         # Critical water filled pore space fraction (m3 water m-3 pore) for denitrification
 
     def initialize(self, day, kiosk, parvalues):
@@ -238,7 +238,7 @@ class N_soil_dynamics_layered(SimulationObject):
         # Get external state variable (in meters)
         RD_m = self.get_root_length(k)
         SM = self.get_soil_moisture_content(k)
-        TRALY = self.get_transpiration_rate_layer(k, SM)
+        # TRALY = self.get_transpiration_rate_layer(k, SM)
         NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM, TRALY, p.TSCF_N) / self.m2_to_ha
 
         self._RAGEAM = np.zeros_like(AGE)
