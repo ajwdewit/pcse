@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
-# Approach based on LINTUL N/P/K made by Joost Wolf
+# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Herman Berghuijs (herman.berghuijs@wur.nl) and Allard de Wit (allard.dewit@wur.nl), January 2024
 
 import numpy as np
 from .. import exceptions as exc
