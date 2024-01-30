@@ -238,7 +238,6 @@ class N_soil_dynamics_layered(SimulationObject):
         # Get external state variable (in meters)
         RD_m = self.get_root_length(k)
         SM = self.get_soil_moisture_content(k)
-        # TRALY = self.get_transpiration_rate_layer(k, SM)
         NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM, p.TSCF_N) / self.m2_to_ha
 
         self._RAGEAM = np.zeros_like(AGE)
@@ -278,7 +277,6 @@ class N_soil_dynamics_layered(SimulationObject):
         SM = self.get_soil_moisture_content(k)
         pF = self.get_pF(self.soiln_profile, SM)
         T = drv.TEMP
-        # TRALY = self.get_transpiration_rate_layer(k, SM)
 
         # Get soil pH
         pH = self.get_pH(self.soiln_profile)
@@ -382,8 +380,6 @@ class N_soil_dynamics_layered(SimulationObject):
         RD_m = self.get_root_length(k)
         SM = self.get_soil_moisture_content(k)
 
-        # TRALY = self.get_transpiration_rate_layer(k, SM)
-
         # Calculate the amount of N available for root uptake in the next time step
         s.NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM, p.TSCF_N) / self.m2_to_ha
         self.check_mass_balances(day, delt)
@@ -465,13 +461,6 @@ class N_soil_dynamics_layered(SimulationObject):
     def get_soil_moisture_content(self, k):
         SM = k.SM
         return SM
-
-    # def get_transpiration_rate_layer(self, k, SM):
-    #     if "RNuptake" in k:
-    #         TRALY = k.TRALY * self.cm_to_m
-    #     else:
-    #         TRALY = np.zeros(len(SM))
-    #     return TRALY
 
     def get_water_flow_rates(self, k):
         flow_m_per_d = k.Flow * self.cm_to_m
@@ -812,15 +801,6 @@ class N_soil_dynamics_layered(SimulationObject):
 
             def calculate_NO3_plant_uptake_rate(self, N_demand_soil, NO3, RD_m, SM, TCSF_N, zmax, zmin):
                 NO3_av = self.calculate_available_NO3(NO3, RD_m, SM, TCSF_N, zmax, zmin)
-                
-                # # SWAP
-                # layer_thickness = zmax - zmin
-                # cNO3 = self.calculate_NO3_concentration(layer_thickness, NO3, SM)
-                # ## NO3 uptake limited by mass transport
-                # PNO3UpTran = TCSF_N * TRALYIL * cNO3
-                # RNO3UP = min(N_demand_soil, PNO3UpTran, NO3_av)
-
-                # Old
                 RNO3UP = min(N_demand_soil, NO3_av)
                 return RNO3UP
 
