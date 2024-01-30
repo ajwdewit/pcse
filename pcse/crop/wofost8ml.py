@@ -20,15 +20,13 @@ from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
 from .assimilation import WOFOST_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_N as Partitioning
 from .evapotranspiration import EvapotranspirationCO2Layered as Evapotranspiration
-
 from .n_dynamics import N_Crop_Dynamics as N_crop
-#from pcse.soil.n_soil_dynamics import N_Soil_Dynamics as N_soil
 from .nutrients.n_stress import N_Stress as N_Stress
 
-#-------------------------------------------------------------------------------
 class Wofost(SimulationObject):
     """Top level object organizing the different components of the WOFOST crop
-    simulation.
+    simulation. EvapotranspirationCO2Layered is used as the Evapotranspiration
+    to allow simulations with the layered soil water balance watfgdw.    
             
     The CropSimulation object organizes the different processes of the crop
     simulation. Moreover, it contains the parameters, rate and state variables
@@ -44,6 +42,8 @@ class Wofost(SimulationObject):
         7. Stem dynamics (self.st_dynamics)
         8. Root dynamics (self.ro_dynamics)
         9. Storage organ dynamics (self.so_dynamics)
+        10. N crop dynamics (self.n_crop_dynamics)
+        11. N stress (self.n_stress)
 
     **Simulation parameters:**
     
@@ -60,37 +60,49 @@ class Wofost(SimulationObject):
     
     **State variables:**
 
-    =========== ================================================= ==== ===============
-     Name        Description                                      Pbl      Unit
-    =========== ================================================= ==== ===============
-    TAGP        Total above-ground Production                      N    |kg ha-1|
-    GASST       Total gross assimilation                           N    |kg CH2O ha-1|
-    MREST       Total gross maintenance respiration                N    |kg CH2O ha-1|
-    CTRAT       Total crop transpiration                           N    cm
-    HI          Harvest Index (only calculated during              N    -
-                `finalize()`)
-    DOF         Date representing the day of finish of the crop    N    -
-                simulation. 
-    FINISH_TYPE String representing the reason for finishing the   N    -
-                simulation: maturity, harvest, leave death, etc.
-    =========== ================================================= ==== ===============
+    ============  ================================================= ==== ===============
+     Name          Description                                      Pbl      Unit
+    ============  ================================================= ==== ===============
+    TAGP          Total above-ground Production                      N    |kg ha-1|
+    GASST         Total gross assimilation                           N    |kg CH2O ha-1|
+    MREST         Total gross maintenance respiration                N    |kg CH2O ha-1|
+    CTRAT         Total crop transpiration accumulated over the
+                  crop cycle                                         N    cm
+    CEVST         Total soil evaporation accumulated over the
+                  crop cycle                                         N    cm
+    HI            Harvest Index (only calculated during              N    -
+                  `finalize()`)
+    DOF           Date representing the day of finish of the crop    N    -
+                  simulation.
+    FINISH_TYPE   String representing the reason for finishing the   N    -
+                  simulation: maturity, harvest, leave death, etc.
+    REALLOC_<o>   Reallocation rate of organ o                      
+    ============  ================================================= ==== ===============
 
  
      **Rate variables:**
 
-    =======  ================================================ ==== =============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================ ==== =============
-    GASS     Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
-    MRES     Actual maintenance respiration rate, taking into
-             account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
-    ASRC     Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
-    DMI      Total dry matter increase, calculated as ASRC
-             times a weighted conversion efficiency.            Y  |kg ha-1 d-1|
-    ADMI     Aboveground dry matter increase                    Y  |kg ha-1 d-1|
-    =======  ================================================ ==== =============
+    ======================= ================================================= ==== =============
+     Name                    Description                                      Pbl      Unit
+    =======================  ================================================ ==== =============
+    GASS                    Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
+    PGASS                   Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
+    MRES                    Actual maintenance respiration rate, taking into
+                            account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
+    PMRES                   Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
+    REALLOC_DVS             Development stage at which reallocation starts     N  -
+    REALLOC_<o>_FRACTION    Fraction of dry matter of organ o that becomes
+                            available at development stage REALLOC_DVS         Y  |kg DM kg-1 DM|
+    REALLOC_<o>_RATE:       Relative rate of reallocation from organ o.        N  |d-1|
+    REALLOC_EFFICIENCY:     Efficiency of reallocation                         N  |kg DM kg-1 DM|
+    ASRC                    Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
+    DMI                     Total dry matter increase, calculated as ASRC
+                            times a weighted conversion efficieny.             Y  |kg ha-1 d-1|
+    ADMI                    Aboveground dry matter increase                    Y  |kg ha-1 d-1|
+    =======================  ================================================ ==== =============
 
     """
+   
     # Placeholders for biomass available for reallocation
     _WLV_REALLOC = Float(None)
     _WST_REALLOC = Float(None)
@@ -105,7 +117,6 @@ class Wofost(SimulationObject):
     st_dynamics = Instance(SimulationObject)
     ro_dynamics = Instance(SimulationObject)
     so_dynamics = Instance(SimulationObject)
-
     n_crop_dynamics = Instance(SimulationObject)
     n_stress = Instance(SimulationObject)
     
@@ -146,7 +157,6 @@ class Wofost(SimulationObject):
         RLV_REALLOCATED = Float(0.)
         RST_REALLOCATED = Float(0.)
 
-
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -170,14 +180,13 @@ class Wofost(SimulationObject):
         self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
 
+        # Added for book keeping of N/P/K in crop and soil
         self.n_crop_dynamics = N_crop(day, kiosk, parvalues)
         self.n_stress = N_Stress(day, kiosk, parvalues)
 
-
         # Initial total (living+dead) above-ground biomass of the crop
-        TAGP = self.kiosk["TWLV"] + \
-               self.kiosk["TWST"] + \
-               self.kiosk["TWSO"]
+        TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
+        
         self.states = self.StateVariables(kiosk,
                                           publish=["TAGP", "GASST", "MREST", "HI"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0,

@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Herman Berghuijs (herman.berghuijs@wur.nl) and Allard de Wit (allard.dewit@wur.nl), January 2024
 
 import datetime
 
@@ -18,16 +20,14 @@ from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
 from .assimilation import WOFOST_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_N as Partitioning
 from .evapotranspiration import EvapotranspirationCO2 as Evapotranspiration
-
 from .n_dynamics import N_Crop_Dynamics as N_crop
-from pcse.soil.n_soil_dynamics import N_Soil_Dynamics as N_soil
 from .nutrients.n_stress import N_Stress as N_Stress
 
-
-class Wofost80(SimulationObject):
-    
+class Wofost80(SimulationObject):    
     """Top level object organizing the different components of the WOFOST crop
-    simulation including the implementation of N/P/K dynamics.
+    simulation including the implementation of N dynamics. EvapotranspirationCO2
+    is used as the Evapotranspiration to allow simulations with the classic soil 
+    water balance classic_waterbalance.
             
     The CropSimulation object organizes the different processes of the crop
     simulation. Moreover, it contains the parameters, rate and state variables
@@ -43,9 +43,9 @@ class Wofost80(SimulationObject):
         7. Stem dynamics (self.st_dynamics)
         8. Root dynamics (self.ro_dynamics)
         9. Storage organ dynamics (self.so_dynamics)
-        10. N/P/K crop dynamics (self.n_crop_dynamics)
-        12. N/P/K stress (self.n_stress)
-
+        10. N crop dynamics (self.n_crop_dynamics)
+        11. N stress (self.n_stress)
+        
     **Simulation parameters:**
     
     ======== =============================================== =======  ==========
@@ -101,17 +101,18 @@ class Wofost80(SimulationObject):
                             times a weighted conversion efficieny.             Y  |kg ha-1 d-1|
     ADMI                    Aboveground dry matter increase                    Y  |kg ha-1 d-1|
     =======================  ================================================ ==== =============
-        """
-
+        
+    """
+    
     # Placeholders for biomass available for reallocation
     _WLV_REALLOC = Float(None)
     _WST_REALLOC = Float(None)
     
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
-    part = Instance(SimulationObject)
+    part  = Instance(SimulationObject)
     assim = Instance(SimulationObject)
-    mres = Instance(SimulationObject)
+    mres  = Instance(SimulationObject)
     evtra = Instance(SimulationObject)
     lv_dynamics = Instance(SimulationObject)
     st_dynamics = Instance(SimulationObject)
@@ -159,7 +160,8 @@ class Wofost80(SimulationObject):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE model instance
-        :param parvalues: dictionary with parameter key/value pairs
+        :param parvalues: `ParameterProvider` object providing parameters as
+                key/value pairs
         """
         
         self.params = self.Parameters(parvalues)
@@ -176,10 +178,10 @@ class Wofost80(SimulationObject):
         self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
         self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
+        
         # Added for book keeping of N/P/K in crop and soil
         self.n_crop_dynamics = N_crop(day, kiosk, parvalues)
-        self.n_stress = N_Stress(day, kiosk, parvalues)
-        
+        self.n_stress = N_Stress(day, kiosk, parvalues)        
 
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
