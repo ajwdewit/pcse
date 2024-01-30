@@ -8,7 +8,7 @@ from pcse.base import SimulationObject
 from .classic_waterbalance import WaterbalanceFD, WaterbalancePP
 from .watfdgw import WaterBalanceLayered, WaterBalanceLayered_PP
 from .n_soil_dynamics import N_Soil_Dynamics, N_PotentialProduction
-from .n_soil_dynamics_layered import N_soil_dynamics_layered
+from .SNOMIN import SNOMIN
 from ..traitlets import Instance
 from ..decorators import prepare_states
 
@@ -221,7 +221,7 @@ class SoilModuleWrapper_NWLP_FD_multilayer2(SimulationObject):
         :param parvalues: dictionary with parameter key/value pairs
         """
         self.WaterbalanceFD = WaterBalanceLayered(day, kiosk, parvalues)
-        self.N_Soil_Dynamics = N_soil_dynamics_layered(day, kiosk, parvalues)
+        self.N_Soil_Dynamics = SNOMIN(day, kiosk, parvalues)
 
     def calc_rates(self, day, drv):
         self.WaterbalanceFD.calc_rates(day, drv)

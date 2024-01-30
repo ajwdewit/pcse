@@ -2,9 +2,7 @@
 # Copyright (c) 2004-2015 Alterra, Wageningen-UR
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
 # Approach based on LINTUL N/P/K made by Joost Wolf
-from email.mime import application
-from re import L
-from symbol import pass_stmt
+
 import numpy as np
 from .. import exceptions as exc
 from pcse.traitlets import Float
@@ -17,7 +15,7 @@ from .soiln_profile import SoilNProfile
 
 import datetime as dt
 
-class N_soil_dynamics_layered(SimulationObject):
+class SNOMIN(SimulationObject):
     """Provides unlimited soil N/P/K for potential production simulations.
 
     NAVAIL just remains 100 kg/ha whatever the crop takes.
