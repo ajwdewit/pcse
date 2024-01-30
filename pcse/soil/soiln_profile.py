@@ -19,7 +19,9 @@ class pFCurve(Afgen):
     pass
 
 class SoilNLayer(HasTraits):
-    """Contains the intrinsic and derived properties for each soil layers
+    """
+    Contains the intrinsic and derived properties for each soil layer that are used by
+    SNOMIN. The following properties are defined for each layer.
     """
     SMfromPF = Instance(pFCurve)  # soil moisture content as function of pF
     PFfromSM = Instance(Afgen)  # Inverse from SMfromPF
@@ -48,8 +50,6 @@ class SoilNLayer(HasTraits):
         self.CNRatioSOMI = layer.CNRatioSOMI
         self.FSOMI = layer.FSOMI
         self.RHOD = layer.RHOD
-        self.NO3I = -99.
-        self.NH4I = -99.
 
         # compute hash value of this layer
         self._hash = hash((tuple(layer.SMfromPF), tuple(layer.CONDfromPF)))
