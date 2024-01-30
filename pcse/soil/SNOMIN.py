@@ -140,8 +140,8 @@ class SNOMIN(SimulationObject):
         KNIT_REF = Float()          # Reference first order nitrification rate constant (d-1)
         KSORP = Float()             # Sorption coefficient ammonium (m3 water kg-1 soil)
         MRCDIS = Float()            # Michaelis Menten constant for response factor denitrification to soil respiration
-        NO3Conc = Float()           # NO3-N concentration in rain water (mg N L-1)
-        NH4Conc = Float()           # NH4-N concentration in rain water (mg N L-1)
+        NO3ConcR = Float()          # NO3-N concentration in rain water (mg N L-1)
+        NH4ConcR = Float()          # NH4-N concentration in rain water (mg N L-1)
         NO3I = Instance(list)       # Initial amount of NO3-N (kg N ha-1)
         NH4I = Instance(list)       # Initial amount of NH4-N (kg N ha-1)
         WFPS_CRIT = Float()         # Critical water filled pore space fraction (m3 water m-3 pore) for denitrification
@@ -328,7 +328,7 @@ class SNOMIN(SimulationObject):
             r.RNORG = r.RNORGAM - r.RNORGDIS
 
         # Calculate deposition rates
-        r.RNH4DEPOS, r.RNO3DEPOS = sinm.calculate_deposition_rates(self.soiln_profile, infiltration_rate_m_per_d, s.NH4, p.NH4Conc, s.NO3, p.NO3Conc)
+        r.RNH4DEPOS, r.RNO3DEPOS = sinm.calculate_deposition_rates(self.soiln_profile, infiltration_rate_m_per_d, s.NH4, p.NH4ConcR, s.NO3, p.NO3ConcR)
 
         # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic N flow rates between layers
         NH4PRE2 = NH4PRE + (r.RNH4AM + r.RNH4MIN + r.RNH4DEPOS - r.RNH4NITR) * delt
@@ -551,11 +551,11 @@ class SNOMIN(SimulationObject):
             RNO3IN, RNO3OUT = sni.calculate_NO3_flow_rates(soiln_profile, flow_m_per_d, NO3, SM)
             return RNH4IN, RNH4OUT, RNO3IN, RNO3OUT
 
-        def calculate_deposition_rates(self,soiln_profile,infiltration_rate_m_per_d, NH4, NH4Conc, NO3, NO3Conc):
+        def calculate_deposition_rates(self,soiln_profile,infiltration_rate_m_per_d, NH4, NH4ConcR, NO3, NO3ConcR):
             samm = self.SoilAmmoniumNModel()
             sni = self.SoilNNitrateModel()
-            RNH4DEPOS = samm.calculate_NH4_deposition_rates(soiln_profile, infiltration_rate_m_per_d, NH4, NH4Conc)
-            RNO3DEPOS = sni.calculate_NO3_deposition_rates(soiln_profile, infiltration_rate_m_per_d, NO3, NO3Conc)
+            RNH4DEPOS = samm.calculate_NH4_deposition_rates(soiln_profile, infiltration_rate_m_per_d, NH4, NH4ConcR)
+            RNO3DEPOS = sni.calculate_NO3_deposition_rates(soiln_profile, infiltration_rate_m_per_d, NO3, NO3ConcR)
             return RNH4DEPOS, RNO3DEPOS
 
         def calculate_reaction_rates(self, soiln_profile, KDENIT_REF, KNIT_REF, KSORP, MRCDIS, NH4, NO3, RCORGDIS, RNORGDIS, SM, T, WFPS_CRIT):
@@ -594,13 +594,13 @@ class SNOMIN(SimulationObject):
             return RNH4UP, RNO3UP  
 
         class SoilAmmoniumNModel():
-            def calculate_NH4_deposition_rates(self, soiln_profile, infiltration_rate_m_per_d, NH4, NH4Conc):
+            def calculate_NH4_deposition_rates(self, soiln_profile, infiltration_rate_m_per_d, NH4, NH4ConcR):
                 RNH4DEPOS = np.zeros_like(NH4)
                 mg_to_kg = 1e-6
                 L_to_m3 = 1e-3
                 for il, layer in enumerate(soiln_profile):
                     if(il == 0):
-                        RNH4DEPOS[il] = (mg_to_kg / L_to_m3) * NH4Conc * infiltration_rate_m_per_d
+                        RNH4DEPOS[il] = (mg_to_kg / L_to_m3) * NH4ConcR * infiltration_rate_m_per_d
                     else:
                         RNH4DEPOS[il] = 0.
                 return RNH4DEPOS
@@ -705,13 +705,13 @@ class SNOMIN(SimulationObject):
                 return fT
 
         class SoilNNitrateModel():
-            def calculate_NO3_deposition_rates(self, soiln_profile, infiltration_rate_m_per_d, NO3, NO3Conc):
+            def calculate_NO3_deposition_rates(self, soiln_profile, infiltration_rate_m_per_d, NO3, NO3ConcR):
                 mg_to_kg = 1e-6
                 L_to_m3 = 1e-3
                 RNO3DEPOS = np.zeros_like(NO3)
                 for il, layer in enumerate(soiln_profile):
                     if(il == 0):
-                        RNO3DEPOS[il] = (mg_to_kg / L_to_m3) * NO3Conc * infiltration_rate_m_per_d
+                        RNO3DEPOS[il] = (mg_to_kg / L_to_m3) * NO3ConcR * infiltration_rate_m_per_d
                     else:
                         RNO3DEPOS[il] = 0.
                 return RNO3DEPOS
