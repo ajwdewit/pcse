@@ -173,7 +173,6 @@ class N_soil_dynamics_layered(SimulationObject):
             AGE[0,il] = self.params.A0SOM * self.y_to_d
             ORGMAT[0,il] = layer.RHOD_kg_per_m3 * layer.FSOMI * layer.Thickness_m
             CORG[0,il] = minip_C.calculate_organic_C(ORGMAT[0,il])
-            #NORG[0,il] = CORG[0, il] / self.params.CNRatioSOMI
             NORG[0,il] = CORG[0, il] / layer.CNRatioSOMI
 
         # Initialize state variables to check the mass balance of organic matter
@@ -300,7 +299,8 @@ class N_soil_dynamics_layered(SimulationObject):
         r.RAGEAG = sonm.calculate_apparent_age_increase_rate(s.AGE, delt, pF, pH, T)
 
         # Calculate dissimilation rates of each ammendment
-        r.RORGMATDIS, r.RCORGDIS, r.RNORGDIS = sonm.calculate_dissimilation_rates(s.AGE, s.AGE0, p.CNRatioBio, p.FASDIS, s.NORG, s.ORGMAT, pF, pH, T)
+        # r.RORGMATDIS, r.RCORGDIS, r.RNORGDIS = sonm.calculate_dissimilation_rates(s.AGE, s.AGE0, p.CNRatioBio, p.FASDIS, s.NORG, s.ORGMAT, pF, pH, T)
+        r.RORGMATDIS, r.RCORGDIS, r.RNORGDIS = sonm.calculate_dissimilation_rates(s.AGE, p.CNRatioBio, p.FASDIS, s.NORG, s.ORGMAT, pF, pH, T)
 
         # Calculate rates of change apparent age, organic matter, organic C, and organic N
         r.RAGE = r.RAGEAG + r.RAGEAM
@@ -843,7 +843,7 @@ class N_soil_dynamics_layered(SimulationObject):
 
             return RORGMAT_am, RCORG_am, RNORG_am
 
-        def calculate_dissimilation_rates(self, AGE, AGE0, CNRatioBio, FASDIS, NORG, ORGMAT, pF, pH, T):
+        def calculate_dissimilation_rates(self, AGE, CNRatioBio, FASDIS, NORG, ORGMAT, pF, pH, T):
             RORGMATDIS = np.zeros_like(AGE)
             RCORGDIS = np.zeros_like(AGE)
             RNORGDIS = np.zeros_like(AGE)
@@ -854,9 +854,9 @@ class N_soil_dynamics_layered(SimulationObject):
             for am in range(0, AGE.shape[0]):
                 for il in range(0, AGE.shape[1]):
                     if(ORGMAT[am, il] > 0):
-                        RORGMATDIS[am,il] = janssen.calculate_dissimilation_rate_OM_T(ORGMAT[am,il], AGE0[am,il], AGE[am,il], pF[il], pH[il], T)
-                        RCORGDIS[am,il] = minip_c.calculate_dissimilation_rate_C(janssen, ORGMAT[am,il], AGE0[am,il], AGE[am,il], pF[il], pH[il], T)
-                        RNORGDIS[am,il] = minip_n.calculate_dissimilation_rate_N(janssen, minip_c, ORGMAT[am,il], NORG[am,il], AGE0[am,il], FASDIS, CNRatioBio, AGE[am,il], pF[il], pH[il], T)
+                        RORGMATDIS[am,il] = janssen.calculate_dissimilation_rate_OM_T(ORGMAT[am,il], AGE[am,il], pF[il], pH[il], T)
+                        RCORGDIS[am,il] = minip_c.calculate_dissimilation_rate_C(janssen, ORGMAT[am,il], AGE[am,il], pF[il], pH[il], T)
+                        RNORGDIS[am,il] = minip_n.calculate_dissimilation_rate_N(janssen, minip_c, ORGMAT[am,il], NORG[am,il], FASDIS, CNRatioBio, AGE[am,il], pF[il], pH[il], T)
                     else:
                         RORGMATDIS[am,il] = 0.
                         RCORGDIS[am,il] = 0.                    
@@ -900,24 +900,18 @@ class N_soil_dynamics_layered(SimulationObject):
                 dA = f_pH * f_T * f_SM * dt
                 return dA
 
-            def calculate_organic_matter_amount_analytical(self, a, OM0, t):
-                m = self.m
-                b = self.b        
-                OM = OM0 * np.exp((b/(m-1)) * (pow((a + t)/self.y_to_d,(1-m)) - pow((a/self.y_to_d),1-m)))
-                return OM
 
-            def calculate_relative_dissimilation_rate_OM_T(self, a, t, pF, pH, T):
+            def calculate_relative_dissimilation_rate_OM_T(self, t, pF, pH, T):
                 m = self.m
                 b = self.b
                 f_pH = self.calculate_pH_response_dissimilation_rate(pH)
                 f_T = self.calculate_temperature_response_dissimilation_rate_Yang(T)
                 f_SM = self.calculate_soil_moisture_response_dissimilation_rate(pF)
                 k = f_pH * f_T * f_SM * b *  pow(t/self.y_to_d, -m) / self.y_to_d
-                #k = b *  pow(t/self.y_to_d, -m) / self.y_to_d
                 return k
 
-            def calculate_dissimilation_rate_OM_T(self, OM, a, t, pF, pH, T):
-                k = self.calculate_relative_dissimilation_rate_OM_T(a, t, pF, pH, T)
+            def calculate_dissimilation_rate_OM_T(self, OM, t, pF, pH, T):
+                k = self.calculate_relative_dissimilation_rate_OM_T(t, pF, pH, T)
                 rate = k * OM
                 return rate
 
@@ -953,20 +947,20 @@ class N_soil_dynamics_layered(SimulationObject):
             OM_to_C = 0.58
             y_to_d = 365.
 
-            def calculate_assimilation_rate(self, janssen, OM, a, f_ass_dis, t, pF, pH, T):
-                r_disc = self.calculate_dissimilation_rate_C(janssen, OM, a, t, pF, pH, T)
+            def calculate_assimilation_rate(self, janssen, OM, f_ass_dis, t, pF, pH, T):
+                r_disc = self.calculate_dissimilation_rate_C(janssen, OM, t, pF, pH, T)
                 r_ass = r_disc * f_ass_dis
                 return r_ass
     
-            def calculate_dissimilation_rate_C(self, janssen, OM, a, t, pF, pH, T):
-                k = janssen.calculate_relative_dissimilation_rate_OM_T(a, t, pF, pH, T)
+            def calculate_dissimilation_rate_C(self, janssen, OM, t, pF, pH, T):
+                k = janssen.calculate_relative_dissimilation_rate_OM_T(t, pF, pH, T)
                 Corg = self.calculate_organic_C(OM)
                 rate = k * Corg
                 return rate
 
-            def calculate_total_conversion_rate_C(self, janssen, OM, a, f_ass_dis, t, pF, pH, T):
-                r_dis_C = self.calculate_dissimilation_rate_C(janssen, OM, a, t, pF, pH, T)
-                r_ass_C = self.calculate_assimilation_rate(janssen, OM, a, f_ass_dis, t, pF, pH, T)
+            def calculate_total_conversion_rate_C(self, janssen, OM, f_ass_dis, t, pF, pH, T):
+                r_dis_C = self.calculate_dissimilation_rate_C(janssen, OM, t, pF, pH, T)
+                r_ass_C = self.calculate_assimilation_rate(janssen, OM, f_ass_dis, t, pF, pH, T)
                 r_conv_C = r_dis_C + r_ass_C
                 return r_conv_C
 
@@ -976,19 +970,19 @@ class N_soil_dynamics_layered(SimulationObject):
 
         class MINIP_N(object):    
 
-            def calculate_total_conversion_rate_N(self, janssen, minip_c, OM, Norg, a, f_ass_dis, t, pF, pH, T):
-                r_conv_C = minip_c.calculate_total_conversion_rate_C(janssen, OM, a, f_ass_dis, t, pF, pH, T)
+            def calculate_total_conversion_rate_N(self, janssen, minip_c, OM, Norg, f_ass_dis, t, pF, pH, T):
+                r_conv_C = minip_c.calculate_total_conversion_rate_C(janssen, OM, f_ass_dis, t, pF, pH, T)
                 C = minip_c.calculate_organic_C(OM)
                 r_conv_N = r_conv_C * (Norg/C)
                 return r_conv_N
 
-            def calculate_assimilation_rate_N(self, janssen, minip_c, OM, a, f_ass_dis, f_C_N_microbial, t, pF, pH, T):
-                r_ass_C = minip_c.calculate_assimilation_rate(janssen, OM, a, f_ass_dis, t, pF, pH, T)
+            def calculate_assimilation_rate_N(self, janssen, minip_c, OM, f_ass_dis, f_C_N_microbial, t, pF, pH, T):
+                r_ass_C = minip_c.calculate_assimilation_rate(janssen, OM, f_ass_dis, t, pF, pH, T)
                 r_ass_N = r_ass_C/f_C_N_microbial
                 return r_ass_N
 
-            def calculate_dissimilation_rate_N(self, janssen, minip_c, OM, Norg, a, f_ass_dis, f_C_N_microbial, t, pF, pH, T):
-                r_ass_N = self.calculate_assimilation_rate_N(janssen, minip_c, OM, a, f_ass_dis, f_C_N_microbial, t, pF, pH, T)
-                r_conv_N = self.calculate_total_conversion_rate_N(janssen, minip_c, OM, Norg, a, f_ass_dis, t, pF, pH, T)
+            def calculate_dissimilation_rate_N(self, janssen, minip_c, OM, Norg, f_ass_dis, f_C_N_microbial, t, pF, pH, T):
+                r_ass_N = self.calculate_assimilation_rate_N(janssen, minip_c, OM, f_ass_dis, f_C_N_microbial, t, pF, pH, T)
+                r_conv_N = self.calculate_total_conversion_rate_N(janssen, minip_c, OM, Norg, f_ass_dis, t, pF, pH, T)
                 r_diss_N = r_conv_N - r_ass_N
                 return r_diss_N
