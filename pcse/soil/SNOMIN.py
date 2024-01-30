@@ -16,9 +16,81 @@ from .soiln_profile import SoilNProfile
 import datetime as dt
 
 class SNOMIN(SimulationObject):
-    """Provides unlimited soil N/P/K for potential production simulations.
+    """
+    SNOMIN (Soil Nitrogen module for Mineral and Inorganic Nitrogen) is a layered soil nitrogen balance. A
+    full mathematical description of the model is given by Berghuijs et al (2024).
+    
+    **Simulation parameters:**
 
-    NAVAIL just remains 100 kg/ha whatever the crop takes.
+    ========== ==================================================  ===================
+     Name      Description                                         Unit
+    ========== ==================================================  ===================
+    A0SOM      Initial age of soil organic material                y
+    CNRatioBio C:N ratio of microbial biomass                      kg C kg-1 N
+    FASDIS     Fraction of assimilation to dissimilation           -
+    KDENIT_REF Reference first order denitrification rate constant d-1
+    KNIT_REF   Reference first order nitrification rate constant   d-1
+    KSORP      Sorption coefficient ammonium (m3 water kg-1 soil)  m3 soil kg-1 soil
+    MRCDIS     Michaelis Menten constant for response factor 
+               denitrification to soil respiration                 kg C m-2 d-1
+    NO3ConcR   NO3-N concentration in rain water                   mg NO3--N L- water
+    NH4ConcR   NH4-N concentration in rain water                   mg NH4+-N L-1 water
+    NO3I       Initial amount of NO3-N **                          kg NO3--N ha-1
+    NH4I       Initial amount of NH4-N **                          kg NH4+-N ha-1)
+    WFPS_CRIT  Critical water filled pore space fraction           m3 water m-3 pore
+    ========== ==================================================  ===================
+    ** This state variable is defined for each soil layer
+
+    ** State variables
+    ========== ==================================================  ==========
+     Name      Description                                         Unit
+    ========== ==================================================  ==========
+    AGE        Appearant age of amendment (d) *                    d 
+    ORGMAT     Amount of organic matter (kg ORG ha-1) *            kg OM m-2
+    CORG       Amount of C in organic matter (kg C ha-1) *         kg C m-2
+    NORG       Amount of N in organic matter (kg N ha-1) *         kg N m-2
+    NH4        Amount of NH4-N (kg N ha-1) **                      kg NH4-N m-2
+    NO3        Amount of NO3-N (kg N ha-1) **                      kg NO3-N m-2
+    ========== ================================================== ============
+    *  This state variable is defined for each combination of soil layer and amendment
+    ** This state variable is defined for each soil layer
+
+    ** Rate variables
+    ========== ==================================================  ==========
+     Name      Description                                         Unit
+    ========== ==================================================  ==========
+    RAGE       Rate of change of apparent age **                   d d-1
+    RAGEAM     Initial apparent age **                             d d-1
+    RAGEAG     Rate of ageing of amendment **                      d d-1
+    RCORG      Rate of change of organic C **                      kg C m-2 d-1 
+    RCORGAM    Rate pf application organic C **                    kg C m-2 d-1
+    RCORGDIS   Dissimilation rate of organic C **                  kg C m-2 d-1 
+    RNH4       Rate of change amount of NH4+-N *                   kg NH4+-N m-2 d-1
+    RNH4AM     Rate of NH4+-N application *                        kg NH4+-N m-2 d-1
+    RNH4DEPOS  Rate of NH4-N deposition *                          kg NH4+-N m-2 d-1
+    RNH4IN     Rate of NH4+-N inflow from adjacent layer *         kg NH4+-N m-2 d-1
+    RNH4MIN    Net rate of mineralization *                        kg NH4+-N m-2 d-1 
+    RNH4NITR   Rate of nitrification *                             kg NH4+-N m-2 d-1
+    RNH4OUT    Rate of NH4+-N outflow to adjacent layer *          kg NH4+-N m-2 d-1
+    RNH4UP     Rate of NH4+-N root uptake *                        kg NH4+-N m-2 d-1
+    RNO3       Rate of change amount of NO3--N *                   kg NO3--N m-2 d-1
+    RNO3AM     Rate of NO3--N application *                        kg NO3--N m-2 d-1
+    RNO3DENITR Rate of denitrification *                           kg NO3--N m-2 d-1
+    RNO3DEPOS  Rate of NO3--N deposition *                         kg NO3--N m-2 d-1
+    RNO3IN     Rate of NH4+-N inflow from adjacent layer *         kg NO3+-N m-2 d-1
+    RNO3NITR   Rate of nitrification *                             kg NO3--N m-2 d-1
+    RNO3OUT    Rate of NO3--N outflow to adjacent layer *          kg NO3--N m-2 d-1
+    RNO3UP     Rate of NO3--N root uptake *                        kg NO3--N m-2 d-1
+    RNORG      Rate of change of organic N **                      kg N m-2 d-1
+    RNORGAM    Rate pf application organic N **                    kg N m-2 d-1
+    RNORGDIS   Dissimilation rate of organic matter **             kg N m-2 d-1
+    RORGMAT    Rate of change of organic material **               kg OM m-2 d-1
+    RORGMATAM  Rate of application organic matter **               kg OM m-2 d-1
+    RORGMATDIS Dissimilation rate of organic matter **             kg OM m-2 d-1
+    ========== ==================================================  ==========
+    *  This state variable is defined for each combination of soil layer and amendment
+    ** This state variable is defined for each soil layer
+
     """
 
     # Placeholders initial values
@@ -297,7 +369,6 @@ class SNOMIN(SimulationObject):
         r.RAGEAG = sonm.calculate_apparent_age_increase_rate(s.AGE, delt, pF, pH, T)
 
         # Calculate dissimilation rates of each ammendment
-        # r.RORGMATDIS, r.RCORGDIS, r.RNORGDIS = sonm.calculate_dissimilation_rates(s.AGE, s.AGE0, p.CNRatioBio, p.FASDIS, s.NORG, s.ORGMAT, pF, pH, T)
         r.RORGMATDIS, r.RCORGDIS, r.RNORGDIS = sonm.calculate_dissimilation_rates(s.AGE, p.CNRatioBio, p.FASDIS, s.NORG, s.ORGMAT, pF, pH, T)
 
         # Calculate rates of change apparent age, organic matter, organic C, and organic N
