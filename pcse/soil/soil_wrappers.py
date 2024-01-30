@@ -207,7 +207,7 @@ class SoilModuleWrapper_NWLP_FD_multilayer(SimulationObject):
         self.WaterbalanceFD.integrate(day, delt)
         self.N_Soil_Dynamics.integrate(day, delt)
 
-class SoilModuleWrapper_NWLP_FD_multilayer2(SimulationObject):
+class SoilModuleWrapper_SNOMIN(SimulationObject):
     """This wraps the soil water balance for free drainage conditions and N balance
     for production conditions limited by both soil water and N.
     """
