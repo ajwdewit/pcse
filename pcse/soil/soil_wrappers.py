@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2020 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), September 2020
+# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), January 2024
 """This module wraps the soil components for water and nutrients so that they run jointly
 within the same model.
 """
