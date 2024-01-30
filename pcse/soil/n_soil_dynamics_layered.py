@@ -146,7 +146,6 @@ class N_soil_dynamics_layered(SimulationObject):
         NH4Conc = Float()           # NH4-N concentration in rain water (mg N L-1)
         NO3I = Instance(list)       # Initial amount of NO3-N (kg N ha-1)
         NH4I = Instance(list)       # Initial amount of NH4-N (kg N ha-1)
-        # TSCF_N = Float()            # Transpiration concentration stream factor (-)
         WFPS_CRIT = Float()         # Critical water filled pore space fraction (m3 water m-3 pore) for denitrification
 
     def initialize(self, day, kiosk, parvalues):
