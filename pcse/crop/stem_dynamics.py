@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), April 2024
 
 from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
@@ -120,6 +120,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         rates  = self.rates
         states = self.states
         params = self.params
+        k = self.kiosk
         
         DVS = self.kiosk["DVS"]
         FS = self.kiosk["FS"]
@@ -128,7 +129,7 @@ class WOFOST_Stem_Dynamics(SimulationObject):
         # Growth/death rate stems
         rates.GRST = ADMI * FS
         rates.DRST = params.RDRSTB(DVS) * states.WST
-        rates.GWST = rates.GRST - rates.DRST
+        rates.GWST = rates.GRST - rates.DRST - k.REALLOC_ST
 
     @prepare_states
     def integrate(self, day, delt=1.0):

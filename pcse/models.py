@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), January 2024
 
 from .engine import Engine
 
@@ -14,9 +14,9 @@ class Wofost72_PP(Engine):
     """
     config = "Wofost72_PP.conf"
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, **kwargs):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
+                        config=self.config, **kwargs)
 
 
 class Wofost72_WLP_FD(Engine):
@@ -27,6 +27,20 @@ class Wofost72_WLP_FD(Engine):
     :param agromanagement: Agromanagement data
     """
     config = "Wofost72_WLP_FD.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+class Wofost80_NWLP_FD(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost80_NWLP_FD.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
@@ -79,7 +93,6 @@ class Wofost80_WLP_FD_beta(Engine):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
 
-
 class Wofost80_NWLP_FD_beta(Engine):
     """Convenience class for running WOFOST8.0 nutrient and water-limited production
 
@@ -89,9 +102,9 @@ class Wofost80_NWLP_FD_beta(Engine):
     """
     config = "Wofost80_NWLP_FD.conf"
 
-    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement, **kwargs):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
-                        config=self.config)
+                        config=self.config, **kwargs)
 
 
 class LINTUL3(Engine):
@@ -159,10 +172,79 @@ class LINGRA_NWLP_FD(Engine):
                         config=self.config)
 
 
-class ALCEPAS(Engine):
-    """ALCEPAS Onion growth model.
+class WOFOST7_ML(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
     """
-    config = "alcepas.conf"
+    config = "Wofost7_MLWLP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+class WOFOST8_ML_PP(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost8_ML_PP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+class WOFOST8_ML_WLP(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost8_ML_WLP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+class WOFOST8_ML_NLP(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost8_ML_NLP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+class WOFOST8_ML_NWLP(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost8_ML_NWLP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+class Wofost8_ML_SNOMIN(Engine):
+    """Convenience class for running WOFOST8.0 nutrient and water-limited production
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost8_ML_SNOMIN.conf"
 
     def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,

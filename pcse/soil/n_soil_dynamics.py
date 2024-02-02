@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Wageningen Environmental Research
+# Copyright (c) 2004-2015 Alterra, Wageningen-UR
 # Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
-# Approach based on LINTUL N made by Joost Wolf
+# Approach based on LINTUL N/P/K made by Joost Wolf
 
 from pcse.traitlets import Float
 from pcse.decorators import prepare_rates, prepare_states
@@ -11,9 +11,9 @@ from pcse import signals
 
 
 class N_PotentialProduction(SimulationObject):
-    """Provides unlimited soil N/ for potential production simulations.
+    """Provides unlimited soil N/P/K for potential production simulations.
 
-    NAVAIL just remain 100 kg/ha whatever the crop takes.
+    NAVAIL just remains 100 kg/ha whatever the crop takes.
     """
 
     class StateVariables(StatesTemplate):
@@ -59,6 +59,9 @@ class N_Soil_Dynamics(SimulationObject):
                   mineralisation
     NSOILBASE_FR  Fraction of base soil N that comes available   SSi        -
                   every day
+    NAVAILI       Initial N available in the N pool              SSi      |kg ha-1|
+    PAVAILI       Initial P available in the P pool              SSi      |kg ha-1|
+    KAVAILI       Initial K available in the K pool              SSi      |kg ha-1|
     BG_N_SUPPLY   Background supply of N through atmospheric     SSi      |kg ha-1 d-1|
                   deposition.
     ============  ============================================= =======  ==============
@@ -81,6 +84,7 @@ class N_Soil_Dynamics(SimulationObject):
     ==============  ================================================= ==== =============
     RNSOIL           Rate of change on total soil mineral N            N   |kg ha-1 d-1|
     RNAVAIL          Total change in N availability                    N   |kg ha-1 d-1|
+
     # Rate of fertilizer supply for N/P/K [kg/ha/day]
     FERT_N_SUPPLY    Supply of fertilizer N. This will be supplied     N   |kg ha-1 d-1|
                      by the AgroManager module through the event
@@ -90,8 +94,8 @@ class N_Soil_Dynamics(SimulationObject):
     **Signals send or handled**
 
     `N_Soil_Dynamics` receives the following signals:
-        * APPLY_N: Is received when an external input from N fertilizer
-          is provided. See `_on_APPLY_N()` for details.
+        * APPLY_NPK: Is received when an external input from N/P/K fertilizer
+          is provided. See `_on_APPLY_NPK()` for details.
 
     **External dependencies:**
 
@@ -108,21 +112,26 @@ class N_Soil_Dynamics(SimulationObject):
     """
 
     NSOILI = Float(-99.) # initial soil N amount
-    # placeholders for FERT_N/P/K_SUPPLY
-    _FERT_N_SUPPLY = Float(0.)
-
+    
     class Parameters(ParamTemplate):      
         NSOILBASE = Float(-99.)  # total mineral soil N available at start of growth period [kg N/ha]
         NSOILBASE_FR = Float(-99.)  # fraction of soil mineral N coming available per day [day-1]
-        BG_N_SUPPLY = Float() # Background rates of N/P/K supply [kg/ha/day]
+
+        # Initial values of available nutrients which is different from the previous ones
+        #
+        NAVAILI = Float()
+
+        # Background rates of N supply [kg/ha/day]
+        BG_N_SUPPLY = Float()
 
     class StateVariables(StatesTemplate):
         NSOIL = Float(-99.)  # mineral N available from soil for crop    kg N ha-1
         NAVAIL = Float(-99.)  # total mineral N from soil and fertiliser  kg N ha-1
-
+      
     class RateVariables(RatesTemplate):
-        RNSOIL = Float(-99.)
+        RNSOIL = Float(-99.)        
         RNAVAIL = Float(-99.)
+
         # Rate of fertilizer supply for N [kg/ha/day]
         FERT_N_SUPPLY = Float()
 
@@ -130,7 +139,7 @@ class N_Soil_Dynamics(SimulationObject):
         """
         :param day: start date of the simulation
         :param kiosk: variable kiosk of this PCSE instance
-        :param parvalues: parameter values
+        :param cropdata: dictionary with WOFOST cropdata key/value pairs
         """
 
         self.params = self.Parameters(parvalues)
@@ -140,8 +149,11 @@ class N_Soil_Dynamics(SimulationObject):
         # INITIAL STATES
         p = self.params
         self.NSOILI = p.NSOILBASE
-        self.states = self.StateVariables(kiosk, publish=["NAVAIL"], NSOIL=p.NSOILBASE, NAVAIL=0.)
+        
+        self.states = self.StateVariables(kiosk,
+            publish=["NAVAIL"], NSOIL=p.NSOILBASE, NAVAIL=p.NAVAILI)
         self._connect_signal(self._on_APPLY_N, signals.apply_n)
+        self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
         
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -150,24 +162,34 @@ class N_Soil_Dynamics(SimulationObject):
         p = self.params
         k = self.kiosk
 
-        # Rate of supplied N
-        r.FERT_N_SUPPLY = self._FERT_N_SUPPLY
-        self._FERT_N_SUPPLY = 0.
+        r.RNSOIL = -max(0., min(p.NSOILBASE_FR * self.NSOILI, s.NSOIL))
 
-        r.RNSOIL = max(0., min(p.NSOILBASE_FR * self.NSOILI, s.NSOIL))
-        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - k.RNuptake + r.RNSOIL
+        # Check uptake rates from crop, if a crop is actually growing
+        RNuptake = k.RNuptake if "RNuptake" in self.kiosk else 0.
 
+        r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - RNuptake - r.RNSOIL
+        
     @prepare_states
     def integrate(self, day, delt=1.0):
         rates = self.rates
         states = self.states
 
-        # mineral NPK amount in the soil
-        states.NSOIL += rates.RNSOIL
-        # total (soil + fertilizer) NPK amount in soil
-        states.NAVAIL += rates.RNAVAIL
+        # mineral N amount in the soil
+        states.NSOIL += rates.RNSOIL * delt
+        
+        # total (soil + fertilizer) N amount in soil
+        states.NAVAIL += rates.RNAVAIL * delt
 
-    @prepare_rates
-    def _on_APPLY_N(self, N_amount=None, N_recovery=None, *args, **kwargs):
+    def _on_APPLY_N(self, N_amount=None,N_recovery=None):
+        r = self.rates
+        r.unlock()
+        r.FERT_N_SUPPLY = N_amount * N_recovery
+        r.lock()
 
-        self._FERT_N_SUPPLY = N_amount * N_recovery
+    def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
+                      P_recovery=None, K_recovery=None):
+
+        r = self.rates
+        r.unlock()
+        r.FERT_N_SUPPLY = N_amount * N_recovery
+        r.lock()

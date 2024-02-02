@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), April 2024
 """Exception hierarchy for PCSE
 """
 
@@ -27,3 +27,18 @@ class VariableKioskError(PCSEError):
     
 class WeatherDataProviderError(PCSEError):
     "Raised when problems occur with the WeatherDataProviders" 
+
+class SoilOrganicMatterBalanceError(PCSEError):
+    "Raised when soil organic matter balance does not close"
+
+class SoilOrganicCarbonBalanceError(PCSEError):
+    "Raised when soil organic carbon balance does not close"
+
+class SoilOrganicNitrogenBalanceError(PCSEError):
+    "Raised when soil organic nitrogen balance does not close"
+
+class SoilAmmoniumBalanceError(PCSEError):
+    "Raised when soil ammonium balance does not close"
+
+class SoilNitrateBalanceError(PCSEError):
+    "Raised when soil nitrate balance does not close"

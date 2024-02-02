@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs, January 2024
 
 from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
@@ -92,7 +92,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         """
 
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk)
+        self.rates  = self.RateVariables(kiosk, publish = ["GRSO"])
         self.kiosk = kiosk
         
         # INITIAL STATES
@@ -115,6 +115,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         rates  = self.rates
         states = self.states
         params = self.params
+        k = self.kiosk
         
         FO = self.kiosk["FO"]
         ADMI = self.kiosk["ADMI"]
@@ -122,7 +123,7 @@ class WOFOST_Storage_Organ_Dynamics(SimulationObject):
         # Growth/death rate organs
         rates.GRSO = ADMI * FO
         rates.DRSO = 0.0
-        rates.GWSO = rates.GRSO - rates.DRSO
+        rates.GWSO = rates.GRSO - rates.DRSO + k.REALLOC_SO
 
     @prepare_states
     def integrate(self, day, delt=1.0):

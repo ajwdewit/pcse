@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), April 2014
 from math import exp
 from collections import deque
 from array import array
+import numpy as np
 
 from ..traitlets import Float, Int, Instance
 from ..decorators import prepare_rates, prepare_states
@@ -446,9 +447,11 @@ class CSDM_Leaf_Dynamics(SimulationObject):
                               crop_delete=True)
 
 
-class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
+class WOFOST_Leaf_Dynamics_N(SimulationObject):
     """Leaf dynamics for the WOFOST crop model including leaf response to
-    NPK stress.
+    N stress.
+
+    # HB 20220405: This function was changed quite a bit and needs redocumentation.
 
     Implementation of biomass partitioning to leaves, growth and senenscence
     of leaves. WOFOST keeps track of the biomass that has been partitioned to
@@ -479,14 +482,14 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
              light as function of DVS
     SLATB    Specific leaf area as a function of DVS        TCr     |ha kg-1|
     RDRNS    max. relative death rate of leaves due to      TCr         -
-             nutrient NPK stress
+             nutrient N stress
     NLAI     coefficient for the reduction due to           TCr         -
-             nutrient NPK stress of the LAI increase
+             nutrient N stress of the LAI increase
              (during juvenile phase).
     NSLA     Coefficient for the effect of nutrient NPK     TCr         -
              stress on SLA reduction
     RDRNS    Max. relative death rate of leaves due to      TCr         -
-             nutrient NPK stress
+             nutrient N stress
     =======  ============================================= =======  ============
 
     *State variables*
@@ -561,10 +564,6 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         TDWI = Float(-99.)
         SLATB = AfgenTrait()
         KDIFTB = AfgenTrait()
-        RDRLV_NPK = Float(-99.)  # max. relative death rate of leaves due to nutrient NPK stress
-        NSLA_NPK = Float(-99.)  # coefficient for the effect of nutrient NPK stress on SLA reduction
-        NLAI_NPK = Float(-99.)  # coefficient for the reduction due to nutrient NPK stress of the 
-                                  # LAI increase (during juvenile phase)
 
     class StateVariables(StatesTemplate):
         LV = Instance(deque)
@@ -653,19 +652,10 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         # Death of leaves due to frost damage as determined by
         # Reduction Factor Frost "RF_FROST"
-        if "RF_FROST" in self.kiosk:
+        if "RF_FROST" in k:
             r.DSLV3 = s.WLV * k.RF_FROST
         else:
             r.DSLV3 = 0.
-
-        # added IS
-        # Extra death rate due to nutrient stress
-        # has to be added to rates.DSLV
-        r.DSLV4 = s.WLV * p.RDRLV_NPK * (1.0 - self.kiosk["NPKI"])
-
-        # added IS
-        # leaf death equals maximum of water stress, shading and frost
-        r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3) + r.DSLV4
 
         # Determine how much leaf biomass classes have to die in states.LV,
         # given the a life span > SPAN, these classes will be accumulated
@@ -678,18 +668,21 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
                 DALV += lv
         r.DALV = DALV
 
+        # Suggestion Allard accelarete ageing:
+        r.DSLV = max(r.DSLV1, r.DSLV2, r.DSLV3)
+        r.DALV = min(DALV * k.NSLLV, k.WLV)
+
         # Total death rate leaves
         r.DRLV = max(r.DSLV, r.DALV)
 
         # physiologic ageing of leaves per time step
         r.FYSAGE = max(0., (drv.TEMP - p.TBASE)/(35. - p.TBASE))
 
-        # added IS
-        # correction SLA due to nutrient stress
-        sla_npk_factor = exp(-p.NSLA_NPK * (1.0 - k.NPKI))
+        ## added IS
+        ## correction SLA due to nutrient stress
 
-        # specific leaf area of leaves per time step
-        r.SLAT = p.SLATB(k.DVS) * sla_npk_factor
+        ## specific leaf area of leaves per time step
+        r.SLAT = p.SLATB(k.DVS)
 
         # leaf area not to exceed exponential growth curve
         if s.LAIEXP < 6.:
@@ -698,7 +691,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
             # added IS
             # Nutrient and water stress during juvenile stage:
             if k.DVS < 0.2 and s.LAI < 0.75:
-                factor = k.RFTRA * exp(-p.NLAI_NPK * (1.0 - k.NPKI))
+                factor = k.RFTRA * k.RFRGRL
             else:
                 factor = 1.
 
@@ -716,6 +709,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         p = self.params
         r = self.rates
         s = self.states
+        k = self.kiosk
 
         # --------- leave death ---------
         tLV = array('d', s.LV)
@@ -740,6 +734,14 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
 
         # Integration of physiological age
         tLVAGE = deque([age + r.FYSAGE for age in tLVAGE])
+
+        # Uniformly reduce leaf biomass in case of reallocation
+        if k.REALLOC_LV > 0:
+            sumLV = sum(tLV)
+            if k.REALLOC_LV < sumLV:
+                ReductionFactorLV = (sumLV - k.REALLOC_LV)/sumLV
+                tLV = np.array(tLV) * ReductionFactorLV
+
         tLV = deque(tLV)
         tSLA = deque(tSLA)
 

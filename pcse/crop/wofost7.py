@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), April 2014
 
 import datetime
 
@@ -12,7 +12,7 @@ from .. import signals
 from .. import exceptions as exc
 
 from .phenology import DVS_Phenology as Phenology
-from .assimilation import WOFOST_Assimilation as Assimilation
+from .assimilation import WOFOST_Assimilation7 as Assimilation
 from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .evapotranspiration import Evapotranspiration
@@ -91,6 +91,10 @@ class Wofost(SimulationObject):
     =======  ================================================ ==== =============
 
     """
+
+    # Placeholders for biomass available for reallocation
+    _WLV_REALLOC = Float(None)
+    _WST_REALLOC = Float(None)
     
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
@@ -110,6 +114,12 @@ class Wofost(SimulationObject):
         CVO = Float(-99.)
         CVR = Float(-99.)
         CVS = Float(-99.)
+        REALLOC_DVS = Float(2.0)
+        REALLOC_STEM_FRACTION = Float(0.)
+        REALLOC_LEAF_FRACTION = Float(0.)
+        REALLOC_STEM_RATE = Float(0.)
+        REALLOC_LEAF_RATE = Float(0.)
+        REALLOC_EFFICIENCY = Float(0.)
 
     class StateVariables(StatesTemplate):
         TAGP  = Float(-99.)
@@ -127,6 +137,9 @@ class Wofost(SimulationObject):
         ASRC = Float(-99.)
         DMI = Float(-99.)
         ADMI = Float(-99.)
+        REALLOC_LV = Float(0.)
+        REALLOC_ST = Float(0.)
+        REALLOC_SO = Float(0.)
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -137,7 +150,7 @@ class Wofost(SimulationObject):
         """
         
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI"])
+        self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI", "REALLOC_LV", "REALLOC_ST", "REALLOC_SO"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
@@ -218,6 +231,23 @@ class Wofost(SimulationObject):
         r.DMI = CVF * r.ASRC
         self._check_carbon_balance(day, r.DMI, r.GASS, r.MRES,
                                    CVF, pf)
+
+        # Reallocation from stems/leaves
+        if k.DVS < p.REALLOC_DVS:
+            r.REALLOC_LV = 0.0
+            r.REALLOC_ST = 0.0
+            r.REALLOC_SO = 0.0
+        else:
+            if self._WST_REALLOC is None:  # Start of reallocation, compute max reallocatable biomass
+                self._WST_REALLOC = k.WST * p.REALLOC_STEM_FRACTION
+                self._WLV_REALLOC = k.WLV * p.REALLOC_LEAF_FRACTION
+            # Reallocation rate in terms of loss of stem/leaf dry matter
+            r.REALLOC_LV = self._WLV_REALLOC * p.REALLOC_LEAF_RATE
+            r.REALLOC_ST = self._WST_REALLOC * p.REALLOC_STEM_RATE
+            # Reallocation rate in terms of increase in storage organs taking
+            # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
+            r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST)  * p.REALLOC_EFFICIENCY
+ 
 
         # distribution over plant organ
 
