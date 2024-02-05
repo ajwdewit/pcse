@@ -239,8 +239,8 @@ class NPK_Soil_Dynamics(SimulationObject):
 
         # Check uptake rates from crop, if a crop is actually growing
         RNuptake = k.RNuptake if "RNuptake" in self.kiosk else 0.
-        RPuptake = k.RNuptake if "RPuptake" in self.kiosk else 0.
-        RKuptake = k.RNuptake if "RKuptake" in self.kiosk else 0.
+        RPuptake = k.RPuptake if "RPuptake" in self.kiosk else 0.
+        RKuptake = k.RKuptake if "RKuptake" in self.kiosk else 0.
 
         r.RNAVAIL = r.FERT_N_SUPPLY + p.BG_N_SUPPLY - RNuptake - r.RNSOIL
         r.RPAVAIL = r.FERT_P_SUPPLY + p.BG_P_SUPPLY - RPuptake - r.RPSOIL
