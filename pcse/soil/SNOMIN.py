@@ -90,6 +90,10 @@ class SNOMIN(SimulationObject):
     *  This state variable is defined for each combination of soil layer and amendment
     ** This state variable is defined for each soil layer
 
+    Berghuijs HNC, Silva JV, Reidsma P, De Wit AJW (2024) Expanding the WOFOST crop model
+    to explore options for sustainable nitrogen management: A study for winter wheat in 
+    the Netherlands. European Journal of Agronomy 154 ARTN 127099
+
     """
 
     # Placeholders initial values
