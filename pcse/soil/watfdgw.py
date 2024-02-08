@@ -244,13 +244,13 @@ class WaterBalanceLayered(SimulationObject):
                   "SS": p.SSI, "WWLOW": W+WLOW, "WBOT":0., "SM_MEAN": W/self._default_RD,
                   "WAVUPP": WAVUPP, "WAVLOW": WAVLOW, "WAVBOT":0.
                   }
-        self.states = self.StateVariables(kiosk, publish=["WC", "SM"], **states)
+        self.states = self.StateVariables(kiosk, publish=["WC", "SM", "EVST"], **states)
 
         # Initial values for profile water content
         self._WCI = WC.sum()
 
         # rate variables
-        self.rates = self.RateVariables(kiosk, publish=["RIN", "Flow"])
+        self.rates = self.RateVariables(kiosk, publish=["RIN", "Flow", "EVS"])
         self.rates.Flow = Flow
 
 
