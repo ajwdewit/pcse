@@ -138,6 +138,7 @@ class Wofost(SimulationObject):
         TAGP  = Float(-99.)
         GASST = Float(-99.)
         MREST = Float(-99.)
+        CEVST = Float(-99.)
         CTRAT = Float(-99.) # Crop total transpiration
         HI    = Float(-99.)
         DOF = Instance(datetime.date)
@@ -189,7 +190,7 @@ class Wofost(SimulationObject):
         
         self.states = self.StateVariables(kiosk,
                                           publish=["TAGP", "GASST", "MREST", "HI"],
-                                          TAGP=TAGP, GASST=0.0, MREST=0.0,
+                                          TAGP=TAGP, GASST=0.0, MREST=0.0, CEVST = 0.0,
                                           CTRAT=0.0, HI=0.0, LV_REALLOCATED = 0., ST_REALLOCATED = 0.,
                                           DOF=None, FINISH_TYPE=None)
 
@@ -338,8 +339,7 @@ class Wofost(SimulationObject):
         # total gross assimilation and maintenance respiration 
         states.GASST += rates.GASS
         states.MREST += rates.MRES
-        
-        # total crop transpiration (CTRAT)
+        states.CEVST += self.kiosk.EVS
         states.CTRAT += self.kiosk.TRA
         
     #---------------------------------------------------------------------------
