@@ -17,6 +17,12 @@ class WaterBalanceLayered_PP(SimulationObject):
     _default_RD = Float(10.)  # default rooting depth at 10 cm
     _RDold = _default_RD
     _RDM = Float(None)
+    
+    # Counter for Days-Dince-Last-Rain
+    DSLR = Float(1)
+    
+    # rainfall rate of previous day
+    RAINold = Float(0)
 
     # placeholders for soil object and parameter provider
     soil_profile = None
@@ -30,9 +36,12 @@ class WaterBalanceLayered_PP(SimulationObject):
     class StateVariables(StatesTemplate):
         SM = Instance(np.ndarray)
         WC = Instance(np.ndarray)
+        WTRAT = Float(-99.)
+        EVST = Float(-99.)
 
     class RateVariables(RatesTemplate):
-        pass
+        EVS = Float(-99.)
+        WTRA = Float(-99.)
 
     def initialize(self, day, kiosk, parvalues):
         self.soil_profile = SoilProfile(parvalues)
@@ -44,22 +53,57 @@ class WaterBalanceLayered_PP(SimulationObject):
 
         SM = np.zeros(len(self.soil_profile))
         WC = np.zeros_like(SM)
-
         for il, layer in enumerate(self.soil_profile):
             SM[il] = layer.SMFCF
             WC[il] = SM[il] * layer.Thickness
+        
+        WTRAT = 0.
+        EVST = 0.
 
-        states = { "WC": WC, "SM":SM}
-        self.states = self.StateVariables(kiosk, publish=["WC", "SM"], **states)
+        states = { "WC": WC, "SM":SM, "EVST": EVST, "WTRAT": WTRAT}
+        self.rates = self.RateVariables(kiosk, publish="EVS")      
+        self.states = self.StateVariables(kiosk, publish=["WC", "SM", "EVST"], **states)
 
     @prepare_rates
     def calc_rates(self, day, drv):
-        pass
+        r = self.rates
+        # Transpiration and maximum soil and surface water evaporation rates
+        # are calculated by the crop Evapotranspiration module.
+        # However, if the crop is not yet emerged then set TRA=0 and use
+        # the potential soil/water evaporation rates directly because there is
+        # no shading by the canopy.
+        if "TRA" not in self.kiosk:
+            r.WTRA = 0.
+            EVSMX = drv.ES0
+        else:
+            r.WTRA = self.kiosk["TRA"]
+            EVSMX = self.kiosk["EVSMX"]
 
+        # Actual evaporation rates
+
+        if self.RAINold >= 1:
+            # If rainfall amount >= 1cm on previous day assume maximum soil
+            # evaporation
+            r.EVS = EVSMX
+            self.DSLR = 1.
+        else:
+            # Else soil evaporation is a function days-since-last-rain (DSLR)
+            self.DSLR += 1
+            EVSMXT = EVSMX * (sqrt(self.DSLR) - sqrt(self.DSLR - 1))
+            r.EVS = min(EVSMX, EVSMXT + self.RAINold)
+
+        # Hold rainfall amount to keep track of soil surface wetness and reset self.DSLR if needed
+        self.RAINold = drv.RAIN
+        
     @prepare_states
     def integrate(self, day, delt=1.0):
         self.states.SM = self.states.SM
         self.states.WC = self.states.WC
+
+        # Accumulated transpiration and soil evaporation amounts
+        self.states.EVST += self.rates.EVS * delt
+        self.states.WTRAT += self.rates.WTRA * delt
+        
 
 class WaterBalanceLayered(SimulationObject):
     _default_RD = Float(10.)  # default rooting depth at 10 cm
