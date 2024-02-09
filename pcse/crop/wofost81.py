@@ -17,13 +17,13 @@ from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
 from .leaf_dynamics import WOFOST_Leaf_Dynamics_N as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
     Storage_Organ_Dynamics
-from .assimilation import WOFOST_Assimilation as Assimilation
+from .assimilation import WOFOST81_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning_N as Partitioning
-from .evapotranspiration import EvapotranspirationCO2Layered as Evapotranspiration
+from .evapotranspiration import EvapotranspirationWrapper as Evapotranspiration
 from .n_dynamics import N_Crop_Dynamics as N_crop
 from .nutrients.n_stress import N_Stress as N_Stress
 
-class Wofost(SimulationObject):
+class Wofost81(SimulationObject):
     """Top level object organizing the different components of the WOFOST crop
     simulation. EvapotranspirationCO2Layered is used as the Evapotranspiration
     to allow simulations with the layered soil water balance watfgdw.    

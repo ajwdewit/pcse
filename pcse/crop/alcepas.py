@@ -10,7 +10,7 @@ from array import array
 import datetime as dt
 
 from ..traitlets import Instance, Float, Enum, Unicode
-from .assimilation import totass
+from .assimilation import totass7
 from ..util import limit, astro, doy, daylength, AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, SimulationObject
 from ..decorators import prepare_rates, prepare_states
@@ -76,7 +76,7 @@ class Assimilation(SimulationObject):
         AMDVS = p.AMDVST(k.DVS)
         AMTMP = p.AMTMPT(drv.DTEMP)
         AMAX = p.AMX * AMDVS * AMTMP
-        DTGA = totass(a.DAYL, AMAX, p.EFF, k.LAI, p.KDIF, drv.IRRAD, a.DIFPP, a.DSINBE, a.SINLD, a.COSLD)
+        DTGA = totass7(a.DAYL, AMAX, p.EFF, k.LAI, p.KDIF, drv.IRRAD, a.DIFPP, a.DSINBE, a.SINLD, a.COSLD)
         r.GPHOT = DTGA * 30./44.
         return r.GPHOT
 

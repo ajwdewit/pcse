@@ -5,7 +5,6 @@
 from math import sqrt
 import numpy as np
 from dotmap import DotMap
-
 from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool, HasTraits, List
 from ..util import limit, Afgen, merge_dict
 
@@ -26,7 +25,7 @@ class SoilNLayer(HasTraits):
     """
     Contains the intrinsic and derived properties for each soil layer that are used by
     SNOMIN. The following properties are read from the *.soil input file or derived from
-    variables that area read from this dfile and defined for each layer:
+    variables that are read from this file and defined for each layer:
 
     =============== ================================================ =======================
     Name             Description                                     Unit

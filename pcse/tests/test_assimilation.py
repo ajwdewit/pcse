@@ -5,7 +5,7 @@ import unittest
 from datetime import date
 
 from ..base import VariableKiosk
-from ..crop.assimilation import WOFOST_Assimilation
+from ..crop.assimilation import WOFOST72_Assimilation
 
 #-------------------------------------------------------------------------------
 class Test_WOFOST_Assimilation(unittest.TestCase):
@@ -37,7 +37,7 @@ class Test_WOFOST_Assimilation(unittest.TestCase):
                     "TMNFTB":[0.,0., 3.,1.]}
         self.kiosk = VariableKiosk()
         dummyday = date(2000,1,1)
-        self.assim = WOFOST_Assimilation(dummyday, self.kiosk, cropdata)
+        self.assim = WOFOST72_Assimilation(dummyday, self.kiosk, cropdata)
         
     def runTest(self):
         from datetime import date, timedelta

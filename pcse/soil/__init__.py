@@ -7,5 +7,4 @@ from .classic_waterbalance import WaterbalanceFDSnow
 from .snowmaus import SnowMAUS
 from .lintul3soil import Lintul3Soil
 from .n_soil_dynamics import N_Soil_Dynamics
-from .soil_wrappers import SoilModuleWrapper_N_WLP_FD, SoilModuleWrapper_PP, \
-    SoilModuleWrapper_WLP_FD, SoilModuleWrapper_N_WLP_FD
+

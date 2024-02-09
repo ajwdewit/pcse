@@ -11,7 +11,6 @@ from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
                          SimulationObject
 from ..util import limit, merge_dict, AfgenTrait
-from ..soil.soil_profile import SoilProfile
 
 
 def SWEAF(ET0, DEPNR):
@@ -38,6 +37,32 @@ def SWEAF(ET0, DEPNR):
         sweaf += (ET0-0.6)/(DEPNR*(DEPNR+3.))
 
     return limit(0.10, 0.95, sweaf)
+
+
+class EvapotranspirationWrapper(SimulationObject):
+    """This selects the appropriate evapotranspiration module
+    depending on the use of a waterbalance with a layered or a non-layered
+    soil
+    """
+    etmodule = Instance(SimulationObject)
+
+    def initialize(self, day, kiosk, parvalues):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this PCSE instance
+        :param parvalues: parameter values
+        """
+
+        if "soil_profile" in parvalues:
+            self.etmodule = EvapotranspirationCO2Layered(day, kiosk, parvalues)
+        elif "CO2" in parvalues and "CO2TRATB" in parvalues:
+            self.etmodule = EvapotranspirationCO2(day, kiosk, parvalues)
+        else:
+            self.etmodule = Evapotranspiration(day, kiosk, parvalues)
+
+    def __call__(self, day, drv):
+        r = self.etmodule(day, drv)
+        return r
 
 
 class Evapotranspiration(SimulationObject):
