@@ -36,7 +36,7 @@ ModelParameters: {BG_N_SUPPLY: 0.091, CFET: 1.0, CO2A: 360.0, CRAIRC: 0.06, DEPN
   RRI: 1.2, SLA: 0.0025, SM0: 0.41, SMFCF: 0.3, SMLIM: 0.3, SMW: 0.104, SOPE: 1.47,
   SSI: 0, SSMAX: 0, SiteFillingMax: 0.693, TSUMmax: 600.0, TempBase: 3.0, TemperatureSoilinit: 5.0,
   TillerFormRateA0: 0.335, TillerFormRateA8: 0.867, TillerFormRateB0: 0.067, TillerFormRateB8: 0.183,
-  TillerNumberinit: 7000.0, WAV: 7.84, WeightREinit: 200.0, WeightRTinit: 4.0}
+  TillerNumberinit: 7000.0, WAV: 7.84, WeightREinit: 200.0, WeightRTinit: 4.0, NAVAILI: 0.0}
 
 WeatherVariables: [{DAY: 1980-01-01, E0: 0.0, ELEV: 250.0, ES0: 0.0, ET0: 0.030761719971731456, IRRAD: 4881000.0,
     LAT: 46.41, LON: 6.22, RAIN: 0.13, TMAX: -1.8, TMIN: 1.3, VAP: 4.3, WIND: 1.0},
