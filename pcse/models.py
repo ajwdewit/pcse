@@ -167,7 +167,7 @@ class Wofost81_NWLP_MLWB_CNB(Engine):
         Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
                         config=self.config)
 
-class Wofost8_NWLP_MLWB_SNOMIN(Engine):
+class Wofost81_NWLP_MLWB_SNOMIN(Engine):
     """Convenience class for running WOFOST8.1 nutrient and water-limited production
     using the multi-layer waterbalance and the SNOMIN carbon/nitrogen balance.
     """
