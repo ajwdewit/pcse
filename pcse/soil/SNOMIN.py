@@ -90,6 +90,10 @@ class SNOMIN(SimulationObject):
     *  This state variable is defined for each combination of soil layer and amendment
     ** This state variable is defined for each soil layer
 
+    Berghuijs HNC, Silva JV, Reidsma P, De Wit AJW (2024) Expanding the WOFOST crop model
+    to explore options for sustainable nitrogen management: A study for winter wheat in 
+    the Netherlands. European Journal of Agronomy 154 ARTN 127099
+
     """
 
     # Placeholders initial values
@@ -297,15 +301,6 @@ class SNOMIN(SimulationObject):
 
         self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMATT", "CORGT", "NORGT"], **states)
         self.rates = self.RateVariables(kiosk)
-
-        k = self.kiosk
-        s = self.states
-        p = self.params
-
-        # Get external state variable (in meters)
-        RD_m = self.get_root_length(k)
-        SM = self.get_soil_moisture_content(k)
-        NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM) / self.m2_to_ha
 
         self._RAGEAM = np.zeros_like(AGE)
         self._RORGMATAM = np.zeros_like(ORGMAT)
