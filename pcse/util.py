@@ -930,7 +930,7 @@ class DummySoilDataProvider(dict):
 def version_tuple(v):
     """Creates a version tuple from a version string for consistent comparison of versions.
 
-    Conversion to tuples is needed because version '2.12.9' is higher then '2.7.8' however::
+    Conversion to tuples is needed because version '2.12.9' is higher than '2.7.8' however::
 
     >>> '2.12.9' > '2.7.8'
     False

@@ -14,7 +14,7 @@ from .. import signals
 
 class WOFOST_Leaf_Dynamics(SimulationObject):
     """Leaf dynamics for the WOFOST crop model.
-    
+
     Implementation of biomass partitioning to leaves, growth and senenscence
     of leaves. WOFOST keeps track of the biomass that has been partitioned to
     the leaves for each day (variable `LV`), which is called a leaf class).
@@ -23,12 +23,12 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
     calculated by summing the biomass values for all leaf classes. Similarly,
     leaf area is calculated by summing leaf biomass times specific leaf area
     (`LV` * `SLA`).
-    
+
     Senescense of the leaves can occur as a result of physiological age,
     drought stress or self-shading.
-       
+
     *Simulation parameters* (provide in cropdata dictionary)
-    
+
     =======  ============================================= =======  ============
      Name     Description                                   Type     Unit
     =======  ============================================= =======  ============
@@ -82,24 +82,24 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
              rate.
     FYSAGE   Increase in physiological leaf age                 N   -
     GLAIEX   Sink-limited leaf expansion rate (exponential      N   |ha ha-1 d-1|
-             curve) 
+             curve)
     GLASOL   Source-limited leaf expansion rate (biomass        N   |ha ha-1 d-1|
              increase)
     =======  ================================================= ==== ============
 
-    
+
     *External dependencies:*
-    
+
     ======== ============================== =============================== ===========
      Name     Description                         Provided by               Unit
     ======== ============================== =============================== ===========
-    DVS      Crop development stage         DVS_Phenology                    - 
+    DVS      Crop development stage         DVS_Phenology                    -
     FL       Fraction biomass to leaves     DVS_Partitioning                 -
     FR       Fraction biomass to roots      DVS_Partitioning                 -
     SAI      Stem area index                WOFOST_Stem_Dynamics             -
     PAI      Pod area index                 WOFOST_Storage_Organ_Dynamics    -
     TRA      Transpiration rate             Evapotranspiration              |cm day-1|
-    TRAMX    Maximum transpiration rate     Evapotranspiration              |cm day-1| 
+    TRAMX    Maximum transpiration rate     Evapotranspiration              |cm day-1|
     ADMI     Above-ground dry matter        CropSimulation                  |kg ha-1 d-1|
              increase
     RF_FROST Reduction factor frost kill    FROSTOL                          -
@@ -262,7 +262,7 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
         tDRLV = rates.DRLV
 
         # leaf death is imposed on leaves by removing leave classes from the
-        # right side of the deque. 
+        # right side of the deque.
         for LVweigth in reversed(states.LV):
             if tDRLV > 0.:
                 if tDRLV >= LVweigth: # remove complete leaf class from deque
@@ -352,18 +352,18 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
 
 class CSDM_Leaf_Dynamics(SimulationObject):
     """Leaf dynamics according to the Canopy Structure Dynamic Model.
-    
+
     The only difference is that in the real CSDM the temperature sum is the
     driving variable, while in this case it is simply the day number since \
     the start of the model.
-    
+
     Reference:
     Koetz et al. 2005. Use of coupled canopy structure dynamic and radiative
     transfer models to estimate biophysical canopy characteristics.
     Remote Sensing of Environment. Volume 95, Issue 1, 15 March 2005,
     Pages 115-124. http://dx.doi.org/10.1016/j.rse.2004.11.017
 
-        
+
     For plotting the CSDM model with GNUPLOT the following example code can be used:
 
         td = 150
@@ -377,7 +377,7 @@ class CSDM_Leaf_Dynamics(SimulationObject):
         set xrange [0:200]
         set yrange [-1:8]
         plot CSDM_MIN + CSDM_MAX*(1./(1. + exp(-CSDM_B*(x - CSDM_T1)))**2 - exp(CSDM_A*(x - CSDM_T2)))
-    
+
     """
 
     class Parameters(ParamTemplate):
@@ -403,9 +403,9 @@ class CSDM_Leaf_Dynamics(SimulationObject):
         LAI_senescence = -exp(p.CSDM_A*(daynr - p.CSDM_T2))
         LAI = p.CSDM_MIN + p.CSDM_MAX*(LAI_growth + LAI_senescence)
 
-        # do not allow LAI lower then CSDM_MIN
+        # Do not allow LAI lower than CSDM_MIN
         if LAI < p.CSDM_MIN:
-            msg = ("LAI of CSDM model smaller then lower LAI limit "+
+            msg = ("LAI of CSDM model smaller than lower LAI limit "+
                    "(CSDM_MIN)! Adjusting LAI to CSDM_MIN.")
             self.logger.warn(msg)
             LAI = max(p.CSDM_MIN, LAI)
@@ -563,7 +563,7 @@ class WOFOST_Leaf_Dynamics_NPK(SimulationObject):
         KDIFTB = AfgenTrait()
         RDRLV_NPK = Float(-99.)  # max. relative death rate of leaves due to nutrient NPK stress
         NSLA_NPK = Float(-99.)  # coefficient for the effect of nutrient NPK stress on SLA reduction
-        NLAI_NPK = Float(-99.)  # coefficient for the reduction due to nutrient NPK stress of the 
+        NLAI_NPK = Float(-99.)  # coefficient for the reduction due to nutrient NPK stress of the
                                   # LAI increase (during juvenile phase)
 
     class StateVariables(StatesTemplate):

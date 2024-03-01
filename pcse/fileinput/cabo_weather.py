@@ -136,7 +136,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
     def _load_cache_file(self, cache_file, CABOWE_files):
         """Load the weather data from a binary file using cPickle.
 
-        Also checks if any of the CABOWE files have modification/creation date more recent then the cache_file.
+        Also checks if any of the CABOWE files have modification/creation date more recent than the cache_file.
         In that case reload the weather data from the original CABOWE files.
 
         Returns True if loading succeeded, False otherwise

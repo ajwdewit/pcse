@@ -175,9 +175,9 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                 if fpath is not None:
                     yaml_file_names = self._get_yaml_files(fpath)
                     yaml_file_dates = [os.stat(fn).st_mtime for crop,fn in yaml_file_names.items()]
-                    # retrieve modification date of cache file
+                    # Retrieve modification date of cache file
                     cache_date = os.stat(cache_fname_fp).st_mtime
-                    # Ensure cache file is more recent then any of the YAML files
+                    # Ensure cache file is more recent than any of the YAML files
                     if any([d > cache_date for d in yaml_file_dates]):
                         return False
 

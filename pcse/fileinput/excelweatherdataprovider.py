@@ -218,7 +218,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         if os.path.exists(cache_filename):
             cache_date = os.stat(cache_filename).st_mtime
             xls_date = os.stat(xls_fname).st_mtime
-            if cache_date > xls_date:  # cache is more recent then XLS file
+            if cache_date > xls_date:  # cache is more recent than XLS file
                 return cache_filename
 
         return None

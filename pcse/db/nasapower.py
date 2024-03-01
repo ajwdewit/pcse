@@ -118,7 +118,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         else:
             # Cache file is too old. Try loading new data from NASA
             try:
-                msg = "Cache file older then 90 days, reloading data from NASA Power."
+                msg = "Cache file older than 90 days, reloading data from NASA Power."
                 self.logger.debug(msg)
                 self._get_and_process_NASAPower(self.latitude, self.longitude)
             except Exception as e:
@@ -177,7 +177,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         # check if sufficient data is available to make a reasonable estimate:
         # As a rule of thumb we want to have at least 200 days available
         if len(df_power) < 200:
-            msg = ("Less then 200 days of data available. Reverting to " +
+            msg = ("Less than 200 days of data available. Reverting to " +
                    "default Angstrom A/B coefficients (%f, %f)")
             self.logger.warn(msg % (self.angstA, self.angstB))
             return self.angstA, self.angstB
