@@ -19,11 +19,11 @@ inherent limitations of models written in FORTRAN is also becoming increasingly 
 To overcome many of the limitations above, the Python Crop Simulation Environment
 (PCSE) was developed which provides an environment for developing simulation models
 as well as a number of implementations of crop simulation models. PCSE is written
-in pure python code which makes it more flexible, easier to modify and extensible
+in pure Python code which makes it more flexible, easier to modify and extensible
 allowing easy interfacing with databases, graphical user interfaces, visualization
 tools and numerical/statistical packages. PCSE has several interesting features:
 
-* Implementation in pure python with dependencies only on popular packages available from
+* Implementation in pure Python with dependencies only on popular packages available from
   the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `pandas`, `Openpyxl`, `xlrd`,
   `requests` and `numpy`)
 

@@ -23,11 +23,11 @@ to_date = lambda d: d.date()
 class NASAPowerWeatherDataProvider(WeatherDataProvider):
     """WeatherDataProvider for using the NASA POWER database with PCSE
 
-    :param latitude: latitude to request weather data for
-    :param longitude: longitude to request weather data for
+    :param latitude: latitude to request weather data for.
+    :param longitude: longitude to request weather data for.
     :keyword force_update: Set to True to force to request fresh data
         from POWER website.
-    :keyword ETmodel: "PM"|"P" for selecting penman-monteith or Penman
+    :keyword ETmodel: "PM"|"P" for selecting Penman-Monteith or Penman
         method for reference evapotranspiration. Defaults to "PM".
 
     The NASA POWER database is a global database of daily weather data

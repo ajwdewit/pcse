@@ -52,7 +52,7 @@ class ParamTemplate(HasTraits):
         HasTraits.__init__(self)
 
         for parname in self.trait_names():
-            # If the attribute of the class starts with "trait" than
+            # If the attribute of the class starts with "trait", then
             # this is a special attribute and not a WOFOST parameter
             if parname.startswith("trait"):
                 continue

@@ -8,18 +8,18 @@ from ..util import AfgenTrait
 
 class WOFOST_Maintenance_Respiration(SimulationObject):
     """Maintenance respiration in WOFOST
-    
+
     WOFOST calculates the maintenance respiration as proportional to the dry
     weights of the plant organs to be maintained, where each plant organ can be
     assigned a different maintenance coefficient. Multiplying organ weight
     with the maintenance coeffients yields the relative maintenance respiration
-    (`RMRES`) which is than corrected for senescence (parameter `RFSETB`). Finally,
+    (`RMRES`) which is then corrected for senescence (parameter `RFSETB`). Finally,
     the actual maintenance respiration rate is calculated using the daily mean
     temperature, assuming a relative increase for each 10 degrees increase
     in temperature as defined by `Q10`.
 
     **Simulation parameters:** (To be provided in cropdata dictionary):
-    
+
     =======  ============================================= =======  ============
      Name     Description                                   Type     Unit
     =======  ============================================= =======  ============
@@ -35,10 +35,10 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
     RMO      Relative maintenance respiration rate for
              storage organs                                 SCr     |kg CH2O kg-1 d-1|
     =======  ============================================= =======  ============
-    
+
 
     **State and rate variables:**
-    
+
     `WOFOSTMaintenanceRespiration` returns the potential maintenance respiration PMRES
      directly from the `__call__()` method, but also includes it as a rate variable
      within the object.
@@ -52,11 +52,11 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
     =======  ================================================ ==== =============
 
     **Signals send or handled**
-    
+
     None
-    
+
     **External dependencies:**
-    
+
     =======  =================================== =============================  ============
      Name     Description                         Provided by                    Unit
     =======  =================================== =============================  ============
@@ -69,7 +69,7 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
 
 
     """
-    
+
     class Parameters(ParamTemplate):
         Q10 = Float(-99.)
         RMR = Float(-99.)
@@ -92,11 +92,11 @@ class WOFOST_Maintenance_Respiration(SimulationObject):
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk)
         self.kiosk = kiosk
-        
+
     def __call__(self, day, drv):
         p = self.params
         kk = self.kiosk
-        
+
         RMRES = (p.RMR * kk["WRT"] +
                  p.RML * kk["WLV"] +
                  p.RMS * kk["WST"] +

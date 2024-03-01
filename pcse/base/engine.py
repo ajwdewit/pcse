@@ -41,7 +41,7 @@ class BaseEngine(HasTraits, DispatcherObject):
         #   these class methods are not defined attributes.
         #
         # Finally, if the value assigned to an attribute is a SimulationObject
-        #   or if the existing attribute value is a SimulationObject than
+        #   or if the existing attribute value is a SimulationObject, then
         #   rebuild the list of sub-SimulationObjects.
 
         if attr.startswith("_") or type(value) is types.FunctionType:

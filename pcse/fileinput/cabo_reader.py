@@ -21,7 +21,7 @@ class CABOFileReader(dict):
     written in the CABO format. This class reads the contents, parses
     the parameter names/values and returns them as a dictionary.
 
-    :param fname: parameter file to read and parse
+    :param fname: parameter file to read and parse.
     :returns: dictionary like object with parameter key/value pairs.
 
     Note that this class does not yet fully support reading all features
