@@ -12,10 +12,10 @@ from .. import signals
 from .. import exceptions as exc
 
 from .phenology import DVS_Phenology as Phenology
-from .assimilation import WOFOST72_Assimilation as Assimilation
+from .assimilation import WOFOST73_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
-from .evapotranspiration import EvapotranspirationCO2Layered as Evapotranspiration
+from .evapotranspiration import EvapotranspirationWrapper as Evapotranspiration
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
 from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
@@ -272,7 +272,7 @@ class Wofost73(SimulationObject):
 
         # if before emergence there is no need to continue
         # because only the phenology is running.
-        # Just run a touch() to to ensure that all state variables are available
+        # Just run a touch() to ensure that all state variables are available
         # in the kiosk
         if crop_stage == "emerging":
             self.touch()

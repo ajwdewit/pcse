@@ -52,6 +52,20 @@ Wofost71_PP = Wofost72_PP
 Wofost71_WLP_FD = Wofost72_WLP_FD = Wofost72_WLP_CWB
 
 
+class Wofost73_PP(Engine):
+    """Convenience class for running WOFOST7.3 Potential Production.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost73_PP.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
 class LINTUL3(Engine):
     """The LINTUL model (Light INTerception and UtiLisation) is a simple general crop model,
     which simulates dry matter production as the result of light interception and utilization

@@ -12,12 +12,6 @@ from ..traitlets import Instance, Float
 from ..util import limit, astro, doy, AfgenTrait
 from ..base import ParamTemplate, SimulationObject, RatesTemplate
 
-try:
-    from ..futil import totass as ftotass
-    from ..futil import astro as fastro
-except ImportError as exc:
-    ftotass = fastro = None
-
 
 def totass8(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):
     """ This routine calculates the daily total gross CO2 assimilation by
@@ -476,45 +470,6 @@ class WOFOST72_Assimilation(SimulationObject):
         self._TMNSAV = deque(maxlen=7)
     
     def __call__(self, day, drv):
-        # Check if fortran versions can be used otherwise use native python
-        if ftotass is not None:
-            self.rates.PGASS = self.___call__fortran(day, drv)
-        else:
-            self.rates.PGASS = self.__call__python(day, drv)
-
-        return self.rates.PGASS
-
-    def ___call__fortran(self, day, drv):
-        """Calls fortran versions of ASTRO and TOTASS
-        """
-        p = self.params
-        k = self.kiosk
-
-        # 7-day running average of TMIN
-        self._TMNSAV.appendleft(drv.TMIN)
-        TMINRA = sum(self._TMNSAV)/len(self._TMNSAV)
-
-        # photoperiodic daylength
-        IDAY = doy(day)
-        DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE = \
-             fastro(IDAY, drv.LAT, drv.IRRAD)
-
-        # gross assimilation and correction for sub-optimum average day temperature
-        AMAX = p.AMAXTB(k.DVS)
-        AMAX *= p.TMPFTB(drv.DTEMP)
-        KDIF = p.KDIFTB(k.DVS)
-        EFF = p.EFFTB(drv.DTEMP)
-        DTGA = ftotass(DAYL, AMAX, EFF, k.LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
-
-        # correction for low minimum temperature potential
-        DTGA *= p.TMNFTB(TMINRA)
-
-        # assimilation in kg CH2O per ha
-        PGASS = DTGA * 30./44.
-
-        return PGASS
-
-    def __call__python(self, day, drv):
         p = self.params
         k = self.kiosk
 
@@ -538,4 +493,117 @@ class WOFOST72_Assimilation(SimulationObject):
         # assimilation in kg CH2O per ha
         PGASS = DTGA * 30./44.
         
+        return PGASS
+
+
+class WOFOST73_Assimilation(SimulationObject):
+    """Class implementing a WOFOST/SUCROS style assimilation routine including
+    effect of changes in atmospheric CO2 concentration.
+
+    WOFOST calculates the daily gross |CO2| assimilation rate of a crop
+    from the absorbed radiation and the photosynthesis-light response curve
+    of individual leaves. This response is dependent on temperature and
+    leaf age. The absorbed radiation is calculated from the total incoming
+    radiation and the leaf area. Daily gross |CO2| assimilation is obtained
+    by integrating the assimilation rates over the leaf layers and over the
+    day.
+
+    *Simulation parameters* (To be provided in cropdata dictionary):
+
+    =========  ============================================= =======  ============
+     Name       Description                                   Type     Unit
+    =========  ============================================= =======  ============
+    AMAXTB     Max. leaf |CO2| assim. rate as a function of   TCr     |kg ha-1 hr-1|
+               of DVS
+    EFFTB      Light use effic. single leaf as a function     TCr     |kg ha-1 hr-1 /(J m-2 s-1)|
+               of daily mean temperature
+    KDIFTB     Extinction coefficient for diffuse visible     TCr      -
+               as function of DVS
+    TMPFTB     Reduction factor of AMAX as function of        TCr      -
+               daily mean temperature.
+    TMPFTB     Reduction factor of AMAX as function of        TCr      -
+               daily minimum temperature.
+    CO2AMAXTB  Correction factor for AMAX given atmos-        TCr      -
+               pheric CO2 concentration.
+    CO2EFFTB   Correction factor for EFF given atmos-         TCr      -
+               pheric CO2 concentration.
+    CO2        Atmopheric CO2 concentration                   SCr      ppm
+    =========  ============================================= =======  ============
+
+    *State and rate variables*
+
+    `WOFOST_Assimilation2` has no state/rate variables, but calculates the
+    rate of assimilation which is returned directly from the `__call__()`
+    method.
+
+    *Signals sent or handled*
+
+    None
+
+
+    *External dependencies:*
+
+    =======  =================================== =================  ============
+     Name     Description                         Provided by         Unit
+    =======  =================================== =================  ============
+    DVS      Crop development stage              DVS_Phenology       -
+    LAI      Leaf area index                     Leaf_dynamics       -
+    =======  =================================== =================  ============
+    """
+
+    _TMNSAV = Instance(deque)
+
+    class Parameters(ParamTemplate):
+        AMAXTB = AfgenTrait()
+        EFFTB = AfgenTrait()
+        KDIFTB = AfgenTrait()
+        TMPFTB = AfgenTrait()
+        TMNFTB = AfgenTrait()
+        CO2AMAXTB = AfgenTrait()
+        CO2EFFTB = AfgenTrait()
+        CO2 = Float(-99.)
+
+    def initialize(self, day, kiosk, cropdata):
+        """
+        :param day: start date of the simulation
+        :param kiosk: variable kiosk of this Engine instance
+        :param cropdata: dictionary with cropdata key/value pairs
+        :returns: the assimilation rate using __call__()
+        """
+
+        self.params = self.Parameters(cropdata)
+        self.kiosk = kiosk
+        self._TMNSAV = deque(maxlen=7)
+
+    def __call__(self, day, drv):
+        p = self.params
+        k = self.kiosk
+
+        # published states from the kiosk
+        DVS = k.DVS
+        LAI = k.LAI
+
+        # 7-day running average of TMIN
+        self._TMNSAV.appendleft(drv.TMIN)
+        TMINRA = sum(self._TMNSAV)/len(self._TMNSAV)
+
+        # 2.19  photoperiodic daylength
+        DAYL, DAYLP, SINLD, COSLD, DIFPP, ATMTR, DSINBE, ANGOT = astro(day, drv.LAT, drv.IRRAD)
+
+        # daily dry matter production
+
+        # gross assimilation and correction for sub-optimum average day
+        # temperature and CO2 concentration
+        AMAX = p.AMAXTB(DVS) * p.CO2AMAXTB(p.CO2)
+        AMAX *= p.TMPFTB(drv.DTEMP)
+        KDIF = p.KDIFTB(DVS)
+        EFF  = p.EFFTB(drv.DTEMP) * p.CO2EFFTB(p.CO2)
+        DTGA = totass7(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
+
+        # correction for low minimum temperature potential
+        DTGA *= p.TMNFTB(TMINRA)
+
+        # assimilation in kg CH2O per ha
+        PGASS = DTGA * 30./44.
+
         return PGASS

@@ -1004,7 +1004,7 @@ class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
     Currently only the value for WAV is mandatory to specify.
     """
     
-    _defaults = {"IFUNRN": (0, {0, 1}, int),
+    _defaults = {"IFUNRN": (0, [0, 1], int),
                  "NOTINF": (0, [0., 1.], float),
                  "SSI": (0., [0., 100.], float),
                  "SSMAX": (0., [0., 100.], float),
@@ -1012,8 +1012,41 @@ class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
                  "SMLIM": (0.4, [0., 1.], float)}
     _required = ["WAV"]
 
+
 # This is just to keep old code working
-WOFOST71SiteDataProvider = WOFOST72SiteDataProvider
+class WOFOST71SiteDataProvider(WOFOST72SiteDataProvider):
+    pass
+
+
+class WOFOST73SiteDataProvider(_GenericSiteDataProvider):
+    """Site data provider for WOFOST 7.3
+
+    Site specific parameters for WOFOST 7.3 can be provided through this data provider as well as through
+    a normal python dictionary. The sole purpose of implementing this data provider is that the site
+    parameters for WOFOST are documented, checked and that sensible default values are given.
+
+    The following site specific parameter values can be set through this data provider::
+
+        - IFUNRN    Indicates whether non-infiltrating fraction of rain is a function of storm size (1)
+                    or not (0). Default 0
+        - NOTINF    Maximum fraction of rain not-infiltrating into the soil [0-1], default 0.
+        - SSMAX     Maximum depth of water that can be stored on the soil surface [cm]
+        - SSI       Initial depth of water stored on the surface [cm]
+        - WAV       Initial amount of water in total soil profile [cm]
+        - SMLIM     Initial maximum moisture content in initial rooting depth zone [0-1], default 0.4
+        - CO2       Atmospheric CO2 concentration in ppm
+
+    Values for WAV and CO2 is mandatory to specify.
+    """
+
+    _defaults = {"IFUNRN": (0, [0, 1], int),
+                 "NOTINF": (0, [0., 1.], float),
+                 "SSI": (0., [0., 100.], float),
+                 "SSMAX": (0., [0., 100.], float),
+                 "WAV": (None, [0., 100.], float),
+                 "SMLIM": (0.4, [0., 1.], float),
+                 "CO2": (None, [320, 700], float)}
+    _required = ["WAV", "CO2"]
 
 
 class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
@@ -1056,7 +1089,7 @@ class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
     nutrients (NAVAILI, PAVAILI, KAVAILI) are mandatory to specify.
     """
 
-    _defaults = {"IFUNRN": (0, {0, 1}, int),
+    _defaults = {"IFUNRN": (0, [0, 1], int),
                  "NOTINF": (0, [0., 1.], float),
                  "SSI": (0., [0., 100.], float),
                  "SSMAX": (0., [0., 100.], float),
