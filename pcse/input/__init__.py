@@ -19,3 +19,4 @@ from .excelweatherdataprovider import ExcelWeatherDataProvider
 from .yaml_agro_loader import YAMLAgroManagementReader
 from .csvweatherdataprovider import CSVWeatherDataProvider
 from .yaml_cropdataprovider import YAMLCropDataProvider
+from .nasapower import NASAPowerWeatherDataProvider

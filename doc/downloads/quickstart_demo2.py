@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 
 import pcse
 from pcse.db import NASAPowerWeatherDataProvider
-from pcse.fileinput import CABOFileReader
-from pcse.fileinput import PCSEFileReader
-from pcse.fileinput import YAMLAgroManagementReader
+from pcse.input import CABOFileReader
+from pcse.input import PCSEFileReader
+from pcse.input import YAMLAgroManagementReader
 from pcse.models import Wofost71_WLP_FD
 from pcse.base import ParameterProvider
 

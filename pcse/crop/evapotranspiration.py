@@ -42,7 +42,7 @@ def SWEAF(ET0, DEPNR):
 class EvapotranspirationWrapper(SimulationObject):
     """This selects the appropriate evapotranspiration module
     depending on the use of a waterbalance with a layered or a non-layered
-    soil
+    soil and whether the impact of CO2 should be taken into account
     """
     etmodule = Instance(SimulationObject)
 

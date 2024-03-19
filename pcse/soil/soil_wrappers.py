@@ -2,11 +2,13 @@
 # Copyright (c) 2004-2024 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), January 2024
 """This module wraps the soil components for water and nutrients so that they run jointly
-within the same model.
+within the same model. Use of these wrappers is only required for WOFOST 8+ because the
+WOFOST 7x version do not simulated nutrient-limited production and therefore can import
+the waterbalance directly into the configuration.
 """
 from pcse.base import SimulationObject
 from .classic_waterbalance import WaterbalanceFD, WaterbalancePP
-from .watfdgw import WaterBalanceLayered, WaterBalanceLayered_PP
+from .multilayer_waterbalance import WaterBalanceLayered, WaterBalanceLayered_PP
 from .n_soil_dynamics import N_Soil_Dynamics, N_PotentialProduction
 from .SNOMIN import SNOMIN
 from ..traitlets import Instance
@@ -27,7 +29,7 @@ class BaseSoilWrapper(SimulationObject):
         :param parvalues: dictionary with parameter key/value pairs
         """
         if self.waterbalance_class is not None:
-            self.waterbalance = self. waterbalance_class(day, kiosk, parvalues)
+            self.waterbalance = self.waterbalance_class(day, kiosk, parvalues)
         if self.nutrientbalance_class is not None:
             self.nutrientbalance = self.nutrientbalance_class(day, kiosk, parvalues)
 
@@ -66,14 +68,6 @@ class SoilModuleWrapper_NWLP_CWB_CNB(BaseSoilWrapper):
     """
     waterbalance_class = WaterbalanceFD
     nutrientbalance_class = N_Soil_Dynamics
-
-
-class SoilModuleWrapper_PP_MLWB(BaseSoilWrapper):
-    """This wraps the multilayer soil water balance and unlimited N balance
-    for production conditions.
-    """
-    waterbalance_class = WaterBalanceLayered_PP
-    nutrientbalance_class = N_PotentialProduction
 
 
 class SoilModuleWrapper_WLP_MLWB(BaseSoilWrapper):

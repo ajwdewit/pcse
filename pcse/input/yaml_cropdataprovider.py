@@ -42,7 +42,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     than pull the crop parameters from my github repository at
     https://github.com/ajwdewit/WOFOST_crop_parameters::
 
-        >>> from pcse.fileinput import YAMLCropDataProvider
+        >>> from pcse.input import YAMLCropDataProvider
         >>> p = YAMLCropDataProvider()
         >>> print(p)
         YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!

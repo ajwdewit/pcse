@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import requests
 
-from ..base import WeatherDataProvider, WeatherDataContainer
-from ..util import ea_from_tdew, reference_ET, check_angstromAB
-from ..exceptions import PCSEError
-from ..settings import settings
+from pcse.base import WeatherDataProvider, WeatherDataContainer
+from pcse.util import ea_from_tdew, reference_ET, check_angstromAB
+from pcse.exceptions import PCSEError
+from pcse.settings import settings
 
 # Define some lambdas to take care of unit conversions.
 MJ_to_J = lambda x: x * 1e6

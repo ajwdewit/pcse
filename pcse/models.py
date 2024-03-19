@@ -66,6 +66,34 @@ class Wofost73_PP(Engine):
                         config=self.config)
 
 
+class Wofost73_WLP_CWB(Engine):
+    """Convenience class for running WOFOST7.3 Water=limited Production using the Classic Waterbalance.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost73_WLP_CWB.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+class Wofost73_WLP_MLWB(Engine):
+    """Convenience class for running WOFOST7.3 Water=limited Production using the Multi-layer Waterbalance.
+
+    :param parameterprovider: A ParameterProvider instance providing all parameter values
+    :param weatherdataprovider: A WeatherDataProvider object
+    :param agromanagement: Agromanagement data
+    """
+    config = "Wofost73_WLP_MLWB.conf"
+
+    def __init__(self, parameterprovider, weatherdataprovider, agromanagement):
+        Engine.__init__(self, parameterprovider, weatherdataprovider, agromanagement,
+                        config=self.config)
+
+
+
 class LINTUL3(Engine):
     """The LINTUL model (Light INTerception and UtiLisation) is a simple general crop model,
     which simulates dry matter production as the result of light interception and utilization

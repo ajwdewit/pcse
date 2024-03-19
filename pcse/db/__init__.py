@@ -6,7 +6,6 @@ from . import pcse
 from . import cgms8
 from . import cgms12
 from . import cgms14
-from .nasapower import NASAPowerWeatherDataProvider
 from . import hdf5
 from . import wofost_parameters
 
