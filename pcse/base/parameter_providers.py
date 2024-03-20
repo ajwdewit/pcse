@@ -206,8 +206,8 @@ class ParameterProvider(MutableMapping):
         """Override an existing parameter (key) by value.
 
          The parameter that is overridden is added to self._override, note that only *existing*
-         parameters may be overridden this way. If it is needed to really add a *new* parameter
-         than use: ParameterProvider.set_override(key, value, check=False)
+         parameters may be overridden this way. If it is needed to really add a *new* parameter,
+         then use: ParameterProvider.set_override(key, value, check=False)
 
         :param key: The name of the parameter to override
         :param value: the value of the parameter
@@ -266,4 +266,3 @@ class MultiCropDataProvider(dict):
         msg = "'set_crop_type' method should be implemented specifically for each" \
               "subclass of MultiCropDataProvider."
         raise NotImplementedError(msg)
-

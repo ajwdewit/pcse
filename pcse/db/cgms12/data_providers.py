@@ -330,7 +330,7 @@ class AgroManagementDataProvider(list):
                     self.campaign_start_date = campaign_start
                 else:
                     msg = "Date (%s) specified by keyword 'campaign_start' in call to AgroManagementDataProvider " \
-                          "is later then crop_start_date defined in the CGMS database."
+                          "is later than crop_start_date defined in the CGMS database."
                     raise exc.PCSEError(msg % campaign_start)
             except KeyError as e:
                 msg = "Value (%s) of keyword 'campaign_start' not recognized in call to AgroManagementDataProvider."
@@ -344,7 +344,7 @@ class AgroManagementDataProvider(list):
             raise exc.PCSEError(msg)
 
         # Determine crop_end_date and campaign_end_date
-        # note that campaign_end_date should be at least one day later then crop_end_date
+        # note that campaign_end_date should be at least one day later than crop_end_date
         if self.crop_end_type == "maturity":
             self.crop_end_date = "null"
             self.max_duration = int(row.max_duration)

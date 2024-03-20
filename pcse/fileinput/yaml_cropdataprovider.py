@@ -39,16 +39,16 @@ class YAMLCropDataProvider(MultiCropDataProvider):
     can switch the active crop.
 
     The most basic use is to call YAMLCropDataProvider with no parameters. It will
-    than pull the crop parameters from my github repository at
+    then pull the crop parameters from my GitHub repository at
     https://github.com/ajwdewit/WOFOST_crop_parameters::
 
         >>> from pcse.fileinput import YAMLCropDataProvider
         >>> p = YAMLCropDataProvider()
         >>> print(p)
-        YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
+        YAMLCropDataProvider - crop and variety not set: no active crop parameter set!
 
-    All crops and varieties have been loaded from the YAML file, however no activate
-    crop has been set. Therefore, we need to activate a a particular crop and variety:
+    All crops and varieties have been loaded from the YAML file, however no active
+    crop has been set. Therefore, we need to activate a particular crop and variety:
 
         >>> p.set_active_crop('wheat', 'Winter_wheat_101')
         >>> print(p)
@@ -64,9 +64,9 @@ class YAMLCropDataProvider(MultiCropDataProvider):
 
         >>> p = YAMLCropDataProvider(fpath=r"D:\\UserData\\sources\\WOFOST_crop_parameters")
         >>> print(p)
-        YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
+        YAMLCropDataProvider - crop and variety not set: no active crop parameter set!
 
-    Finally, it is possible to pull data from your fork of my github repository by specifying
+    Finally, it is possible to pull data from your fork of my GitHub repository by specifying
     the URL to that repository::
 
         >>> p = YAMLCropDataProvider(repository=\"https://raw.githubusercontent.com/<your_account>/WOFOST_crop_parameters/master/\")
@@ -112,9 +112,9 @@ class YAMLCropDataProvider(MultiCropDataProvider):
                 pickle.dump((self.compatible_version, self._store), fp, pickle.HIGHEST_PROTOCOL)
 
     def read_local_repository(self, fpath):
-        """Reads the crop YAML files on the local file system
+        """Reads the crop YAML files on the local file system.
 
-        :param fpath: the location of the YAML files on the filesystem
+        :param fpath: the location of the YAML files on the filesystem.
         """
         yaml_file_names = self._get_yaml_files(fpath)
         for crop_name, yaml_fname in yaml_file_names.items():
@@ -124,10 +124,10 @@ class YAMLCropDataProvider(MultiCropDataProvider):
             self._add_crop(crop_name, parameters)
 
     def read_remote_repository(self, repository):
-        """Reads the crop files from a remote git repository
+        """Reads the crop files from a remote git repository.
 
         :param repository: The url of the repository pointing to the URL where the raw inputs can be obtained.
-            E.g. for github this is https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master
+            E.g. for GitHub this is https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/master
         :return:
         """
 
@@ -171,13 +171,13 @@ class YAMLCropDataProvider(MultiCropDataProvider):
             if os.path.exists(cache_fname_fp):
 
                 # First we check that the cache file reflects the contents of the YAML files.
-                # This only works for files not for github repos
+                # This only works for files not for GitHub repos
                 if fpath is not None:
                     yaml_file_names = self._get_yaml_files(fpath)
                     yaml_file_dates = [os.stat(fn).st_mtime for crop,fn in yaml_file_names.items()]
-                    # retrieve modification date of cache file
+                    # Retrieve modification date of cache file
                     cache_date = os.stat(cache_fname_fp).st_mtime
-                    # Ensure cache file is more recent then any of the YAML files
+                    # Ensure cache file is more recent than any of the YAML files
                     if any([d > cache_date for d in yaml_file_dates]):
                         return False
 
@@ -201,7 +201,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
 
         Raises an exception if the parameter set is incompatible.
 
-        :param parameters: The parameter set loaded by YAML
+        :param parameters: The parameter set loaded by YAML.
         """
         try:
             v = parameters['Version']
@@ -219,7 +219,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
         self._store[crop_name] = variety_sets
 
     def _get_yaml_files(self, fpath):
-        """Returns all the files ending on *.yaml in the given path.
+        """Returns all the files ending with *.yaml in the given path.
         """
         fname = os.path.join(fpath, "crops.yaml")
         if not os.path.exists(fname):
@@ -234,12 +234,12 @@ class YAMLCropDataProvider(MultiCropDataProvider):
         return crop_yaml_fnames
 
     def set_active_crop(self, crop_name, variety_name):
-        """Sets the parameters in the internal dict for given crop_name and variety_name
+        """Sets the parameters in the internal dict for given crop_name and variety_name.
 
-        It first clears the active set of crop parameter sin the internal dict.
+        It first clears the active set of crop parameters in the internal dict.
 
-        :param crop_name: the name of the crop
-        :param variety_name: the variety for the given crop
+        :param crop_name: the name of the crop.
+        :param variety_name: the variety for the given crop.
         """
         self.clear()
         if crop_name not in self._store:
@@ -256,7 +256,7 @@ class YAMLCropDataProvider(MultiCropDataProvider):
 
         # Retrieve parameter name/values from input (ignore description and units)
         parameters = {k: v[0] for k, v in variety_sets[variety_name].items() if k != "Metadata"}
-        # update internal dict with parameter values for this variety
+        # Update internal dict with parameter values for this variety
         self.update(parameters)
 
     def get_crops_varieties(self):

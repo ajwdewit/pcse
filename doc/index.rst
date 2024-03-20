@@ -27,8 +27,8 @@ somewhat outdated and are difficult to integrate with many of the great tools th
 nowadays (XML, databases, web, etc).
 Like so many other software packages, PCSE was developed to facilitate my own research work. I wanted something
 that was more easy to work with, more interactive and more flexible while still implementing
-the sound computational approach of FSE. For this reason PCSE was developed in Python
-hsa become an important programming language for scientific purposes.
+the sound computational approach of FSE. For this reason PCSE was developed in Python,
+which has become an important programming language for scientific purposes.
 
 Traditionally, crop simulation models in Wageningen have been provided including the
 full source code. PCSE is no exception and its source code is open and licensed under the

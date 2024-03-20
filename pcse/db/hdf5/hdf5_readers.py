@@ -368,7 +368,7 @@ class AgroManagementDataProvider(list):
                     self.campaign_start_date = campaign_start
                 else:
                     msg = "Date (%s) specified by keyword 'campaign_start' in call to AgroManagementDataProvider " \
-                          "is later then crop_start_date defined in the CGMS database."
+                          "is later than crop_start_date defined in the CGMS database."
                     raise exc.PCSEError(msg % campaign_start)
             except KeyError as e:
                 msg = "Value (%s) of keyword 'campaign_start' not recognized in call to AgroManagementDataProvider."
@@ -606,4 +606,3 @@ class SoilDataIterator(list):
         for t in self:
             msg += template % t
         return msg
-

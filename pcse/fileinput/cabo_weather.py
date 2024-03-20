@@ -14,15 +14,15 @@ from ..exceptions import PCSEError
 
 class CABOWeatherDataProvider(WeatherDataProvider):
     """Reader for CABO weather files.
-    
-    :param fname: root name of CABO weather files to read
+
+    :param fname: root name of CABO weather files to read.
     :param fpath: path where to find files, can be absolute or relative.
-    :keyword ETmodel: "PM"|"P" for selecting penman-monteith or Penman
+    :keyword ETmodel: "PM"|"P" for selecting Penman-Monteith or Penman
         method for reference evapotranspiration. Defaults to "PM".
     :keyword distance: maximum interpolation distance for meteorological
         variables, defaults to 1 day.
     :returns: callable like object with meteo records keyed on date.
-    
+
     The Wageningen crop models that are written in FORTRAN or FST often use
     the CABO weather system (http://edepot.wur.nl/43010) for storing and
     reading weather data. This class implements a reader for the CABO weather
@@ -31,28 +31,28 @@ class CABOWeatherDataProvider(WeatherDataProvider):
     to global radiation estimates and calculation the reference
     evapotranspiration values for water, soil and plants (E0, ES0, ET0)
     using the Penman approach.
-    
+
     A difference with the old CABOWE system is that the python implementation
     will read and store all files (e.g. years) available for a certain
     station instead of loading a new file when crossing a year boundary.
-    
+
     .. note::
         some conversions are done by the CABOWeaterDataProvider from
         the units in the CABO weather file for compatibility with WOFOST:
-        
+
         - vapour pressure from kPa to hPa
         - radiation from kJ/m2/day to J/m2/day
         - rain from mm/day to cm/day.
         - all evaporation/transpiration rates are also returned in cm/day.
-    
+
     *Example*
-    
+
     The file 'nl1.003' provides weather data for the year 2003 for the
     station in Wageningen and can be found in the cabowe/ folder of the
     WOFOST model distribution. This file can be read using::
-    
+
         >>> weather_data = CABOWeatherDataProvider('nl1', fpath="./meteo/cabowe")
-        >>> print weather_data(datetime.date(2003,7,26))
+        >>> print(weather_data(datetime.date(2003, 7, 26)))
         Weather data for 2003-07-26 (DAY)
         IRRAD:  12701000.00  J/m2/day
          TMIN:        15.90   Celsius
@@ -87,7 +87,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
     # temporary array for storing data
     potential_records = None
     tmp_data = None
-    
+
     def __init__(self, fname, fpath=None, ETmodel="PM", distance=1):
         WeatherDataProvider.__init__(self)
 
@@ -136,17 +136,17 @@ class CABOWeatherDataProvider(WeatherDataProvider):
     def _load_cache_file(self, cache_file, CABOWE_files):
         """Load the weather data from a binary file using cPickle.
 
-        Also checks if any of the CABOWE files have modification/creation date more recent then the cache_file.
+        Also checks if any of the CABOWE files have modification/creation date more recent than the cache_file.
         In that case reload the weather data from the original CABOWE files.
-        
+
         Returns True if loading succeeded, False otherwise
         """
         # If no cache_file defined return False directly
         if cache_file is None:
             return False
 
-        # if date of any CABOWE files > cache file: discard cache file and return False to reload from original files.
-        # retrieved last modification dates of CABOWE files
+        # If date of any CABOWE files > cache file: discard cache file and return False to reload from original files.
+        # retrieve last modification dates of CABOWE files
         cb_dates = []
         for cb_file in CABOWE_files:
             r = os.stat(cb_file)
@@ -160,8 +160,8 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                 msg = "Failed to remove cache file '%s' due to: %s" % (cache_file, exc)
                 warnings.warn(msg)
             return False
+        # Else load data from cache file and store internally
         else:
-            # Else load data from cache file and store internally
             try:
                 self._load(cache_file)
                 return True
@@ -171,7 +171,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                 return False
 
     def _write_cache_file(self, search_path):
-        """Write the data loaded from the CABOWE files to a binary file using cPickle
+        """Write the data loaded from the CABOWE files to a binary file using cPickle.
         """
         cache_fname = search_path + ".cache"
         self._dump(cache_fname)
@@ -197,10 +197,10 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             year = int(values[1])
             doy  = int(values[2])
             weather_obs = np.array(values[3:], dtype=np.float64)
-        except (ValueError,IndexError) as exc:
+        except (ValueError, IndexError) as exc:
             msg = ("Failed to parse line: %s" % rec)
             raise RuntimeError(msg)
-        
+
         # Check if file contents are consistent with file year
         if year != fileyr:
             msg = "File with year %s contains record for year %s"
@@ -209,13 +209,13 @@ class CABOWeatherDataProvider(WeatherDataProvider):
         # Calculate position in tmp_array base on date since first date
         rec_date = dt.date(year, 1, 1) + dt.timedelta(days=(doy-1))
         arraypos = (rec_date - self.first_date).days
-        
-        # insert data at right position in array
+
+        # Insert data at right position in array
         self.tmp_data[:, arraypos] = weather_obs
-            
+
     def _interpolate_timeseries(self, distance=1):
         """Interpolates gaps using linear interpolation, except for rainfall.
-        
+
         distance specifies the interpolation distance: distance=1 will only
         allow interpolation when the previous and the following day are
         available, distance=2 allows also when 2 days are missing, etc.
@@ -246,7 +246,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                 continue
             timeseries = self.tmp_data[i,:].flatten()
             r = np.convolve(timeseries_hasdata, kernel, mode='same')
-            
+
             # Find positions for interpolation: hasdata==0 and >=2 neighbours
             # except the first and last record
             index = (timeseries_hasdata==0)*(r>=2)
@@ -255,7 +255,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             if True not in index:
                 # No positions that can be interpolated
                 continue
-                
+
             # Determine positions and y values for interpolation (x, xp, yp)
             xrange = np.arange(self.potential_records, dtype=np.float64)
             x  = xrange[index]
@@ -263,23 +263,23 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             yp = timeseries[(timeseries_hasdata == 1)]
             y_int = np.interp(x,xp,yp)
 
-            # put interpolated values back into tmp_data
+            # Put interpolated values back into tmp_data
             self.tmp_data[i, x.astype(np.int32)] = y_int
-    
+
 
     def _make_WeatherDataContainers(self):
         """Converts the data in self.tmp_data into WeatherDataContainers which are stored in
         the class dictionary keyed on the date.
-        
+
         Records that are incomplete (contain np.NaN values) are skipped.
-        Moreover, if the radiation measurements are in sunshine duration, than
+        Moreover, if the radiation measurements are in sunshine duration, then
         the Angstrom equation is used to estimate global radiation. Finally,
         the evapotranspiration value are calculated for each complete record.
         """
-        
+
         # Generate prototype weather data container
         #wdc_proto = self._build_WeatherDataContainer()
-        
+
         for i in range(self.potential_records):
             rec = self.tmp_data[:, i]
             if True in np.isnan(rec):
@@ -288,9 +288,9 @@ class CABOWeatherDataProvider(WeatherDataProvider):
 
             # Derive date from position in array
             thisdate = self.first_date + dt.timedelta(days=i)
-            t = {"DAY": thisdate, "LAT": self.latitude, 
+            t = {"DAY": thisdate, "LAT": self.latitude,
                  "LON": self.longitude, "ELEV": self.elevation}
-            
+
             for obs, (name, cf, unit) in zip(rec, self.variables):
                 if name == "IRRAD" and self.has_sunshine is True:
                     obs = angstrom(thisdate, self.latitude, obs, self.angstA, self.angstB)
@@ -298,7 +298,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                     t[name] = float(obs)
                 else:
                     t[name] = float(obs)*cf
-            
+
             # Reference evapotranspiration in mm/day
             try:
                 E0, ES0, ET0 = reference_ET(thisdate, t["LAT"], t["ELEV"], t["TMIN"], t["TMAX"], t["IRRAD"],
@@ -309,15 +309,15 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                        ("Due to error: %s" % e))
                 raise PCSEError(msg)
 
-            # update record with ET values value convert to cm/day
+            # Update record with ET values value convert to cm/day
             t.update({"E0": E0/10., "ES0": ES0/10., "ET0": ET0/10.})
 
             # Build weather data container from dict 't'
             wdc = WeatherDataContainer(**t)
 
-            # add wdc to dictionary for thisdate
+            # Add wdc to dictionary for thisdate
             self._store_WeatherDataContainer(wdc, thisdate)
-        
+
     def _calc_arraysize(self):
         """Returns array of NaNs with size based on min/max year of data."""
         self.potential_records = 0
@@ -328,7 +328,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                 self.potential_records += 365
         t_ar = np.empty((6,self.potential_records), dtype=np.float64)
         t_ar[:] = np.NaN
-        
+
         return t_ar
 
     def _set_location_parameters(self, line, cb_file, prev_cb_file):
@@ -338,7 +338,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
         if len(strvalues) != 5:
             msg = "Did not find 5 values on location parameter line of file %s"
             raise PCSEError(msg % cb_file)
-        
+
         parnames = ["longitude", "latitude", "elevation", "angstA", "angstB"]
         for parname, strvalue in zip(parnames, strvalues):
             try:
@@ -355,21 +355,21 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             except AttributeError as e:
                 msg = "Inconsistent '%s' location parameter in file %s compared to file %s."
                 raise PCSEError(msg % (parname, cb_file, prev_cb_file))
-    
+
     def _check_angstrom(self):
         """Checks the Angstrom parameters for consistency.
-        
+
         Also sets self.has_sunshine=True when both A and B > 0.
         """
         if self.angstA > 0 and self.angstB > 0:
             self.has_sunshine=True
-            
+
         self.angstA = abs(self.angstA)
         self.angstB = abs(self.angstB)
         check_angstromAB(self.angstA, self.angstB)
 
     def _read_file(self, fname):
-        
+
         with open(fname) as fp:
             lines = fp.readlines()
         header = []
@@ -385,14 +385,14 @@ class CABOWeatherDataProvider(WeatherDataProvider):
                 else:
                     records.append(l)
         return (header, location_par, records)
-    
+
     def _find_CABOWEfiles(self, search_path):
         """Find CABOWEfiles on given path with given name.
-        
+
         Also sorts the list, checks for missing years and sets self.firstyear/lastyear
         and self.first_date.
         """
-        
+
         cachefile = search_path + ".cache"
         if not os.path.exists(cachefile):
             cachefile = None

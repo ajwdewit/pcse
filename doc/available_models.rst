@@ -20,6 +20,6 @@ LINTUL3                An implementation of the LINTUL3 model for production sce
 FAO_WRSI               An implementation of the Water Requirement Satisfaction Index model. This re-uses components
                        from WOFOST to create a simpler approach which computes water requirements and water availability.
 Wofost72_Phenology     The phenology modules from WOFOST 7.2 as a standalone model. This is purely for convenience as in
-                       some cases running the phenology is sufficient and this is much faster then running the full
+                       some cases running the phenology is sufficient and this is much faster than running the full
                        WOFOST model.
 ===================== =======================================================================================================

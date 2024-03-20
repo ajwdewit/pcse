@@ -13,17 +13,17 @@ from pcse.settings.settings
 For example, to use the settings in a module under 'crop':
 
     from ..settings import settings
-    print settings.METEO_CACHE_DIR
+    print(settings.METEO_CACHE_DIR)
 
 Settings that are not ALL-CAPS will generate a warning. To avoid warnings
 for everything that is not a setting (such as imported modules), prepend
-and underscore to the name.
+an underscore to the name.
 """
 
 import os as _os
 from .. import util as _util
 
-PCSE_USER_HOME =  _os.path.join(_util.get_user_home(), ".pcse")
+PCSE_USER_HOME = _os.path.join(_util.get_user_home(), ".pcse")
 
 # Location for meteo cache files
 METEO_CACHE_DIR = _os.path.join(PCSE_USER_HOME, "meteo_cache")
@@ -65,24 +65,24 @@ LOG_CONFIG = \
                 },
                 'handlers': {
                     'console': {
-                        'level':LOG_LEVEL_CONSOLE,
-                        'class':'logging.StreamHandler',
-                        'formatter':'brief'
+                        'level': LOG_LEVEL_CONSOLE,
+                        'class': 'logging.StreamHandler',
+                        'formatter': 'brief'
                     },
                     'file': {
-                        'level':LOG_LEVEL_FILE,
-                        'class':'logging.handlers.RotatingFileHandler',
-                        'formatter':'standard',
-                        'filename':LOG_FILE_NAME,
+                        'level': LOG_LEVEL_FILE,
+                        'class': 'logging.handlers.RotatingFileHandler',
+                        'formatter': 'standard',
+                        'filename': LOG_FILE_NAME,
                         'maxBytes': 1024**2,
                         'backupCount': 7,
-                        'mode':'a',
+                        'mode': 'a',
                         'encoding': 'utf8'
                     },
                 },
                 'root': {
                          'handlers': ['console', 'file'],
                          'propagate': True,
-                         'level':'NOTSET'
+                         'level': 'NOTSET'
                 }
             }

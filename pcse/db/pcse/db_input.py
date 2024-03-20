@@ -457,7 +457,7 @@ def fetch_soildata_layered(metadata, grid):
         
     soildata["SOIL_LAYERS"]= soil_layers
     
-    #print "Succesfully retrieved soil layer parameter values for layered soil from database"
+    #print("Succesfully retrieved soil layer parameter values for layered soil from database")
     logger.info("Succesfully retrieved soil layer parameter values for layered soil from database")
 
     return soildata

@@ -4,10 +4,10 @@ Installing PCSE
 Requirements and dependencies
 -----------------------------
 
-PCSE is being developed on Ubuntu Linux 18.04 and Windows 10 using python 3.7 and python 3.8
+PCSE is being developed on Ubuntu Linux 18.04 and Windows 10 using Python 3.7 and Python 3.8
 As Python is a platform independent language, PCSE works equally well on Linux, Windows or Mac OSX.
 Before installing PCSE, Python itself must be installed on your system which we will demonstrate
-below. PCSE has a number of dependencies on other python packages which are the following::
+below. PCSE has a number of dependencies on other Python packages which are the following::
 
 - SQLAlchemy>=0.8.0
 - PyYAML>=3.11
@@ -27,16 +27,16 @@ additional functionality used by PCSE.
 .. _HomeBrew: http://brew.sh
 .. _traitlets: https://traitlets.readthedocs.io/en/stable/
 
-Setting up your python environment
+Setting up your Python environment
 ----------------------------------
 
-A convenient way to set up your python environment for PCSE is through the `Anaconda`_ python distribution.
+A convenient way to set up your Python environment for PCSE is through the `Anaconda`_ Python distribution.
 In the present PCSE Documentation all examples of installing and using PCSE refer to the Windows 10 platform.
 
-First, we suggest you download and install the `MiniConda`_ python distribution which provides a minimum
-python environment that we will use to bootstrap a dedicated environment for PCSE. For the rest
+First, we suggest you download and install the `MiniConda`_ Python distribution which provides a minimum
+Python environment that we will use to bootstrap a dedicated environment for PCSE. For the rest
 of this guide we will assume that you use Windows 10 and install the
-64bit miniconda for python 3 (``Miniconda3-latest-Windows-x86_64.exe``). The environment that
+64bit miniconda for Python 3 (``Miniconda3-latest-Windows-x86_64.exe``). The environment that
 we will create contains not only the dependencies for PCSE, it also includes many other useful packages
 such as `IPython`_, `Pandas`_ and the `Jupyter notebook`_. These packages will be used in the Getting Started section
 as well.
@@ -83,14 +83,14 @@ After installing MiniConda you should open a command box and check that conda is
                      netrc file : None
                    offline mode : False
 
-Now we will use a Conda environment file to recreate the python environment that we use to develop and run
+Now we will use a Conda environment file to recreate the Python environment that we use to develop and run
 PCSE. First you should download the conda environment file which comes in two flavours, an
-environment for running PCSE on python 3 (:download:`downloads/py3_pcse.yml`) and one for python 2
-(:download:`downloads/py2_pcse.yml`). It is strongly recommended to use the python 3 version as python 2
+environment for running PCSE on Python 3 (:download:`downloads/py3_pcse.yml`) and one for Python 2
+(:download:`downloads/py2_pcse.yml`). It is strongly recommended to use the Python 3 version as Python 2
 is not maintained anymore. Both environments include the Jupyter notebook and IPython which are
 needed for running the `getting started` section and the example notebooks. Save the environment file
 on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
-using the command ``conda env create`` and tell conda to use the environment file for python3 with the
+using the command ``conda env create`` and tell conda to use the environment file for Python 3 with the
 option ``-f p3_pcse.yml`` as show below:
 
 .. code-block:: doscon
@@ -127,11 +127,11 @@ You can then activate your environment (note the addition of ``(py3_pcse)`` on y
 Installing PCSE
 ---------------
 
-The easiest way to install PCSE is through the python package index (`PyPI`_).
+The easiest way to install PCSE is through the Python package index (`PyPI`_).
 Installing from PyPI is mostly useful if you are interested in using the functionality
 provided by PCSE in your own scripts, but are not interested in modifying or contributing to
 PCSE itself. Installing from PyPI is done using the package installer `pip` which searches
-the python package index for a package, downloads and installs it into your python
+the Python package index for a package, downloads and installs it into your Python
 environment (example below for PCSE 5.4):
 
 .. code-block:: doscon
@@ -168,11 +168,11 @@ environment (example below for PCSE 5.4):
     Installing collected packages: pcse
     Successfully installed pcse-5.4.0
 
-If you are wondering what the difference between `pip` and `conda` are than have a look
+If you are wondering what the differences between `pip` and `conda` are, then have a look
 `here <https://stackoverflow.com/questions/20994716/what-is-the-difference-between-pip-and-conda#20994790>`_
 
-If you want to develop with or contribute to PCSE, than you should fork the `PCSE
-repository`_ on GitHub and get a local copy of PCSE using `git clone`. See the help on github_
+If you want to develop with or contribute to PCSE, then you should fork the `PCSE
+repository`_ on GitHub and get a local copy of PCSE using `git clone`. See the help on GitHub_
 and for Windows/Mac users the `GitHub Desktop`_ application.
 
 .. _GitHub Desktop: https://desktop.github.com/
@@ -197,7 +197,7 @@ well as in an SQLite database (pcse.db). This database can be found under
 PCSE for the first time. When you delete the database file manually it will be
 recreated next time you import PCSE.
 
-For running the internal tests of the PCSE package we need to start python and import pcse:
+For running the internal tests of the PCSE package we need to start Python and import pcse:
 
 .. code-block:: doscon
 
@@ -262,4 +262,3 @@ Moreover, SQLAlchemy may complain with a warning that can be safely ignored::
     Dialect sqlite+pysqlite does *not* support Decimal objects natively, and SQLAlchemy must
     convert from floating point - rounding errors and other issues may occur. Please consider
     storing Decimal numbers as strings or integers on this platform for lossless storage.
-

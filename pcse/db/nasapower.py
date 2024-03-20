@@ -23,11 +23,11 @@ to_date = lambda d: d.date()
 class NASAPowerWeatherDataProvider(WeatherDataProvider):
     """WeatherDataProvider for using the NASA POWER database with PCSE
 
-    :param latitude: latitude to request weather data for
-    :param longitude: longitude to request weather data for
+    :param latitude: latitude to request weather data for.
+    :param longitude: longitude to request weather data for.
     :keyword force_update: Set to True to force to request fresh data
         from POWER website.
-    :keyword ETmodel: "PM"|"P" for selecting penman-monteith or Penman
+    :keyword ETmodel: "PM"|"P" for selecting Penman-Monteith or Penman
         method for reference evapotranspiration. Defaults to "PM".
 
     The NASA POWER database is a global database of daily weather data
@@ -43,16 +43,16 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     WOFOST in the past.
 
     For more information on the NASA POWER database see the documentation
-    at: http://power.larc.nasa.gov/common/AgroclimatologyMethodology/Agro_Methodology_Content.html
+    at: https://power.larc.nasa.gov/docs/methodology/
 
     The `NASAPowerWeatherDataProvider` retrieves the weather from the
-    th NASA POWER API and does the necessary conversions to be compatible
+    NASA POWER API and does the necessary conversions to be compatible
     with PCSE. After the data has been retrieved and stored, the contents
     are dumped to a binary cache file. If another request is made for the
     same location, the cache file is loaded instead of a full request to the
     NASA Power server.
 
-    Cache files are used until they are older then 90 days. After 90 days
+    Cache files are used until they are older than 90 days. After 90 days
     the NASAPowerWeatherDataProvider will make a new request to obtain
     more recent data from the NASA POWER server. If this request fails
     it will fall back to the existing cache file. The update of the cache
@@ -60,7 +60,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
     Finally, note that any latitude/longitude within a 0.5x0.5 degrees grid box
     will yield the same weather data, e.g. there is no difference between
-    lat/lon 5.3/52.1 and lat/lon 5.1/52.4. Nevertheless slight differences
+    lat/lon 5.3/52.1 and lat/lon 5.1/52.4. Nevertheless, slight differences
     in PCSE simulations may occur due to small differences in day length.
 
     """
@@ -118,7 +118,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         else:
             # Cache file is too old. Try loading new data from NASA
             try:
-                msg = "Cache file older then 90 days, reloading data from NASA Power."
+                msg = "Cache file older than 90 days, reloading data from NASA Power."
                 self.logger.debug(msg)
                 self._get_and_process_NASAPower(self.latitude, self.longitude)
             except Exception as e:
@@ -177,7 +177,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         # check if sufficient data is available to make a reasonable estimate:
         # As a rule of thumb we want to have at least 200 days available
         if len(df_power) < 200:
-            msg = ("Less then 200 days of data available. Reverting to " +
+            msg = ("Less than 200 days of data available. Reverting to " +
                    "default Angstrom A/B coefficients (%f, %f)")
             self.logger.warn(msg % (self.angstA, self.angstB))
             return self.angstA, self.angstB

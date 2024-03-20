@@ -41,7 +41,7 @@ What's new in PCSE 5.3
 PCSE 5.3 has the following new features:
 
 - The WOFOST crop parameters have been reorganized into a new data structure and file format (e.g. YAML)
-  and are available from github_. PCSE 5.3 provides the :ref:`YAMLCropDataProvider <YAMLCropDataProvider>`
+  and are available from GitHub_. PCSE 5.3 provides the :ref:`YAMLCropDataProvider <YAMLCropDataProvider>`
   to read the new parameters files. The YAMLCropDataProvider works together with the AgroManager for
   specifying parameter sets for crop rotations.
 - A new :ref:`CGMSEngine <Engine and models>` that mimics the behaviour of the classic CGMS. This means
@@ -57,7 +57,7 @@ Some bugs have been fixed:
 - When running crop rotations it was found that python did not garbage collect the crop simulation objects
   quick enough. This is now fixed with an explicit call to the garbage collector.
 
-.. _github: https://github.com/ajwdewit/WOFOST_crop_parameters
+.. _GitHub: https://github.com/ajwdewit/WOFOST_crop_parameters
 
 **********************
 What's new in PCSE 5.2

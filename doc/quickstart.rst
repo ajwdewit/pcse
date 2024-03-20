@@ -65,7 +65,7 @@ simulation::
 
 We can now use the pandas package to turn the simulation output into a
 dataframe which is much easier to handle and can be exported to different
-file types. For example an excel file which should look like this
+file types. For example an Excel file which should look like this
 :download:`downloads/wofost_results.xls`::
 
     >>> import pandas as pd

@@ -19,7 +19,7 @@ mm_to_cm = lambda x: x/10.
 
 
 def determine_true_false(value):
-    """OpenPyXL has a somewhat strange treatment of true/false
+    """OpenPyXL has a somewhat strange treatment of True/False:
 
     Excel cell value      OpenPyXL cell value       Type
        =FALSE()            '=FALSE()'               str
@@ -29,7 +29,7 @@ def determine_true_false(value):
        =TRUE               '=TRUE'                  str
        TRUE                 True                    bool
 
-    Finally, there is the possibility for true/false to be presented
+    Finally, there is the possibility for True/False to be presented
     by 0/1 integer values.
 
     This function tries to handle all of the them.
@@ -53,22 +53,22 @@ def determine_true_false(value):
 
 
 class ExcelWeatherDataProvider(WeatherDataProvider):
-    """Reading weather data from an excel file (.xlsx only).
+    """Reading weather data from an Excel file (.xlsx only).
 
-    :param xls_fname: name of the Excel file to be read
+    :param xls_fname: name of the Excel file to be read.
     :param mising_snow_depth: the value that should use for missing SNOW_DEPTH values,
            the default value is `None`.
     :param force_reload: bypass the cache file, reload data from the .xlsx file and
-           write a new cache file. Cache files are written under `$HOME/.pcse/meteo_cache`
+           write a new cache file. Cache files are written under `$HOME/.pcse/meteo_cache`.
 
     For reading weather data from file, initially only the CABOWeatherDataProvider
-    was available that reads its data from a text file in the CABO Weather format.
-    Nevertheless, building CABO weather files is tedious as for each year a new
-    file must constructed. Moreover it is rather error prone and formatting
-    mistakes are easily leading to errors.
+    was available, which reads its data from a text file in the CABO Weather format.
+    However, building CABO weather files is tedious, as a new file must be
+    constructed for each year. Moreover, it is rather error-prone and formatting
+    mistakes easily lead to errors.
 
     To simplify providing weather data to PCSE models, a new data provider
-    was written that reads its data from simple excel files
+    was written that reads its data from simple Excel files.
 
     The ExcelWeatherDataProvider assumes that records are complete and does
     not make an effort to interpolate data as this can be easily
@@ -86,7 +86,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
     }
 
     # row numbers where values start. Note that the row numbers are
-    # zero-based, so add 1 to find the corresponding row in excel.
+    # zero-based, so add 1 to find the corresponding row in Excel.
     site_row = 9
     label_row = 11
     data_start_row = 13
@@ -158,7 +158,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                             d[label] = cell.value.date()
                             continue
 
-                    # explicitly convert to float. If this fails a ValueError will be thrown
+                    # Explicitly convert to float. If this fails a ValueError will be thrown
                     value = float(cell.value)
 
                     # Check for observations marked as missing. Currently only missing
@@ -185,7 +185,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                 # Reference ET in mm/day
                 e0, es0, et0 = reference_ET(LAT=self.latitude, ELEV=self.elevation, ANGSTA=self.angstA,
                                             ANGSTB=self.angstB, **d)
-                # convert to cm/day
+                # Convert to cm/day
                 d["E0"] = e0/10.; d["ES0"] = es0/10.; d["ET0"] = et0/10.
 
                 wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude, ELEV=self.elevation, **d)
@@ -209,7 +209,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                  return False
 
     def _find_cache_file(self, xls_fname):
-        """Try to find a cache file for file name
+        """Try to find a cache file for file name.
 
         Returns None if the cache file does not exist, else it returns the full path
         to the cache file.
@@ -218,13 +218,13 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         if os.path.exists(cache_filename):
             cache_date = os.stat(cache_filename).st_mtime
             xls_date = os.stat(xls_fname).st_mtime
-            if cache_date > xls_date:  # cache is more recent then XLS file
+            if cache_date > xls_date:  # cache is more recent than XLS file
                 return cache_filename
 
         return None
 
     def _get_cache_filename(self, xls_fname):
-        """Constructs the filename used for cache files given xls_fname
+        """Constructs the filename used for cache files given xls_fname.
         """
         basename = os.path.basename(xls_fname)
         filename, ext = os.path.splitext(basename)
@@ -243,7 +243,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
             self.logger.warning(msg)
 
     def _is_missing_value(self, value):
-        """Checks if value is equal to the value specified for missign date
+        """Checks if value is equal to the value specified for missign date.
 
         :return: True|False
         """
