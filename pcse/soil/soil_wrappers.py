@@ -10,7 +10,7 @@ from pcse.base import SimulationObject
 from .classic_waterbalance import WaterbalanceFD, WaterbalancePP
 from .multilayer_waterbalance import WaterBalanceLayered, WaterBalanceLayered_PP
 from .n_soil_dynamics import N_Soil_Dynamics, N_PotentialProduction
-from .SNOMIN import SNOMIN
+from .snomin import SNOMIN
 from ..traitlets import Instance
 
 
