@@ -13,7 +13,7 @@ AUTHOR = "Allard de Wit"
 AUTHOR_EMAIL = 'allard.dewit@wur.nl'
 URL = 'http://github.com/ajwdewit/pcse/'
 LICENSE="EUPL"
-VERSION = "5.5.6"
+VERSION = "6.0.0"
 
 here = os.path.abspath(os.path.dirname(__file__))
 
