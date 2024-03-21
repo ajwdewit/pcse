@@ -84,9 +84,14 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         "RAIN": mm_to_cm,
         "SNOWDEPTH": NoConversion
     }
+    # Maximum number of rows to read, assuming max 250 years of weather data.
+    # This is needed because in some Excel files the sheet.max_row attribute is
+    # set to the maximum number of rows an Excel sheet can contain, which leads
+    # to reading a million empty rows.
+    max_rows = int(250*365.35)
 
     # row numbers where values start. Note that the row numbers are
-    # zero-based, so add 1 to find the corresponding row in excel.
+    # zero-based, so add 1 to find the corresponding row in Excel.
     site_row = 9
     label_row = 11
     data_start_row = 13
@@ -146,8 +151,8 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
         labels = [cell.value for cell in sheet[self.label_row]]
 
         # Start reading all rows with data
-        # rownums = list(range(sheet.nrows))
-        for rownum, row in enumerate(sheet[self.data_start_row:sheet.max_row]):
+        max_row = min(sheet.max_row, self.max_rows)
+        for rownum, row in enumerate(sheet[self.data_start_row:max_row]):
             try:
                 d = {}
                 for cell, label in zip(row, labels):
