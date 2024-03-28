@@ -3,6 +3,53 @@ An overview of new features and fixes
 #####################################
 
 **********************
+What's new in PCSE 6.0
+**********************
+
+PCSE 6.0 has a number of breaking changes compared to the 5.5 release.
+
+First of all, WOFOST 7.3 and 8.1 are released with PCSE 6.0. This release also includes a
+new multi-layer waterbalance and a new Carbon/Nitrogen balance.
+
+WOFOST 7.3 includes the atmospheric CO2 response and is coupled with the new multi-layer
+waterbalance. WOFOST 8.1 provides the full crop N dynamics and is coupled to the new
+SNOMIN carbon/nitrogen balance.
+
+Nevertheless the
+older simpler water and nitrogen balances are also still available and in many
+cases highly relevant. For example, for educational purposes a simpler approach is
+often sufficient. Moreover, in areas with little data available a simple approach
+may be preferred. Therefore, with WOFOST 7.3 and 8.1 many combinations of crop/soil models are
+possible. In order to accomodate these combinations, the models in PCSE have been coded according
+to a certain system which follows the following rule:
+
+    `<modelname><version>_<productionlevel>_<waterbalance>_<nutrientbalance>` 
+
+The placeholders can be one of the following:
+ - <modelname>: Wofost, Lintul, Lingra or any other model included
+ - <version>: the respective model version consisting of a major and minor number, e.g. "72" for Wofost 7.2
+ - <productionlevel>: an indication of the agro-ecological production level which can be one of
+   "PP": potential production, "WLP": water-limited production or "NWLP": nitrogen and water-limited production
+   level.
+ - <waterbalance>: the type of waterbalance used which can be either one of "CWB": for classic (simpel) water balance
+   or "MLWB" for the more complex multi-layer water balance.
+ - <nutrientbalance>: the type of nutrient balance which can be either on of "CNB" for the classic (simpel) nitrogen
+   balance or "SNOMIN" for the complex carbon/nitrogen balance.
+
+Depending on the production level, the codes for the water balance and nitrogen balance can be omitted. For example,
+WOFOST 7.3 potential production will be coded as "Wofost73_PP", while for the most complex WOFOST 8.1 variant the
+model coding will be: "Wofost81_NWLP_MLWB_SNOMIN". The latter combines the WOFOST 8.1 crop dynamics with the
+multi-layer water balance and the SNOMIN Carbon/Nitrogen balance.
+
+Further changes to the system consist of:
+
+ - all data providers have been moved to `pcse.input`
+ - All WOFOST 7.2 models have been renamed according to the coding schema above. So "pcse.models.Wofost72_WLP_FD" is
+   now "pcse.models.Wofost72_WLP_CWB" although the old name will keep working in order not to break old code.
+
+
+
+**********************
 What's new in PCSE 5.5
 **********************
 
