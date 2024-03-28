@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2018
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """The PCSE Engine provides the environment where SimulationObjects are 'living'.
 The engine takes care of reading the model configuration, initializing model
 components (e.g. groups of SimulationObjects), driving the simulation
@@ -22,7 +22,8 @@ from .traitlets import Instance, Bool, List, Dict
 from .base import (VariableKiosk, WeatherDataProvider,
                            AncillaryObject, SimulationObject,
                            BaseEngine, ParameterProvider)
-from .util import ConfigurationLoader, check_date
+from .util import check_date
+from .base import ConfigurationLoader
 from .timer import Timer
 from . import signals
 from . import exceptions as exc

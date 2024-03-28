@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), June 2017
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 
 import os, sys
 import matplotlib
@@ -8,11 +8,11 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import pcse
-from pcse.db import NASAPowerWeatherDataProvider
+from pcse.input import NASAPowerWeatherDataProvider
 from pcse.input import CABOFileReader
-from pcse.input import PCSEFileReader
 from pcse.input import YAMLAgroManagementReader
-from pcse.models import Wofost71_WLP_FD
+from pcse.util import WOFOST72SiteDataProvider
+from pcse.models import Wofost72_WLP_CWB
 from pcse.base import ParameterProvider
 
 # First set the location where the crop, soil and crop calendar files can be found
@@ -27,20 +27,14 @@ wdp = NASAPowerWeatherDataProvider(latitude=52, longitude=5)
 # Read parameter values from the input files
 cropdata = CABOFileReader(os.path.join(data_dir,'sug0601.crop'))
 soildata = CABOFileReader(os.path.join(data_dir,'ec3.soil'))
-sitedata = {'SSMAX'  : 0.,
-            'IFUNRN' : 0,
-            'NOTINF' : 0,
-            'SSI'    : 0,
-            'WAV'    : 100,
-            'SMLIM'  : 0.03,
-            'CO2'    : 360}
+sitedata = WOFOST72SiteDataProvider(WAV=10)
 parameters = ParameterProvider(cropdata=cropdata, soildata=soildata, sitedata=sitedata)
 
 # Read agromanagement
 agromanagement = YAMLAgroManagementReader(os.path.join(data_dir,'sugarbeet_calendar.amgt'))
 
 # Start WOFOST
-wf = Wofost71_WLP_FD(parameters, wdp, agromanagement)
+wf = Wofost72_WLP_CWB(parameters, wdp, agromanagement)
 wf.run_till_terminate()
 
 # Get time-series output from WOFOST and take the selected variables

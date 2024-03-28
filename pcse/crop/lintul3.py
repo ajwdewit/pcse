@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Wim de Winter(Wim.deWinter@wur.nl), April 2015
 """
 LINTUL3

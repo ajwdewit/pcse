@@ -126,7 +126,12 @@ Partitioning
 |CO2| Assimilation
 ------------------
 
-.. autoclass:: pcse.crop.assimilation.WOFOST_Assimilation
+.. autoclass:: pcse.crop.assimilation.WOFOST72_Assimilation
+
+.. autoclass:: pcse.crop.assimilation.WOFOST73_Assimilation
+
+.. autoclass:: pcse.crop.assimilation.WOFOST81_Assimilation
+
 
 Maintenance respiration
 -----------------------
@@ -136,12 +141,20 @@ Evapotranspiration
 ------------------
 .. autoclass:: pcse.crop.evapotranspiration.Evapotranspiration
 
+.. autoclass:: pcse.crop.evapotranspiration.EvapotranspirationCO2
+
+.. autoclass:: pcse.crop.evapotranspiration.EvapotranspirationCO2Layered
+
 .. autofunction:: pcse.crop.evapotranspiration.SWEAF
 
     
 Leaf dynamics
 -------------
 .. autoclass:: pcse.crop.leaf_dynamics.WOFOST_Leaf_Dynamics
+
+.. autoclass:: pcse.crop.leaf_dynamics.WOFOST_Leaf_Dynamics_N
+
+.. autoclass:: pcse.crop.leaf_dynamics.CSDM_Leaf_Dynamics
 
 Root dynamics
 -------------
@@ -155,13 +168,12 @@ Storage organ dynamics
 ----------------------
 .. autoclass:: pcse.crop.storage_organ_dynamics.WOFOST_Storage_Organ_Dynamics
 
-N/P/K dynamics
---------------
+Crop N dynamics
+---------------
 
-.. autoclass:: pcse.crop.npk_dynamics.NPK_Crop_Dynamics
-.. autoclass:: pcse.crop.nutrients.NPK_Demand_Uptake
-.. autoclass:: pcse.crop.nutrients.NPK_Stress
-.. autoclass:: pcse.crop.nutrients.NPK_Translocation
+.. autoclass:: pcse.crop.n_dynamics.N_Crop_Dynamics
+.. autoclass:: pcse.crop.nutrients.N_Demand_Uptake
+.. autoclass:: pcse.crop.nutrients.N_Stress
 
 
 Abiotic damage
@@ -196,6 +208,10 @@ Nitrogen dynamics
 .. autoclass:: pcse.crop.lingra_ndynamics.N_Stress
 
 .. autoclass:: pcse.crop.lingra_ndynamics.N_Crop_Dynamics
+
+
+.. Crop simulation processes for the ALCEPAS model
+.. ===============================================
 
 
 .. _BaseClasses:
@@ -235,6 +251,11 @@ Base and utility classes for weather data
 .. autoclass:: pcse.base.WeatherDataContainer
     :members:
 
+Configuration loading
+---------------------
+.. autoclass:: pcse.base.ConfigurationLoader
+    :members:
+
 .. _Signals:
 
 Signals defined
@@ -243,43 +264,55 @@ Signals defined
     :members:
     
 
-Utilities
-=========
+Ancillary code
+==============
 
-The utilities section deals with tools for reading weather data and parameter
+The ancillary code section deals with tools for reading weather data and parameter
 values from files or databases.
 
-.. _FileInput:
 
-Tools for reading input files
------------------------------
+.. _Input:
+Data providers
+--------------
 
-The file_input tools contain several classes for reading weather files,
+The module `pcse.input` contains all classes for reading weather files,
 parameter files and agromanagement files.
 
-.. _CABOFileReader:
-.. autoclass:: pcse.fileinput.CABOFileReader
-    :members:
+.. _NASAPowerWeatherDataProvider:
+.. autoclass:: pcse.input.NASAPowerWeatherDataProvider
 
 .. _CABOWeatherDataProvider:
-.. autoclass:: pcse.fileinput.CABOWeatherDataProvider
-    :members:
-
-.. _PCSEFileReader:
-.. autoclass:: pcse.fileinput.PCSEFileReader
-    :members:
+.. autoclass:: pcse.input.CABOWeatherDataProvider
 
 .. _ExcelWeatherDataProvider:
-.. autoclass:: pcse.fileinput.ExcelWeatherDataProvider
+.. autoclass:: pcse.input.ExcelWeatherDataProvider
 
 .. _CSVWeatherDataProvider:
-.. autoclass:: pcse.fileinput.CSVWeatherDataProvider
+.. autoclass:: pcse.input.CSVWeatherDataProvider
+
+.. _CABOFileReader:
+.. autoclass:: pcse.input.CABOFileReader
+
+.. _PCSEFileReader:
+.. autoclass:: pcse.input.PCSEFileReader
 
 .. _YAMLAgroManagementReader:
-.. autoclass:: pcse.fileinput.YAMLAgroManagementReader
+.. autoclass:: pcse.input.YAMLAgroManagementReader
 
 .. _YAMLCropDataProvider:
-.. autoclass:: pcse.fileinput.YAMLCropDataProvider
+.. autoclass:: pcse.input.YAMLCropDataProvider
+
+.. _WOFOST72SiteDataProvider:
+.. autoclass:: pcse.input.WOFOST72SiteDataProvider
+
+.. _WOFOST73SiteDataProvider:
+.. autoclass:: pcse.input.WOFOST73SiteDataProvider
+
+.. _WOFOST81SiteDataProvider_classic:
+.. autoclass:: pcse.input.WOFOST81SiteDataProvider_Classic
+
+.. _WOFOST81SiteDataProvider_SNOMIN:
+.. autoclass:: pcse.input.WOFOST81SiteDataProvider_SNOMIN
 
 
 Simple or dummy data providers
@@ -293,12 +326,6 @@ must be provided to the model.
 
 .. _DummySoilDataProvider:
 .. autoclass:: pcse.util.DummySoilDataProvider
-
-.. _WOFOST72SiteDataProvider:
-.. autoclass:: pcse.util.WOFOST72SiteDataProvider
-
-.. _WOFOST80SiteDataProvider:
-.. autoclass:: pcse.util.WOFOST80SiteDataProvider
 
 
 .. _DBtools:
@@ -314,7 +341,7 @@ Note that the data providers only provide functionality for *reading* data,
 there are no tools here *writing* simulation results to a CGMS database. This was
 done on purpose as writing data can be a complex matter and it is our
 experience that this can be done more easily with dedicated database loader
-tools such as `SQLLoader`_ for ORACLE or the ``load data infile`` syntax of MySQL
+tools such as `SQLLoader`_ for ORACLE or the ``load data infile`` syntax of MySQL.
 
 .. _SQLLoader: http://www.oracle.com/technetwork/database/enterprise-edition/sql-loader-overview-095816.html
 
@@ -385,15 +412,6 @@ from CGMS8 and CGMS12.
 .. _CGMS14_data_providers:
 
 
-The NASA POWER database
-.......................
-
-.. _NASAPowerWeatherDataProvider:
-
-.. autoclass:: pcse.db.NASAPowerWeatherDataProvider
-    :members:
-
-
 Convenience routines
 --------------------
 
@@ -407,7 +425,7 @@ build your own script but have no further relevance.
 Miscelaneous utilities
 ----------------------
 
-Many miscelaneous for a variety of purposes such as the Arbitrary Function
+Many miscelaneous function for a variety of purposes such as the Arbitrary Function
 Generator (AfGen) for linear interpolation and functions for calculating
 Penman Penman/Monteith reference evapotranspiration,
 the Angstrom equation and astronomical calculations such as day length.
@@ -424,8 +442,6 @@ the Angstrom equation and astronomical calculations such as day length.
 .. autofunction:: pcse.util.astro
 .. autofunction:: pcse.util.merge_dict
 .. autoclass:: pcse.util.Afgen
-    :members:
-.. autoclass:: pcse.util.ConfigurationLoader
     :members:
 .. autofunction:: pcse.util.is_a_month
 .. autofunction:: pcse.util.is_a_dekad

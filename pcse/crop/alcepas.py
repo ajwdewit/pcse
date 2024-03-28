@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2017 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), October 2017
-"""Basic routines for ALCEPAS onion model
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
+"""Basic routines for ALCEPAS onion model for growth of onions under potential production conditions.
+
+The model is described in:
+- De Visser, C. L. M. . “ALCEPAS, an Onion Growth Model Based on SUCROS87.I. Development of the Model.”
+  Journal of Horticultural Science 69, no. 3 (January 1994): 501–18. https://doi.org/10.1080/14620316.1994.11516482.
+- De Visser, C. L. M. “ALCEPAS, an Onion Growth Model Based on SUCROS87. II. Validation of the Model.”
+  Journal of Horticultural Science 69, no. 3 (January 1994): 519–25. https://doi.org/10.1080/14620316.1994.11516483.
 """
 from __future__ import print_function
 from math import exp
@@ -219,17 +225,6 @@ class Phenology(SimulationObject):
 class LeafDynamics(SimulationObject):
     """Leaf dynamics for the ALCEPAS crop model.
 
-    Implementation of biomass partitioning to leaves, growth and senenscence
-    of leaves. WOFOST keeps track of the biomass that has been partitioned to
-    the leaves for each day (variable `LV`), which is called a leaf class).
-    For each leaf class the leaf age (variable 'LVAGE') and specific leaf area
-    (variable `SLA`) are also registered. Total living leaf biomass is
-    calculated by summing the biomass values for all leaf classes. Similarly,
-    leaf area is calculated by summing leaf biomass times specific leaf area
-    (`LV` * `SLA`).
-
-    Senescense of the leaves can occur as a result of physiological age,
-    drought stress or self-shading.
 
     *Simulation parameters* (provide in cropdata dictionary)
 
@@ -252,19 +247,7 @@ class LeafDynamics(SimulationObject):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    LV       Leaf biomass per leaf class                        N    |kg ha-1|
-    SLA      Specific leaf area per leaf class                  N    |ha kg-1|
-    LVAGE    Leaf age per leaf class                            N    |d|
-    LVSUM    Sum of LV                                          N    |kg ha-1|
-    LAIEM    LAI at emergence                                   N    -
-    LASUM    Total leaf area as sum of LV*SLA,                  N    -
-             not including stem and pod area                    N
-    LAIEXP   LAI value under theoretical exponential growth     N    -
-    LAIMAX   Maximum LAI reached during growth cycle            N    -
-    LAI      Leaf area index, including stem and pod area       Y    -
-    WLV      Dry weight of living leaves                        Y    |kg ha-1|
-    DWLV     Dry weight of dead leaves                          N    |kg ha-1|
-    TWLV     Dry weight of total leaves (living + dead)         Y    |kg ha-1|
+    XXX      xxxxxxxxxxxxxxxxxx                                Y|N   |kg ha-1|
     =======  ================================================= ==== ============
 
 
@@ -273,22 +256,7 @@ class LeafDynamics(SimulationObject):
     =======  ================================================= ==== ============
      Name     Description                                      Pbl      Unit
     =======  ================================================= ==== ============
-    GRLV     Growth rate leaves                                 N   |kg ha-1 d-1|
-    DSLV1    Death rate leaves due to water stress              N   |kg ha-1 d-1|
-    DSLV2    Death rate leaves due to self-shading              N   |kg ha-1 d-1|
-    DSLV3    Death rate leaves due to frost kill                N   |kg ha-1 d-1|
-    DSLV     Maximum of DLSV1, DSLV2, DSLV3                     N   |kg ha-1 d-1|
-    DALV     Death rate leaves due to aging.                    N   |kg ha-1 d-1|
-    DRLV     Death rate leaves as a combination of DSLV and     N   |kg ha-1 d-1|
-             DALV
-    SLAT     Specific leaf area for current time step,          N   |ha kg-1|
-             adjusted for source/sink limited leaf expansion
-             rate.
-    FYSAGE   Increase in physiological leaf age                 N   -
-    GLAIEX   Sink-limited leaf expansion rate (exponential      N   |ha ha-1 d-1|
-             curve)
-    GLASOL   Source-limited leaf expansion rate (biomass        N   |ha ha-1 d-1|
-             increase)
+    xxxx     xxxxxxxxxxx                                        N   |kg ha-1 d-1|
     =======  ================================================= ==== ============
 
 
@@ -297,16 +265,6 @@ class LeafDynamics(SimulationObject):
     ======== ============================== =============================== ===========
      Name     Description                         Provided by               Unit
     ======== ============================== =============================== ===========
-    DVS      Crop development stage         DVS_Phenology                    -
-    FL       Fraction biomass to leaves     DVS_Partitioning                 -
-    FR       Fraction biomass to roots      DVS_Partitioning                 -
-    SAI      Stem area index                WOFOST_Stem_Dynamics             -
-    PAI      Pod area index                 WOFOST_Storage_Organ_Dynamics    -
-    TRA      Transpiration rate             Evapotranspiration              |cm day-1|
-    TRAMX    Maximum transpiration rate     Evapotranspiration              |cm day-1|
-    ADMI     Above-ground dry matter        CropSimulation                  |kg ha-1 d-1|
-             increase
-    RF_FROST Reduction factor frost kill    FROSTOL                          -
     ======== ============================== =============================== ===========
     """
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
-# Approach based on LINTUL N/P/K made by Joost Wolf
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 from collections import namedtuple
 
 from ...base import StatesTemplate, ParamTemplate, SimulationObject, RatesTemplate
@@ -16,7 +15,7 @@ class N_Demand_Uptake(SimulationObject):
     """Calculates the crop N demand and its uptake from the soil.
 
     Crop N demand is calculated as the difference between the actual N
-   (kg N per kg biomass) in the vegetative plant organs (leaves, stems and roots) 
+    (kg N per kg biomass) in the vegetative plant organs (leaves, stems and roots)
     and the maximum N concentration for each organ. N uptake is then 
     estimated as the minimum of supply from the soil and demand from the crop.
 

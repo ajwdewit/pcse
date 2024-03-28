@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2024 Alterra, Wageningen-UR
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Herman Berghuijs (herman.berghuijs@wur.nl) and Allard de Wit (allard.dewit@wur.nl), January 2024
 
 from math import sqrt
 import numpy as np
-from dotmap import DotMap
+from types import SimpleNamespace
 from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool, HasTraits, List
 from ..util import limit, Afgen, merge_dict
 
@@ -109,7 +109,7 @@ class SoilNProfile(list):
     def __init__(self, parvalues):
         list.__init__(self)
 
-        sp = DotMap(parvalues["SoilProfileDescription"])
+        sp = SimpleNamespace(**parvalues["SoilProfileDescription"])
         for layer_properties in sp.SoilLayers:
             layer = SoilNLayer(layer_properties, sp.PFFieldCapacity, sp.PFWiltingPoint)
             self.append(layer)

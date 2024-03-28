@@ -4,14 +4,13 @@ Installing PCSE
 Requirements and dependencies
 -----------------------------
 
-PCSE is being developed on Ubuntu Linux 18.04 and Windows 10 using python 3.7 and python 3.8
+PCSE is being developed on Ubuntu Linux 18.04 and Windows 10 using python 3.9 and python 3.10
 As Python is a platform independent language, PCSE works equally well on Linux, Windows or Mac OSX.
 Before installing PCSE, Python itself must be installed on your system which we will demonstrate
 below. PCSE has a number of dependencies on other python packages which are the following::
 
-- SQLAlchemy>=0.8.0
+- SQLAlchemy<2.0
 - PyYAML>=3.11
-- xlrd>=0.9.3
 - openpyxl>=3.0
 - requests>=2.0.0
 - pandas>=0.20
@@ -50,48 +49,51 @@ After installing MiniConda you should open a command box and check that conda is
 
 .. code-block:: doscon
 
-    (py3_pcse) C:\>conda info
+    (base) C:\>conda info
 
-             active environment : py3_pcse
-            active env location : C:\data\Miniconda3\envs\py3_pcse
-                    shell level : 3
-               user config file : C:\Users\wit015\.condarc
-         populated config files : C:\Users\wit015\.condarc
-                  conda version : 4.9.2
-            conda-build version : not installed
-                 python version : 3.8.5.final.0
-               virtual packages : __win=0=0
-                                  __archspec=1=x86_64
-               base environment : C:\data\Miniconda3  (writable)
-                   channel URLs : https://conda.anaconda.org/conda-forge/win-64
-                                  https://conda.anaconda.org/conda-forge/noarch
-                                  https://repo.anaconda.com/pkgs/main/win-64
-                                  https://repo.anaconda.com/pkgs/main/noarch
-                                  https://repo.anaconda.com/pkgs/r/win-64
-                                  https://repo.anaconda.com/pkgs/r/noarch
-                                  https://repo.anaconda.com/pkgs/msys2/win-64
-                                  https://repo.anaconda.com/pkgs/msys2/noarch
-                  package cache : C:\data\Miniconda3\pkgs
-                                  C:\Users\wit015\.conda\pkgs
-                                  C:\Users\wit015\AppData\Local\conda\conda\pkgs
-               envs directories : C:\data\Miniconda3\envs
-                                  C:\Users\wit015\.conda\envs
-                                  C:\Users\wit015\AppData\Local\conda\conda\envs
-                       platform : win-64
-                     user-agent : conda/4.9.2 requests/2.24.0 CPython/3.8.5 Windows/10 Windows/10.0.18362
-                  administrator : False
-                     netrc file : None
-                   offline mode : False
+         active environment : base
+        active env location : C:\data\Miniconda3
+                shell level : 1
+           user config file : C:\Users\wit015\.condarc
+     populated config files : C:\Users\wit015\.condarc
+              conda version : 23.11.0
+        conda-build version : not installed
+             python version : 3.8.18.final.0
+                     solver : libmamba (default)
+           virtual packages : __archspec=1=x86_64
+                              __conda=23.11.0=0
+                              __win=0=0
+           base environment : C:\data\Miniconda3  (writable)
+          conda av data dir : C:\data\Miniconda3\etc\conda
+      conda av metadata url : None
+               channel URLs : https://conda.anaconda.org/conda-forge/win-64
+                              https://conda.anaconda.org/conda-forge/noarch
+                              https://repo.anaconda.com/pkgs/main/win-64
+                              https://repo.anaconda.com/pkgs/main/noarch
+                              https://repo.anaconda.com/pkgs/r/win-64
+                              https://repo.anaconda.com/pkgs/r/noarch
+                              https://repo.anaconda.com/pkgs/msys2/win-64
+                              https://repo.anaconda.com/pkgs/msys2/noarch
+              package cache : C:\data\Miniconda3\pkgs
+                              C:\Users\wit015\.conda\pkgs
+                              C:\Users\wit015\AppData\Local\conda\conda\pkgs
+           envs directories : C:\data\Miniconda3\envs
+                              C:\Users\wit015\.conda\envs
+                              C:\Users\wit015\AppData\Local\conda\conda\envs
+                   platform : win-64
+                 user-agent : conda/23.11.0 requests/2.31.0 CPython/3.8.18 Windows/10 Windows/10.0.19045 solver/libmamba conda-libmamba-solver/23.11.1 libmambapy/1.5.3
+              administrator : False
+                 netrc file : None
+               offline mode : False
+
 
 Now we will use a Conda environment file to recreate the python environment that we use to develop and run
-PCSE. First you should download the conda environment file which comes in two flavours, an
-environment for running PCSE on python 3 (:download:`downloads/py3_pcse.yml`) and one for python 2
-(:download:`downloads/py2_pcse.yml`). It is strongly recommended to use the python 3 version as python 2
-is not maintained anymore. Both environments include the Jupyter notebook and IPython which are
+PCSE. First you should download the conda environment file (:download:`downloads/py3_pcse.yml`).
+The environment include the Jupyter notebook and IPython which are
 needed for running the `getting started` section and the example notebooks. Save the environment file
 on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
-using the command ``conda env create`` and tell conda to use the environment file for python3 with the
-option ``-f p3_pcse.yml`` as show below:
+using the command ``conda env create`` and tell conda to use the environment file  with the
+option ``-f py3_pcse.yml`` as show below:
 
 .. code-block:: doscon
 
@@ -118,7 +120,7 @@ You can then activate your environment (note the addition of ``(py3_pcse)`` on y
 
 .. code-block:: doscon
 
-    D:\temp\make_env>activate py3_pcse
+    D:\temp\make_env>conda activate py3_pcse
     Deactivating environment "C:\Miniconda3"...
     Activating environment "C:\Miniconda3\envs\py3_pcse"...
 
@@ -132,7 +134,7 @@ Installing from PyPI is mostly useful if you are interested in using the functio
 provided by PCSE in your own scripts, but are not interested in modifying or contributing to
 PCSE itself. Installing from PyPI is done using the package installer `pip` which searches
 the python package index for a package, downloads and installs it into your python
-environment (example below for PCSE 5.4):
+environment (example below for PCSE 6.0.0):
 
 .. code-block:: doscon
 
@@ -166,10 +168,7 @@ environment (example below for PCSE 5.4):
     mkl-random 1.0.1 requires cython, which is not installed.
     mkl-fft 1.0.4 requires cython, which is not installed.
     Installing collected packages: pcse
-    Successfully installed pcse-5.4.0
-
-If you are wondering what the difference between `pip` and `conda` are than have a look
-`here <https://stackoverflow.com/questions/20994716/what-is-the-difference-between-pip-and-conda#20994790>`_
+    Successfully installed pcse-6.0.0
 
 If you want to develop with or contribute to PCSE, than you should fork the `PCSE
 repository`_ on GitHub and get a local copy of PCSE using `git clone`. See the help on github_
@@ -201,14 +200,14 @@ For running the internal tests of the PCSE package we need to start python and i
 
 .. code-block:: doscon
 
-    (py3_pcse) D:\temp\make_env>python
-    Python 3.6.5 (default, Aug 14 2018, 19:12:50) [MSC v.1900 32 bit (Intel)] :: Anaconda, Inc. on win32
-    Type "help", "copyright", "credits" or "license" for more information.
+    (py3_pcse) C:\>python
+    Python 3.10.14 | packaged by conda-forge | (main, Mar 20 2024, 12:40:08) [MSC v.1938 64 bit (AMD64)]
+    Type 'copyright', 'credits' or 'license' for more information
     >>> import pcse
     Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db ... OK
     >>>
 
-Next, the tests can be executed by calling the `test()` function at the top of the package::
+Next, the tests can be executed by calling the `test()` function at the top of the package:
 
 .. code-block:: doscon
 
@@ -231,23 +230,21 @@ Next, the tests can be executed by calling the `test()` function at the top of t
     runTest (pcse.tests.test_agromanager.TestAgroManager6) ... ok
     runTest (pcse.tests.test_agromanager.TestAgroManager7) ... ok
     runTest (pcse.tests.test_agromanager.TestAgroManager8) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedPotato) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialSunflower) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSpringBarley) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterRapeseed) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialWinterWheat) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedSunflower) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedWinterWheat) ... ok
-    runTest (pcse.tests.test_wofost.TestWaterlimitedGrainMaize) ... ok
-    runTest (pcse.tests.test_wofost.TestPotentialPotato) ... ok
-    runTest (pcse.tests.test_wofost80.TestWOFOST80_Potential_WinterWheat) ... ok
-    runTest (pcse.tests.test_wofost80.TestWOFOST80_WaterLimited_WinterWheat) ... ok
+    runTest (pcse.tests.test_wofost72.TestWaterlimitedGrainMaize) ... ok
+    runTest (pcse.tests.test_wofost72.TestWaterlimitedPotato) ... ok
+    runTest (pcse.tests.test_wofost72.TestWaterlimitedWinterRapeseed) ... ok
+    runTest (pcse.tests.test_wofost72.TestWaterlimitedWinterWheat) ... ok
+    runTest (pcse.tests.test_wofost72.TestPotentialGrainMaize) ... ok
+    runTest (pcse.tests.test_wofost72.TestPotentialWinterWheat) ... ok
+    runTest (pcse.tests.test_wofost72.TestPotentialWinterRapeseed) ... ok
+    runTest (pcse.tests.test_wofost72.TestWaterlimitedSunflower) ... ok
+    runTest (pcse.tests.test_wofost72.TestPotentialSpringBarley) ... ok
+    runTest (pcse.tests.test_wofost72.TestPotentialSunflower) ... ok
+    runTest (pcse.tests.test_wofost72.TestPotentialPotato) ... ok
+    runTest (pcse.tests.test_wofost72.TestWaterlimitedSpringBarley) ... ok
 
     ----------------------------------------------------------------------
-    Ran 32 tests in 39.809s
+    Ran 30 tests in 22.482s
 
     OK
 

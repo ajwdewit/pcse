@@ -1,5 +1,21 @@
+.. include:: abbreviations.txt
 Models available in PCSE
 ========================
+
+The PCSE package implements several crop models that were developed in Wageningen. These models are:
+
+    - The WOFOST cropping system model for simulating growth and development of arable crops.
+    - The LINTUL3 model for simulating growth and development of arable crops. Compared to
+      WOFOST, LINTUL3 uses a simplified approach for estimating |CO2| assimilation.
+    - The LINGRA model for simulating grassland productivity.
+    - The ALCEPAS model specifically developed for simulation of onion.
+
+PCSE also provides an implementation of the FAO-WRSI (Water Requirement Satisfaction Index) model which
+computes stress index representing the water shortage experience by the crop
+
+Moreover, these crop models can be combined with models for soil water and nitrogen of different complexity,
+ranging from simple models (indicated as "classic") as well as a more advanced water balance models using
+multiple soil layers and an advanced soil carbon/nitrogen model (SNOMIN).
 
 The following table lists the models that are available in PCSE and can be imported from `pcse.models` package.
 For each model it lists the production level and some of the features included in the models. The model name for
@@ -29,5 +45,3 @@ most models is made up from a set of codes which follow: <modelname><version>_<p
  ALCEPAS_PP                  Potential                                                                     N/A             N/A
  FAO_WRSI                    Water-limited                                                                 Classic         N/A
 =========================== ============================ ============ ====================== ============ =============== ===========
-
-

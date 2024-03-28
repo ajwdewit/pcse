@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2016 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), October 2016
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """Miscellaneous utilities for PCSE
 """
 import os, sys
-from pathlib import Path
 import datetime
 import copy
 import platform
@@ -13,7 +12,6 @@ import logging
 from math import log10, cos, sin, asin, sqrt, exp, pi, radians
 from collections import namedtuple
 from bisect import bisect_left
-import textwrap
 import sqlite3
 if sys.version_info > (3,8):
     from collections.abc import Iterable
@@ -719,90 +717,6 @@ def merge_dict(d1, d2, overwrite=False):
     return td
 
 
-class ConfigurationLoader(object):
-    """Class for loading the model configuration from a PCSE configuration files
-
-        :param config: string given file name containing model configuration
-        """
-    _required_attr = ("CROP", "SOIL", "AGROMANAGEMENT", "OUTPUT_VARS", "OUTPUT_INTERVAL",
-                      "OUTPUT_INTERVAL_DAYS", "SUMMARY_OUTPUT_VARS")
-    defined_attr = []
-    model_config_file = None
-    description = None
-
-    def __init__(self, config):
-
-        if not isinstance(config, (str, Path)):
-            msg = ("Keyword 'config' should provide the name of the file (string or pathlib.Path)" +
-                   "storing the configuration of the model PCSE should run.")
-            raise exc.PCSEError(msg)
-
-        # check if model configuration file is an absolute or relative path. If
-        # not assume that it is located in the 'conf/' folder in the PCSE
-        # distribution
-        config = str(config)
-        if os.path.isabs(config):
-            mconf = config
-        elif config.startswith("."):
-            mconf = os.path.normpath(config)
-        else:
-            pcse_dir = os.path.dirname(__file__)
-            mconf = os.path.join(pcse_dir, "conf", config)
-        model_config_file = os.path.abspath(mconf)
-
-        # check that configuration file exists
-        if not os.path.exists(model_config_file):
-            msg = "PCSE model configuration file does not exist: %s" % model_config_file
-            raise exc.PCSEError(msg)
-        # store for later use
-        self.model_config_file = model_config_file
-
-        # Load file using execfile
-        try:
-            loc = {}
-            bytecode = compile(open(model_config_file).read(), model_config_file, 'exec')
-            exec(bytecode, {}, loc)
-        except Exception as e:
-            msg = "Failed to load configuration from file '%s' due to: %s"
-            msg = msg % (model_config_file, e)
-            raise exc.PCSEError(msg)
-
-        # Add the descriptive header for later use
-        if "__doc__" in loc:
-            desc = loc.pop("__doc__")
-            if len(desc) > 0:
-                self.description = desc
-                if self.description[-1] != "\n":
-                    self.description += "\n"
-
-        # Loop through the attributes in the configuration file
-        for key, value in list(loc.items()):
-            if key.isupper():
-                self.defined_attr.append(key)
-                setattr(self, key, value)
-
-        # Check for any missing compulsary attributes
-        req = set(self._required_attr)
-        diff = req.difference(set(self.defined_attr))
-        if diff:
-            msg = "One or more compulsary configuration items missing: %s" % list(diff)
-            raise exc.PCSEError(msg)
-
-    def __str__(self):
-        msg = "PCSE ConfigurationLoader from file:\n"
-        msg += "  %s\n\n" % self.model_config_file
-        if self.description is not None:
-            msg += ("%s Header of configuration file %s\n"% ("-"*20, "-"*20))
-            msg += self.description
-            if msg[-1] != "\n":
-                msg += "\n"
-            msg += ("%s Contents of configuration file %s\n"% ("-"*19, "-"*19))
-        for k in self.defined_attr:
-             r = "%s: %s" % (k, getattr(self, k))
-             msg += (textwrap.fill(r, subsequent_indent="  ") + "\n")
-        return msg
-
-
 def is_a_month(day):
     """Returns True if the date is on the last day of a month."""
 
@@ -941,175 +855,6 @@ def version_tuple(v):
     True
     """
     return tuple(map(int, (v.split("."))))
-
-
-class _GenericSiteDataProvider(dict):
-    """Generic Site data provider
-
-    It just checks the values provided as keywords given the _defaults and _required values
-
-    _defaults = {"VARNAME": (default, {maxvalue, minvalue}, type),
-                }
-    _required = ["VARNAME"]
-    """
-
-    def __init__(self, **kwargs):
-        dict.__init__(self)
-
-        for par_name, (default_value, par_range, par_conversion) in self._defaults.items():
-            if par_name not in kwargs:
-                # parameter was not provided, use the default if possible
-                if par_name in self._required:
-                    msg = "Value for parameter '%s' must be provided!" % par_name
-                    raise exc.PCSEError(msg)
-                else:
-                    v = default_value
-            else:
-                # parameter was provided, check value for type and range
-                v = par_conversion(kwargs.pop(par_name))
-                if isinstance(par_range, set):
-                    if v not in par_range:
-                        msg = "Value for parameter '%s' can only have values: %s" % (par_name, par_range)
-                        raise exc.PCSEError(msg)
-                else:
-                    if not (par_range[0] <= v <= par_range[1]):
-                        msg = "Value for parameter '%s' out of range %s-%s" % \
-                              (par_name, par_range[0], par_range[1])
-                        raise exc.PCSEError(msg)
-            self[par_name] = v
-
-        # Check if kwargs is empty
-        if kwargs:
-            msg = "Unknown parameter values provided to WOFOSTSiteDataProvider: %s" % kwargs
-            print(msg)
-
-
-class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
-    """Site data provider for WOFOST 7.2.
-
-    Site specific parameters for WOFOST 7.2 can be provided through this data provider as well as through
-    a normal python dictionary. The sole purpose of implementing this data provider is that the site
-    parameters for WOFOST are documented, checked and that sensible default values are given.
-
-    The following site specific parameter values can be set through this data provider::
-
-        - IFUNRN    Indicates whether non-infiltrating fraction of rain is a function of storm size (1)
-                    or not (0). Default 0
-        - NOTINF    Maximum fraction of rain not-infiltrating into the soil [0-1], default 0.
-        - SSMAX     Maximum depth of water that can be stored on the soil surface [cm]
-        - SSI       Initial depth of water stored on the surface [cm]
-        - WAV       Initial amount of water in total soil profile [cm]
-        - SMLIM     Initial maximum moisture content in initial rooting depth zone [0-1], default 0.4
-
-    Currently only the value for WAV is mandatory to specify.
-    """
-    
-    _defaults = {"IFUNRN": (0, [0, 1], int),
-                 "NOTINF": (0, [0., 1.], float),
-                 "SSI": (0., [0., 100.], float),
-                 "SSMAX": (0., [0., 100.], float),
-                 "WAV": (None, [0., 100.], float),
-                 "SMLIM": (0.4, [0., 1.], float)}
-    _required = ["WAV"]
-
-
-# This is just to keep old code working
-class WOFOST71SiteDataProvider(WOFOST72SiteDataProvider):
-    pass
-
-
-class WOFOST73SiteDataProvider(_GenericSiteDataProvider):
-    """Site data provider for WOFOST 7.3
-
-    Site specific parameters for WOFOST 7.3 can be provided through this data provider as well as through
-    a normal python dictionary. The sole purpose of implementing this data provider is that the site
-    parameters for WOFOST are documented, checked and that sensible default values are given.
-
-    The following site specific parameter values can be set through this data provider::
-
-        - IFUNRN    Indicates whether non-infiltrating fraction of rain is a function of storm size (1)
-                    or not (0). Default 0
-        - NOTINF    Maximum fraction of rain not-infiltrating into the soil [0-1], default 0.
-        - SSMAX     Maximum depth of water that can be stored on the soil surface [cm]
-        - SSI       Initial depth of water stored on the surface [cm]
-        - WAV       Initial amount of water in total soil profile [cm]
-        - SMLIM     Initial maximum moisture content in initial rooting depth zone [0-1], default 0.4
-        - CO2       Atmospheric CO2 concentration in ppm
-
-    Values for WAV and CO2 is mandatory to specify.
-    """
-
-    _defaults = {"IFUNRN": (0, [0, 1], int),
-                 "NOTINF": (0, [0., 1.], float),
-                 "SSI": (0., [0., 100.], float),
-                 "SSMAX": (0., [0., 100.], float),
-                 "WAV": (None, [0., 100.], float),
-                 "SMLIM": (0.4, [0., 1.], float),
-                 "CO2": (None, [320, 700], float)}
-    _required = ["WAV", "CO2"]
-
-
-class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
-    """Site data provider for WOFOST 8.0.
-
-    Site specific parameters for WOFOST 8.0 can be provided through this data provider as well as through
-    a normal python dictionary. The sole purpose of implementing this data provider is that the site
-    parameters for WOFOST are documented, checked and that sensible default values are given.
-
-    The following site specific parameter values can be set through this data provider::
-
-        - IFUNRN        Indicates whether non-infiltrating fraction of rain is a function of
-                        storm size (1) or not (0). Default 0
-        - NOTINF        Maximum fraction of rain not-infiltrating into the soil [0-1],
-                        default 0.
-        - SSMAX         Maximum depth of water that can be stored on the soil surface [cm]
-        - SSI           Initial depth of water stored on the surface [cm]
-        - WAV           Initial amount of water in total soil profile [cm]
-        - SMLIM         Initial maximum moisture content in initial rooting depth zone [0-1],
-                        default 0.4
-        - CO2           Atmospheric CO2 level (ppm), default 360.
-        - BG_N_SUPPLY   Background N supply through atmospheric deposition in kg/ha/day. Can be
-                        in the order of 25 kg/ha/year in areas with high N pollution. Default 0.0
-        - NSOILBASE     Base N amount available in the soil. This is often estimated as the nutrient
-                        left over from the previous growth cycle (surplus nutrients, crop residues
-                        or green manure).
-        - NSOILBASE_FR  Daily fraction of soil N coming available through mineralization
-        - BG_P_SUPPLY   Background P supply in kg/ha/day. Usually this is mainly through deposition
-                        of dust and an order of magnitude smaller than N deposition. Default 0.0
-        - PSOILBASE     Base P amount available in the soil.
-        - PSOILBASE_FR  Daily fraction of soil P coming available through mineralization
-        - BG_K_SUPPLY   Background P supply in kg/ha/day. Default 0.0
-        - KSOILBASE     Base K amount available in the soil
-        - KSOILBASE_FR  Daily fraction of soil K coming available through mineralization
-        - NAVAILI       Amount of N available in the pool at initialization of the system [kg/ha]
-        - PAVAILI       Amount of P available in the pool at initialization of the system [kg/ha]
-        - KAVAILI       Amount of K available in the pool at initialization of the system [kg/ha]
-
-    Currently, the parameters for initial water availability (WAV) and initial availability of
-    nutrients (NAVAILI, PAVAILI, KAVAILI) are mandatory to specify.
-    """
-
-    _defaults = {"IFUNRN": (0, [0, 1], int),
-                 "NOTINF": (0, [0., 1.], float),
-                 "SSI": (0., [0., 100.], float),
-                 "SSMAX": (0., [0., 100.], float),
-                 "WAV": (None, [0., 100.], float),
-                 "SMLIM": (0.4, [0., 1.], float),
-                 "CO2": (360., [300., 1400.], float),
-                 "BG_N_SUPPLY": (0, (0, 0.1), float),
-                 "NSOILBASE": (0, (0, 100), float),
-                 "NSOILBASE_FR": (0.025, (0, 100), float),
-                 "BG_P_SUPPLY": (0, (0, 0.05), float),
-                 "PSOILBASE": (0, (0, 100), float),
-                 "PSOILBASE_FR": (0.025, (0, 100), float),
-                 "BG_K_SUPPLY": (0, (0, 0.05), float),
-                 "KSOILBASE": (0, (0, 100), float),
-                 "KSOILBASE_FR": (0.025, (0, 0.05), float),
-                 "NAVAILI": (None, (0, 250), float),
-                 "PAVAILI": (None, (0, 50), float),
-                 "KAVAILI": (None, (0, 250), float),
-                 }
-    _required = ["WAV", "NAVAILI", "PAVAILI", "KAVAILI"]
 
 
 def get_user_home():

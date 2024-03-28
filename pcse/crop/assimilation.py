@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs (herman.berghuijs@wur.nl), January 2024
 """SimulationObjects implementing |CO2| Assimilation for use with PCSE.
 """
@@ -29,6 +29,7 @@ def totass8(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV
                                                           ha leaf/h
     EFF     R4  Initial light use efficiency              kg CO2/J/  I
                                                           ha/h m2 s
+    KN      R4  Extinction coefficient of N in the canopy     -      I
     LAI     R4  Leaf area index                             ha/ha    I
     KDIF    R4  Extinction coefficient for diffuse light             I
     AVRAD   R4  Daily shortwave radiation                  J m-2 d-1 I
@@ -81,7 +82,7 @@ def assim8(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF,
     takes place. More information on this routine is given by
     Spitters et al. (1988). The input variables SINB, PARDIR
     and PARDIF are calculated in routine TOTASS. AMAX is calculated
-    using the specific leaf nitrogen
+    using the specific leaf nitrogen (SLN)
 
     Subroutines and functions called: none.
     Called by routine TOTASS.
@@ -150,7 +151,8 @@ def assim8(AMAX_LNB, AMAX_REF, AMAX_SLP, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF,
 
 class WOFOST81_Assimilation(SimulationObject):
     """Class implementing a WOFOST/SUCROS style assimilation routine including
-    effect of changes in atmospheric CO2 concentration.
+    effect of changes in atmospheric CO2 concentration and impact of
+    leaf nitrogen content on the maximum assimilation rate.
 
     WOFOST calculates the daily gross |CO2| assimilation rate of a crop
     from the absorbed radiation and the photosynthesis-light response curve
@@ -159,8 +161,6 @@ class WOFOST81_Assimilation(SimulationObject):
     radiation and the leaf area. Daily gross |CO2| assimilation is obtained
     by integrating the assimilation rates over the leaf layers and over the
     day.
-
-
 
     *Simulation parameters* (To be provided in cropdata dictionary):
 
@@ -171,10 +171,9 @@ class WOFOST81_Assimilation(SimulationObject):
                no gross photosynthesis                        Cr      |kg ha-1|
     AMAX_REF   Maximum leaf CO2 assim. rate under reference   TCr     |kg ha-1 hr-1|
                conditions and high specific leaf nitrogen.
-    AMAX_SLP   Slope of linear response of AMAX to specific   Cr      |kg hr-1 / kg|
-               leaf nitrogen content at reference conditions  Cr      
-    AMAXTB     Max. leaf |CO2| assim. rate as a function of   TCr     |kg ha-1 hr-1|
-               of DVS
+    AMAX_SLP   Slope of linear response of AMAX to specific   Cr      |kg hr-1 kg-1|
+               leaf nitrogen content at reference conditions  Cr
+    KN         Extinction coefficient of N in the canopy      Cr       -
     EFFTB      Light use effic. single leaf as a function     TCr     |kg ha-1 hr-1 /(J m-2 s-1)|
                of daily mean temperature
     KDIFTB     Extinction coefficient for diffuse visible     TCr      -
@@ -390,6 +389,7 @@ def assim7(AMAX, EFF, LAI, KDIF, SINB, PARDIR, PARDIF):
     FGROS  = FGROS*LAI
     return FGROS
 
+
 class WOFOST72_Assimilation(SimulationObject):
     """Class implementing a WOFOST/SUCROS style assimilation routine.
     
@@ -507,6 +507,11 @@ class WOFOST73_Assimilation(SimulationObject):
     radiation and the leaf area. Daily gross |CO2| assimilation is obtained
     by integrating the assimilation rates over the leaf layers and over the
     day.
+
+    The impact of atmospheric |CO2| is implemented by applying empirical
+    adjustments to the AMAX at every development stage (parameter CO2AMAXTB)
+    and EFF (parameter CO2EFFTB). The latter two are defined as a function
+    of atmospheric |CO2| concentration.
 
     *Simulation parameters* (To be provided in cropdata dictionary):
 

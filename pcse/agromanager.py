@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), Juli 2015
-# from __future__ import print_function
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """Implementation of AgroManager and related classes for agromanagement actions in PCSE.
 
 Available classes:
@@ -21,9 +20,10 @@ from collections import Counter
 from .base import DispatcherObject, VariableKiosk, SimulationObject, ParameterProvider, AncillaryObject
 from .traitlets import HasTraits, Float, Int, Instance, Enum, Bool, List, Dict, Unicode
 from . import exceptions as exc
-from .util import ConfigurationLoader
+from .base import ConfigurationLoader
 from . import signals
 from . import exceptions as exc
+
 
 def cmp2(x, y):
     """
@@ -32,6 +32,7 @@ def cmp2(x, y):
     Surrogate for cmp() function in Python2
     """
     return (x > y) - (x < y)
+
 
 def check_date_range(day, start, end):
     """returns True if start <= day < end

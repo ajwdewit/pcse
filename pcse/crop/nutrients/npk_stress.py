@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
-# Allard de Wit and Iwan Supit (allard.dewit@wur.nl), July 2015
-# Approach based on LINTUL N/P/K made by Joost Wolf
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """
 Class to calculate various nutrient relates stress factors:
     NNI      nitrogen nutrition index   

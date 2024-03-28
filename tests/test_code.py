@@ -19,7 +19,7 @@ from pcse.engine import Engine, BaseEngine
 from pcse.base.weather import WeatherDataProvider, WeatherDataContainer
 from pcse.base.variablekiosk import VariableKiosk
 from pcse.base.simulationobject import SimulationObject
-from pcse.util import ConfigurationLoader
+from pcse.base import ConfigurationLoader
 from pcse.traitlets import Instance
 from pcse.agromanager import AgroManager
 from pcse.timer import Timer

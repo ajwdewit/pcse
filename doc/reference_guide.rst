@@ -1,4 +1,5 @@
 .. include:: abbreviations.txt
+
 ###############
 Reference Guide
 ###############
@@ -152,14 +153,14 @@ for potential crop production::
     """
 
     from pcse.soil.classic_waterbalance import WaterbalancePP
-    from pcse.crop.wofost7 import Wofost
+    from pcse.crop.wofost72 import Wofost72
     from pcse.agromanager import AgroManager
 
     # Module to be used for water balance
     SOIL = WaterbalancePP
 
     # Module to be used for the crop simulation itself
-    CROP = Wofost
+    CROP = Wofost72
 
     # Module to use for AgroManagement actions
     AGROMANAGEMENT = AgroManager
@@ -226,7 +227,7 @@ the model details are not known beforehand.
 SimulationObjects
 =================
 
-PCSE  uses SimulationObjects to group parts of the crop simulation model
+PCSE uses SimulationObjects to group parts of the crop simulation model
 that form a logical entity into separate program code sections. In this
 way the crop simulation model is grouped into sections that implement certain
 biophysical processes such as phenology, assimilation, respiration, etc.
@@ -783,23 +784,12 @@ package which is used to provide this functionality.
 
 
 
-Data providers in PCSE
-======================
-
-PCSE needs to receive inputs on weather, parameter values and agromanagement in order to carry out the
-simulation. To obtain the required inputs several data providers have been written that read
-these inputs from a variety of sources. Nevertheless, care has been taken to avoid dependencies on a particular
-database and file format. As a consequence there is no direct coupling between PCSE and a particular file format
-or database. This ensures that a variety of data sources can be used, ranging from simple files, relational
-databases and internet resources.
-
-.. _Weather data providers:
 
 Weather data in PCSE
---------------------
+====================
 
 Required weather variables
-..........................
+--------------------------
 
 To run the crop simulation, the engine needs meteorological variables that
 drive the processes that are being simulated. PCSE requires the following daily
@@ -838,7 +828,7 @@ TMINRA The 7-day running average of TMIN                          |C|
 
 
 How weather data is used in PCSE
-................................
+--------------------------------
 
 To provide the simulation Engine with weather data PCSE uses the concept of a
 `WeatherDataProvider` which can retrieve its weather data from various
@@ -849,7 +839,7 @@ weather data files provided in the Getting Started section
 data from an Excel file `nl1.xlsx` using the ExcelWeatherDataProvider::
 
     >>> import pcse
-    >>> from pcse.fileinput import ExcelWeatherDataProvider
+    >>> from pcse.input import ExcelWeatherDataProvider
     >>> wdp = ExcelWeatherDataProvider('nl1.xlsx')
 
 We can simply `print()` the weather data provider to get an overview of its contents::
@@ -935,8 +925,20 @@ or in the format YYYYDDD::
     Elevation (ELEV):    7.0 m.
 
 
-Weather data providers available in PCSE
-........................................
+Data providers in PCSE
+======================
+
+PCSE needs to receive inputs on weather, parameter values and agromanagement in order to carry out the
+simulation. To obtain the required inputs several data providers have been written that read
+these inputs from a variety of sources. Nevertheless, care has been taken to avoid dependencies on a particular
+database and file format. As a consequence there is no direct coupling between PCSE and a particular file format
+or database. This ensures that a variety of data sources can be used, ranging from simple files, relational
+databases and internet resources.
+
+.. _Weather data providers:
+
+Weather data providers
+----------------------
 
 PCSE provides several weather data providers out of the box. First of all, it includes file-based weather data providers
 that use an input file on disk to retrieve data. The :ref:`CABOWeatherDataProvider <CABOWeatherDataProvider>` and
@@ -945,13 +947,8 @@ the :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>` use the structure
 which is easier to handle than the ASCII files of the CABOWeatherDataProvider. Furthermore, a weather data provider
 is available that uses a simple CSV data format, :ref:`CSVWeatherDataProvider <CSVWeatherDataProvider>`.
 
-Second, there is a set of WeatherDataProviders that derive the weather data from the database tables
-implemented in the different versions of the `European Crop Growth Monitoring System`_ including a
-:ref:`CGMS8 <CGMS8tools>` database, a :ref:`CGMS12 <CGMS12tools>` database and
-a :ref:`CGMS14 <CGMS14tools>` database.
-
 Finally, there is the global weather data provided by the agroclimatology from the
-`NASA Power database`_ at a resolution of 1x1 degree. PCSE provides the
+`NASA Power database`_ at a resolution of 0.25x0.25 degree. PCSE provides the
 :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
 the NASA Power data from the internet for a given latitude and longitude.
 
@@ -962,10 +959,10 @@ the NASA Power data from the internet for a given latitude and longitude.
 
 .. _Data providers for parameter values:
 
-Data providers for crop parameter values
-----------------------------------------
+Crop parameter values
+---------------------
 
-PCSE has a specific data provider for crop parameters: the YAMLCropDataprovider.
+PCSE has a specific data provider for crop parameters: the :ref:`YAMLCropDataprovider <YAMLCropDataprovider>`.
 The difference with the generic data providers is that
 this data provider can read and store the parameter sets for multiple
 crops while the generic data providers only can hold a single set.
@@ -977,7 +974,7 @@ The most basic use is to call YAMLCropDataProvider with no parameters. It will
 than pull the crop parameters from the github repository at
 https://github.com/ajwdewit/WOFOST_crop_parameters::
 
-    >>> from pcse.fileinput import YAMLCropDataProvider
+    >>> from pcse.input import YAMLCropDataProvider
     >>> p = YAMLCropDataProvider()
     >>> print(p)
     YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
@@ -1035,26 +1032,14 @@ and there is a risk that parameters are loaded from an outdated cache file. In t
 case use `force_reload=True` to force loading the parameters from the URL.
 
 
-Generic data providers for parameters
--------------------------------------
+Generic data providers
+----------------------
 
 PCSE provides several modules for retrieving parameter values for use in simulation models.
 The general concept that is used by all data providers for parameters is that they return a
 python dictionary object with the parameter names and values as key/value pairs. This concept
 is independent of the source where the parameters come from, either a file, a relational database or
-an internet source. It also means that parameters can be easily defined or changed on the command prompt,
-which is useful when iterating over loops and changing parameter files at each iteration.
-For example when showing the impact of a change in a crop parameter one could easily do::
-
-    >>> from pcse.fileinput import CABOFileReader
-    >>> import numpy as np
-    >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
-    >>> cropdata = CABOFileReader(cropfile)
-    >>> TSUM1_values = np.arange(800, 1200, 25)
-    >>> for tsum1 in TSUM1_values:
-            cropdata["TSUM1"] = tsum1
-            # code needed to run the simulation goes here
-
+an internet source.
 
 PCSE provides two file-based data providers for reading parameters. The first one is the
 :ref:`CABOFileReader <CABOFileReader>` which reads parameter file in the CABO format that was
@@ -1062,10 +1047,8 @@ used to write parameter files for models in FORTRAN or FST. A more versatile rea
 :ref:`PCSEFileReader <PCSEFileReader>` which uses the python language itself as its syntax.
 This also implies that all the python syntax features can be used in PCSE parameter files.
 
-Finally, several data providers exist for retrieving crop, soil and site parameter values from the database
-of the Crop Growth Monitoring System including data providers for a
-:ref:`CGMS8 <CGMS8tools>`, :ref:`CGMS12 <CGMS12tools>` and :ref:`CGMS14/CGMS18 <CGMS14tools>` databases.
-
+Encapsulating models parameters
+-------------------------------
 
 As described earlier, PCSE needs parameters to define the soil, the crop and and additional
 ancillary class of parameters called 'site'. Nevertheless, the different modules in PCSE have
@@ -1082,7 +1065,7 @@ for accessing names and values::
 
     >>> import os
     >>> import sqlalchemy as sa
-    >>> from pcse.fileinput import CABOFileReader, PCSEFileReader
+    >>> from pcse.input import CABOFileReader, PCSEFileReader
     >>> from pcse.base import ParameterProvider
     >>> from pcse.db.pcse import fetch_sitedata
     >>> import pcse.settings
@@ -1102,12 +1085,12 @@ for accessing names and values::
     >>> site = fetch_sitedata(db_metadata, grid=31031, year=2000)
 
     # Combine everything into one ParameterProvider object and print some values
-    >>> parprov = ParameterProvider(sitedata=site, soildata=soil, cropdata=crop)
-    >>> print(parprov["AMAXTB"]) # maximum leaf assimilation rate
+    >>> params = ParameterProvider(sitedata=site, soildata=soil, cropdata=crop)
+    >>> print(params["AMAXTB"]) # maximum leaf assimilation rate
     [0.0, 22.5, 1.0, 45.0, 1.13, 45.0, 1.8, 36.0, 2.0, 36.0]
-    >>> print(parprov["DRATE"])  # maximum soil drainage rate
+    >>> print(params["DRATE"])  # maximum soil drainage rate
     30.0
-    >>> print(parprov["WAV"])  # site-specific initial soil water amount
+    >>> print(params["WAV"])  # site-specific initial soil water amount
     10.0
 
 
@@ -1159,3 +1142,4 @@ Within PCSE all settings can be easily accessed by importing the settings module
     'C:\\Users\\wit015\\.pcse'
     >>> pcse.settings.METEO_CACHE_DIR
     'C:\\Users\\wit015\\.pcse\\meteo_cache'
+

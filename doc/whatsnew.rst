@@ -139,7 +139,7 @@ What's new in PCSE 5.1
 PCSE version 5.1 brings the following new features:
 
 - Support for reading input data (weather, soil, crop parameters) from a CGMS12 database. CGMS is the acronym for
-  Crop Growth Monitoring System and was developed by Alterra in cooperation with the MARS unit of the Joint Research
+  Crop Growth Monitoring System and was developed by WEnR in cooperation with the MARS unit of the Joint Research
   Centre for crop monitoring and yield forecasting in Europe. It uses a database structure for storing weather
   data and model simulation results which can be read by PCSE. See the MARSwiki_ for the database definition.
 - The ExcelWeatherDataProvider: Before PCSE 5.2 the only file-based format for weather data was the CABO weather format
