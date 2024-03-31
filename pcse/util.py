@@ -120,7 +120,7 @@ def reference_ET(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
 
 def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     """Calculates E0, ES0, ET0 based on the Penman model.
-    
+
      This routine calculates the potential evapo(transpi)ration rates from
      a free water surface (E0), a bare soil surface (ES0), and a crop canopy
      (ET0) in mm/d. For these calculations the analysis by Penman is followed
@@ -128,20 +128,20 @@ def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
      Subroutines and functions called: ASTRO, LIMIT.
 
     Input variables::
-    
+
         DAY     -  Python datetime.date object                                    -
-        LAT     -  Latitude of the site                        degrees   
-        ELEV    -  Elevation above sea level                      m      
+        LAT     -  Latitude of the site                        degrees
+        ELEV    -  Elevation above sea level                      m
         TMIN    -  Minimum temperature                            C
-        TMAX    -  Maximum temperature                            C      
-        AVRAD   -  Daily shortwave radiation                   J m-2 d-1 
+        TMAX    -  Maximum temperature                            C
+        AVRAD   -  Daily shortwave radiation                   J m-2 d-1
         VAP     -  24-hour average vapour pressure               hPa
         WIND2   -  24-hour average windspeed at 2 meter          m/s
         ANGSTA  -  Empirical constant in Angstrom formula         -
         ANGSTB  -  Empirical constant in Angstrom formula         -
 
     Output is a tuple (E0,ES0,ET0)::
-    
+
         E0      -  Penman potential evaporation from a free water surface [mm/d]
         ES0     -  Penman potential evaporation from a moist bare soil surface [mm/d]
         ET0     -  Penman potential transpiration from a crop canopy [mm/d]
@@ -167,7 +167,7 @@ def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
     GAMMA = PSYCON*PBAR/1013.
 
     # saturated vapour pressure according to equation of Goudriaan
-    # (1977) derivative of SVAP with respect to temperature, i.e. 
+    # (1977) derivative of SVAP with respect to temperature, i.e.
     # slope of the SVAP-temperature curve (mbar/Celsius);
     # measured vapour pressure not to exceed saturated vapour pressure
 
@@ -199,14 +199,14 @@ def penman(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2, ANGSTA, ANGSTB):
 
     # Penman formula (1948)
     E0  = (DELTA*RNW+GAMMA*EA)/(DELTA+GAMMA)
-    ES0 = (DELTA*RNS+GAMMA*EA)/(DELTA+GAMMA) 
+    ES0 = (DELTA*RNS+GAMMA*EA)/(DELTA+GAMMA)
     ET0 = (DELTA*RNC+GAMMA*EAC)/(DELTA+GAMMA)
 
     # Ensure reference evaporation >= 0.
     E0  = max(0., E0)
     ES0 = max(0., ES0)
     ET0 = max(0., ET0)
-    
+
     return E0, ES0, ET0
 
 
@@ -309,7 +309,7 @@ def penman_monteith(DAY, LAT, ELEV, TMIN, TMAX, AVRAD, VAP, WIND2):
 
 def check_angstromAB(xA, xB):
     """Routine checks validity of Angstrom coefficients.
-    
+
     This is the  python version of the FORTRAN routine 'WSCAB' in 'weather.for'.
     """
     MIN_A = 0.1
@@ -388,22 +388,22 @@ def vap_from_relhum(rh, temp):
 
 def angstrom(day, latitude, ssd, cA, cB):
     """Compute global radiation using the Angstrom equation.
-    
+
     Global radiation is derived from sunshine duration using the Angstrom
     equation:
     globrad = Angot * (cA + cB * (sunshine / daylength)
-    
+
     :param day: day of observation (date object)
     :param latitude: Latitude of the observation
     :param ssd: Observed sunshine duration
     :param cA: Angstrom A parameter
-    :param cB: Angstrom B parameter    
+    :param cB: Angstrom B parameter
     :returns: the global radiation in J/m2/day
     """
     r = astro(day, latitude, 0)
     globrad = r.ANGOT * (cA + cB * (ssd / r.DAYL))
     return globrad
-                       
+
 
 def doy(day):
     """Converts a date or datetime object to day-of-year (Jan 1st = doy 1)
@@ -422,7 +422,7 @@ def limit(vmin, vmax, v):
 
     if vmin > vmax:
         raise RuntimeError("Min value (%f) larger than max (%f)" % (vmin, vmax))
-    
+
     if v < vmin:       # V below range: return min
         return vmin
     elif v < vmax:     # v within range: return v
@@ -438,7 +438,7 @@ def daylength(day, latitude, angle=-4, _cache={}):
     :param latitude:    latitude of location
     :param angle:       The photoperiodic daylength starts/ends when the sun
         is `angle` degrees under the horizon. Default is -4 degrees.
-    
+
     Derived from the WOFOST routine ASTRO.FOR and simplified to include only
     daylength calculation. Results are being cached for performance
     """
@@ -448,10 +448,10 @@ def daylength(day, latitude, angle=-4, _cache={}):
     if abs(latitude) > 90.:
         msg = "Latitude not between -90 and 90"
         raise RuntimeError(msg)
-    
+
     # Calculate day-of-year from date object day
     IDAY = doy(day)
-    
+
     # Test if daylength for given (day, latitude, angle) was already calculated
     # in a previous run. If not (e.g. KeyError) calculate the daylength, store
     # in cache and return the value.
@@ -459,7 +459,7 @@ def daylength(day, latitude, angle=-4, _cache={}):
         return _cache[(IDAY, latitude, angle)]
     except KeyError:
         pass
-    
+
     # constants
     RAD = radians(1.)
 
@@ -481,13 +481,13 @@ def daylength(day, latitude, angle=-4, _cache={}):
 
     # store results in cache
     _cache[(IDAY, latitude, angle)] = DAYLP
-    
+
     return DAYLP
 
 
 def astro(day, latitude, radiation, _cache={}):
     """python version of ASTRO routine by Daniel van Kraalingen.
-    
+
     This subroutine calculates astronomic daylength, diurnal radiation
     characteristics such as the atmospheric transmission, diffuse radiation etc.
 
@@ -497,19 +497,19 @@ def astro(day, latitude, radiation, _cache={}):
 
     output is a `namedtuple` in the following order and tags::
 
-        DAYL      Astronomical daylength (base = 0 degrees)     h      
-        DAYLP     Astronomical daylength (base =-4 degrees)     h      
-        SINLD     Seasonal offset of sine of solar height       -      
-        COSLD     Amplitude of sine of solar height             -      
+        DAYL      Astronomical daylength (base = 0 degrees)     h
+        DAYLP     Astronomical daylength (base =-4 degrees)     h
+        SINLD     Seasonal offset of sine of solar height       -
+        COSLD     Amplitude of sine of solar height             -
         DIFPP     Diffuse irradiation perpendicular to
-                  direction of light                         J m-2 s-1 
-        ATMTR     Daily atmospheric transmission                -      
+                  direction of light                         J m-2 s-1
+        ATMTR     Daily atmospheric transmission                -
         DSINBE    Daily total of effective solar height         s
         ANGOT     Angot radiation at top of atmosphere       J m-2 d-1
- 
+
     Authors: Daniel van Kraalingen
     Date   : April 1991
- 
+
     Python version
     Author      : Allard de Wit
     Date        : January 2011
@@ -520,10 +520,10 @@ def astro(day, latitude, radiation, _cache={}):
         msg = "Latitude not between -90 and 90"
         raise RuntimeError(msg)
     LAT = latitude
-        
+
     # Determine day-of-year (IDAY) from day
     IDAY = doy(day)
-    
+
     # reassign radiation
     AVRAD = radiation
 
@@ -550,7 +550,7 @@ def astro(day, latitude, radiation, _cache={}):
     AOB = SINLD/COSLD
 
     # For very high latitudes and days in summer and winter a limit is
-    # inserted to avoid math errors when daylength reaches 24 hours in 
+    # inserted to avoid math errors when daylength reaches 24 hours in
     # summer or 0 hours in winter.
 
     # Calculate solution for base=0 degrees
@@ -563,7 +563,7 @@ def astro(day, latitude, radiation, _cache={}):
     else:
         if AOB >  1.0: DAYL = 24.0
         if AOB < -1.0: DAYL = 0.0
-        # integrals of sine of solar height	
+        # integrals of sine of solar height
         DSINB = 3600.*(DAYL*SINLD)
         DSINBE = 3600.*(DAYL*(SINLD+0.4*(SINLD**2+COSLD**2*0.5)))
 
@@ -604,15 +604,15 @@ def astro(day, latitude, radiation, _cache={}):
 
 class Afgen(object):
     """Emulates the AFGEN function in WOFOST.
-    
+
     :param tbl_xy: List or array of XY value pairs describing the function
         the X values should be mononically increasing.
 
-    Returns the interpolated value provided with the 
+    Returns the interpolated value provided with the
     absicca value at which the interpolation should take place.
-    
+
     example::
-    
+
         >>> tbl_xy = [0,0,1,1,5,10]
         >>> f =  Afgen(tbl_xy)
         >>> f(0.5)
@@ -626,21 +626,21 @@ class Afgen(object):
         >>> f(-1)
         0.0
     """
-    
+
     def _check_x_ascending(self, tbl_xy):
         """Checks that the x values are strictly ascending.
-        
+
         Also truncates any trailing (0.,0.) pairs as a results of data coming
         from a CGMS database.
         """
         x_list = tbl_xy[0::2]
         y_list = tbl_xy[1::2]
         n = len(x_list)
-        
+
         # Check if x range is ascending continuously
         rng = list(range(1, n))
         x_asc = [True if (x_list[i] > x_list[i-1]) else False for i in rng]
-        
+
         # Check for breaks in the series where the ascending sequence stops.
         # Only 0 or 1 breaks are allowed. Use the XOR operator '^' here
         sum_break = sum([1 if (x0 ^ x1) else 0 for x0,x1 in zip(x_asc, x_asc[1:])])
@@ -658,11 +658,11 @@ class Afgen(object):
             msg = ("X values for AFGEN input list not strictly ascending: %s"
                    % x_list)
             raise ValueError(msg)
-        
-        return x, y            
+
+        return x, y
 
     def __init__(self, tbl_xy):
-        
+
         x_list, y_list = self._check_x_ascending(tbl_xy)
         x_list = self.x_list = list(map(float, x_list))
         y_list = self.y_list = list(map(float, y_list))
@@ -697,15 +697,15 @@ class AfgenTrait(TraitType):
 
 def merge_dict(d1, d2, overwrite=False):
     """Merge contents of d1 and d2 and return the merged dictionary
-    
+
     Note:
-    
+
     * The dictionaries d1 and d2 are unaltered.
     * If `overwrite=False` (default), a `RuntimeError` will be raised when
       duplicate keys exist, else any existing keys in d1 are silently
-      overwritten by d2.  
+      overwritten by d2.
     """
-    # Note: May  partially be replaced by a ChainMap as of python 3.3 
+    # Note: May  partially be replaced by a ChainMap as of python 3.3
     if overwrite is False:
         sd1 = set(d1.keys())
         sd2 = set(d2.keys())
@@ -926,6 +926,13 @@ class DummySoilDataProvider(dict):
         dict.__init__(self)
         self.update(self._defaults)
 
+    def copy(self):
+        """
+        Overrides the inherited dict.copy method, which returns a dict.
+        This instead preserves the class and attributes like .header.
+        """
+        return copy.copy(self)
+
 
 def version_tuple(v):
     """Creates a version tuple from a version string for consistent comparison of versions.
@@ -1003,7 +1010,7 @@ class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
 
     Currently only the value for WAV is mandatory to specify.
     """
-    
+
     _defaults = {"IFUNRN": (0, {0, 1}, int),
                  "NOTINF": (0, [0., 1.], float),
                  "SSI": (0., [0., 100.], float),
