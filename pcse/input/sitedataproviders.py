@@ -24,25 +24,32 @@ class _GenericSiteDataProvider(dict):
                     msg = "Value for parameter '%s' must be provided!" % par_name
                     raise exc.PCSEError(msg)
                 else:
-                    v = default_value
+                    par_value = default_value
             else:
                 # parameter was provided, check value for type and range
-                v = par_conversion(kwargs.pop(par_name))
+                par_value = par_conversion(kwargs.pop(par_name))
                 if isinstance(par_range, set):
-                    if v not in par_range:
+                    # allowed values consist of a
+                    if par_value not in par_range:
                         msg = "Value for parameter '%s' can only have values: %s" % (par_name, par_range)
                         raise exc.PCSEError(msg)
                 else:
-                    if not (par_range[0] <= v <= par_range[1]):
-                        msg = "Value for parameter '%s' out of range %s-%s" % \
-                              (par_name, par_range[0], par_range[1])
-                        raise exc.PCSEError(msg)
-            self[par_name] = v
+                    if isinstance(par_value, list):
+                        if not all(par_range[0] <= x <= par_range[1] for x in par_value):
+                            msg = "At least one of the values for parameter '%s' out of range %s-%s" % \
+                                  (par_name, par_range[0], par_range[1])
+                            raise exc.PCSEError(msg)
+                    else:
+                        if not (par_range[0] <= par_value <= par_range[1]):
+                            msg = "Value for parameter '%s' out of range %s-%s" % \
+                                  (par_name, par_range[0], par_range[1])
+                            raise exc.PCSEError(msg)
+            self[par_name] = par_value
 
         # Check if kwargs is empty
         if kwargs:
-            msg = "Unknown parameter values provided to WOFOSTSiteDataProvider: %s" % kwargs
-            print(msg)
+            msg = f"Unknown parameter values provided to {self.__class__}: %s" % kwargs
+            raise exc.PCSEError(msg)
 
 
 class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
@@ -65,7 +72,7 @@ class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
     Currently only the value for WAV is mandatory to specify.
     """
 
-    _defaults = {"IFUNRN": (0, [0, 1], int),
+    _defaults = {"IFUNRN": (0, {0, 1}, int),
                  "NOTINF": (0, [0., 1.], float),
                  "SSI": (0., [0., 100.], float),
                  "SSMAX": (0., [0., 100.], float),
@@ -95,7 +102,7 @@ class WOFOST73SiteDataProvider(_GenericSiteDataProvider):
     Values for WAV and CO2 is mandatory to specify.
     """
 
-    _defaults = {"IFUNRN": (0, [0, 1], int),
+    _defaults = {"IFUNRN": (0, {0, 1}, int),
                  "NOTINF": (0, [0., 1.], float),
                  "SSI": (0., [0., 100.], float),
                  "SSMAX": (0., [0., 100.], float),
@@ -136,7 +143,7 @@ class WOFOST81SiteDataProvider_Classic(_GenericSiteDataProvider):
     nutrients (NAVAILI) are mandatory to specify.
     """
 
-    _defaults = {"IFUNRN": (0, [0, 1], int),
+    _defaults = {"IFUNRN": (0, {0, 1}, int),
                  "NOTINF": (0, [0., 1.], float),
                  "SSI": (0., [0., 100.], float),
                  "SSMAX": (0., [0., 100.], float),
@@ -151,7 +158,6 @@ class WOFOST81SiteDataProvider_Classic(_GenericSiteDataProvider):
     _required = ["WAV", "NAVAILI", "CO2"]
 
 
-# TODO: update site data provider
 class WOFOST81SiteDataProvider_SNOMIN(_GenericSiteDataProvider):
     """Site data provider for WOFOST 8.1 for use with the SNOMIN C/N balance.
 
@@ -167,8 +173,8 @@ class WOFOST81SiteDataProvider_SNOMIN(_GenericSiteDataProvider):
         - SMLIM         Initial maximum moisture content in initial rooting depth zone [0-1],
                         default 0.4
         - CO2           Atmospheric CO2 level (ppm), default 360.
-        - A0SOM         Initial age of organic material (24.0)  [UNIT???]
-        - CNRatioBio    C:N ratio of microbial biomass  (9.0) [-]
+        - A0SOM         Initial age of organic material (24.0)  [year]
+        - CNRatioBio    C:N ratio of microbial biomass  (9.0) [kg C kg-1 N]
         - FASDIS        Assimilation to dissimilation rate ratio (0.5) [-]
         - KDENIT_REF    Reference first order rate of denitrification (0.06) [d-1]
         - KNIT_REF      Reference first order rate of nitrification (1.0) [d-1]
@@ -184,25 +190,30 @@ class WOFOST81SiteDataProvider_SNOMIN(_GenericSiteDataProvider):
                         should match the number of soil layers specified in the soil
                         configuration.
         - WFPS_CRIT     Critical fraction water filled soil pores (0.8)  [m3 water m-3 pores]
+
+
+        *important*: Some of the valid ranges of parameters for WOFOST 8.1/SNOMIN are uncertain
+        and therefore values outside of the specified ranges here may be valid in certain cases.
+
     """
-    _defaults = {"IFUNRN": (0, [0, 1], int),
+    _required = ["WAV", "CO2", "NH4I", "NO3I", ]
+    _defaults = {"IFUNRN": (0, {0, 1}, int),
                  "NOTINF": (0, [0., 1.], float),
                  "SSI": (0., [0., 100.], float),
                  "SSMAX": (0., [0., 100.], float),
                  "WAV": (None, [0., 100.], float),
                  "SMLIM": (0.4, [0., 1.], float),
                  "CO2": (None, [300., 1400.], float),
-                 # "A0SOM": (24.0, [x1, x2], float),
-                 # "CNRatioBio": (9.0, [x1, x2], float),
-                 # "FASDIS": (0.5, [x1, x2], float),
-                 # "KDENIT_REF": (0.06, [x1, x2], float),
-                 # "KNIT_REF": (1.0, [x1, x2], float),
-                 # "KSORP": (0.0005, [x1, x2], float),
-                 # "MRCDIS": (0.001, [x1, x2], float),
-                 # "NH4ConcR": (0.9095, [x1, x2], float),
-                 # "NH4I": (None, [x1, x2], float),
-                 # "NO3ConcR": (2.1, [x1, x2], float),
-                 # "NO3I": (None, [x1, x2], float),
-                 # "WFPS_CRIT": (0.8, [x1, x2], float),
+                 "A0SOM": (24.0, [5.0, 40.0], float),
+                 "CNRatioBio": (9.0, [5.0, 20.0], float),
+                 "FASDIS": (0.5, [0, 0.6], float),
+                 "KDENIT_REF": (0.06, [0.0, 0.1], float),
+                 "KNIT_REF": (1.0, [0.9, 1.0], float),
+                 "KSORP": (0.0005, [0.0001, 0.001], float),
+                 "MRCDIS": (0.001, [0.0001, 0.01], float),
+                 "NH4ConcR": (0.0, [0.0, 25], float),
+                 "NO3ConcR": (0.0, [0, 25], float),
+                 "NH4I": (None, [0.0, 5.0], list),
+                 "NO3I": (None, [0.0, 20.0], list),
+                 "WFPS_CRIT": (0.8, [0.5, 0.99], float),
                  }
-    _required = ["WAV", "CO2", "NH4I", "NO3I", ]
