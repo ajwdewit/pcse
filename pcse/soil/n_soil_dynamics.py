@@ -93,8 +93,8 @@ class N_Soil_Dynamics(SimulationObject):
     **Signals send or handled**
 
     `N_Soil_Dynamics` receives the following signals:
-        * APPLY_NPK: Is received when an external input from N/P/K fertilizer
-          is provided. See `_on_APPLY_NPK()` for details.
+        * APPLY_N: Is received when an external input from N fertilizer
+          is provided. See `_on_APPLY_N()` for details.
 
     **External dependencies:**
 
@@ -152,8 +152,7 @@ class N_Soil_Dynamics(SimulationObject):
         self.states = self.StateVariables(kiosk,
             publish=["NAVAIL"], NSOIL=p.NSOILBASE, NAVAIL=p.NAVAILI)
         self._connect_signal(self._on_APPLY_N, signals.apply_n)
-        self._connect_signal(self._on_APPLY_NPK, signals.apply_npk)
-        
+
     @prepare_rates
     def calc_rates(self, day, drv):
         r = self.rates
@@ -180,14 +179,6 @@ class N_Soil_Dynamics(SimulationObject):
         states.NAVAIL += rates.RNAVAIL * delt
 
     def _on_APPLY_N(self, N_amount=None,N_recovery=None):
-        r = self.rates
-        r.unlock()
-        r.FERT_N_SUPPLY = N_amount * N_recovery
-        r.lock()
-
-    def _on_APPLY_NPK(self, N_amount=None, P_amount=None, K_amount=None, N_recovery=None,
-                      P_recovery=None, K_recovery=None):
-
         r = self.rates
         r.unlock()
         r.FERT_N_SUPPLY = N_amount * N_recovery

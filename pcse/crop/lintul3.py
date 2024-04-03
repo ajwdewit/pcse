@@ -39,7 +39,7 @@ class Lintul3(SimulationObject):
     well to nitrogen stress in all the treatments without fertilizer application as observed, but between
     fertilized treatments the response was varying.
 
-    Nitrogen demand, uptake and stress
+    **Nitrogen demand, uptake and stress**
 
     At sub-optimal nitrogen availability in the soil, nitrogen demand of the crop
     cannot be satisfied, which leads to sub-optimal crop nitrogen concentration. The
@@ -54,17 +54,17 @@ class Lintul3(SimulationObject):
     However, calculation of N demand and N uptake also includes the belowground
     part.
 
-    See M.E. Shibu, P.A. Leffelaar, H. van Keulena, P.K. Aggarwal (2010). LINTUL3,
-        a simulation model for nitrogen-limited situations: application to rice.
-        Eur. J. Agron. (2010) http://dx.doi.org/10.1016/j.eja.2010.01.003
+    See:
+    M.E. Shibu, P.A. Leffelaar, H. van Keulena, P.K. Aggarwal (2010). LINTUL3,
+    a simulation model for nitrogen-limited situations: application to rice.
+    Eur. J. Agron. (2010) http://dx.doi.org/10.1016/j.eja.2010.01.003
 
-        available from http://models.pps.wur.nl/sites/models.pps.wur.nl/files/LINTUL-N-Shibu-article.pdf
 
+    *Parameters*
 
-    *parameters*
-    ======== =============================================== =======  ==========
-     Name     Description                                     Type     Unit
-    ======== =============================================== =======  ==========
+    ======== =======================================================  ==========
+     Name     Description                                              Unit
+    ======== =======================================================  ==========
     DVSI     Initial development stage                                  -
     DVSDR    Development stage above which deathOfLeaves of
              leaves and roots start                                     -
@@ -121,31 +121,35 @@ class Lintul3(SimulationObject):
              field capacity, true= irrigated up to saturation)          (bool)
     RNSOIL   Daily amount of N available in the soil through
              mineralisation of organic matter
+    ======== =======================================================  ==========
 
-    *function tables*
-    ======== =============================================== =======  ==========
-     Name     Description                                     Type     Unit
-    ======== =============================================== =======  ==========
-    FLVTB    Partitioning coefficients
-    FRTTB    Partitioning coefficients
-    FSOTB    Partitioning coefficients
-    FSTTB    Partitioning coefficients
-    NMXLV    Maximum N concentration in the leaves, from
+
+    *Tabular parameters*
+
+    ======== =======================================================  =======================
+     Name     Description                                              Unit
+    ======== =======================================================  =======================
+    FLVTB    Partitioning coefficients                                  -
+    FRTTB    Partitioning coefficients                                  -
+    FSOTB    Partitioning coefficients                                  -
+    FSTTB    Partitioning coefficients                                  -
+    NMXLV    Maximum N concentration in the leaves, from               kg N kg-1 dry biomass
              which the values of the stem and roots are derived,
              as a  function of development stage
     RDRT     Relative death rate of leaves as a function of
              Developmental stage                                        1/d
-    SLACF    Leaf area correction function as a function of
+    SLACF    Leaf area correction function as a function of             -
              development stage, DVS. Reference: Drenth, H.,
              ten Berge, H.F.M. and Riethoven, J.J.M. 1994,
              p.10. (Complete reference under Observed data.)
-    ======== =============================================== =======  ==========
+    ======== =======================================================  =======================
 
 
     * initial states *
-    ======== =============================================== =======  ==========
-     Name     Description                                     Type     Unit
-    ======== =============================================== =======  ==========
+
+    ======== =======================================================  ==========
+     Name     Description                                              Unit
+    ======== =======================================================  ==========
     ROOTDI   Initial rooting depth                                      m
     NFRLVI   Initial fraction of N in leaves                            gN/gDM
     NFRRTI   Initial fraction of N in roots                             gN/gDM
@@ -155,10 +159,11 @@ class Lintul3(SimulationObject):
     WSTI     Initial Weight of stem                                     g/m²
     WRTLI    Initial Weight of roots                                    g/m²
     WSOI     Initial Weight of storage organs                           g/m²
-    ======== =============================================== =======  ==========
+    ======== =======================================================  ==========
 
 
     **State variables:**
+
     =========== ================================================= ==== ===============
      Name        Description                                      Pbl      Unit
     =========== ================================================= ==== ===============
@@ -184,6 +189,7 @@ class Lintul3(SimulationObject):
     =========== ================================================= ==== ===============
 
     **Rate variables:**
+
     =========== ================================================= ==== ===============
      Name        Description                                      Pbl      Unit
     =========== ================================================= ==== ===============
@@ -694,8 +700,7 @@ class Lintul3(SimulationObject):
         s.TAGBM = s.WLVG + s.WLVD + s.WST + s.WSO
 
     def _calc_potential_evapotranspiration(self, drv):
-        """
-        Potential evaporation and transpiration.
+        """Compute the potential evaporation and transpiration.
         """
         ES0 = cm2mm(drv.ES0)
         ET0 = cm2mm(drv.ET0)
@@ -706,9 +711,7 @@ class Lintul3(SimulationObject):
         return pevap, ptran
 
     def _calc_actual_transpiration(self, PTRAN, WC):
-        """
-        compute actual rates of evaporation and transpiration.
-        Obsolete subroutine name: EVAPTR                  
+        """Compute the actual rates of evaporation and transpiration.
         """
         p = self.params
                 
@@ -740,7 +743,8 @@ class Lintul3(SimulationObject):
         return PTRAN * FR
 
     def _growth_leaf_area(self, DTEFF, LAII,  DELT, SLA, GLV, WC, DVS, TRANRF, NNI):
-        """This subroutine computes daily increase of leaf area index."""
+        """This subroutine computes daily increase of leaf area index.
+        """
 
         p = self.params
         LAI = self.states.LAI
@@ -759,9 +763,7 @@ class Lintul3(SimulationObject):
         return GLAI
 
     def dryMatterPartitioningFractions(self, NPART, TRANRF, NNI, FRTWET, FLVT, FSTT, FSOT):
-        """
-        Purpose: Dry matter partitioning fractions: leaves, stem and storage organs.
-        Obsolete subroutine name: SUBPAR
+        """ Computes the Dry matter partitioning fractions: leaves, stem and storage organs.
         """
 
         p = self.params
@@ -788,22 +790,25 @@ class Lintul3(SimulationObject):
         return FRT, FLV, FST, FSO # FLVMOD removed from signature - WdW
     
     def totalGrowthRate(self, DTR, TRANRF, NNI):
-        """
-        compute the total totalGrowthRate rate.
-        (Monteith, 1977; Gallagher and Biscoe, 1978; Monteith, 1990) have
+        """Compute the total total Growth Rate.
+
+        Monteith, (1977), Gallagher and Biscoe, (1978) and Monteith (1990) have
         shown that biomass formed per unit intercepted light, LUE (Light
-        Use Efficiency, g dry matter MJ-1), is relatively more stable. Hence,
+        Use Efficiency, g dry matter MJ-1), is relatively stable. Hence,
         maximum daily growth rate can be defined as the product of
-        intercepted PAR (photosynthetically active radiation, MJm-2 d-1)
-        and LUE. Intercepted PAR depends on incident solar radiation,
+        intercepted PAR (photosynthetically active radiation, |MJm-2d-1|)
+        and LUE.
+
+        Intercepted PAR depends on incident solar radiation,
         the fraction that is photosynthetically active (0.5) (Monteith and
-        Unsworth, 1990; Spitters, 1990), and LAI (m2 leafm-2 soil) according
-        to Lambert�Beer�s law:
-        Q = 0.5Q0[1 - e(-k LAI)] 
-        where Q is intercepted PAR(MJm-2 d-1), Q0 is daily global radiation
-        (MJm-2 d-1), and k is the attenuation coefficient for PAR in the
+        Unsworth, 1990; Spitters, 1990), and LAI (|m2| leaf |m-2| soil) according
+        to Lambert Beer's law:
+
+        :math:`Q = 0.5 Q0 (1 - e^{-k LAI})`
+
+        where *Q* is intercepted PAR |MJm-2d-1|, *Q0* is daily global radiation
+        |MJm-2d-1|, and *k* is the attenuation coefficient for PAR in the
         canopy.
-        Obsolete subroutine name: GROWTH 
         """
         
         p = self.params
@@ -823,10 +828,8 @@ class Lintul3(SimulationObject):
         return RGROWTH
 
     def relativeGrowthRates(self, RGROWTH, FLV, FRT, FST, FSO, DLV, DRRT):
-        """
-        compute the relative totalGrowthRate rate of roots, leaves, stem 
+        """Compute the relative total Growth Rate rate of roots, leaves, stem
         and storage organs.
-        Obsolete subroutine name: RELGR                   
         """
       
         RWLVG = RGROWTH * FLV - DLV
@@ -837,10 +840,8 @@ class Lintul3(SimulationObject):
         return RWLVG, RWRT, RWST, RWSO
 
     def N_uptakeRates(self, NDEML, NDEMS, NDEMR, NUPTR, NDEMTO):
-        """
-        compute the partitioning of the total N uptake rate (NUPTR) 
+        """Compute the partitioning of the total N uptake rate (NUPTR)
         over the leaves, stem, and roots.
-        Obsolete subroutine name: RNUSUB                                      
         """
       
         if (NDEMTO > 0):
@@ -853,9 +854,7 @@ class Lintul3(SimulationObject):
             return 0.0, 0.0, 0.0
 
     def translocatable_N(self):      
-        """
-        compute the translocatable N in the organs.
-        Obsolete subroutine name: NTRLOC                                                   
+        """Compute the translocatable N in the organs.
         """
         s = self.states
         p = self.params
@@ -867,10 +866,7 @@ class Lintul3(SimulationObject):
         return ATNLV, ATNST, ATNRT, ATN
 
     def deathRateOfLeaves(self, TSUM, RDRTMP, NNI, SLA):
-        """
-        compute the relative deathOfLeaves rate of leaves due to age, 
-        shading amd due to nitrogen stress.                        
-        Obsolete subroutine name: DEATHL                 
+        """Compute the relative death rate of leaves due to age, shading amd due to nitrogen stress.
         """
       
         p = self.params

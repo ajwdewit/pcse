@@ -21,7 +21,7 @@ described using the same structure:
     7. External dependencies on state/rate variables of other SimulationObjects.
     8. The exceptions that are raised under which conditions.
     
-One or more of these sections may be excluded when they are not appropriate
+One or more of these sections may be excluded when they are not relevant
 for the SimulationObject that is described.
 
 The table specifying the simulation parameters has the following columns:
@@ -32,9 +32,6 @@ The table specifying the simulation parameters has the following columns:
        with the following interpretation. The first character indicates of the
        parameter is a scalar **(S)** or table **(T)** parameter. The second and
        third
-       character indicate whether this parameter should be present in the
-       timerdata '**Ti**', cropdata '**Cr**', soildata '**So**' or
-       sitedata '**Si**' dictionary.
     4. The physical unit of the parameter.
 
 The tables specifying state/rate variables have the following columns:
@@ -84,8 +81,11 @@ The Timer
 .. autoclass:: pcse.timer.Timer
     :members:
 
-The waterbalance
-================
+Soil process modules
+====================
+
+Water balance modules
+---------------------
 
 The PCSE distribution provides several waterbalance modules:
     1. WaterbalancePP which is used for simulation under non-water-limited
@@ -94,16 +94,33 @@ The PCSE distribution provides several waterbalance modules:
        under conditions of freely draining soils
     3. The `SnowMAUS` for simulation the build-up and melting of the snow cover.
     4. A multi-layer waterbalance implementing simulations for potential
-       conditions, water-limited free drainage conditions and
-       water-limited groundwater conditions (in case of shallow ground
-       water tables). This waterbalance is in a prototype stage and not yet
-       usable, although the source code is available in PCSE.
+       conditions, water-limited free drainage conditions. Currently the model
+       does not support the impact of shallow ground water tables but this will
+       implemented in the future.
 
 .. autoclass:: pcse.soil.WaterbalancePP
 
 .. autoclass:: pcse.soil.WaterbalanceFD
 
 .. autoclass:: pcse.soil.SnowMAUS
+
+.. autoclass:: pcse.soil.WaterBalanceLayered
+
+Nitrogen and Carbon modules
+---------------------------
+
+PCSE contains two modules for nitrogen and carbon in the soil:
+    1. The simple N_Soil_Dynamics module which only simulates N availability as a pool of available N
+       without any dynamic processes like leach, volatilization, etc.
+    2. The SNOMIN module (Soil Nitrogen module for Mineral and Inorganic Nitrogen) which is a layered soil
+       carbon/nitrogen balance that also requires the layered soil water balance. It includes the full
+       N dynamics in the soil as well as the impact of organic matter and organic amendments (manure) on the
+       availability of nitrogen in the soil.
+
+.. autoclass:: pcse.soil.N_Soil_Dynamics
+
+.. autoclass:: pcse.soil.SNOMIN
+
 
 Crop simulation processes for WOFOST
 ====================================
@@ -208,6 +225,12 @@ Nitrogen dynamics
 .. autoclass:: pcse.crop.lingra_ndynamics.N_Stress
 
 .. autoclass:: pcse.crop.lingra_ndynamics.N_Crop_Dynamics
+
+Crop simulation processes for LINTUL3
+=====================================
+
+.. autoclass:: pcse.crop.lintul3.Lintul3
+    :members:
 
 
 .. Crop simulation processes for the ALCEPAS model

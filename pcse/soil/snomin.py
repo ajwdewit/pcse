@@ -4,7 +4,6 @@
 
 import numpy as np
 from .. import exceptions as exc
-from pcse.traitlets import Float
 from pcse.decorators import prepare_rates, prepare_states
 from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
@@ -12,88 +11,91 @@ from pcse import signals
 from ..traitlets import Float, Int, Instance, Bool
 from .soiln_profile import SoilNProfile
 
-import datetime as dt
 
 class SNOMIN(SimulationObject):
     """
     SNOMIN (Soil Nitrogen module for Mineral and Inorganic Nitrogen) is a layered soil nitrogen balance. A
     full mathematical description of the model is given by Berghuijs et al (2024).
-    
-    **Simulation parameters:**
-
-    ========== ==================================================  ===================
-     Name      Description                                         Unit
-    ========== ==================================================  ===================
-    A0SOM      Initial age of soil organic material                y
-    CNRatioBio C:N ratio of microbial biomass                      kg C kg-1 N
-    FASDIS     Fraction of assimilation to dissimilation           -
-    KDENIT_REF Reference first order denitrification rate constant d-1
-    KNIT_REF   Reference first order nitrification rate constant   d-1
-    KSORP      Sorption coefficient ammonium (m3 water kg-1 soil)  m3 soil kg-1 soil
-    MRCDIS     Michaelis Menten constant for response factor 
-               denitrification to soil respiration                 kg C m-2 d-1
-    NO3ConcR   NO3-N concentration in rain water                   mg NO3--N L- water
-    NH4ConcR   NH4-N concentration in rain water                   mg NH4+-N L-1 water
-    NO3I       Initial amount of NO3-N **                          kg NO3--N ha-1
-    NH4I       Initial amount of NH4-N **                          kg NH4+-N ha-1)
-    WFPS_CRIT  Critical water filled pore space fraction           m3 water m-3 pore
-    ========== ==================================================  ===================
-    ** This state variable is defined for each soil layer
-
-    ** State variables
-    ========== ==================================================  ==========
-     Name      Description                                         Unit
-    ========== ==================================================  ==========
-    AGE        Appearant age of amendment (d) *                    d 
-    ORGMAT     Amount of organic matter (kg ORG ha-1) *            kg OM m-2
-    CORG       Amount of C in organic matter (kg C ha-1) *         kg C m-2
-    NORG       Amount of N in organic matter (kg N ha-1) *         kg N m-2
-    NH4        Amount of NH4-N (kg N ha-1) **                      kg NH4-N m-2
-    NO3        Amount of NO3-N (kg N ha-1) **                      kg NO3-N m-2
-    ========== ================================================== ============
-    *  This state variable is defined for each combination of soil layer and amendment
-    ** This state variable is defined for each soil layer
-
-    ** Rate variables
-    ========== ==================================================  ==========
-     Name      Description                                         Unit
-    ========== ==================================================  ==========
-    RAGE       Rate of change of apparent age **                   d d-1
-    RAGEAM     Initial apparent age **                             d d-1
-    RAGEAG     Rate of ageing of amendment **                      d d-1
-    RCORG      Rate of change of organic C **                      kg C m-2 d-1 
-    RCORGAM    Rate pf application organic C **                    kg C m-2 d-1
-    RCORGDIS   Dissimilation rate of organic C **                  kg C m-2 d-1 
-    RNH4       Rate of change amount of NH4+-N *                   kg NH4+-N m-2 d-1
-    RNH4AM     Rate of NH4+-N application *                        kg NH4+-N m-2 d-1
-    RNH4DEPOS  Rate of NH4-N deposition *                          kg NH4+-N m-2 d-1
-    RNH4IN     Rate of NH4+-N inflow from adjacent layer *         kg NH4+-N m-2 d-1
-    RNH4MIN    Net rate of mineralization *                        kg NH4+-N m-2 d-1 
-    RNH4NITR   Rate of nitrification *                             kg NH4+-N m-2 d-1
-    RNH4OUT    Rate of NH4+-N outflow to adjacent layer *          kg NH4+-N m-2 d-1
-    RNH4UP     Rate of NH4+-N root uptake *                        kg NH4+-N m-2 d-1
-    RNO3       Rate of change amount of NO3--N *                   kg NO3--N m-2 d-1
-    RNO3AM     Rate of NO3--N application *                        kg NO3--N m-2 d-1
-    RNO3DENITR Rate of denitrification *                           kg NO3--N m-2 d-1
-    RNO3DEPOS  Rate of NO3--N deposition *                         kg NO3--N m-2 d-1
-    RNO3IN     Rate of NH4+-N inflow from adjacent layer *         kg NO3+-N m-2 d-1
-    RNO3NITR   Rate of nitrification *                             kg NO3--N m-2 d-1
-    RNO3OUT    Rate of NO3--N outflow to adjacent layer *          kg NO3--N m-2 d-1
-    RNO3UP     Rate of NO3--N root uptake *                        kg NO3--N m-2 d-1
-    RNORG      Rate of change of organic N **                      kg N m-2 d-1
-    RNORGAM    Rate pf application organic N **                    kg N m-2 d-1
-    RNORGDIS   Dissimilation rate of organic matter **             kg N m-2 d-1
-    RORGMAT    Rate of change of organic material **               kg OM m-2 d-1
-    RORGMATAM  Rate of application organic matter **               kg OM m-2 d-1
-    RORGMATDIS Dissimilation rate of organic matter **             kg OM m-2 d-1
-    ========== ==================================================  ==========
-    *  This state variable is defined for each combination of soil layer and amendment
-    ** This state variable is defined for each soil layer
 
     Berghuijs HNC, Silva JV, Reidsma P, De Wit AJW (2024) Expanding the WOFOST crop model
-    to explore options for sustainable nitrogen management: A study for winter wheat in 
-    the Netherlands. European Journal of Agronomy 154 ARTN 127099
+    to explore options for sustainable nitrogen management: A study for winter wheat in
+    the Netherlands. European Journal of Agronomy 154 ARTN 127099. https://doi.org/10.1016/j.eja.2024.127099
 
+    **Simulation parameters:**
+
+    ========== ====================================================  ====================
+     Name      Description                                           Unit
+    ========== ====================================================  ====================
+    A0SOM      Initial age of soil organic material                  y
+    CNRatioBio C:N ratio of microbial biomass                        kg C kg-1 N
+    FASDIS     Fraction of assimilation to dissimilation             -
+    KDENIT_REF Reference first order denitrification rate constant   d-1
+    KNIT_REF   Reference first order nitrification rate constant     d-1
+    KSORP      Sorption coefficient ammonium (m3 water kg-1 soil)    m3 soil kg-1 soil
+    MRCDIS     Michaelis Menten constant for response factor
+               denitrification to soil respiration                   kg C m-2 d-1
+    NO3ConcR   NO3-N concentration in rain water                     mg NO3--N L- water
+    NH4ConcR   NH4-N concentration in rain water                     mg NH4+-N L-1 water
+    NO3I       Initial amount of NO3-N :sup:`1`                      kg NO3--N ha-1
+    NH4I       Initial amount of NH4-N :sup:`1`                      kg NH4+-N ha-1)
+    WFPS_CRIT  Critical water filled pore space fraction             m3 water m-3 pore
+    ========== ====================================================  ====================
+
+    :sup:`1` This state variable is defined for each soil layer
+
+    **State variables**
+
+    ========== ====================================================  ==============
+     Name      Description                                            Unit
+    ========== ====================================================  ==============
+    AGE        Appearant age of amendment (d) :sup:`1`                 d
+    ORGMAT     Amount of organic matter (kg ORG ha-1) :sup:`1`         kg OM m-2
+    CORG       Amount of C in organic matter (kg C ha-1) :sup:`1`      kg C m-2
+    NORG       Amount of N in organic matter (kg N ha-1) :sup:`1`      kg N m-2
+    NH4        Amount of NH4-N (kg N ha-1) :sup:`2`                    kg NH4-N m-2
+    NO3        Amount of NO3-N (kg N ha-1) :sup:`2`                    kg NO3-N m-2
+    ========== ====================================================  ==============
+
+    | :sup:`1` This state variable is defined for each combination of soil layer and amendment
+    | :sup:`2` This state variable is defined for each soil layer
+
+    **Rate variables**
+
+    ========== ==================================================  ====================
+     Name      Description                                          Unit
+    ========== ==================================================  ====================
+    RAGE       Rate of change of apparent age :sup:`2`              d d-1
+    RAGEAM     Initial apparent age :sup:`2`                        d d-1
+    RAGEAG     Rate of ageing of amendment :sup:`2`                 d d-1
+    RCORG      Rate of change of organic C :sup:`2`                 kg C m-2 d-1
+    RCORGAM    Rate pf application organic C :sup:`2`               kg C m-2 d-1
+    RCORGDIS   Dissimilation rate of organic C :sup:`2`             kg C m-2 d-1
+    RNH4       Rate of change amount of NH4+-N :sup:`1`             kg NH4+-N m-2 d-1
+    RNH4AM     Rate of NH4+-N application :sup:`1`                  kg NH4+-N m-2 d-1
+    RNH4DEPOS  Rate of NH4-N deposition :sup:`1`                    kg NH4+-N m-2 d-1
+    RNH4IN     Rate of NH4+-N inflow from adjacent layer :sup:`1`   kg NH4+-N m-2 d-1
+    RNH4MIN    Net rate of mineralization :sup:`1`                  kg NH4+-N m-2 d-1
+    RNH4NITR   Rate of nitrification :sup:`1`                       kg NH4+-N m-2 d-1
+    RNH4OUT    Rate of NH4+-N outflow to adjacent layer :sup:`1`    kg NH4+-N m-2 d-1
+    RNH4UP     Rate of NH4+-N root uptake :sup:`1`                  kg NH4+-N m-2 d-1
+    RNO3       Rate of change amount of NO3--N :sup:`1`             kg NO3--N m-2 d-1
+    RNO3AM     Rate of NO3--N application :sup:`1`                  kg NO3--N m-2 d-1
+    RNO3DENITR Rate of denitrification :sup:`1`                     kg NO3--N m-2 d-1
+    RNO3DEPOS  Rate of NO3--N deposition :sup:`1`                   kg NO3--N m-2 d-1
+    RNO3IN     Rate of NH4+-N inflow from adjacent layer :sup:`1`   kg NO3+-N m-2 d-1
+    RNO3NITR   Rate of nitrification :sup:`1`                       kg NO3--N m-2 d-1
+    RNO3OUT    Rate of NO3--N outflow to adjacent layer :sup:`1`    kg NO3--N m-2 d-1
+    RNO3UP     Rate of NO3--N root uptake :sup:`1`                  kg NO3--N m-2 d-1
+    RNORG      Rate of change of organic N :sup:`2`                 kg N m-2 d-1
+    RNORGAM    Rate pf application organic N :sup:`2`               kg N m-2 d-1
+    RNORGDIS   Dissimilation rate of organic matter :sup:`2`        kg N m-2 d-1
+    RORGMAT    Rate of change of organic material :sup:`2`          kg OM m-2 d-1
+    RORGMATAM  Rate of application organic matter :sup:`2`          kg OM m-2 d-1
+    RORGMATDIS Dissimilation rate of organic matter :sup:`2`        kg OM m-2 d-1
+    ========== ==================================================  ====================
+
+    | :sup:`1` This state variable is defined for each combination of soil layer and amendment
+    | :sup:`2` This state variable is defined for each soil layer
     """
 
     # Placeholders initial values
@@ -316,7 +318,7 @@ class SNOMIN(SimulationObject):
         self._NO3I = NO3
 
         # Connect module to signal AgroManager
-        self._connect_signal(self._on_APPLY_N, signals.apply_n)
+        self._connect_signal(self._on_APPLY_N, signals.apply_n_snomin)
 
     @prepare_rates
     def calc_rates(self, day, drv):

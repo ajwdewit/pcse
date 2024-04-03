@@ -18,11 +18,11 @@ crop data and management data for a grid location in South-Spain.
 Initializing PCSE/WOFOST and advancing model state
 ..................................................
 
-Let's start a WOFOST object for modelling winter-wheat (crop=1) on a
-location in South-Spain (grid 31031) for the year 2000 under water-limited
-conditions for a freely draining soil (mode='wlp')::
+Let's start a WOFOST object for modelling winter-wheat on a
+location in South-Spain for the year 2000 under water-limited
+conditions.::
 
-    >>> wofost_object = pcse.start_wofost(grid=31031, crop=1, year=2000, mode='wlp')
+    >>> wofost_object = pcse.start_wofost()
     >>> type(wofost_object)
     <class 'pcse.models.Wofost72_WLP_CWB'>
 

@@ -1,3 +1,5 @@
+.. include:: abbreviations.txt
+
 #####################################
 An overview of new features and fixes
 #####################################
@@ -8,22 +10,20 @@ What's new in PCSE 6.0
 
 PCSE 6.0 has a number of breaking changes compared to the 5.5 release.
 
-First of all, WOFOST 7.3 and 8.1 are released with PCSE 6.0. This release also includes a
-new multi-layer waterbalance and a new Carbon/Nitrogen balance.
+First of all, WOFOST 7.3 and 8.1 are released with PCSE 6.0. WOFOST 7.3 includes the atmospheric |CO2| response
+and biomass reallocation. WOFOST 8.1 provides the full crop N dynamics. Moreover, this release also includes a
+new multi-layer waterbalance and a new Carbon/Nitrogen balance called `SNOMIN` (Soil Nitrogen module for Mineral and
+Inorganic Nitrogen). Furthermore, WOFOST 8.0-beta has been deprecated in the PCSE 6.0 release. This also implies dropping
+support for the simulation of P/K limitations on crop growth.
 
-WOFOST 7.3 includes the atmospheric CO2 response and is coupled with the new multi-layer
-waterbalance. WOFOST 8.1 provides the full crop N dynamics and is coupled to the new
-SNOMIN carbon/nitrogen balance.
-
-Nevertheless the
-older simpler water and nitrogen balances are also still available and in many
-cases highly relevant. For example, for educational purposes a simpler approach is
-often sufficient. Moreover, in areas with little data available a simple approach
+WOFOST 7.3 and WOFOST 8.1 are coupled to the new SNOMIN carbon/nitrogen balance and the new multi-layer
+waterbalance. Nevertheless the existing (simpler) water and nitrogen balances are also still available and in many
+cases highly relevant. For example, for educational purposes or in areas with little data available, a simple approach
 may be preferred. Therefore, with WOFOST 7.3 and 8.1 many combinations of crop/soil models are
-possible. In order to accomodate these combinations, the models in PCSE have been coded according
-to a certain system which follows the following rule:
+possible. In order to accommodate these combinations, the models in PCSE have been coded according
+to a certain system which follows the following rule::
 
-    `<modelname><version>_<productionlevel>_<waterbalance>_<nutrientbalance>` 
+    <modelname><version>_<productionlevel>_<waterbalance>_<nutrientbalance>
 
 The placeholders can be one of the following:
  - <modelname>: Wofost, Lintul, Lingra or any other model included
@@ -43,7 +43,7 @@ multi-layer water balance and the SNOMIN Carbon/Nitrogen balance.
 
 Further changes to the system consist of:
 
- - all data providers have been moved to `pcse.input`
+ - all data providers have been moved to `pcse.input`, except for the CGMS dataproviders residing in `pcse.db`.
  - All WOFOST 7.2 models have been renamed according to the coding schema above. So "pcse.models.Wofost72_WLP_FD" is
    now "pcse.models.Wofost72_WLP_CWB" although the old name will keep working in order not to break old code.
 

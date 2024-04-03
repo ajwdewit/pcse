@@ -228,14 +228,14 @@ class TimedEventsDispatcher(HasTraits, DispatcherObject):
             - 2000-01-21: {irrigation_amount: 50}
             - 2000-03-18: {irrigation_amount: 30}
             - 2000-03-19: {irrigation_amount: 25}
-        -   event_signal: apply_npk
-            name:  Timed N/P/K application table
+        -   event_signal: apply_n
+            name:  Timed N application table
             comment: All fertilizer amounts in kg/ha
             events_table:
-            - 2000-01-10: {N_amount : 10, P_amount: 5, K_amount: 2}
-            - 2000-01-31: {N_amount : 30, P_amount: 15, K_amount: 12}
-            - 2000-03-25: {N_amount : 50, P_amount: 25, K_amount: 22}
-            - 2000-04-05: {N_amount : 70, P_amount: 35, K_amount: 32}
+            - 2000-01-10: {N_amount : 10, N_recovery: 0.7}
+            - 2000-01-31: {N_amount : 30, N_recovery: 0.7}
+            - 2000-03-25: {N_amount : 50, N_recovery: 0.7}
+            - 2000-04-05: {N_amount : 70, N_recovery: 0.7}
 
     Each TimedEventDispatcher is defined by an `event_signal`, an optional name,
     an optional comment and the events_table. The events_table is list which provides
@@ -340,15 +340,15 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
     of StateEventsDispatchers::
 
         StateEvents:
-        -   event_signal: apply_npk
+        -   event_signal: apply_n
             event_state: DVS
             zero_condition: rising
-            name: DVS-based N/P/K application table
+            name: DVS-based N application table
             comment: all fertilizer amounts in kg/ha
             events_table:
-            - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4}
-            - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14}
-            - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24}
+            - 0.3: {N_amount : 1, N_recovery: 0.7}
+            - 0.6: {N_amount: 11, N_recovery: 0.7}
+            - 1.12: {N_amount: 21, N_recovery: 0.7}
         -   event_signal: irrigate
             event_state: SM
             zero_condition: falling
@@ -546,11 +546,11 @@ class AgroManager(AncillaryObject):
     starting on 2000-09-01 and the last campaign starting on 2001-03-01. The first campaign consists of a crop
     calendar for winter-wheat starting with sowing at the given crop_start_date. During the campaign there are
     timed events for irrigation at 2000-05-25 and 2000-06-30. Moreover, there are state events for  fertilizer
-    application (event_signal: apply_npk) given by development stage (DVS) at DVS 0.3, 0.6 and 1.12.
+    application (event_signal: apply_n) given by development stage (DVS) at DVS 0.3, 0.6 and 1.12.
 
     The second campaign has no crop calendar, timed events or state events. This means that this is a period of
     bare soil with only the water balance running. The third campaign is for fodder maize sown at 2001-04-15
-    with two series of timed events (one for irrigation and one for N/P/K application) and no state events.
+    with two series of timed events (one for irrigation and one for N application) and no state events.
     The end date of the simulation in this case will be 2001-11-01 (2001-04-15 + 200 days).
 
     An example of an agromanagement definition file::
@@ -573,15 +573,15 @@ class AgroManager(AncillaryObject):
                 - 2000-05-25: {irrigation_amount: 3.0}
                 - 2000-06-30: {irrigation_amount: 2.5}
             StateEvents:
-            -   event_signal: apply_npk
+            -   event_signal: apply_n
                 event_state: DVS
                 zero_condition: rising
-                name: DVS-based N/P/K application table
+                name: DVS-based N application table
                 comment: all fertilizer amounts in kg/ha
                 events_table:
-                - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4}
-                - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14}
-                - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24}
+                - 0.3: {N_amount : 1, N_recovery: 0.7}
+                - 0.6: {N_amount: 11, N_recovery: 0.7}
+                - 1.12: {N_amount: 21, N_recovery: 0.7}
         - 2000-09-01:
             CropCalendar:
             TimedEvents:
@@ -604,12 +604,12 @@ class AgroManager(AncillaryObject):
                 - 2001-07-21: {irrigation_amount: 5.0}
                 - 2001-08-18: {irrigation_amount: 3.0}
                 - 2001-09-19: {irrigation_amount: 2.5}
-            -   event_signal: apply_npk
-                name:  Timed N/P/K application table
+            -   event_signal: apply_n
+                name:  Timed N application table
                 comment: All fertilizer amounts in kg/ha
                 events_table:
-                - 2001-05-25: {N_amount : 50, P_amount: 25, K_amount: 22}
-                - 2001-07-05: {N_amount : 70, P_amount: 35, K_amount: 32}
+                - 2001-05-25: {N_amount : 50, N_recovery: 0.7}
+                - 2001-07-05: {N_amount : 70, N_recovery: 0.7}
             StateEvents:
 
     """
@@ -780,15 +780,15 @@ class AgroManager(AncillaryObject):
                     max_duration: 200
                 TimedEvents:
                 StateEvents:
-                -   event_signal: apply_npk
+                -   event_signal: apply_n
                     event_state: DVS
                     zero_condition: rising
-                    name: DVS-based N/P/K application table
+                    name: DVS-based N application table
                     comment: all fertilizer amounts in kg/ha
                     events_table:
-                    - 0.3: {N_amount : 1, P_amount: 3, K_amount: 4}
-                    - 0.6: {N_amount: 11, P_amount: 13, K_amount: 14}
-                    - 1.12: {N_amount: 21, P_amount: 23, K_amount: 24}
+                    - 0.3: {N_amount : 1, N_recovery: 0.7}
+                    - 0.6: {N_amount: 11, N_recovery: 0.7}
+                    - 1.12: {N_amount: 21, N_recovery: 0.7}
 
 
         **2. Without an explicit trailing campaign**

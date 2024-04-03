@@ -5,6 +5,9 @@
 .. |DD| replace:: :math:`Decimal Degree`
 .. |d| replace:: day
 .. |Cday| replace:: :math:`^{\circ}C day`
+.. |m2| replace:: m :sup:`2`
+.. |m-2| replace:: m :sup:`-2`
+
 
 .. |msec-1| replace:: :math:`m sec^{-1}`
 .. |cmday-1| replace:: :math:`cm day^{-1}`
@@ -12,6 +15,7 @@
 .. |C day-1| replace:: :math:`^{\circ}C day^{-1}`
 .. |C-1day-1| replace:: :math:`^{\circ}C^{-1} day^{-1}`
 .. |C-3day-1| replace:: :math:`^{\circ}C^{-3} day^{-1}`
+.. |MJm-2d-1| replace:: :math:`MJ m^{-2} day^{-1}`
 
 .. |kg ha-1| replace:: kg ha\ :sup:`-1`\
 .. |ha kg-1| replace:: ha kg\ :sup:`-1`\

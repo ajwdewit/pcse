@@ -172,7 +172,7 @@ class WOFOST81SiteDataProvider_SNOMIN(_GenericSiteDataProvider):
         - WAV           Initial amount of water in total soil profile [cm]
         - SMLIM         Initial maximum moisture content in initial rooting depth zone [0-1],
                         default 0.4
-        - CO2           Atmospheric CO2 level (ppm), default 360.
+        - CO2           Atmospheric CO2 level, currently around 400. [ppm]
         - A0SOM         Initial age of organic material (24.0)  [year]
         - CNRatioBio    C:N ratio of microbial biomass  (9.0) [kg C kg-1 N]
         - FASDIS        Assimilation to dissimilation rate ratio (0.5) [-]
@@ -182,13 +182,17 @@ class WOFOST81SiteDataProvider_SNOMIN(_GenericSiteDataProvider):
         - MRCDIS        Michaelis-Menten constant of relationship organic C-dissimilation rate
                         and response factor denitrification rate (0.001) [kg C m-2 d-1]
         - NH4ConcR      NH4-N concentration in rain water (0.9095) [mg NH4+-N L-1 water]
+        - NO3ConcR      NO3-N concentration in rain water (2.1) [mg NO3--N L-1 water]
         - NH4I          Initial amount of NH4+ per soil layer  [kg NH4+ ha-1]. This
                         should match the number of soil layers specified in the soil
-                        configuration.
-        - NO3ConcR      NO3-N concentration in rain water (2.1) [mg NO3--N L-1 water]
+                        configuration. The initial value can be highly variable and as
+                        high as 300-500 kg/ha of NH4/NO3 if the model was started right
+                        after an N application event.
         - NO3I          Initial amount of NO3-N per soil layer [kg NO3-N ha-1]. This
                         should match the number of soil layers specified in the soil
-                        configuration.
+                        configuration. The initial value can be highly variable and as
+                        high as 300-500 kg/ha of NH4/NO3 if the model was started right
+                        after an N application event.
         - WFPS_CRIT     Critical fraction water filled soil pores (0.8)  [m3 water m-3 pores]
 
 
@@ -211,9 +215,9 @@ class WOFOST81SiteDataProvider_SNOMIN(_GenericSiteDataProvider):
                  "KNIT_REF": (1.0, [0.9, 1.0], float),
                  "KSORP": (0.0005, [0.0001, 0.001], float),
                  "MRCDIS": (0.001, [0.0001, 0.01], float),
-                 "NH4ConcR": (0.0, [0.0, 25], float),
-                 "NO3ConcR": (0.0, [0, 25], float),
-                 "NH4I": (None, [0.0, 5.0], list),
-                 "NO3I": (None, [0.0, 20.0], list),
+                 "NH4ConcR": (0.0, [0.0, 5.], float),
+                 "NO3ConcR": (0.0, [0.0, 20.], float),
+                 "NH4I": (None, [0.0, 300.0], list),
+                 "NO3I": (None, [0.0, 500.0], list),
                  "WFPS_CRIT": (0.8, [0.5, 0.99], float),
                  }
