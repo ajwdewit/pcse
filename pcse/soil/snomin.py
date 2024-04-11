@@ -94,8 +94,8 @@ class SNOMIN(SimulationObject):
     RORGMATDIS Dissimilation rate of organic matter :sup:`2`        kg OM m-2 d-1
     ========== ==================================================  ====================
 
-    | :sup:`1` This state variable is defined for each combination of soil layer and amendment
-    | :sup:`2` This state variable is defined for each soil layer
+    | :sup:`1` This state variable is defined for each soil layer
+    | :sup:`2` This state variable is defined for each combination of soil layer and amendment
     """
 
     # Placeholders initial values
@@ -250,56 +250,66 @@ class SNOMIN(SimulationObject):
             CORG[0,il] = minip_C.calculate_organic_C(ORGMAT[0,il])
             NORG[0,il] = CORG[0, il] / layer.CNRatioSOMI
 
-        # Initialize state variables to check the mass balance of organic matter
-        RORGMATDISTT = 0.
-        RORGMATAMTT = 0.
+        states = dict(
+            NH4 = NH4,
+            NO3 = NO3,
+            AGE = AGE,
+            AGE0 = AGE0,
+            ORGMAT = ORGMAT,
+            CORG =  CORG,
+            NORG =  NORG,
 
-        # Initialize state variables to check the mass balance of organic C
-        RCORGDISTT = 0.
-        RCORGAMTT = 0.
+            # Initialize state variables to check the mass balance of organic matter
+            RORGMATDISTT = 0.,
+            RORGMATAMTT = 0.,
 
-        # Initialize state variables to check the mass balance of organic N
-        RNORGDISTT = 0.
-        RNORGAMTT = 0.
+            # Initialize state variables to check the mass balance of organic C
+            RCORGDISTT = 0.,
+            RCORGAMTT = 0.,
 
-        # Initialize state variables to check the mass balance of NH4-N
-        RNH4MINTT = 0.
-        RNH4NITRTT = 0.
-        RNH4UPTT = 0.
-        RNH4INTT = 0.
-        RNH4OUTTT = 0.
-        RNH4AMTT = 0.
-        RNH4DEPOSTT = 0.
+            # Initialize state variables to check the mass balance of organic N
+            RNORGDISTT = 0.,
+            RNORGAMTT = 0.,
 
-        # Initialize state variables to check the mass balance of NO3-N
-        RNO3NITRTT = 0.
-        RNO3DENITRTT = 0.
-        RNO3UPTT = 0.
-        RNO3INTT = 0.
-        RNO3OUTTT = 0.
-        RNO3AMTT = 0.
-        RNO3DEPOSTT = 0.
+            # Initialize state variables to check the mass balance of NH4-N
+            RNH4MINTT = 0.,
+            RNH4NITRTT = 0.,
+            RNH4UPTT = 0.,
+            RNH4INTT = 0.,
+            RNH4OUTTT = 0.,
+            RNH4AMTT = 0.,
+            RNH4DEPOSTT = 0.,
 
-        # Initialize output variables
-        CORGT = np.sum(CORG) / self.m2_to_ha
-        NORGT = np.sum(NORG) / self.m2_to_ha
-        ORGMATT = np.sum(ORGMAT) / self.m2_to_ha
-        RMINT = 0.
-        NH4T = np.sum(NH4)/ self.m2_to_ha
-        NO3T = np.sum(NO3)/ self.m2_to_ha
-        NAVAIL = 0.
-        NH4LEACHCUM = 0.
-        NO3LEACHCUM = 0.
-        NDENITCUM = 0.
-        NLOSSCUM = 0.
+            # Initialize state variables to check the mass balance of NO3-N
+            RNO3NITRTT = 0.,
+            RNO3DENITRTT = 0.,
+            RNO3UPTT = 0.,
+            RNO3INTT = 0.,
+            RNO3OUTTT = 0.,
+            RNO3AMTT = 0.,
+            RNO3DEPOSTT = 0.,
 
-        states = {"NAVAIL": NAVAIL, "NO3": NO3, "NH4": NH4, "AGE": AGE, "AGE0": AGE0, "ORGMAT": ORGMAT, "CORG": CORG, "NORG": NORG,  
-                  "ORGMATT": ORGMATT,  "CORGT": CORGT, "NORGT": NORGT, "RMINT": RMINT, "NH4T": NH4T, "NO3T": NO3T, 
-                  "RORGMATAMTT": RORGMATAMTT, "RORGMATDISTT": RORGMATDISTT, "RCORGAMTT": RCORGAMTT, "RCORGDISTT": RCORGDISTT,
-                  "RNORGAMTT": RNORGAMTT, "RNORGDISTT": RNORGDISTT, "RNH4MINTT": RNH4MINTT, "RNH4NITRTT": RNH4NITRTT, "RNH4UPTT": RNH4UPTT,
-                  "RNH4INTT": RNH4INTT, "RNH4OUTTT": RNH4OUTTT, "RNH4AMTT": RNH4AMTT, "RNO3NITRTT": RNO3NITRTT, "RNO3DENITRTT": RNO3DENITRTT,
-                  "RNO3UPTT": RNO3UPTT, "RNO3INTT": RNO3INTT, "RNO3OUTTT": RNO3OUTTT, "RNO3AMTT": RNO3AMTT, "RNO3DEPOSTT": RNO3DEPOSTT, "RNH4DEPOSTT": RNH4DEPOSTT,
-                  "NH4LEACHCUM": NH4LEACHCUM, "NO3LEACHCUM": NO3LEACHCUM, "NDENITCUM": NDENITCUM, "NLOSSCUM": NLOSSCUM}
+            # Initialize output variables
+            CORGT = np.sum(CORG) / self.m2_to_ha,
+            NORGT = np.sum(NORG) / self.m2_to_ha,
+            ORGMATT = np.sum(ORGMAT) / self.m2_to_ha,
+            RMINT = 0.,
+            NH4T = np.sum(NH4)/ self.m2_to_ha,
+            NO3T = np.sum(NO3)/ self.m2_to_ha,
+            NAVAIL = 0.,
+            NH4LEACHCUM = 0.,
+            NO3LEACHCUM = 0.,
+            NDENITCUM = 0.,
+            NLOSSCUM = 0.,
+        )
+
+        # states = {"NAVAIL": NAVAIL, "NO3": NO3, "NH4": NH4, "AGE": AGE, "AGE0": AGE0, "ORGMAT": ORGMAT, "CORG": CORG, "NORG": NORG,
+        #           "ORGMATT": ORGMATT,  "CORGT": CORGT, "NORGT": NORGT, "RMINT": RMINT, "NH4T": NH4T, "NO3T": NO3T,
+        #           "RORGMATAMTT": RORGMATAMTT, "RORGMATDISTT": RORGMATDISTT, "RCORGAMTT": RCORGAMTT, "RCORGDISTT": RCORGDISTT,
+        #           "RNORGAMTT": RNORGAMTT, "RNORGDISTT": RNORGDISTT, "RNH4MINTT": RNH4MINTT, "RNH4NITRTT": RNH4NITRTT, "RNH4UPTT": RNH4UPTT,
+        #           "RNH4INTT": RNH4INTT, "RNH4OUTTT": RNH4OUTTT, "RNH4AMTT": RNH4AMTT, "RNO3NITRTT": RNO3NITRTT, "RNO3DENITRTT": RNO3DENITRTT,
+        #           "RNO3UPTT": RNO3UPTT, "RNO3INTT": RNO3INTT, "RNO3OUTTT": RNO3OUTTT, "RNO3AMTT": RNO3AMTT, "RNO3DEPOSTT": RNO3DEPOSTT, "RNH4DEPOSTT": RNH4DEPOSTT,
+        #           "NH4LEACHCUM": NH4LEACHCUM, "NO3LEACHCUM": NO3LEACHCUM, "NDENITCUM": NDENITCUM, "NLOSSCUM": NLOSSCUM}
 
         self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMATT", "CORGT", "NORGT"], **states)
         self.rates = self.RateVariables(kiosk)
@@ -318,7 +328,7 @@ class SNOMIN(SimulationObject):
         self._NO3I = NO3
 
         # Connect module to signal AgroManager
-        self._connect_signal(self._on_APPLY_N, signals.apply_n_snomin)
+        self._connect_signal(self._on_APPLY_N_SNOMIN, signals.apply_n_snomin)
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -382,10 +392,9 @@ class SNOMIN(SimulationObject):
         r.RNH4MIN, r.RNH4NITR, r.RNO3NITR, r.RNO3DENITR =  sinm.calculate_reaction_rates(self.soiln_profile, p.KDENIT_REF, p.KNIT_REF, 
                                                                                          p.KSORP, p.MRCDIS, NH4PRE, NO3PRE, r.RCORGDIS, r.RNORGDIS, SM, T, p.WFPS_CRIT)
 
-
-        # For each layer: if the net mineralization rate is negative (net immobilization) and there is not enough NH4-N in the layer to be taken up by
-        # the organic matter, only the amount of N that remains after denitrification is available for immobilization. RNORGDIS is updated as well 
-        # to close the N balance again.
+        # For each layer: if the net mineralization rate is negative (net immobilization) and there is not enough
+        # NH4-N in the layer to be taken up by the organic matter, only the amount of N that remains after
+        # denitrification is available for immobilization. RNORGDIS is updated as well to close the N balance again.
         for il, layer in enumerate(self.soiln_profile):
             if(NH4PRE[il] + (r.RNH4MIN[il] - r.RNH4NITR[il]) * delt < 0):
                 r.RNH4MIN[il] = NH4PRE[il] - r.RNH4NITR[il]
@@ -397,7 +406,8 @@ class SNOMIN(SimulationObject):
         # Calculate deposition rates
         r.RNH4DEPOS, r.RNO3DEPOS = sinm.calculate_deposition_rates(self.soiln_profile, infiltration_rate_m_per_d, s.NH4, p.NH4ConcR, s.NO3, p.NO3ConcR)
 
-        # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic N flow rates between layers
+        # Calculate remaining amounts of NH4-N and NO3-N after uptake and reaction and calculate inorganic
+        # N flow rates between layers
         NH4PRE2 = NH4PRE + (r.RNH4AM + r.RNH4MIN + r.RNH4DEPOS - r.RNH4NITR) * delt
         NO3PRE2 = NO3PRE + (r.RNO3AM + r.RNO3NITR + r.RNO3DEPOS  - r.RNO3DENITR) * delt
         r.RNH4IN, r.RNH4OUT, r.RNO3IN, r.RNO3OUT = sinm.calculate_flow_rates(self.soiln_profile, flow_m_per_d, p.KSORP, NH4PRE2, NO3PRE2, SM)
@@ -464,7 +474,8 @@ class SNOMIN(SimulationObject):
         s.NDENITCUM = NDENITCUM
         s.NLOSSCUM = NLOSSCUM
 
-    def _on_APPLY_N(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None, f_NH4N = None, f_NO3N = None, initial_age =None):
+    def _on_APPLY_N_SNOMIN(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None,
+                           f_NH4N = None, f_NO3N = None, initial_age =None):
         """
         This function calculates the application rates of organic matter, organic C, organic N, NH4-N, NO3-N and the initial apparent
         age of the applied material at the date of application. For each amendment, the following variables need to be provided in the
@@ -574,22 +585,21 @@ class SNOMIN(SimulationObject):
         s.RNORGAMTT += delt * r.RNORGAM.sum()
         s.RNORGDISTT += delt * r.RNORGDIS.sum()
 
-        s.RNH4MINTT+= delt * r.RNH4MIN.sum()
-        s.RNH4NITRTT+= delt * r.RNH4NITR.sum()
-        s.RNH4UPTT+= delt * r.RNH4UP.sum()
-        s.RNH4INTT+= delt * r.RNH4IN.sum()
-        s.RNH4OUTTT+= delt * r.RNH4OUT.sum()
-        s.RNH4AMTT+= delt * r.RNH4AM.sum()
-        s.RNH4DEPOSTT+= delt * r.RNH4DEPOS.sum()
+        s.RNH4MINTT += delt * r.RNH4MIN.sum()
+        s.RNH4NITRTT += delt * r.RNH4NITR.sum()
+        s.RNH4UPTT += delt * r.RNH4UP.sum()
+        s.RNH4INTT += delt * r.RNH4IN.sum()
+        s.RNH4OUTTT += delt * r.RNH4OUT.sum()
+        s.RNH4AMTT += delt * r.RNH4AM.sum()
+        s.RNH4DEPOSTT += delt * r.RNH4DEPOS.sum()
 
-        s.RNO3NITRTT+=  delt * r.RNO3NITR.sum()
-        s.RNO3DENITRTT+= delt * r.RNO3DENITR.sum()
-        s.RNO3UPTT+= delt * r.RNO3UP.sum()
-        s.RNO3INTT+= delt * r.RNO3IN.sum()
-        s.RNO3OUTTT+= delt * r.RNO3OUT.sum()
-        s.RNO3AMTT+= delt * r.RNO3AM.sum()
-        s.RNO3DEPOSTT+= delt * r.RNO3DEPOS.sum()
-
+        s.RNO3NITRTT += delt * r.RNO3NITR.sum()
+        s.RNO3DENITRTT += delt * r.RNO3DENITR.sum()
+        s.RNO3UPTT += delt * r.RNO3UP.sum()
+        s.RNO3INTT += delt * r.RNO3IN.sum()
+        s.RNO3OUTTT += delt * r.RNO3OUT.sum()
+        s.RNO3AMTT += delt * r.RNO3AM.sum()
+        s.RNO3DEPOSTT += delt * r.RNO3DEPOS.sum()
 
         ORGMATBAL = self._ORGMATI.sum() - s.ORGMAT.sum() + s.RORGMATAMTT - s.RORGMATDISTT
         if(abs(ORGMATBAL) > 0.0001):
@@ -614,7 +624,7 @@ class SNOMIN(SimulationObject):
         NO3BAL = self._NO3I.sum() - s.NO3.sum() + s.RNO3AMTT + s.RNO3NITRTT + s.RNO3INTT + s.RNO3DEPOSTT - s.RNO3DENITRTT - s.RNO3OUTTT - s.RNO3UPTT
         if(abs(NO3BAL) > 0.0001):
             msg = "NO3-N mass balance is not closing on %s with checksum: %f" % (day, NO3BAL)
-            raise exc.SoilAmmoniumBalanceError(msg)
+            raise exc.SoilNitrateBalanceError(msg)
 
     class SoilInorganicNModel():
         def calculate_N_application_amounts(self, soiln_profile, amount, application_depth, f_NH4N, f_NO3N):
@@ -957,14 +967,14 @@ class SNOMIN(SimulationObject):
             minip_C = self.MINIP_C()
             ORGMAT_am = self.calculate_organic_material_application_amount(amount, application_depth, f_orgmat, layer_thickness, zmax, zmin)
             CORG_am = minip_C.calculate_organic_C(ORGMAT_am)
-            if(cnratio == 0):
+            if cnratio == 0:
                 NORG_am = 0.
             else:
                 NORG_am = CORG_am / cnratio
             return NORG_am
 
         def calculate_organic_material_application_amount(self, amount, application_depth, f_orgmat, layer_thickness, zmax, zmin):
-            if(application_depth > zmax):
+            if application_depth > zmax:
                 ORGMAT_am = (layer_thickness / application_depth) * f_orgmat * amount
             elif(application_depth >= zmin and application_depth <= zmax):
                 ORGMAT_am = ((application_depth - zmin) / application_depth) * f_orgmat * amount
@@ -984,7 +994,6 @@ class SNOMIN(SimulationObject):
                 dA = f_pH * f_T * f_SM * dt
                 return dA
 
-
             def calculate_relative_dissimilation_rate_OM_T(self, t, pF, pH, T):
                 m = self.m
                 b = self.b
@@ -1000,9 +1009,9 @@ class SNOMIN(SimulationObject):
                 return rate
 
             def calculate_soil_moisture_response_dissimilation_rate(self, pF):
-                if(pF < 2.7):
+                if pF < 2.7:
                     f_SM = 1.0
-                elif(pF < 4.2):
+                elif pF < 4.2:
                     f_SM = 1.0 * (4.2 - pF) / (4.2 - 2.7)
                 else:
                     f_SM = 0.
@@ -1017,11 +1026,11 @@ class SNOMIN(SimulationObject):
                 return f_T
 
             def calculate_temperature_response_dissimilation_rate_Yang(self, T):
-                if(T < -1):
+                if T < -1:
                     f_T = 0.
-                elif(T < 9.):
+                elif T < 9.:
                     f_T = 0.09 * (T + 1)
-                elif(T < 27.):
+                elif T < 27.:
                     f_T = 0.88 * pow(2, (T-9)/9)
                 else:
                     f_T = 3.5

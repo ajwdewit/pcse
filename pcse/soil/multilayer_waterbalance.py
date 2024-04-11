@@ -106,6 +106,53 @@ class WaterBalanceLayered_PP(SimulationObject):
         
 
 class WaterBalanceLayered(SimulationObject):
+    """This implements a layered water balance to estimate soil water availability for crop growth and water stress.
+
+    The classic free-drainage water-balance had some important limitations such as the inability to take into
+    account differences in soil texture throughout the profile and its impact on soil water flow. Moreover,
+    in the single layer water balance, rainfall or irrigation will become immediately available to the crop.
+    This is incorrect physical behaviour and in many situations it leads to a very quick recovery of the crop
+    after rainfall since all the roots have immediate access to infiltrating water. Therefore, with more detailed
+    soil data becoming available a more realistic soil water balance was deemed necessary to better simulate soil
+    processes and its impact on crop growth.
+
+    The multi-layer water balance represents a compromise between computational complexity, realistic simulation
+    of water content and availability of data to calibrate such models. The model still runs on a daily time step
+    but does implement the concept of downward and upward flow based on the concept of hydraulic head and soil
+    water conductivity. The latter are combined in the so-called Matric Flux Potential. The model computes
+    two types of flow of water in the soil:
+
+      (1) a "dry flow" from the matric flux potentials (e.g. the suction gradient between layers)
+      (2) a "wet flow" under the current layer conductivities and downward gravity.
+
+    Clearly, only the dry flow may be negative (=upward). The dry flow accounts for the large
+    gradient in water potential under dry conditions (but neglects gravity). The wet flow takes into
+    account gravity only and will dominate under wet conditions. The maximum of the dry and wet
+    flow is taken as the downward flow, which is then further limited in order the prevent
+    (a) oversaturation and (b) water content to decrease below field capacity.
+    Upward flow is just the dry flow when it is negative. In this case the flow is limited
+    to a certain fraction of what is required to get the layers at equal potential, taking
+    into account, however, the contribution of an upward flow from further down.
+
+    The configuration of the soil layers is variable but is bound to certain limitations:
+    - The layer thickness cannot be made too small. In practice, the top layer should not
+      be smaller than 20 to 30 cm. Smaller layers would require smaller time steps than
+      one day to simulate realistically, since rain storms will fill up the top layer very
+      quickly leading to surface runoff because the model cannot handle the infiltration of
+      the rainfall in a single timestep (a day).
+    - The crop maximum rootable depth must coincide with a layer boundary. This is to avoid
+      that roots can directly access water below the rooting depth. Of course such water may become
+      available gradually by upward flow of moisture at some point during the simulation.
+
+    The current python implementation does not yet implement the impact of shallow groundwater
+    but this will be added in future versions of the model.
+
+    **note**: the current implementation of the model is rather 'Fortran-ish'. This has been done
+    on purpose to allow comparisons with the original code in Fortran90. When we are sure that
+    the implementation performs properly, we can refactor this in to a more functional structure
+    instead of the
+
+    """
     _default_RD = Float(10.)  # default rooting depth at 10 cm
     _RDold = _default_RD
     _RINold = Float(0.)

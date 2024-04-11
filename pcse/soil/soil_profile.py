@@ -107,6 +107,10 @@ class SoilLayer(HasTraits):
 
 
 class SoilProfile(list):
+    """A component that represents the soil column as required by the multilayer waterbalance and SNOMIN.
+
+
+    """
     
     def __init__(self, parvalues):
         list.__init__(self)
