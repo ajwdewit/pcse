@@ -18,6 +18,7 @@ if sys.version_info > (3,8):
 else:
     from collections import Iterable
 
+import dotmap
 from . import exceptions as exc
 from .traitlets import TraitType
 
@@ -880,3 +881,11 @@ def get_user_home():
         user_home = tempfile.gettempdir()
 
     return user_home
+
+
+class DotMap(dotmap.DotMap):
+    """DotMap subclass with _dynamic switched off by default.
+    """
+    def __init__(self, *args, **kwargs):
+        kwargs.update(_dynamic=False)
+        super().__init__(*args, **kwargs)

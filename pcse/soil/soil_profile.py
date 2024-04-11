@@ -1,8 +1,7 @@
 from math import sqrt
 import numpy as np
-from types import SimpleNamespace
 from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool, HasTraits, List
-from ..util import limit, Afgen, merge_dict
+from ..util import limit, Afgen, merge_dict, DotMap
 
 from .. import exceptions as exc
 
@@ -115,7 +114,7 @@ class SoilProfile(list):
     def __init__(self, parvalues):
         list.__init__(self)
 
-        sp = SimpleNamespace(**parvalues["SoilProfileDescription"])
+        sp = DotMap(parvalues["SoilProfileDescription"])
         for layer_properties in sp.SoilLayers:
             layer = SoilLayer(layer_properties, sp.PFFieldCapacity, sp.PFWiltingPoint)
             self.append(layer)
