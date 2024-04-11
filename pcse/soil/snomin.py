@@ -303,14 +303,6 @@ class SNOMIN(SimulationObject):
             NLOSSCUM = 0.,
         )
 
-        # states = {"NAVAIL": NAVAIL, "NO3": NO3, "NH4": NH4, "AGE": AGE, "AGE0": AGE0, "ORGMAT": ORGMAT, "CORG": CORG, "NORG": NORG,
-        #           "ORGMATT": ORGMATT,  "CORGT": CORGT, "NORGT": NORGT, "RMINT": RMINT, "NH4T": NH4T, "NO3T": NO3T,
-        #           "RORGMATAMTT": RORGMATAMTT, "RORGMATDISTT": RORGMATDISTT, "RCORGAMTT": RCORGAMTT, "RCORGDISTT": RCORGDISTT,
-        #           "RNORGAMTT": RNORGAMTT, "RNORGDISTT": RNORGDISTT, "RNH4MINTT": RNH4MINTT, "RNH4NITRTT": RNH4NITRTT, "RNH4UPTT": RNH4UPTT,
-        #           "RNH4INTT": RNH4INTT, "RNH4OUTTT": RNH4OUTTT, "RNH4AMTT": RNH4AMTT, "RNO3NITRTT": RNO3NITRTT, "RNO3DENITRTT": RNO3DENITRTT,
-        #           "RNO3UPTT": RNO3UPTT, "RNO3INTT": RNO3INTT, "RNO3OUTTT": RNO3OUTTT, "RNO3AMTT": RNO3AMTT, "RNO3DEPOSTT": RNO3DEPOSTT, "RNH4DEPOSTT": RNH4DEPOSTT,
-        #           "NH4LEACHCUM": NH4LEACHCUM, "NO3LEACHCUM": NO3LEACHCUM, "NDENITCUM": NDENITCUM, "NLOSSCUM": NLOSSCUM}
-
         self.states = self.StateVariables(kiosk, publish=["NAVAIL", "ORGMATT", "CORGT", "NORGT"], **states)
         self.rates = self.RateVariables(kiosk)
 
@@ -476,24 +468,25 @@ class SNOMIN(SimulationObject):
 
     def _on_APPLY_N_SNOMIN(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None,
                            f_NH4N = None, f_NO3N = None, initial_age =None):
-        """
-        This function calculates the application rates of organic matter, organic C, organic N, NH4-N, NO3-N and the initial apparent
-        age of the applied material at the date of application. For each amendment, the following variables need to be provided in the
-        AgroManagement file of the simulation:
+        """This function calculates the application rates of organic matter, organic C, organic N, NH4-N, NO3-N
+        and the initial apparent age of the applied material at the date of application.
 
-        ** Ammendment properties
-        ================== ==================================================     ===================
-         Name              Description                                            Unit
-        ================== =====================================================  ===================
-        amount             Amount of material in amendment                        kg material ha-1
-        application_depth  Depth over which the amendment is applied in the soil  cm
-        cnratio            C:N ratio of organic matter in material                kg C kg-1 N
-        initial_age        Initial apparent age of organic matter in material     y
-        f_NH4N             Fraction of NH4+-N in material                         kg NH4+-N kg-1 material
-        f_NO3N             Fraction of NO3--N in material                         kg NO3--N kg-1 material                        
-        f_orgmat           Fraction of organic matter in amendment                kg OM kg-1 material
-        ================== =====================================================  ===================
-        """        
+        For each amendment, the following variables need to be provided in the AgroManagement
+        file of the simulation:
+
+        **Amendment properties**
+        ================== ======================================================    =========================
+         Name              Description                                               Unit
+        ================== ======================================================    =========================
+        amount             Amount of material in amendment                           kg material ha-1
+        application_depth  Depth over which the amendment is applied in the soil     cm
+        cnratio            C:N ratio of organic matter in material                   kg C kg-1 N
+        initial_age        Initial apparent age of organic matter in material        y
+        f_NH4N             Fraction of NH4+-N in material                            kg NH4+-N kg-1 material
+        f_NO3N             Fraction of NO3--N in material                            kg NO3--N kg-1 material
+        f_orgmat           Fraction of organic matter in amendment                   kg OM kg-1 material
+        ================== ======================================================    =========================
+        """
 
         r = self.rates
         s = self.states
@@ -503,7 +496,7 @@ class SNOMIN(SimulationObject):
         sinm = self.SoilInorganicNModel()
         sonm = self.SoilOrganicNModel()
 
-        # Initialize ammendment rates
+        # Initialize amendment rates
         RAGE_am = np.zeros((1, len(self.soiln_profile)))
         AGE0_am =  np.zeros_like(RAGE_am)
         RORGMAT_am = np.zeros_like(RAGE_am)
@@ -602,31 +595,31 @@ class SNOMIN(SimulationObject):
         s.RNO3DEPOSTT += delt * r.RNO3DEPOS.sum()
 
         ORGMATBAL = self._ORGMATI.sum() - s.ORGMAT.sum() + s.RORGMATAMTT - s.RORGMATDISTT
-        if(abs(ORGMATBAL) > 0.0001):
+        if abs(ORGMATBAL) > 0.0001:
             msg = "Organic matter mass balance is not closing on %s with checksum: %f" % (day, ORGMATBAL)
             raise exc.SoilOrganicMatterBalanceError(msg)
 
         CORGBAL = self._CORGI.sum() - s.CORG.sum() + s.RCORGAMTT - s.RCORGDISTT
-        if(abs(CORGBAL) > 0.0001):
+        if abs(CORGBAL) > 0.0001:
             msg = "Organic carbon mass balance is not closing on %s with checksum: %f" % (day, CORGBAL)
             raise exc.SoilOrganicCarbonBalanceError(msg)
 
         NORGBAL = self._NORGI.sum() - s.NORG.sum() + s.RNORGAMTT - s.RNORGDISTT
-        if(abs(NORGBAL) > 0.0001):
+        if abs(NORGBAL) > 0.0001:
             msg = "Organic carbon mass balance is not closing on %s with checksum: %f" % (day, NORGBAL)
             raise exc.SoilOrganicNitrogenBalanceError(msg)
 
         NH4BAL = self._NH4I.sum() - s.NH4.sum() + s.RNH4AMTT + s.RNH4INTT + s.RNH4MINTT + s.RNH4DEPOSTT - s.RNH4NITRTT - s.RNH4OUTTT - s.RNH4UPTT
-        if(abs(NH4BAL) > 0.0001):
+        if abs(NH4BAL) > 0.0001:
             msg = "NH4-N mass balance is not closing on %s with checksum: %f" % (day, NH4BAL)
             raise exc.SoilAmmoniumBalanceError(msg)
 
         NO3BAL = self._NO3I.sum() - s.NO3.sum() + s.RNO3AMTT + s.RNO3NITRTT + s.RNO3INTT + s.RNO3DEPOSTT - s.RNO3DENITRTT - s.RNO3OUTTT - s.RNO3UPTT
-        if(abs(NO3BAL) > 0.0001):
+        if abs(NO3BAL) > 0.0001:
             msg = "NO3-N mass balance is not closing on %s with checksum: %f" % (day, NO3BAL)
             raise exc.SoilNitrateBalanceError(msg)
 
-    class SoilInorganicNModel():
+    class SoilInorganicNModel:
         def calculate_N_application_amounts(self, soiln_profile, amount, application_depth, f_NH4N, f_NO3N):
             samm = self.SoilAmmoniumNModel()
             sni = self.SoilNNitrateModel()
@@ -689,7 +682,7 @@ class SNOMIN(SimulationObject):
                 zmin = zmax
             return RNH4UP, RNO3UP  
 
-        class SoilAmmoniumNModel():
+        class SoilAmmoniumNModel:
             def calculate_NH4_deposition_rates(self, soiln_profile, infiltration_rate_m_per_d, NH4, NH4ConcR):
                 RNH4DEPOS = np.zeros_like(NH4)
                 mg_to_kg = 1e-6
@@ -726,24 +719,24 @@ class SNOMIN(SimulationObject):
                     cNH4[il] =  self.calculate_NH4_concentration(KSORP, dz[il], NH4[il], RHOD[il], SM[il])
 
                 for il in range(0,len(soiln_profile)):
-                    if(flow_m_per_d[il] >= 0.):
-                        if(il == 0):
+                    if flow_m_per_d[il] >= 0.:
+                        if il == 0:
                             RNH4IN[il] += 0.
                         else:
                             RNH4IN[il] += flow_m_per_d[il] * cNH4[il - 1]
                             RNH4OUT[il-1] += flow_m_per_d[il] * cNH4[il - 1]
-                if(flow_m_per_d[len(NH4) - 1] >= 0.):
+                if flow_m_per_d[len(NH4) - 1] >= 0.:
                     RNH4OUT[len(NH4) - 1] += flow_m_per_d[len(NH4)] * cNH4[len(NH4) - 1]
 
                 ## Upward flow
                 for il in reversed(range(0,len(soiln_profile))):
-                    if(flow_m_per_d[il + 1] < 0.):
-                        if(il == len(NH4) - 1):
+                    if flow_m_per_d[il + 1] < 0.:
+                        if il == len(NH4) - 1:
                             RNH4IN[il] += - flow_m_per_d[il + 1] * cNH4Kwel
                         else:
                             RNH4IN[il] += - flow_m_per_d[il + 1] * cNH4[il + 1]
                             RNH4OUT[il + 1] += - flow_m_per_d[il + 1] * cNH4[il + 1]
-                if(flow_m_per_d[0] < 0.):
+                if flow_m_per_d[0] < 0.:
                     RNH4OUT[0] += - flow_m_per_d[0] * cNH4[0]
                 else:
                     RNH4OUT[0] += 0.
@@ -751,9 +744,9 @@ class SNOMIN(SimulationObject):
 
 
             def calculate_NH4_application_amount(self, amount, application_depth, f_NH4N, layer_thickness, zmax, zmin):
-                if(application_depth > zmax):
+                if application_depth > zmax:
                     NH4_am = (layer_thickness / application_depth) * f_NH4N *  amount
-                elif(application_depth >= zmin and application_depth <= zmax):
+                elif zmin <= application_depth <= zmax:
                     NH4_am = ((application_depth - zmin) / application_depth) * f_NH4N  * amount
                 else:
                     NH4_am = 0.
@@ -767,16 +760,16 @@ class SNOMIN(SimulationObject):
                 layer_thickness = zmax - zmin
                 cNH4 = self.calculate_NH4_concentration(KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM)
 
-                if(RD <= zmin):
+                if RD <= zmin:
                     NH4_avail = 0.
-                elif(RD > zmax):
+                elif RD > zmax:
                     NH4_avail = (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
                 else:
                     NH4_avail = ((RD - zmin)/ layer_thickness) * (SM / ( KSORP * RHOD_kg_per_m3 + SM)) * NH4
                 return NH4_avail
 
             def calculate_mineralization_rate(self, rNMINs_layer):
-                RNH4MIN = (rNMINs_layer).sum()
+                RNH4MIN = rNMINs_layer.sum()
                 return RNH4MIN
 
             def calculate_nitrification_rate(self, KNIT_REF, KSORP, layer_thickness, NH4, RHOD_kg_per_m3, SM, SM0, T):
@@ -800,13 +793,13 @@ class SNOMIN(SimulationObject):
                 fT = 1/(1+np.exp(-0.26*(T-17.)))-1/(1+np.exp(-0.77*(T-41.9)))
                 return fT
 
-        class SoilNNitrateModel():
+        class SoilNNitrateModel:
             def calculate_NO3_deposition_rates(self, soiln_profile, infiltration_rate_m_per_d, NO3, NO3ConcR):
                 mg_to_kg = 1e-6
                 L_to_m3 = 1e-3
                 RNO3DEPOS = np.zeros_like(NO3)
                 for il, layer in enumerate(soiln_profile):
-                    if(il == 0):
+                    if il == 0:
                         RNO3DEPOS[il] = (mg_to_kg / L_to_m3) * NO3ConcR * infiltration_rate_m_per_d
                     else:
                         RNO3DEPOS[il] = 0.
@@ -827,26 +820,26 @@ class SNOMIN(SimulationObject):
                     cNO3[il] =  self.calculate_NO3_concentration(dz[il], NO3[il], SM[il])
 
                 for il in range(0,len(soiln_profile)):
-                    if(flow_m_per_d[il] >= 0.):
-                        if(il == 0):
+                    if flow_m_per_d[il] >= 0.:
+                        if il == 0:
                             RNO3IN[il] += 0.
                         else:
                             RNO3IN[il] += flow_m_per_d[il] * cNO3[il - 1]
                             RNO3OUT[il-1] += flow_m_per_d[il] * cNO3[il - 1]
-                if(flow_m_per_d[len(NO3) - 1] >= 0.):
+                if flow_m_per_d[len(NO3) - 1] >= 0.:
                     RNO3OUT[len(NO3) - 1] += flow_m_per_d[len(NO3)] * cNO3[len(NO3) - 1]
                 else:
                     RNO3OUT[len(NO3) - 1] += 0
 
                 # Upward flow
                 for il in reversed(range(0,len(soiln_profile))):
-                    if(flow_m_per_d[il + 1] < 0.):
-                        if(il == len(NO3) - 1):
+                    if flow_m_per_d[il + 1] < 0.:
+                        if il == len(NO3) - 1:
                             RNO3IN[il] += - flow_m_per_d[il + 1] * cNO3Kwel
                         else:
                             RNO3IN[il] += - flow_m_per_d[il + 1] * cNO3[il + 1]
                             RNO3OUT[il + 1] += - flow_m_per_d[il + 1] * cNO3[il + 1]
-                if(flow_m_per_d[0] < 0.):
+                if flow_m_per_d[0] < 0.:
                     RNO3OUT[0] += - flow_m_per_d[0] * cNO3[0]
                 else:
                     RNO3OUT[0] += 0.
@@ -861,9 +854,9 @@ class SNOMIN(SimulationObject):
                 return RNO3NITR, RNO3DENITR      
 
             def calculate_NO3_application_amount(self, amount, application_depth, f_NO3N, layer_thickness, zmax, zmin):
-                if(application_depth > zmax):
+                if application_depth > zmax:
                     NO3_am = (layer_thickness / application_depth) * f_NO3N *  amount
-                elif(application_depth >= zmin and application_depth <= zmax):
+                elif zmin <= application_depth <= zmax:
                     NO3_am = ((application_depth - zmin) / application_depth) * f_NO3N  * amount
                 else:
                     NO3_am = 0.
@@ -876,9 +869,9 @@ class SNOMIN(SimulationObject):
             def calculate_available_NO3(self, NO3, RD, SM, zmax, zmin):
                 layer_thickness = zmax - zmin
                 cNO3 = self.calculate_NO3_concentration(layer_thickness, NO3, SM)
-                if(RD <= zmin):
+                if RD <= zmin:
                     NO3_avail_layer = 0.
-                elif(RD > zmax):
+                elif RD > zmax:
                     NO3_avail_layer = NO3
                 else:
                     NO3_avail_layer = ((RD - zmin)/ layer_thickness) * NO3 
@@ -899,7 +892,7 @@ class SNOMIN(SimulationObject):
 
             def calculate_soil_moisture_response_denitrification_rate_constant(self, SM, SM0, WFPS_CRIT):
                 WFPS = SM / SM0
-                if(WFPS < WFPS_CRIT):
+                if WFPS < WFPS_CRIT:
                     fW = 0.
                 else:
                     fW = np.power((WFPS - WFPS_CRIT)/(1 - WFPS_CRIT),2)
@@ -913,7 +906,7 @@ class SNOMIN(SimulationObject):
                 fT = 1/(1+np.exp(-0.26*(T-17)))-1/(1+np.exp(-0.77*(T-41.9)))
                 return fT
 
-    class SoilOrganicNModel():
+    class SoilOrganicNModel:
         def calculate_apparent_age_increase_rate(self, AGE, delt, pF, pH, T):
             RAGEAG = np.zeros_like(AGE)
             janssen = self.Janssen()
@@ -947,7 +940,7 @@ class SNOMIN(SimulationObject):
 
             for am in range(0, AGE.shape[0]):
                 for il in range(0, AGE.shape[1]):
-                    if(ORGMAT[am, il] > 0):
+                    if ORGMAT[am, il] > 0:
                         RORGMATDIS[am,il] = janssen.calculate_dissimilation_rate_OM_T(ORGMAT[am,il], AGE[am,il], pF[il], pH[il], T)
                         RCORGDIS[am,il] = minip_c.calculate_dissimilation_rate_C(janssen, ORGMAT[am,il], AGE[am,il], pF[il], pH[il], T)
                         RNORGDIS[am,il] = minip_n.calculate_dissimilation_rate_N(janssen, minip_c, ORGMAT[am,il], NORG[am,il], FASDIS, CNRatioBio, AGE[am,il], pF[il], pH[il], T)
@@ -976,13 +969,13 @@ class SNOMIN(SimulationObject):
         def calculate_organic_material_application_amount(self, amount, application_depth, f_orgmat, layer_thickness, zmax, zmin):
             if application_depth > zmax:
                 ORGMAT_am = (layer_thickness / application_depth) * f_orgmat * amount
-            elif(application_depth >= zmin and application_depth <= zmax):
+            elif zmin <= application_depth <= zmax:
                 ORGMAT_am = ((application_depth - zmin) / application_depth) * f_orgmat * amount
             else:
                 ORGMAT_am = 0
             return ORGMAT_am
 
-        class Janssen():
+        class Janssen:
             m = 1.6
             b = 2.82
             y_to_d = 365.25
@@ -1036,7 +1029,7 @@ class SNOMIN(SimulationObject):
                     f_T = 3.5
                 return f_T
 
-        class MINIP_C(object):
+        class MINIP_C:
             OM_to_C = 0.58
             y_to_d = 365.
 
@@ -1061,7 +1054,7 @@ class SNOMIN(SimulationObject):
                 Corg = OM * self.OM_to_C
                 return Corg
 
-        class MINIP_N(object):    
+        class MINIP_N:
 
             def calculate_total_conversion_rate_N(self, janssen, minip_c, OM, Norg, f_ass_dis, t, pF, pH, T):
                 r_conv_C = minip_c.calculate_total_conversion_rate_C(janssen, OM, f_ass_dis, t, pF, pH, T)
