@@ -49,14 +49,61 @@ class MFPCurve(Afgen):
 
 
 class SoilLayer(HasTraits):
-    """Contains the intrinsic and derived properties for each soil layers
+    """Contains the intrinsic and derived properties for each soil layers as required by the multilayer
+    waterbalance and SNOMIN.
+
+    :param layer: a soil layer definition providing parameter values for this layer, see table below.
+    :param PFFieldcapacity: the pF value for defining Field Capacity
+    :param PFWiltingPoint: the pF value for defining the Wilting Point
+
+    The following properties have to be defined for each layer.
+
+    =============== ================================================================  =======================
+    Name             Description                                                      Unit
+    =============== ================================================================  =======================
+    CONDfromPF      Table function of the 10-base logarithm of the unsaturated
+                    hydraulic conductivity as a function of pF.                       log10(cm water d-1), -
+    SMfromPF        Table function that describes the soil moisture
+                    content as a function of pF                                       m3 water m-3 soil, -
+    Thickness       Layer thickness                                                   cm
+    FSOMI           Initial fraction of soil organic matter in soil                   kg OM kg-1 soil
+    CNRatioSOMI     Initial C:N ratio of soil organic matter                          kg C kg-1 N
+    RHOD            Bulk density of the soil                                          g soil cm-3 soil
+    Soil_pH         pH of the soil layer                                              -
+    CRAIRC          Critical air content for aeration for root system                 m3 air m-3 soil
+    =============== ================================================================  =======================
+
+
+    Based on the soil layer definition the following properties are derived from the parameters in the
+    table above.
+
+    =============== ================================================================  =======================
+     Name             Description                                                      Unit
+    =============== ================================================================  =======================
+    PFfromSM         Afgen table providing the inverted SMfromPF curve                 m3 water m-3 soil, -
+    MFPfromPF        AfTen table describing the Matric Flux Potential as a             cm2 d-1
+                     function of the hydraulic head (pF).
+    SM0              The volumetric soil moisture content at saturation (pF = -1)      m3 water m-3 soil
+    SMW              The volumetric soil moisture content at wilting point             m3 water m-3 soil
+    SMFCF            The volumetric soil moisture content at field capacity            m3 water m-3 soil
+    WC0              The soil moisture amount (cm) at saturation (pF = -1)             cm water
+    WCW              The soil moisture amount (cm) at wilting point                    cm water
+    WCFC             The soil moisture amount (cm) at field capacity                   cm water
+    CondFC           Soil hydraulic conductivity at field capacity                     cm water d-1
+    CondK0           Soil hydraulic conductivity at saturation                         cm water d-1
+    =============== ================================================================  =======================
+
+    Finally `rooting_status` is initialized to None (not yet known at initialization).
     """
     SMfromPF = Instance(pFCurve)  # soil moisture content as function of pF
     CONDfromPF = Instance(pFCurve)  # conductivity as function of pF
     PFfromSM = Instance(Afgen)  # Inverse from SMfromPF
     MFPfromPF = Instance(MFPCurve)  # Matrix Flux Potential as function of pF
+    CNRatioSOMI = Float()  # Initial C:N ratio of soil organic matter
+    FSOMI = Float()  # Initial fraction of soil organic matter in soil
+    RHOD = Float()  # Bulk density of the soil
+    Soil_pH = Float()  # pH of the soil layer
     CRAIRC = Float()  # Critical air content
-    SMsat = Float()  # Saturation soil moisture content
     Thickness = Float()
     rooting_status = Enum(["rooted","partially rooted","potentially rooted","never rooted",])
 
@@ -65,6 +112,10 @@ class SoilLayer(HasTraits):
         self.CONDfromPF = pFCurve(layer.CONDfromPF)
         self.PFfromSM = self._invert_pF(layer.SMfromPF)
         self.MFPfromPF = MFPCurve(layer.SMfromPF, layer.CONDfromPF)
+        self.CNRatioSOMI = layer.CNRatioSOMI
+        self.FSOMI = layer.FSOMI
+        self.RHOD = layer.RHOD
+        self.CRAIRC = layer.CRAIRC
 
         if 5 <= layer.Thickness <= 250:
             self.Thickness = layer.Thickness
@@ -72,11 +123,9 @@ class SoilLayer(HasTraits):
             msg = "Soil layer should have thickness between 5 and 250 cm. Current value: %f" % layer.Thickness
             raise exc.PCSEError(msg)
 
-        self.CRAIRC = layer.CRAIRC
         self.SM0 = self.SMfromPF(-1.0)
         self.SMFCF = self.SMfromPF(PFFieldCapacity)
         self.SMW = self.SMfromPF(PFWiltingPoint)
-
         self.WC0 = self.SM0 * self.Thickness
         self.WCW = self.SMW * self.Thickness
         self.WCFC = self.SMFCF * self.Thickness
@@ -84,8 +133,16 @@ class SoilLayer(HasTraits):
         self.CondK0 = 10.0 ** self.CONDfromPF(-1.0)
         self.rooting_status = None
 
-        # compute hash value of this layer
+        # compute hash value of this layer based on pF curves for conductivity and SM
         self._hash = hash((tuple(layer.SMfromPF), tuple(layer.CONDfromPF)))
+
+    @property
+    def Thickness_m(self):
+        return self.Thickness * 1e-2
+
+    @property
+    def RHOD_kg_per_m3(self):
+        return self.RHOD * 1e-3 * 1e06
 
     def _invert_pF(self, SMfromPF):
         """Inverts the SMfromPF table to get pF from SM
@@ -108,7 +165,158 @@ class SoilLayer(HasTraits):
 class SoilProfile(list):
     """A component that represents the soil column as required by the multilayer waterbalance and SNOMIN.
 
+    :param parvalues: a ParameterProvider instance that will be used to retrieve the description of the
+        soil profile which is assumed to be available under the key `SoilProfileDescription`.
 
+    This class is basically a container that stores `SoilLayer` instances with some additional logic mainly related
+    to root growth, root status and root water extraction. For detailed information on the properties of the soil
+    layers have a look at the description of the `SoilLayer` class.
+
+    The description of the soil profile can be defined in YAML format with an example of the structure
+    given below. In this case first three soil physical types are defined under the section `SoilLayerTypes`.
+    Next, these SoilLayerTypes are used to define an actual soil profile using two upper layers of 10 cm of
+    type `TopSoil`, three layers of 10, 20 and 30 cm of type `MidSoil`, a lower layer of 45 cm of type `SubSoil`
+    and finally a SubSoilType with a thickness of 200 cm. Only the top 3 layers contain a certain amaount of
+    organic carbon (FSOMI).
+
+    An example of a data structure for the soil profile::
+
+        SoilLayerTypes:
+            TopSoil: &TopSoil
+                SMfromPF: [-1.0,     0.366,
+                            1.0,     0.338,
+                            1.3,     0.304,
+                            1.7,     0.233,
+                            2.0,     0.179,
+                            2.3,     0.135,
+                            2.4,     0.123,
+                            2.7,     0.094,
+                            3.0,     0.073,
+                            3.3,     0.059,
+                            3.7,     0.046,
+                            4.0,     0.039,
+                            4.17,    0.037,
+                            4.2,     0.036,
+                            6.0,     0.02]
+                CONDfromPF: [-1.0,     1.8451,
+                              1.0,     1.02119,
+                              1.3,     0.51055,
+                              1.7,    -0.52288,
+                              2.0,    -1.50864,
+                              2.3,    -2.56864,
+                              2.4,    -2.92082,
+                              2.7,    -4.01773,
+                              3.0,    -5.11919,
+                              3.3,    -6.22185,
+                              3.7,    -7.69897,
+                              4.0,    -8.79588,
+                              4.17,   -9.4318,
+                              4.2,    -9.5376,
+                              6.0,   -11.5376]
+                CRAIRC:  0.090
+                CNRatioSOMI: 9.0
+                RHOD: 1.406
+                Soil_pH: 7.4
+                SoilID: TopSoil
+            MidSoil: &MidSoil
+                SMfromPF: [-1.0,     0.366,
+                            1.0,     0.338,
+                            1.3,     0.304,
+                            1.7,     0.233,
+                            2.0,     0.179,
+                            2.3,     0.135,
+                            2.4,     0.123,
+                            2.7,     0.094,
+                            3.0,     0.073,
+                            3.3,     0.059,
+                            3.7,     0.046,
+                            4.0,     0.039,
+                            4.17,    0.037,
+                            4.2,     0.036,
+                            6.0,     0.02]
+                CONDfromPF: [-1.0,     1.8451,
+                              1.0,     1.02119,
+                              1.3,     0.51055,
+                              1.7,    -0.52288,
+                              2.0,    -1.50864,
+                              2.3,    -2.56864,
+                              2.4,    -2.92082,
+                              2.7,    -4.01773,
+                              3.0,    -5.11919,
+                              3.3,    -6.22185,
+                              3.7,    -7.69897,
+                              4.0,    -8.79588,
+                              4.17,   -9.4318,
+                              4.2,    -9.5376,
+                              6.0,   -11.5376]
+                CRAIRC:  0.090
+                CNRatioSOMI: 9.0
+                RHOD: 1.406
+                Soil_pH: 7.4
+                SoilID: MidSoil_10
+            SubSoil: &SubSoil
+                SMfromPF: [-1.0,     0.366,
+                            1.0,     0.338,
+                            1.3,     0.304,
+                            1.7,     0.233,
+                            2.0,     0.179,
+                            2.3,     0.135,
+                            2.4,     0.123,
+                            2.7,     0.094,
+                            3.0,     0.073,
+                            3.3,     0.059,
+                            3.7,     0.046,
+                            4.0,     0.039,
+                            4.17,    0.037,
+                            4.2,     0.036,
+                            6.0,     0.02]
+                CONDfromPF: [-1.0,     1.8451,
+                              1.0,     1.02119,
+                              1.3,     0.51055,
+                              1.7,    -0.52288,
+                              2.0,    -1.50864,
+                              2.3,    -2.56864,
+                              2.4,    -2.92082,
+                              2.7,    -4.01773,
+                              3.0,    -5.11919,
+                              3.3,    -6.22185,
+                              3.7,    -7.69897,
+                              4.0,    -8.79588,
+                              4.17,   -9.4318,
+                              4.2,    -9.5376,
+                              6.0,   -11.5376]
+                CRAIRC:  0.090
+                CNRatioSOMI: 9.0
+                RHOD: 1.406
+                Soil_pH: 7.4
+                SoilID: SubSoil_10
+        SoilProfileDescription:
+            PFWiltingPoint: 4.2
+            PFFieldCapacity: 2.0
+            SurfaceConductivity: 70.0 # surface conductivity cm / day
+            SoilLayers:
+            -   <<: *TopSoil
+                Thickness: 10
+                FSOMI: 0.02
+            -   <<: *TopSoil
+                Thickness: 10
+                FSOMI: 0.02
+            -   <<: *MidSoil
+                Thickness: 10
+                FSOMI: 0.01
+            -   <<: *MidSoil
+                Thickness: 20
+                FSOMI: 0.00
+            -   <<: *MidSoil
+                Thickness: 30
+                FSOMI: 0.00
+            -   <<: *SubSoil
+                Thickness: 45
+                FSOMI: 0.00
+            SubSoilType:
+                <<: *SubSoil
+                Thickness: 200
+            GroundWater: null
     """
     
     def __init__(self, parvalues):

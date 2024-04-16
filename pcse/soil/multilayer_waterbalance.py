@@ -135,8 +135,9 @@ class WaterBalanceLayered(SimulationObject):
     into account, however, the contribution of an upward flow from further down.
 
     The configuration of the soil layers is variable but is bound to certain limitations:
+
     - The layer thickness cannot be made too small. In practice, the top layer should not
-      be smaller than 20 to 30 cm. Smaller layers would require smaller time steps than
+      be smaller than 10 to 20 cm. Smaller layers would require smaller time steps than
       one day to simulate realistically, since rain storms will fill up the top layer very
       quickly leading to surface runoff because the model cannot handle the infiltration of
       the rainfall in a single timestep (a day).
@@ -147,11 +148,102 @@ class WaterBalanceLayered(SimulationObject):
     The current python implementation does not yet implement the impact of shallow groundwater
     but this will be added in future versions of the model.
 
-    **note**: the current implementation of the model is rather 'Fortran-ish'. This has been done
+    For an introduction to the concept of Matric Flux Potential see for example:
+
+        Pinheiro, Everton Alves Rodrigues, et al. “A Matric Flux Potential Approach to Assess Plant Water
+        Availability in Two Climate Zones in Brazil.” Vadose Zone Journal, vol. 17, no. 1, Jan. 2018, pp. 1–10.
+        https://doi.org/10.2136/vzj2016.09.0083.
+
+    **Note**: the current implementation of the model (April 2024) is rather 'Fortran-ish'. This has been done
     on purpose to allow comparisons with the original code in Fortran90. When we are sure that
     the implementation performs properly, we can refactor this in to a more functional structure
-    instead of the
+    instead of the current code which is too long and full of loops.
 
+
+    **Simulation parameters:**
+
+    Besides the parameters in the table below, the multi-layer waterbalance requires
+    a `SoilProfileDescription` which provides the properties of the different soil
+    layers. See the `SoilProfile` and `SoilLayer` classes for the details.
+
+    ========== ====================================================  ====================
+     Name      Description                                           Unit
+    ========== ====================================================  ====================
+    NOTINF     Maximum fraction of rain not-infiltrating into          -
+               the soil
+    IFUNRN     Indicates whether non-infiltrating fraction of   SSi    -
+               rain is a function of storm size (1)
+               or not (0)
+    SSI        Initial surface storage                                 cm
+    SSMAX      Maximum surface storage                                 cm
+    SMLIM      Maximum soil moisture content of top soil layer         cm3/cm3
+    WAV        Initial amount of water in the soil                     cm
+    ========== ====================================================  ====================
+
+
+    **State variables:**
+
+    =======  ========================================================  ============
+     Name     Description                                                  Unit
+    =======  ========================================================  ============
+    WTRAT     Total water lost as transpiration as calculated           cm
+              by the water balance. This can be different
+              from the CTRAT variable which only counts
+              transpiration for a crop cycle.
+    EVST      Total evaporation from the soil surface                   cm
+    EVWT      Total evaporation from a water surface                    cm
+    TSR       Total surface runoff                                      cm
+    RAINT     Total amount of rainfall (eff + non-eff)                  cm
+    WDRT      Amount of water added to root zone by increase            cm
+              of root growth
+    TOTINF    Total amount of infiltration                              cm
+    TOTIRR    Total amount of effective irrigation                      cm
+
+    SM        Volumetric moisture content in the different soil          -
+              layers (array)
+    WC        Water content in the different soil                       cm
+              layers (array)
+    W         Amount of water in root zone                              cm
+    WLOW      Amount of water in the subsoil (between current           cm
+              rooting depth and maximum rootable depth)
+    WWLOW     Total amount of water                                     cm
+              in the  soil profile (WWLOW = WLOW + W)
+    WBOT      Water below maximum rootable depth and unavailable
+              for plant growth.                                         cm
+    WAVUPP    Plant available water (above wilting point) in the        cm
+              rooted zone.
+    WAVLOW    Plant available water (above wilting point) in the        cm
+              potential root zone (below current roots)
+    WAVBOT    Plant available water (above wilting point) in the        cm
+              zone below the maximum rootable depth
+    SS        Surface storage (layer of water on surface)               cm
+    SM_MEAN   Mean water content in rooted zone                         cm3/cm3
+    PERCT     Total amount of water percolating from rooted             cm
+              zone to subsoil
+    LOSST     Total amount of water lost to deeper soil                 cm
+    =======  ========================================================  ============
+
+
+    **Rate variables**
+
+    ========== ==================================================  ====================
+     Name      Description                                          Unit
+    ========== ==================================================  ====================
+    Flow        Rate of flow from one layer to the next              cm/day
+    RIN         Rate of infiltration at the surface                  cm/day
+    WTRALY      Rate of transpiration from the different
+                soil layers (array)                                  cm/day
+    WTRA        Total crop transpiration rate accumulated over       cm/day
+                soil layers.
+    EVS         Soil evaporation rate                                cm/day
+    EVW         Open water evaporation rate                          cm/day
+    RIRR        Rate of irrigation                                   cm/day
+    DWC         Net change in water amount per layer (array)         cm/day
+    DRAINT      Change in rainfall accumlation                       cm/day
+    DSS         Change in surface storage                            cm/day
+    DTSR        Rate of surface runoff                               cm/day
+    BOTTOMFLOW  Flow of the bottom of the profile                    cm/day
+    ========== ==================================================  ====================
     """
     _default_RD = Float(10.)  # default rooting depth at 10 cm
     _RDold = _default_RD
@@ -343,7 +435,6 @@ class WaterBalanceLayered(SimulationObject):
         # rate variables
         self.rates = self.RateVariables(kiosk, publish=["RIN", "Flow", "EVS"])
         self.rates.Flow = Flow
-
 
         # Connect to CROP_START/CROP_FINISH/IRRIGATE signals
         self._connect_signal(self._on_CROP_START, signals.crop_start)

@@ -102,9 +102,13 @@ The PCSE distribution provides several waterbalance modules:
 
 .. autoclass:: pcse.soil.WaterbalanceFD
 
-.. autoclass:: pcse.soil.SnowMAUS
-
 .. autoclass:: pcse.soil.WaterBalanceLayered
+
+.. autoclass:: pcse.soil.soil_profile.SoilProfile
+
+.. autoclass:: pcse.soil.soil_profile.SoilLayer
+
+.. autoclass:: pcse.soil.SnowMAUS
 
 Nitrogen and Carbon modules
 ---------------------------
