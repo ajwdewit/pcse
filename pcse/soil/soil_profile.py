@@ -116,6 +116,7 @@ class SoilLayer(HasTraits):
         self.FSOMI = layer.FSOMI
         self.RHOD = layer.RHOD
         self.CRAIRC = layer.CRAIRC
+        self.Soil_pH = layer.Soil_pH
 
         if 5 <= layer.Thickness <= 250:
             self.Thickness = layer.Thickness
