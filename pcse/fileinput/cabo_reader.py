@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+import copy
 import re
 
 from ..exceptions import PCSEError
@@ -237,3 +238,10 @@ class CABOFileReader(dict):
         for key, value in self.items():
             msg += ("%s: %s %s\n" % (key, value, type(value)))
         return msg
+
+    def copy(self):
+        """
+        Overrides the inherited dict.copy method, which returns a dict.
+        This instead preserves the class and attributes like .header.
+        """
+        return copy.copy(self)

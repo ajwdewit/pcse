@@ -926,6 +926,13 @@ class DummySoilDataProvider(dict):
         dict.__init__(self)
         self.update(self._defaults)
 
+    def copy(self):
+        """
+        Overrides the inherited dict.copy method, which returns a dict.
+        This instead preserves the class and attributes like .header.
+        """
+        return copy.copy(self)
+
 
 def version_tuple(v):
     """Creates a version tuple from a version string for consistent comparison of versions.

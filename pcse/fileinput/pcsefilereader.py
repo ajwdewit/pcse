@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2014 Alterra, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), April 2014
+import copy
 import os, sys
 import inspect
 import textwrap
@@ -12,7 +13,11 @@ class PCSEFileReader(dict):
     used for reading parameter files in the CABO format, however this format
     has rather severe limitations: it only supports string, integer, float
     and array parameters. There is no support for specifying parameters with
+<<<<<<< HEAD
     dates for example (other than specifying them as a string).
+=======
+    dates for example (other then specifying them as a string).
+>>>>>>> upstream/develop
 
     The `PCSEFileReader` is a much more versatile tool for creating parameter
     files because it leverages the power of the Python interpreter for
@@ -30,12 +35,12 @@ class PCSEFileReader(dict):
     importing modules, defining parameters as dates or numpy arrays and even
     applying function on arrays (in this case `np.sin`)::
 
-        \"\"\"This is the header of my parameter file.
+        '''This is the header of my parameter file.
 
         This file is derived from the following sources
         * dummy file for demonstrating the PCSEFileReader
         * contains examples how to leverage dates, arrays and functions, etc.
-        \"\"\"
+        '''
 
         import numpy as np
         import datetime as dt
@@ -115,3 +120,10 @@ class PCSEFileReader(dict):
              r = "%s: %s (%s)" % (k, self[k], type(self[k]))
              printstr += (textwrap.fill(r, subsequent_indent="  ") + "\n")
         return printstr
+
+    def copy(self):
+        """
+        Overrides the inherited dict.copy method, which returns a dict.
+        This instead preserves the class and attributes like .header.
+        """
+        return copy.copy(self)
