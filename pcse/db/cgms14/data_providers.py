@@ -57,7 +57,7 @@ class STU_Suitability(set):
         self.crop_name = fetch_crop_name(engine, idcrop_parametrization)
         metadata = MetaData(engine)
 
-        # Retrieve suitable STU's - first connect to the 2 relevant tables      
+        # Retrieve suitable STU's - first connect to the 2 relevant tables
         t1 = Table("link_crop_aggregation", metadata, autoload=True)
         t2 = Table("link_crop_stu", metadata, autoload=True)
 
@@ -311,7 +311,7 @@ class AgroManagementDataProvider(list):
         self.variety_name = f"{self.crop_name}_{self.idcrop}_{idgrid}"
         self.campaign_year = campaign_year
 
-        # Use the idcrop_parametrization to search in the table crop_calendars 
+        # Use the idcrop_parametrization to search in the table crop_calendars
         metadata = MetaData(engine)
         t = Table("crop_calendars", metadata, autoload=True)
         sm = select([t], and_(t.c.idgrid == self.idgrid,
@@ -413,7 +413,7 @@ class AgroManagementDataProvider(list):
 
 
 class SoilDataProviderSingleLayer(dict):
-    """Class for providing soil data from the ROOING_DEPTH AND
+    """Class for providing soil data from the ROOTING_DEPTH AND
     SOIL_PHYSICAL_GROUP tableS in a CGMS14 database. This
     applies to the single layered soil only.
 

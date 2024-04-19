@@ -43,7 +43,7 @@ class VariableKiosk(dict):
         >>> v.set_variable(id0, "VAR1", 1.35)
         >>> v.set_variable(id1, "VAR3", 310.56)
         >>>
-        >>> print v
+        >>> print(v)
         Contents of VariableKiosk:
          * Registered state variables: 2
          * Published state variables: 1 with values:
@@ -52,7 +52,7 @@ class VariableKiosk(dict):
          * Published rate variables: 1 with values:
           - variable VAR3, value: 310.56
 
-        >>> print v["VAR3"]
+        >>> print(v["VAR3"])
         310.56
         >>> v.set_variable(id0, "VAR3", 750.12)
         Traceback (most recent call last):
@@ -62,7 +62,7 @@ class VariableKiosk(dict):
         pcse.exceptions.VariableKioskError: Unregistered object tried to set the value of variable 'VAR3': access denied.
         >>>
         >>> v.flush_rates()
-        >>> print v
+        >>> print(v)
         Contents of VariableKiosk:
          * Registered state variables: 2
          * Published state variables: 1 with values:
@@ -72,7 +72,7 @@ class VariableKiosk(dict):
           - variable VAR3, value: undefined
 
         >>> v.flush_states()
-        >>> print v
+        >>> print(v)
         Contents of VariableKiosk:
          * Registered state variables: 2
          * Published state variables: 1 with values:
@@ -156,7 +156,7 @@ class VariableKiosk(dict):
         :param varname: Name of the variable to be registered, e.g. "DVS"
         """
         if varname in self.registered_states:
-            # print "Deregistering '%s'" % varname
+            # print("Deregistering '%s'" % varname)
             if oid != self.registered_states[varname]:
                 msg = "Wrong object tried to deregister variable '%s'." \
                       % varname
@@ -166,7 +166,7 @@ class VariableKiosk(dict):
             if varname in self.published_states:
                 self.published_states.pop(varname)
         elif varname in self.registered_rates:
-            # print "Deregistering '%s'" % varname
+            # print("Deregistering '%s'" % varname)
             if oid != self.registered_rates[varname]:
                 msg = "Wrong object tried to deregister variable '%s'." \
                       % varname

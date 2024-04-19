@@ -6,7 +6,7 @@ from .. import exceptions as exc
 class YAMLAgroManagementReader(list):
     """Reads PCSE agromanagement files in the YAML format.
 
-    :param fname: filename of the agromanagement file. If fname is not provided as a absolute or
+    :param fname: filename of the agromanagement file. If fname is not provided as an absolute or
         relative path the file is assumed to be in the current working directory.
     """
 

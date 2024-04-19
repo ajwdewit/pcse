@@ -13,15 +13,19 @@ class PCSEFileReader(dict):
     used for reading parameter files in the CABO format, however this format
     has rather severe limitations: it only supports string, integer, float
     and array parameters. There is no support for specifying parameters with
+<<<<<<< HEAD
+    dates for example (other than specifying them as a string).
+=======
     dates for example (other then specifying them as a string).
+>>>>>>> upstream/develop
 
     The `PCSEFileReader` is a much more versatile tool for creating parameter
-    files because it leverages the power of the python interpreter for
-    processing parameter files through the `execfile` functionality in python.
-    This means that anything that can be done in a python script can also be
+    files because it leverages the power of the Python interpreter for
+    processing parameter files through the `execfile` functionality in Python.
+    This means that anything that can be done in a Python script can also be
     done in a PCSE parameter file.
 
-    :param fname: parameter file to read and parse
+    :param fname: parameter file to read and parse.
     :returns: dictionary object with parameter key/value pairs.
 
     *Example*
@@ -54,11 +58,11 @@ class PCSEFileReader(dict):
     Can be read with the following statements::
 
         >>>fileparameters = PCSEFileReader('parfile.pcse')
-        >>>print fileparameters['TSUM1']
+        >>>print(fileparameters['TSUM1'])
         1100
-        >>>print fileparameters['CROP_START_DATE']
+        >>>print(fileparameters['CROP_START_DATE'])
         2010-05-14
-        >>>print fileparameters
+        >>>print(fileparameters)
         PCSE parameter file contents loaded from:
         D:\\UserData\\pcse_examples\\parfile.pw
 
@@ -87,7 +91,7 @@ class PCSEFileReader(dict):
             msg = "Could not find parameter file '%s'" % self.fname_fp
             raise RuntimeError(msg)
 
-        # compile and execute the contents of the file
+        # Compile and execute the contents of the file
         bytecode = compile(open(self.fname_fp).read(), self.fname_fp, 'exec')
         exec(bytecode, {}, self)
 

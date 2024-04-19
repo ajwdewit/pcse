@@ -22,7 +22,7 @@ class CABOFileReader(dict):
     written in the CABO format. This class reads the contents, parses
     the parameter names/values and returns them as a dictionary.
 
-    :param fname: parameter file to read and parse
+    :param fname: parameter file to read and parse.
     :returns: dictionary like object with parameter key/value pairs.
 
     Note that this class does not yet fully support reading all features
@@ -30,7 +30,7 @@ class CABOFileReader(dict):
     tabular parameters is not supported and will lead to errors.
 
     The header of the CABO file (marked with ** at the first line) is
-    read and can be retrieved by the get_header() method or just by
+    read and can be retrieved from the .header attribute or just by
     a print on the returned dictionary.
 
     *Example*
@@ -55,9 +55,9 @@ class CABOFileReader(dict):
     Can be read with the following statements::
 
         >>>fileparameters = CABOFileReader('parfile.cab')
-        >>>print fileparameters['CROP_NO']
+        >>>print(fileparameters['CROP_NO'])
         99
-        >>>print fileparameters
+        >>>print(fileparameters)
         ** CROP DATA FILE for use with WOFOST Version 5.4, June 1992
         **
         ** WHEAT, WINTER 102

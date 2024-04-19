@@ -5,7 +5,7 @@
 """
 Class to calculate various nutrient relates stress factors:
     NNI      nitrogen nutrition index   
-    PNI      phosphorous nutrition index
+    PNI      phosphorus nutrition index
     KNI      potassium nutrition index
     NPKI     NPK nutrition index (= minimum of N/P/K-index)
     NPKREF   assimilation reduction factor based on NPKI
@@ -43,7 +43,7 @@ class NPK_Stress(SimulationObject):
     with subscript `a`, `r` and `c` being the actual, residual and critical
     concentration for the nutrient.
     This equation is applied in analogue to N, P and K and results in the
-    nitrogen nutrition index (NNI), phosphorous nutrition index (PNI) and
+    nitrogen nutrition index (NNI), phosphorus nutrition index (PNI) and
     Potassium nutrition index (KNI). Next, the NPK index (NPKI) is calculated
     as the minimum of NNI, PNI, KNI. Finally, the reduction factor for
     assimilation (NPKREF) is calculated using the reduction factor for

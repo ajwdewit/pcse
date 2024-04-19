@@ -38,7 +38,7 @@ class IRRADFromSunshineDuration:
         self.angstB = angstB
 
     def __call__(self, value, day):
-        """Computes irradiance in J/m2/day from sunshine duration by applying the Angstrom equation
+        """Computes irradiance in J/m2/day from sunshine duration by applying the Angstrom equation.
 
         :param value: sunshine duration in hours
         :param day: the day
@@ -81,12 +81,12 @@ def kPa_to_hPa(x, d):
 class CSVWeatherDataProvider(WeatherDataProvider):
     """Reading weather data from a CSV file.
 
-    :param csv_fname: name of the CSV file to be read
-    :param delimiter: CSV delimiter
-    :param dateformat: date format to be read. Default is '%Y%m%d'
+    :param csv_fname: name of the CSV file to be read.
+    :param delimiter: CSV delimiter.
+    :param dateformat: date format to be read. Default is '%Y%m%d'.
     :keyword ETmodel: "PM"|"P" for selecting Penman-Monteith or Penman
         method for reference evapotranspiration. Default is 'PM'.
-    :param force_reload: Ignore cache file and reload from the CSV file
+    :param force_reload: Ignore cache file and reload from the CSV file.
 
     The CSV file should have the following structure (sample), missing values should be added as 'NaN'::
 
@@ -114,11 +114,11 @@ class CSVWeatherDataProvider(WeatherDataProvider):
         RAIN in mm
         SNOWDEPTH in cm
 
-    For reading weather data from a file, initially the CABOWeatherDataProvider
-    was available which read its data from text in the CABO weather format.
-    Nevertheless, building CABO weather files is tedious as for each year a new
-    file must constructed. Moreover it is rather error prone and formatting
-    mistakes are easily leading to errors.
+    For reading weather data from file, initially only the CABOWeatherDataProvider
+    was available, which reads its data from a text file in the CABO Weather format.
+    However, building CABO weather files is tedious, as a new file must be
+    constructed for each year. Moreover, it is rather error-prone and formatting
+    mistakes easily lead to errors.
 
     To simplify providing weather data to PCSE models, a new data provider
     has been derived from the ExcelWeatherDataProvider that reads its data
@@ -211,7 +211,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
                 e0, es0, et0 = reference_ET(LAT=self.latitude, ELEV=self.elevation,
                                             ANGSTA=self.angstA, ANGSTB=self.angstB,
                                             ETMODEL=self.ETmodel, **row)
-                # convert to cm/day
+                # Convert to cm/day
                 row["E0"] = e0/10.
                 row["ES0"] = es0/10.
                 row["ET0"] = et0/10.
@@ -235,7 +235,7 @@ class CSVWeatherDataProvider(WeatherDataProvider):
             return True
 
     def _find_cache_file(self, csv_fname):
-        """Try to find a cache file for file name
+        """Try to find a cache file for file name.
 
         Returns None if the cache file does not exist, else it returns the full
         path to the cache file.
@@ -244,13 +244,13 @@ class CSVWeatherDataProvider(WeatherDataProvider):
         if os.path.exists(cache_filename):
             cache_date = os.stat(cache_filename).st_mtime
             csv_date = os.stat(csv_fname).st_mtime
-            if cache_date > csv_date:  # cache is more recent then CSV file
+            if cache_date > csv_date:  # cache is more recent than CSV file
                 return cache_filename
 
         return None
 
     def _get_cache_filename(self, csv_fname):
-        """Constructs the filename used for cache files given csv_fname
+        """Constructs the filename used for cache files given csv_fname.
         """
         basename = os.path.basename(csv_fname)
         filename, ext = os.path.splitext(basename)

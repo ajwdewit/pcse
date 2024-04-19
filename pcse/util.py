@@ -910,8 +910,8 @@ class DummySoilDataProvider(dict):
     """This class is to provide some dummy soil parameters for potential production simulation.
 
     Simulation of potential production levels is independent of the soil. Nevertheless, the model
-    does not some parameter values. This data provider provides some hard coded parameter values for
-    this situation.
+    does not some provide parameter values. This data provider provides some hard coded parameter
+    values for this situation.
     """
     _defaults = {"SMFCF":0.3,
                  "SM0":0.4,
@@ -937,7 +937,7 @@ class DummySoilDataProvider(dict):
 def version_tuple(v):
     """Creates a version tuple from a version string for consistent comparison of versions.
 
-    Conversion to tuples is needed because version '2.12.9' is higher then '2.7.8' however::
+    Conversion to tuples is needed because version '2.12.9' is higher than '2.7.8' however::
 
     >>> '2.12.9' > '2.7.8'
     False

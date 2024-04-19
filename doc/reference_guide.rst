@@ -521,7 +521,7 @@ An example of an agromanagement definition file::
 Crop calendars
 --------------
 
-The crop calendar definition will be passed on to a `CropCalendar` object which is 
+The crop calendar definition will be passed on to a `CropCalendar` object which is
 responsible for storing, checking, starting and ending the crop cycle during a PCSE simulation.
 At each time step the instance of `CropCalendar` is called
 and at the dates defined by its parameters it initiates the appropriate actions:
@@ -743,7 +743,7 @@ simulation, etc.
 Signals in PCSE are defined in the `signals` module which can be easily imported by
 any module that needs access to signals. Signals are simply defined as strings but
 any hashable object type would do. Most of the work for dealing with signals is in
-setting up a receiver. A receiver is usually a method on a SimulationObject that 
+setting up a receiver. A receiver is usually a method on a SimulationObject that
 will be called when the signal is broadcasted. This method will then be connected
 to the signal during the initialization of the object. This is easy to describe
 with an example::
@@ -756,7 +756,7 @@ with an example::
             self._connect_signal(self.handle_mysignal, mysignal)
 
         def handle_mysignal(self, arg1, arg2):
-            print "Value of arg1, arg2: %s, %s" % (arg1, arg2)
+            print("Value of arg1, arg2: %s, %s" % (arg1, arg2))
 
         def send_mysignal(self):
             self._send_signal(signal=mysignal, arg2="A", arg1=2.5)
@@ -902,7 +902,7 @@ While individual weather elements can be accessed through the standard dotted py
 Finally, for convenience the WeatherDataProvider can also be called with a string representing a date.
 This string can in the format YYYYMMDD or YYYYDDD::
 
-    >>> print wdp("20060703")
+    >>> print(wdp("20060703"))
     Weather data for 2006-07-03 (DAY)
     IRRAD:  29290000.00  J/m2/day
      TMIN:        17.20   Celsius
@@ -919,7 +919,7 @@ This string can in the format YYYYMMDD or YYYYDDD::
 
 or in the format YYYYDDD::
 
-    >>> print wdp("2006183")
+    >>> print(wdp("2006183"))
     Weather data for 2006-07-03 (DAY)
     IRRAD:  29290000.00  J/m2/day
      TMIN:        17.20   Celsius
@@ -974,7 +974,7 @@ for running crop rotations with different crop types as the data provider
 can switch the active crop.
 
 The most basic use is to call YAMLCropDataProvider with no parameters. It will
-than pull the crop parameters from the github repository at
+then pull the crop parameters from the GitHub repository at
 https://github.com/ajwdewit/WOFOST_crop_parameters::
 
     >>> from pcse.fileinput import YAMLCropDataProvider
@@ -982,7 +982,7 @@ https://github.com/ajwdewit/WOFOST_crop_parameters::
     >>> print(p)
     YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
 
-All crops and varieties have been loaded from the github repository, however no active
+All crops and varieties have been loaded from the GitHub repository, however no active
 crop has been set. Therefore, we can activate a particular crop and variety:
 
     >>> p.set_active_crop('wheat', 'Winter_wheat_101')
@@ -1018,12 +1018,12 @@ Additionally, it is possible to load YAML parameter files from your local file s
     >>> print(p)
     YAMLCropDataProvider - crop and variety not set: no activate crop parameter set!
 
-Finally, it is possible to pull data from your fork of my github repository by specifying
+Finally, it is possible to pull data from your fork of my GitHub repository by specifying
 the URL to that repository::
 
     >>> p = YAMLCropDataProvider(repository="https://raw.githubusercontent.com/<your_account>/WOFOST_crop_parameters/master/")
 
-Note that this URL should point to the location where the raw files can be found. In case of github, these URLs
+Note that this URL should point to the location where the raw files can be found. In case of GitHub, these URLs
 start with `https://raw.githubusercontent`, for other systems (e.g. gitlab) check the manual.
 
 To increase performance of loading parameters, the YAMLCropDataProvider will create a

@@ -19,11 +19,11 @@ inherent limitations of models written in FORTRAN is also becoming increasingly 
 To overcome many of the limitations above, the Python Crop Simulation Environment
 (PCSE) was developed which provides an environment for developing simulation models
 as well as a number of implementations of crop simulation models. PCSE is written
-in pure python code which makes it more flexible, easier to modify and extensible
+in pure Python code which makes it more flexible, easier to modify and extensible
 allowing easy interfacing with databases, graphical user interfaces, visualization
 tools and numerical/statistical packages. PCSE has several interesting features:
 
-* Implementation in pure python with dependencies only on popular packages available from
+* Implementation in pure Python with dependencies only on popular packages available from
   the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `pandas`, `Openpyxl`, `xlrd`,
   `requests` and `numpy`)
 
@@ -125,7 +125,7 @@ data which can be used to compare the results from a PCSE model against. Experim
 'experimental collection' which contains references to experiments that belong together. For example, all
 experiments for potato for a given variety. Currently, the available experiments are limited to grassland for the
 LINGRA model and consist of two collections. One for grassland under irrigated conditions and one for rain-fed
-conditions. Tt is expected that more experimental data will be collected and stored here in order to have a
+conditions. It is expected that more experimental data will be collected and stored here in order to have a
 reference set to compare model results.
 
 Running the experiments is similar to running the unit tests::
