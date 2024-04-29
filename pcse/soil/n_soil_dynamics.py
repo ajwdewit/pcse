@@ -59,8 +59,6 @@ class N_Soil_Dynamics(SimulationObject):
     NSOILBASE_FR  Fraction of base soil N that comes available   SSi        -
                   every day
     NAVAILI       Initial N available in the N pool              SSi      |kg ha-1|
-    PAVAILI       Initial P available in the P pool              SSi      |kg ha-1|
-    KAVAILI       Initial K available in the K pool              SSi      |kg ha-1|
     BG_N_SUPPLY   Background supply of N through atmospheric     SSi      |kg ha-1 d-1|
                   deposition.
     ============  ============================================= =======  ==============
@@ -115,12 +113,7 @@ class N_Soil_Dynamics(SimulationObject):
     class Parameters(ParamTemplate):      
         NSOILBASE = Float(-99.)  # total mineral soil N available at start of growth period [kg N/ha]
         NSOILBASE_FR = Float(-99.)  # fraction of soil mineral N coming available per day [day-1]
-
-        # Initial values of available nutrients which is different from the previous ones
-        #
         NAVAILI = Float()
-
-        # Background rates of N supply [kg/ha/day]
         BG_N_SUPPLY = Float()
 
     class StateVariables(StatesTemplate):
