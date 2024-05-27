@@ -38,10 +38,10 @@ most models is made up from a set of codes which follow: <modelname><version>_<p
  Wofost81_NWLP_CWB_CNB       Water and Nitrogen limited   X            X                      X            Classic         Classic
  Wofost81_NWLP_MLWB_CNB      Water and Nitrogen limited   X            X                      X            Multi-layer     Classic
  Wofost81_NWLP_MLWB_SNOMIN   Water and Nitrogen limited   X            X                      X            Multi-layer     SNOMIN
- LINGRA_PP                   Potential                    X                                                N/A             N/A
- LINGRA_WLP_CWB              Water-limited                X                                                Classic         N/A
- LINGRA_NWLP_CWB_CNB         Water and Nitrogen limited   X                                   X            Classic         Classic
- LINTUL3_NWLP_CWB_CNB        Water and Nitrogen limited                                       X            Classic         Classic
- ALCEPAS_PP                  Potential                                                                     N/A             N/A
- FAO_WRSI                    Water-limited                                                                 Classic         N/A
+ Lingra10_PP                 Potential                    X                                                N/A             N/A
+ Lingra10_WLP_CWB            Water-limited                X                                                Classic         N/A
+ Lingra10_NWLP_CWB_CNB       Water and Nitrogen limited   X                                   X            Classic         Classic
+ Lintul10_NWLP_CWB_CNB       Water and Nitrogen limited                                       X            Classic         Classic
+ Alcepas10_PP                Potential                                                                     N/A             N/A
+ FAO_WRSI10_WLP_CWB          Water-limited                                                                 Classic         N/A
 =========================== ============================ ============ ====================== ============ =============== ===========

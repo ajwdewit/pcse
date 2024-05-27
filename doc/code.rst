@@ -204,8 +204,8 @@ Abiotic damage
 .. autoclass:: pcse.crop.abioticdamage.CrownTemperature
 
 
-Crop simulation processes for LINGRA & LINGRA-N
-===============================================
+Crop simulation processes for LINGRA
+====================================
 
 .. automodule:: pcse.crop.lingra
 
@@ -230,8 +230,8 @@ Nitrogen dynamics
 
 .. autoclass:: pcse.crop.lingra_ndynamics.N_Crop_Dynamics
 
-Crop simulation processes for LINTUL3
-=====================================
+Crop simulation processes for LINTUL
+====================================
 
 .. autoclass:: pcse.crop.lintul3.Lintul3
     :members:
