@@ -43,7 +43,7 @@ setup(
                       'requests>=2.0.0',
                       'pandas>=0.25',
                       'traitlets-pcse==5.0.0.dev',
-                      'dotmap==1.3',
+                      'dotmap>=1.3',
                       ],
     author_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
