@@ -2,6 +2,7 @@
 include pcse/db/pcse/pcse_dump.sql
 
 # Model configuration files
+include pcse/conf/Alcepas10_PP.conf
 include pcse/conf/FAO_WRSI.conf
 include pcse/conf/Lingra_NWLP_FD.conf
 include pcse/conf/Lingra_PP.conf
@@ -9,10 +10,18 @@ include pcse/conf/Lingra_WLP_FD.conf
 include pcse/conf/Lintul3.conf
 include pcse/conf/Wofost72_Pheno.conf
 include pcse/conf/Wofost72_PP.conf
-include pcse/conf/Wofost72_WLP_FD.conf
-include pcse/conf/Wofost80_NWLP_FD.conf
-include pcse/conf/Wofost80_PP.conf
-include pcse/conf/Wofost80_WLP_FD.conf
+include pcse/conf/Wofost72_WLP_CWB.conf
+include pcse/conf/Wofost73_PP.conf
+include pcse/conf/Wofost73_WLP_CWB.conf
+include pcse/conf/Wofost73_WLP_MLWB.conf
+include pcse/conf/Wofost81_NWLP_CWB_CNB.conf
+include pcse/conf/Wofost81_NWLP_MLWB_CNB.conf
+include pcse/conf/Wofost81_NWLP_MLWB_SNOMIN.conf
+include pcse/conf/Wofost81_PP.conf
+include pcse/conf/Wofost81_WLP_CWB.conf
+include pcse/conf/Wofost81_WLP_MLWB.conf
+include pcse/conf/Wofost_winterkill.conf
+
 
 # Test data and input files
 include pcse/tests/test_data/10870_munchen_flughafen.csv
