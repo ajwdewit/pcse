@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2018
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs, June 2024
 """
 The Python Crop Simulation Environment (PCSE) has been developed
 to facilitate implementing crop simulation models that were 
@@ -17,8 +17,7 @@ in a PCSE model. Moreover PCSE provides support for reusing
 input files and weather files that are used by FST models.
 
 PCSE currently provides an implementation of the WOFOST and LINTUL crop
-simulation models and variants of WOFOST with extended
-capabilities.
+simulation models and the LINGRA grassland simulation model.
 
 See Also
 --------
@@ -30,7 +29,7 @@ from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
 __stable__ = True
-__version__ = "5.5.6"
+__version__ = "6.0.0"
 
 
 import sys, os
@@ -74,7 +73,7 @@ from .settings import settings
 logging.config.dictConfig(settings.LOG_CONFIG)
 
 from . import db
-from . import fileinput
+from . import input
 from . import tests
 from . import agromanager
 from . import soil

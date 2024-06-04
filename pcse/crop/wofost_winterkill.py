@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 
 import datetime
 
@@ -12,7 +12,7 @@ from .. import signals
 from .. import exceptions as exc
 
 from .phenology import DVS_Phenology as Phenology
-from .assimilation import WOFOST_Assimilation as Assimilation
+from .assimilation import WOFOST72_Assimilation as Assimilation
 from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
 from .evapotranspiration import Evapotranspiration

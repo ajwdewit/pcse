@@ -21,7 +21,7 @@ described using the same structure:
     7. External dependencies on state/rate variables of other SimulationObjects.
     8. The exceptions that are raised under which conditions.
     
-One or more of these sections may be excluded when they are not appropriate
+One or more of these sections may be excluded when they are not relevant
 for the SimulationObject that is described.
 
 The table specifying the simulation parameters has the following columns:
@@ -32,9 +32,6 @@ The table specifying the simulation parameters has the following columns:
        with the following interpretation. The first character indicates of the
        parameter is a scalar **(S)** or table **(T)** parameter. The second and
        third
-       character indicate whether this parameter should be present in the
-       timerdata '**Ti**', cropdata '**Cr**', soildata '**So**' or
-       sitedata '**Si**' dictionary.
     4. The physical unit of the parameter.
 
 The tables specifying state/rate variables have the following columns:
@@ -84,8 +81,11 @@ The Timer
 .. autoclass:: pcse.timer.Timer
     :members:
 
-The waterbalance
-================
+Soil process modules
+====================
+
+Water balance modules
+---------------------
 
 The PCSE distribution provides several waterbalance modules:
     1. WaterbalancePP which is used for simulation under non-water-limited
@@ -94,16 +94,37 @@ The PCSE distribution provides several waterbalance modules:
        under conditions of freely draining soils
     3. The `SnowMAUS` for simulation the build-up and melting of the snow cover.
     4. A multi-layer waterbalance implementing simulations for potential
-       conditions, water-limited free drainage conditions and
-       water-limited groundwater conditions (in case of shallow ground
-       water tables). This waterbalance is in a prototype stage and not yet
-       usable, although the source code is available in PCSE.
+       conditions, water-limited free drainage conditions. Currently the model
+       does not support the impact of shallow ground water tables but this will
+       implemented in the future.
 
 .. autoclass:: pcse.soil.WaterbalancePP
 
 .. autoclass:: pcse.soil.WaterbalanceFD
 
+.. autoclass:: pcse.soil.WaterBalanceLayered
+
+.. autoclass:: pcse.soil.soil_profile.SoilProfile
+
+.. autoclass:: pcse.soil.soil_profile.SoilLayer
+
 .. autoclass:: pcse.soil.SnowMAUS
+
+Nitrogen and Carbon modules
+---------------------------
+
+PCSE contains two modules for nitrogen and carbon in the soil:
+    1. The simple N_Soil_Dynamics module which only simulates N availability as a pool of available N
+       without any dynamic processes like leach, volatilization, etc.
+    2. The SNOMIN module (Soil Nitrogen module for Mineral and Inorganic Nitrogen) which is a layered soil
+       carbon/nitrogen balance that also requires the layered soil water balance. It includes the full
+       N dynamics in the soil as well as the impact of organic matter and organic amendments (manure) on the
+       availability of nitrogen in the soil.
+
+.. autoclass:: pcse.soil.N_Soil_Dynamics
+
+.. autoclass:: pcse.soil.SNOMIN
+
 
 Crop simulation processes for WOFOST
 ====================================
@@ -126,7 +147,12 @@ Partitioning
 |CO2| Assimilation
 ------------------
 
-.. autoclass:: pcse.crop.assimilation.WOFOST_Assimilation
+.. autoclass:: pcse.crop.assimilation.WOFOST72_Assimilation
+
+.. autoclass:: pcse.crop.assimilation.WOFOST73_Assimilation
+
+.. autoclass:: pcse.crop.assimilation.WOFOST81_Assimilation
+
 
 Maintenance respiration
 -----------------------
@@ -136,12 +162,20 @@ Evapotranspiration
 ------------------
 .. autoclass:: pcse.crop.evapotranspiration.Evapotranspiration
 
+.. autoclass:: pcse.crop.evapotranspiration.EvapotranspirationCO2
+
+.. autoclass:: pcse.crop.evapotranspiration.EvapotranspirationCO2Layered
+
 .. autofunction:: pcse.crop.evapotranspiration.SWEAF
 
     
 Leaf dynamics
 -------------
 .. autoclass:: pcse.crop.leaf_dynamics.WOFOST_Leaf_Dynamics
+
+.. autoclass:: pcse.crop.leaf_dynamics.WOFOST_Leaf_Dynamics_N
+
+.. autoclass:: pcse.crop.leaf_dynamics.CSDM_Leaf_Dynamics
 
 Root dynamics
 -------------
@@ -155,13 +189,12 @@ Storage organ dynamics
 ----------------------
 .. autoclass:: pcse.crop.storage_organ_dynamics.WOFOST_Storage_Organ_Dynamics
 
-N/P/K dynamics
---------------
+Crop N dynamics
+---------------
 
-.. autoclass:: pcse.crop.npk_dynamics.NPK_Crop_Dynamics
-.. autoclass:: pcse.crop.nutrients.NPK_Demand_Uptake
-.. autoclass:: pcse.crop.nutrients.NPK_Stress
-.. autoclass:: pcse.crop.nutrients.NPK_Translocation
+.. autoclass:: pcse.crop.n_dynamics.N_Crop_Dynamics
+.. autoclass:: pcse.crop.nutrients.N_Demand_Uptake
+.. autoclass:: pcse.crop.nutrients.N_Stress
 
 
 Abiotic damage
@@ -171,8 +204,8 @@ Abiotic damage
 .. autoclass:: pcse.crop.abioticdamage.CrownTemperature
 
 
-Crop simulation processes for LINGRA & LINGRA-N
-===============================================
+Crop simulation processes for LINGRA
+====================================
 
 .. automodule:: pcse.crop.lingra
 
@@ -196,6 +229,16 @@ Nitrogen dynamics
 .. autoclass:: pcse.crop.lingra_ndynamics.N_Stress
 
 .. autoclass:: pcse.crop.lingra_ndynamics.N_Crop_Dynamics
+
+Crop simulation processes for LINTUL
+====================================
+
+.. autoclass:: pcse.crop.lintul3.Lintul3
+    :members:
+
+
+.. Crop simulation processes for the ALCEPAS model
+.. ===============================================
 
 
 .. _BaseClasses:
@@ -235,6 +278,11 @@ Base and utility classes for weather data
 .. autoclass:: pcse.base.WeatherDataContainer
     :members:
 
+Configuration loading
+---------------------
+.. autoclass:: pcse.base.ConfigurationLoader
+    :members:
+
 .. _Signals:
 
 Signals defined
@@ -243,43 +291,55 @@ Signals defined
     :members:
     
 
-Utilities
-=========
+Ancillary code
+==============
 
-The utilities section deals with tools for reading weather data and parameter
+The ancillary code section deals with tools for reading weather data and parameter
 values from files or databases.
 
-.. _FileInput:
 
-Tools for reading input files
------------------------------
+.. _Input:
+Data providers
+--------------
 
-The file_input tools contain several classes for reading weather files,
+The module `pcse.input` contains all classes for reading weather files,
 parameter files and agromanagement files.
 
-.. _CABOFileReader:
-.. autoclass:: pcse.fileinput.CABOFileReader
-    :members:
+.. _NASAPowerWeatherDataProvider:
+.. autoclass:: pcse.input.NASAPowerWeatherDataProvider
 
 .. _CABOWeatherDataProvider:
-.. autoclass:: pcse.fileinput.CABOWeatherDataProvider
-    :members:
-
-.. _PCSEFileReader:
-.. autoclass:: pcse.fileinput.PCSEFileReader
-    :members:
+.. autoclass:: pcse.input.CABOWeatherDataProvider
 
 .. _ExcelWeatherDataProvider:
-.. autoclass:: pcse.fileinput.ExcelWeatherDataProvider
+.. autoclass:: pcse.input.ExcelWeatherDataProvider
 
 .. _CSVWeatherDataProvider:
-.. autoclass:: pcse.fileinput.CSVWeatherDataProvider
+.. autoclass:: pcse.input.CSVWeatherDataProvider
+
+.. _CABOFileReader:
+.. autoclass:: pcse.input.CABOFileReader
+
+.. _PCSEFileReader:
+.. autoclass:: pcse.input.PCSEFileReader
 
 .. _YAMLAgroManagementReader:
-.. autoclass:: pcse.fileinput.YAMLAgroManagementReader
+.. autoclass:: pcse.input.YAMLAgroManagementReader
 
 .. _YAMLCropDataProvider:
-.. autoclass:: pcse.fileinput.YAMLCropDataProvider
+.. autoclass:: pcse.input.YAMLCropDataProvider
+
+.. _WOFOST72SiteDataProvider:
+.. autoclass:: pcse.input.WOFOST72SiteDataProvider
+
+.. _WOFOST73SiteDataProvider:
+.. autoclass:: pcse.input.WOFOST73SiteDataProvider
+
+.. _WOFOST81SiteDataProvider_classic:
+.. autoclass:: pcse.input.WOFOST81SiteDataProvider_Classic
+
+.. _WOFOST81SiteDataProvider_SNOMIN:
+.. autoclass:: pcse.input.WOFOST81SiteDataProvider_SNOMIN
 
 
 Simple or dummy data providers
@@ -293,12 +353,6 @@ must be provided to the model.
 
 .. _DummySoilDataProvider:
 .. autoclass:: pcse.util.DummySoilDataProvider
-
-.. _WOFOST72SiteDataProvider:
-.. autoclass:: pcse.util.WOFOST72SiteDataProvider
-
-.. _WOFOST80SiteDataProvider:
-.. autoclass:: pcse.util.WOFOST80SiteDataProvider
 
 
 .. _DBtools:
@@ -314,7 +368,7 @@ Note that the data providers only provide functionality for *reading* data,
 there are no tools here *writing* simulation results to a CGMS database. This was
 done on purpose as writing data can be a complex matter and it is our
 experience that this can be done more easily with dedicated database loader
-tools such as `SQLLoader`_ for ORACLE or the ``load data infile`` syntax of MySQL
+tools such as `SQLLoader`_ for ORACLE or the ``load data infile`` syntax of MySQL.
 
 .. _SQLLoader: http://www.oracle.com/technetwork/database/enterprise-edition/sql-loader-overview-095816.html
 
@@ -385,15 +439,6 @@ from CGMS8 and CGMS12.
 .. _CGMS14_data_providers:
 
 
-The NASA POWER database
-.......................
-
-.. _NASAPowerWeatherDataProvider:
-
-.. autoclass:: pcse.db.NASAPowerWeatherDataProvider
-    :members:
-
-
 Convenience routines
 --------------------
 
@@ -407,7 +452,7 @@ build your own script but have no further relevance.
 Miscelaneous utilities
 ----------------------
 
-Many miscelaneous for a variety of purposes such as the Arbitrary Function
+Many miscelaneous function for a variety of purposes such as the Arbitrary Function
 Generator (AfGen) for linear interpolation and functions for calculating
 Penman Penman/Monteith reference evapotranspiration,
 the Angstrom equation and astronomical calculations such as day length.
@@ -424,8 +469,6 @@ the Angstrom equation and astronomical calculations such as day length.
 .. autofunction:: pcse.util.astro
 .. autofunction:: pcse.util.merge_dict
 .. autoclass:: pcse.util.Afgen
-    :members:
-.. autoclass:: pcse.util.ConfigurationLoader
     :members:
 .. autofunction:: pcse.util.is_a_month
 .. autofunction:: pcse.util.is_a_dekad

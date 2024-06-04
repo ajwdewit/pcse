@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 
 import datetime as dt
 from sqlalchemy import create_engine, MetaData, Table
@@ -9,7 +9,7 @@ import sqlalchemy as sa
 from ..db.pcse import fetch_cropdata, fetch_sitedata, fetch_soildata, GridWeatherDataProvider, \
     AgroManagementDataProvider
 from ..base import ParameterProvider
-from ..models import Wofost71_WLP_FD, Wofost71_PP
+from ..models import Wofost72_WLP_CWB, Wofost72_PP
 from .. import exceptions as exc
 from ..util import merge_dict
 
@@ -99,9 +99,9 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     # Initialize PCSE/WOFOST
     mode = mode.strip().lower()
     if mode == 'pp':
-        wofsim = Wofost71_PP(parameters, wdp, agromanagement)
+        wofsim = Wofost72_PP(parameters, wdp, agromanagement)
     elif mode == 'wlp':
-        wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
+        wofsim = Wofost72_WLP_CWB(parameters, wdp, agromanagement)
     else:
         msg = "Unrecognized mode keyword: '%s' should be one of 'pp'|'wlp'" % mode
         raise RuntimeError(msg, mode)

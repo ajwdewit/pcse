@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """Python implementations of the WOFOST waterbalance modules for simulation
 of potential production (`WaterbalancePP`) and water-limited production
 (`WaterbalanceFD`) under freely draining conditions.
@@ -602,7 +602,7 @@ class WaterbalanceFD(SimulationObject):
         p = self.params
         
         WDR = 0.
-        if RDchange > 0.001:
+        if abs(RDchange) > 0.001:
             # roots grow down by more than 0.001 cm
             # move water from previously unrooted zone and add to new rooted zone
             WDR = s.WLOW * RDchange/(p.RDMSOL - self.RDold)
@@ -613,7 +613,7 @@ class WaterbalanceFD(SimulationObject):
             # move water from previously rooted zone and add to new unrooted zone
             WDR = s.W * RDchange/self.RDold
 
-        if WDR != 0.:
+        if abs(WDR) > 0.:
             # reduce amount of water in subsoil
             s.WLOW -= WDR
             # increase amount of water in root zone

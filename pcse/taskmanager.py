@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """Taskmanager which reads tasks from a database table and updates the status
 when the tasks is finished.
 

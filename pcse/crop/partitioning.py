@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 from collections import namedtuple
 from math import exp
 
@@ -160,9 +160,9 @@ class DVS_Partitioning(SimulationObject):
         return self.states.PF
 
 
-class DVS_Partitioning_NPK(SimulationObject):
+class DVS_Partitioning_N(SimulationObject):
     """Class for assimilate partitioning based on development stage (`DVS`)
-    with influence of NPK stress.
+    with influence of N stress.
 
     `DVS_Partitioning_NPK` calculates the partitioning of the assimilates to roots,
     stems, leaves and storage organs using fixed partitioning tables as a
@@ -235,7 +235,7 @@ class DVS_Partitioning_NPK(SimulationObject):
         FLTB = AfgenTrait()
         FSTB = AfgenTrait()
         FOTB = AfgenTrait()
-        NPART = Float(-99.)  # coefficient for the effect of N stress on leaf allocation
+        #NPART = Float(-99.)  # coefficient for the effect of N stress on leaf allocation
 
     class StateVariables(StatesTemplate):
         FR = Float(-99.)
@@ -285,31 +285,18 @@ class DVS_Partitioning_NPK(SimulationObject):
     @prepare_states
     def integrate(self, day, delt=1.0):
         """
-        Update partitioning factors based on development stage (DVS)
-        and the Nitrogen nutrition Index (NNI)
+        Update partitioning factors based on development stage (DVS) and water and oxygen stress
         """
 
         p = self.params
         s = self.states
         k = self.kiosk
 
-        if k.RFTRA < k.NNI:
-            # Water stress is more severe than nitrogen stress and the
-            # partitioning follows the original LINTUL2 assumptions
-            # Note: we use specifically nitrogen stress not nutrient stress!!!
-            FRTMOD = max(1., 1./(k.RFTRA + 0.5))
-            s.FR = min(0.6, p.FRTB(k.DVS) * FRTMOD)
-            s.FL = p.FLTB(k.DVS)
-            s.FS = p.FSTB(k.DVS)
-            s.FO = p.FOTB(k.DVS)
-        else:
-            # Nitrogen stress is more severe than water stress resulting in
-            # less partitioning to leaves and more to stems
-            FLVMOD = exp(-p.NPART * (1.0 - k.NNI))
-            s.FL = p.FLTB(k.DVS) * FLVMOD
-            s.FS = p.FSTB(k.DVS) + p.FLTB(k.DVS) - s.FL
-            s.FR = p.FRTB(k.DVS)
-            s.FO = p.FOTB(k.DVS)
+        FRTMOD = max(1., 1./(k.RFTRA + 0.5))
+        s.FR = min(0.6, p.FRTB(k.DVS) * FRTMOD)
+        s.FL = p.FLTB(k.DVS)
+        s.FS = p.FSTB(k.DVS)
+        s.FO = p.FOTB(k.DVS)
 
         # Pack partitioning factors into tuple
         s.PF = PartioningFactors(s.FR, s.FL, s.FS, s.FO)

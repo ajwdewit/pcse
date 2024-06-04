@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 
 import unittest
 from datetime import date
@@ -140,7 +140,7 @@ class TestAgroManager5(TestAgroManagerSimpleTestTemplate):
                         - 2000-01-21: {amount: 5, efficiency: 0.7}
                         - 2000-03-18: {amount: 3, efficiency: 0.7}
                         - 2000-03-19: {amount: 2, efficiency: 0.7}
-                    -   event_signal: apply_npk
+                    -   event_signal: apply_n_snomin
                         name:  Timed N/P/K application table
                         comment: All fertilizer amounts in kg/ha
                         events_table:
@@ -160,7 +160,7 @@ class TestAgroManager5(TestAgroManagerSimpleTestTemplate):
                         max_duration: 200
                     TimedEvents:
                     StateEvents:
-                    -   event_signal: apply_npk
+                    -   event_signal: apply_n_snomin
                         event_state: DVS
                         zero_condition: rising
                         name: DVS-based N/P/K application table

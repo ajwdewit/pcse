@@ -1,25 +1,47 @@
+.. include:: abbreviations.txt
 Models available in PCSE
 ========================
 
-The following table lists the models that are available in PCSE and can be imported from `pcse.models` package.
+The PCSE package implements several crop models that were developed in Wageningen. These models are:
 
-===================== =======================================================================================================
-Model name             Description
-===================== =======================================================================================================
-Wofost72_PP            An implementation of WOFOST 7.2 for potential production scenarios.
-Wofost72_WLP_FD        An implementation of WOFOST 7.2 for water-limited production scenarios with freely draining soils.
-Wofost80_PP_beta       An implementation of WOFOST 8.0 for potential production scenarios including N/P/K dynamics
-Wofost80_WLP_FD_beta   An implementation of WOFOST 8.0 for water-limited production scenarios including N/P/K dynamics
-                       for freely draining soils.
-Wofost80_NWLP_FD_beta  An implementation of WOFOST 8.0 for water-limited and nutrient-limited production scenarios
-                       including N/P/K dynamics for freely draining soils.
-LINGRA_PP              A LINGRA implementation for simulating potential production scenarios.
-LINGRA_WLP_FD          A LINGRA implementation for simulating water-limited production scenarios with freely draining soils.
-LINTUL3                An implementation of the LINTUL3 model for production scenarios under water-limited and nitrogen-
-                       limited production scenarios.
-FAO_WRSI               An implementation of the Water Requirement Satisfaction Index model. This re-uses components
-                       from WOFOST to create a simpler approach which computes water requirements and water availability.
-Wofost72_Phenology     The phenology modules from WOFOST 7.2 as a standalone model. This is purely for convenience as in
-                       some cases running the phenology is sufficient and this is much faster then running the full
-                       WOFOST model.
-===================== =======================================================================================================
+    - The WOFOST cropping system model for simulating growth and development of arable crops.
+    - The LINTUL3 model for simulating growth and development of arable crops. Compared to
+      WOFOST, LINTUL3 uses a simplified approach for estimating |CO2| assimilation.
+    - The LINGRA model for simulating grassland productivity.
+    - The ALCEPAS model specifically developed for simulation of onion.
+
+PCSE also provides an implementation of the FAO-WRSI (Water Requirement Satisfaction Index) model which
+computes stress index representing the water shortage experience by the crop
+
+Moreover, these crop models can be combined with models for soil water and nitrogen of different complexity,
+ranging from simple models (indicated as "classic") as well as a more advanced water balance models using
+multiple soil layers and an advanced soil carbon/nitrogen model (SNOMIN).
+
+The following table lists the models that are available in PCSE and can be imported from `pcse.models` package.
+For each model it lists the production level and some of the features included in the models. The model name for
+most models is made up from a set of codes which follow: <modelname><version>_<productionlevel>_<waterbalance>_<nitrogenbalance>
+
+.. Table generated using: https://tableconvert.com/restructuredtext-generator
+
+=========================== ============================ ============ ====================== ============ =============== ===========
+ Model                       Production level             CO2 impact   Biomass reallocation   N dynamics   Water balance   N balance
+=========================== ============================ ============ ====================== ============ =============== ===========
+ Wofost72_Pheno              Phenology only                                                                N/A             N/A
+ Wofost72_PP                 Potential                                                                     N/A             N/A
+ Wofost72_WLP_CWB            Water-limited                                                                 Classic         N/A
+ Wofost73_PP                 Potential                    X            X                                   N/A             N/A
+ Wofost73_WLP_CWB            Water-limited                X            X                                   Classic         N/A
+ Wofost73_WLP_MLWB           Water-limited                X            X                                   Multi-layer     N/A
+ Wofost81_PP                 Potential                    X            X                      X            N/A             N/A
+ Wofost81_WLP_CWB            Water-limited                X            X                      X            Classic         N/A
+ Wofost81_WLP_MLWB           Water-limited                X            X                      X            Multi-layer     N/A
+ Wofost81_NWLP_CWB_CNB       Water and Nitrogen limited   X            X                      X            Classic         Classic
+ Wofost81_NWLP_MLWB_CNB      Water and Nitrogen limited   X            X                      X            Multi-layer     Classic
+ Wofost81_NWLP_MLWB_SNOMIN   Water and Nitrogen limited   X            X                      X            Multi-layer     SNOMIN
+ Lingra10_PP                 Potential                    X                                                N/A             N/A
+ Lingra10_WLP_CWB            Water-limited                X                                                Classic         N/A
+ Lingra10_NWLP_CWB_CNB       Water and Nitrogen limited   X                                   X            Classic         Classic
+ Lintul10_NWLP_CWB_CNB       Water and Nitrogen limited                                       X            Classic         Classic
+ Alcepas10_PP                Potential                                                                     N/A             N/A
+ FAO_WRSI10_WLP_CWB          Water-limited                                                                 Classic         N/A
+=========================== ============================ ============ ====================== ============ =============== ===========

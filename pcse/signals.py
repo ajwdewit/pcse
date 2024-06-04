@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """This module defines and describes the signals used by PCSE
 
 Signals are used by PCSE to notify components of events such as sowing,
@@ -76,7 +76,7 @@ keywords.
 
 **CROP_START**
 
- Indicates that a new crop cycle will start:
+ Indicates that a new crop cycle will start::
  
      self._send_signal(signal=signals.crop_start, day=<date>,
                        crop_name=<string>, variety_name=<string>,
@@ -123,6 +123,7 @@ keyword arguments with `signals.crop_finish`:
  
  No keyword arguments are defined for this signal
 
+
 **SUMMARY_OUTPUT**
 
  Indicates that the model state should be saved for later use,
@@ -133,17 +134,36 @@ keyword arguments with `signals.crop_finish`:
 
  No keyword arguments are defined for this signal
 
-**APPLY_NPK**
 
-Is used for application of Nitrate/Phosphate/Potassium (N/P/K) fertilizer::
+**APPLY_N**
 
-    self._send_signal(signal=signals.apply_npk, N_amount=<float>, P_amount=<float>, K_amount=<float>,
-                      N_recovery<float>, P_recovery=<float>, K_recovery=<float>)
+Is used for application of N fertilizer::
 
-Keyword arguments with `signals.apply_npk`:
+    self._send_signal(signal=signals.apply_n, N_amount=<float>, N_recovery<float>)
 
-    * N/P/K_amount: Amount of fertilizer in kg/ha applied on this day.
-    * N/P/K_recovery: Recovery fraction for the given type of fertilizer
+Keyword arguments with `signals.apply_n`:
+
+    * N_amount: Amount of fertilizer in kg/ha applied on this day.
+    * N_recovery: Recovery fraction for the given type of fertilizer
+
+
+**APPLY_N_SNOMIN**
+
+Is used for application of N fertilizer with the SNOMIN module::
+
+    self._send_signal(signal=signals.apply_n_snomin,amount=<float>, application_depth=<float>,
+                      cnratio=<float>, initial_age=<float>, f_NH4N=<float>, f_NO3N=<float>,
+                      f_orgmat=<float>)
+
+Keyword arguments with `signals.apply_n_snomin`:
+
+    * amount: Amount of material in amendment (kg material ha-1)
+    * application_depth: Depth over which the amendment is applied in the soil (cm)
+    * cnratio: C:N ratio of organic matter in material (kg C kg-1 N)
+    * initial_age: Initial apparent age of organic matter in material (year)
+    * f_NH4N: Fraction of NH4+-N in material (kg NH4+-N kg-1 material)
+    * f_NO3N: Fraction of NO3--N in material (kg NO3--N kg-1 material)
+    * f_orgmat: Fraction of organic matter in amendment (kg OM kg-1 material)
 
 
 **IRRIGATE**
@@ -179,7 +199,7 @@ crop_finish = "CROP_FINISH"
 terminate = "TERMINATE"
 output = "OUTPUT"
 summary_output = "SUMMARY_OUTPUT"
-apply_npk = "APPLY_NPK"
 apply_n = "APPLY_N"
-irrigate = "IRRIGATE" 
+apply_n_snomin = "APPLY_N_SNOMIN"
+irrigate = "IRRIGATE"
 mowing = "MOWING"

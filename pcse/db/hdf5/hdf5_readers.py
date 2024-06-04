@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2017 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), November 2017
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """
 Data providers for weather, soil, crop, timer and site data. Also
 a class for testing STU suitability for a given crop.

@@ -28,7 +28,7 @@ several interesting features:
 
 * Implementation in pure Python. The core system has a small number of dependencies outside the Python standard
   library. However many data providers require certain packages to be installed. Most of these can be automatically
-  installed from the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `xlrd`, `openpyxl`, `requests`) and in
+  installed from the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `openpyxl`, `requests`) and in
   processing of the output of models is most easily done with `pandas` DataFrames.
 
 * Modular design allowing you to add or change components relatively quickly with a simple but powerful approach

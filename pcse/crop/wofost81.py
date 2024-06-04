@@ -1,31 +1,32 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2014 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Herman Berghuijs (herman.berghuijs@wur.nl) and Allard de Wit (allard.dewit@wur.nl), January 2024
 
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Unicode
+from ..traitlets import Float, Instance, Unicode
 from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
-
 from .phenology import DVS_Phenology as Phenology
-from .assimilation import WOFOST_Assimilation as Assimilation
-from .partitioning import DVS_Partitioning as Partitioning
 from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
-from .evapotranspiration import Evapotranspiration
 from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
 from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
+from .leaf_dynamics import WOFOST_Leaf_Dynamics_N as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
-     Storage_Organ_Dynamics
+    Storage_Organ_Dynamics
+from .assimilation import WOFOST81_Assimilation as Assimilation
+from .partitioning import DVS_Partitioning_N as Partitioning
+from .evapotranspiration import EvapotranspirationWrapper as Evapotranspiration
+from .n_dynamics import N_Crop_Dynamics as N_crop
+from .nutrients.n_stress import N_Stress as N_Stress
 
-
-class Wofost(SimulationObject):
+class Wofost81(SimulationObject):
     """Top level object organizing the different components of the WOFOST crop
-    simulation.
+    simulation. EvapotranspirationCO2Layered is used as the Evapotranspiration
+    to allow simulations with the layered soil water balance watfgdw.    
             
     The CropSimulation object organizes the different processes of the crop
     simulation. Moreover, it contains the parameters, rate and state variables
@@ -41,6 +42,8 @@ class Wofost(SimulationObject):
         7. Stem dynamics (self.st_dynamics)
         8. Root dynamics (self.ro_dynamics)
         9. Storage organ dynamics (self.so_dynamics)
+        10. N crop dynamics (self.n_crop_dynamics)
+        11. N stress (self.n_stress)
 
     **Simulation parameters:**
     
@@ -57,40 +60,52 @@ class Wofost(SimulationObject):
     
     **State variables:**
 
-    =========== ================================================= ==== ===============
-     Name        Description                                      Pbl      Unit
-    =========== ================================================= ==== ===============
-    TAGP        Total above-ground Production                      N    |kg ha-1|
-    GASST       Total gross assimilation                           N    |kg CH2O ha-1|
-    MREST       Total gross maintenance respiration                N    |kg CH2O ha-1|
-    CTRAT       Total crop transpiration accumulated over the
-                crop cycle                                         N    cm
-    CEVST       Total soil evaporation accumulated over the
-                crop cycle                                         N    cm
-    HI          Harvest Index (only calculated during              N    -
-                `finalize()`)
-    DOF         Date representing the day of finish of the crop    N    -
-                simulation. 
-    FINISH_TYPE String representing the reason for finishing the   N    -
-                simulation: maturity, harvest, leave death, etc.
-    =========== ================================================= ==== ===============
+    ============  ================================================= ==== ===============
+     Name          Description                                      Pbl      Unit
+    ============  ================================================= ==== ===============
+    TAGP          Total above-ground Production                      N    |kg ha-1|
+    GASST         Total gross assimilation                           N    |kg CH2O ha-1|
+    MREST         Total gross maintenance respiration                N    |kg CH2O ha-1|
+    CTRAT         Total crop transpiration accumulated over the
+                  crop cycle                                         N    cm
+    CEVST         Total soil evaporation accumulated over the
+                  crop cycle                                         N    cm
+    HI            Harvest Index (only calculated during              N    -
+                  `finalize()`)
+    DOF           Date representing the day of finish of the crop    N    -
+                  simulation.
+    FINISH_TYPE   String representing the reason for finishing the   N    -
+                  simulation: maturity, harvest, leave death, etc.
+    REALLOC_<o>   Reallocation rate of organ o                      
+    ============  ================================================= ==== ===============
 
  
      **Rate variables:**
 
-    =======  ================================================ ==== =============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================ ==== =============
-    GASS     Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
-    MRES     Actual maintenance respiration rate, taking into
-             account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
-    ASRC     Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
-    DMI      Total dry matter increase, calculated as ASRC
-             times a weighted conversion efficiency.            Y  |kg ha-1 d-1|
-    ADMI     Aboveground dry matter increase                    Y  |kg ha-1 d-1|
-    =======  ================================================ ==== =============
+    ======================= ================================================= ==== =============
+     Name                    Description                                      Pbl      Unit
+    =======================  ================================================ ==== =============
+    GASS                    Assimilation rate corrected for water stress       N  |kg CH2O ha-1 d-1|
+    PGASS                   Potential assimilation rate                        N  |kg CH2O ha-1 d-1|
+    MRES                    Actual maintenance respiration rate, taking into
+                            account that MRES <= GASS.                         N  |kg CH2O ha-1 d-1|
+    PMRES                   Potential maintenance respiration rate             N  |kg CH2O ha-1 d-1|
+    REALLOC_DVS             Development stage at which reallocation starts     N  -
+    REALLOC_<o>_FRACTION    Fraction of dry matter of organ o that becomes
+                            available at development stage REALLOC_DVS         Y  |kg DM kg-1 DM|
+    REALLOC_<o>_RATE:       Relative rate of reallocation from organ o.        N  |d-1|
+    REALLOC_EFFICIENCY:     Efficiency of reallocation                         N  |kg DM kg-1 DM|
+    ASRC                    Net available assimilates (GASS - MRES)            N  |kg CH2O ha-1 d-1|
+    DMI                     Total dry matter increase, calculated as ASRC
+                            times a weighted conversion efficieny.             Y  |kg ha-1 d-1|
+    ADMI                    Aboveground dry matter increase                    Y  |kg ha-1 d-1|
+    =======================  ================================================ ==== =============
 
     """
+   
+    # Placeholders for biomass available for reallocation
+    _WLV_REALLOC = Float(None)
+    _WST_REALLOC = Float(None)
     
     # sub-model components for crop simulation
     pheno = Instance(SimulationObject)
@@ -102,6 +117,8 @@ class Wofost(SimulationObject):
     st_dynamics = Instance(SimulationObject)
     ro_dynamics = Instance(SimulationObject)
     so_dynamics = Instance(SimulationObject)
+    n_crop_dynamics = Instance(SimulationObject)
+    n_stress = Instance(SimulationObject)
     
     # Parameters, rates and states which are relevant at the main crop
     # simulation level
@@ -110,23 +127,36 @@ class Wofost(SimulationObject):
         CVO = Float(-99.)
         CVR = Float(-99.)
         CVS = Float(-99.)
+        REALLOC_DVS = Float(2.0)
+        REALLOC_STEM_FRACTION = Float(0.)
+        REALLOC_LEAF_FRACTION = Float(0.)
+        REALLOC_STEM_RATE = Float(0.)
+        REALLOC_LEAF_RATE = Float(0.)
+        REALLOC_EFFICIENCY = Float(0.)
 
     class StateVariables(StatesTemplate):
         TAGP  = Float(-99.)
         GASST = Float(-99.)
         MREST = Float(-99.)
-        CTRAT = Float(-99.)
         CEVST = Float(-99.)
-        HI = Float(-99.)
+        CTRAT = Float(-99.) # Crop total transpiration
+        HI    = Float(-99.)
         DOF = Instance(datetime.date)
         FINISH_TYPE = Unicode(allow_none=True)
+        LV_REALLOCATED = Float(0.)
+        ST_REALLOCATED = Float(0.)
 
     class RateVariables(RatesTemplate):
-        GASS = Float(-99.)
-        MRES = Float(-99.)
-        ASRC = Float(-99.)
-        DMI = Float(-99.)
-        ADMI = Float(-99.)
+        GASS  = Float(-99.)
+        MRES  = Float(-99.)
+        ASRC  = Float(-99.)
+        DMI   = Float(-99.)
+        ADMI  = Float(-99.)
+        REALLOC_LV = Float(0.)
+        REALLOC_ST = Float(0.)
+        REALLOC_SO = Float(0.)
+        RLV_REALLOCATED = Float(0.)
+        RST_REALLOCATED = Float(0.)
 
     def initialize(self, day, kiosk, parvalues):
         """
@@ -137,26 +167,31 @@ class Wofost(SimulationObject):
         """
         
         self.params = self.Parameters(parvalues)
-        self.rates = self.RateVariables(kiosk, publish=["DMI", "ADMI"])
+        self.rates  = self.RateVariables(kiosk, publish=["DMI","ADMI", "REALLOC_LV", "REALLOC_ST", "REALLOC_SO"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
         self.pheno = Phenology(day, kiosk, parvalues)
-        self.part = Partitioning(day, kiosk, parvalues)
+        self.part  = Partitioning(day, kiosk, parvalues)
         self.assim = Assimilation(day, kiosk, parvalues)
-        self.mres = MaintenanceRespiration(day, kiosk, parvalues)
+        self.mres  = MaintenanceRespiration(day, kiosk, parvalues)
         self.evtra = Evapotranspiration(day, kiosk, parvalues)
         self.ro_dynamics = Root_Dynamics(day, kiosk, parvalues)
         self.st_dynamics = Stem_Dynamics(day, kiosk, parvalues)
         self.so_dynamics = Storage_Organ_Dynamics(day, kiosk, parvalues)
         self.lv_dynamics = Leaf_Dynamics(day, kiosk, parvalues)
 
+        # Added for book keeping of N/P/K in crop and soil
+        self.n_crop_dynamics = N_crop(day, kiosk, parvalues)
+        self.n_stress = N_Stress(day, kiosk, parvalues)
+
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
+        
         self.states = self.StateVariables(kiosk,
                                           publish=["TAGP", "GASST", "MREST", "HI"],
-                                          TAGP=TAGP, GASST=0.0, MREST=0.0,
-                                          CTRAT=0.0, CEVST=0.0, HI=0.0,
+                                          TAGP=TAGP, GASST=0.0, MREST=0.0, CEVST = 0.0,
+                                          CTRAT=0.0, HI=0.0, LV_REALLOCATED = 0., ST_REALLOCATED = 0.,
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
@@ -167,11 +202,12 @@ class Wofost(SimulationObject):
             
         # assign handler for CROP_FINISH signal
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
-
+    #---------------------------------------------------------------------------
     @staticmethod
     def _check_carbon_balance(day, DMI, GASS, MRES, CVF, pf):
         (FR, FL, FS, FO) = pf
-        checksum = (GASS - MRES - (FR+(FL+FS+FO)*(1.-FR)) * DMI/CVF) * 1./(max(0.0001, GASS))
+        checksum = (GASS - MRES - (FR+(FL+FS+FO)*(1.-FR)) * DMI/CVF) * \
+                    1./(max(0.0001,GASS))
         if abs(checksum) >= 0.0001:
             msg = "Carbon flows not balanced on day %s\n" % day
             msg += "Checksum: %f, GASS: %f, MRES: %f\n" % (checksum, GASS, MRES)
@@ -179,6 +215,7 @@ class Wofost(SimulationObject):
                    (FR, FL, FS, FO, DMI, CVF)
             raise exc.CarbonBalanceError(msg)
 
+    #---------------------------------------------------------------------------
     @prepare_rates
     def calc_rates(self, day, drv):
         p = self.params
@@ -219,6 +256,33 @@ class Wofost(SimulationObject):
         self._check_carbon_balance(day, r.DMI, r.GASS, r.MRES,
                                    CVF, pf)
 
+        # Reallocation from stems/leaves
+        if k.DVS < p.REALLOC_DVS:
+            r.REALLOC_LV = 0.0
+            r.REALLOC_ST = 0.0
+            r.REALLOC_SO = 0.0
+        else:
+            if self._WST_REALLOC is None:  # Start of reallocation, compute max reallocatable biomass
+                self._WST_REALLOC = k.WST * p.REALLOC_STEM_FRACTION
+                self._WLV_REALLOC = k.WLV * p.REALLOC_LEAF_FRACTION
+            # Reallocation rate in terms of loss of stem/leaf dry matter
+            if(self.states.LV_REALLOCATED < self._WLV_REALLOC):
+                r.REALLOC_LV = min(self._WLV_REALLOC * p.REALLOC_LEAF_RATE, self._WLV_REALLOC - self.states.LEAF_REALLOCATED)
+            else:
+                r.REALLOC_LV = 0.
+
+            if(self.states.ST_REALLOCATED < self._WST_REALLOC):
+                r.REALLOC_ST = min(self._WST_REALLOC * p.REALLOC_STEM_RATE, self._WST_REALLOC - self.states.ST_REALLOCATED)
+            else:
+                r.REALLOC_ST = 0.
+            # Reallocation rate in terms of increase in storage organs taking
+            # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
+            r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST)  * p.REALLOC_EFFICIENCY
+
+
+        # Calculate N stress indices
+        self.n_stress(day, drv)
+
         # distribution over plant organ
 
         # Below-ground dry matter increase and root dynamics
@@ -230,6 +294,9 @@ class Wofost(SimulationObject):
         self.so_dynamics.calc_rates(day, drv)
         self.lv_dynamics.calc_rates(day, drv)
 
+        self.n_crop_dynamics.calc_rates(day, drv)
+
+    #---------------------------------------------------------------------------
     @prepare_states
     def integrate(self, day, delt=1.0):
         rates = self.rates
@@ -258,17 +325,24 @@ class Wofost(SimulationObject):
         self.st_dynamics.integrate(day, delt)
         self.lv_dynamics.integrate(day, delt)
 
+        self.n_crop_dynamics.integrate(day, delt)
+
         # Integrate total (living+dead) above-ground biomass of the crop
-        states.TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
+        states.TAGP = self.kiosk.TWLV + \
+                      self.kiosk.TWST + \
+                      self.kiosk.TWSO
+
+        #
+        states.LV_REALLOCATED += rates.REALLOC_LV * delt
+        states.ST_REALLOCATED += rates.REALLOC_ST * delt
 
         # total gross assimilation and maintenance respiration 
         states.GASST += rates.GASS
         states.MREST += rates.MRES
-        
-        # total crop transpiration and soil evaporation
-        states.CTRAT += self.kiosk.TRA
         states.CEVST += self.kiosk.EVS
-
+        states.CTRAT += self.kiosk.TRA
+        
+    #---------------------------------------------------------------------------
     @prepare_states
     def finalize(self, day):
 
@@ -282,6 +356,7 @@ class Wofost(SimulationObject):
         
         SimulationObject.finalize(self, day)
 
+    #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, finish_type=None):
         """Handler for setting day of finish (DOF) and reason for
         crop finishing (FINISH).

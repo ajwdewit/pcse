@@ -41,3 +41,12 @@ runfiles
 
 # Cache files from YAML experiments
 *.cache
+
+.vs/*
+pcse.sln
+/*.pyproj
+/env_pcse
+/pcse_env
+/exp/experiment_files
+/exp/test_files
+/exp/run.bat

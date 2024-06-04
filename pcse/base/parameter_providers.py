@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """Base classes for creating PCSE simulation units.
 
 In general these classes are not to be used directly, but are to be subclassed
@@ -61,7 +61,9 @@ class ParameterProvider(MutableMapping):
         else:
             self._timerdata = {}
         self._override = {}
-        self._maps = [self._override, self._sitedata, self._timerdata, self._soildata, self._cropdata]
+        self._derived = {}
+        self._maps = [self._override, self._sitedata, self._timerdata, self._soildata,
+                      self._cropdata, self._derived]
         self._test_uniqueness()
 
     def set_active_crop(self, crop_name=None, variety_name=None, crop_start_type=None, crop_end_type=None):
@@ -151,6 +153,18 @@ class ParameterProvider(MutableMapping):
             else:
                 msg = "Cannot clear varname '%s' from override" % varname
                 raise exc.PCSEError(msg)
+
+    def set_derived(self, varname, value):
+        """Allows to set an additional `derived` parameter to the ParameterProvider
+
+        Sometimes it is required to compute new parameters from given parameters. An
+        example is the soil moisture and conductivity values at specific pF values.
+
+        :param varname: The name of the parameter
+        :param value: the value of the parameters
+        """
+
+        self._derived[varname] = value
 
     def _test_uniqueness(self):
         """Check if parameter names are unique and raise an error if duplicates occur.

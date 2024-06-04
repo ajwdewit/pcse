@@ -12,16 +12,16 @@ import yaml
 from pcse.base.parameter_providers import ParameterProvider
 from pcse.crop.phenology import DVS_Phenology
 from pcse.crop.leaf_dynamics import WOFOST_Leaf_Dynamics
-from pcse.crop.assimilation import WOFOST_Assimilation
+from pcse.crop.assimilation import WOFOST81_Assimilation, WOFOST72_Assimilation
 from pcse.crop.respiration import WOFOST_Maintenance_Respiration
 from pcse.crop.partitioning import DVS_Partitioning
 from pcse.crop.root_dynamics import WOFOST_Root_Dynamics
 from pcse.crop.evapotranspiration import Evapotranspiration
-from pcse.crop.wofost7 import Wofost
+from pcse.crop.wofost72 import Wofost72
 from pcse.crop.lingra import LINGRA
 from pcse.crop.lingraN import LINGRA_N
 from pcse.soil.classic_waterbalance import WaterbalanceFD, WaterbalancePP
-from pcse.soil.soil_wrappers import SoilModuleWrapper_N_WLP_FD
+from pcse.soil.soil_wrappers import SoilModuleWrapper_NWLP_CWB_CNB
 from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvider, TestSimulationObject
 
 # This defines the YAML tests, each rows represents:
@@ -30,14 +30,14 @@ from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvi
 # - an optional soil simobject to be tested
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
 quick_tests = [
-               ("test_potentialproduction_wofost72*", Wofost, WaterbalancePP),
-               ("test_waterlimitedproduction_wofost72*", Wofost, WaterbalanceFD),
+               ("test_potentialproduction_wofost72*", Wofost72, WaterbalancePP),
+               ("test_waterlimitedproduction_wofost72*", Wofost72, WaterbalanceFD),
                ("test_LINGRA*_PP.yaml", LINGRA, WaterbalancePP),
                ("test_LINGRA*_WLP.yaml", LINGRA, WaterbalanceFD),
-               ("test_LINGRA*_NWLP.yaml", LINGRA_N, SoilModuleWrapper_N_WLP_FD),
+               ("test_LINGRA*_NWLP.yaml", LINGRA_N, SoilModuleWrapper_NWLP_CWB_CNB),
                ]
 full_tests = [("test_phenology_wofost72*", DVS_Phenology, None),
-              ("test_assimilation_wofost72*", WOFOST_Assimilation, None),
+              ("test_assimilation_wofost72*", WOFOST72_Assimilation, None),
               ("test_partitioning_wofost72*", DVS_Partitioning, None),
               ("test_leafdynamics_wofost72*", WOFOST_Leaf_Dynamics, None),
               ("test_rootdynamics_wofost72*", WOFOST_Root_Dynamics, None),

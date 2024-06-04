@@ -8,7 +8,7 @@ PCSE in the future.
 
 
 An interactive PCSE/WOFOST session
-==================================
+----------------------------------
 
 The easiest way to demonstrate PCSE is to import WOFOST from PCSE and run it from
 an interactive Python session. We will be using the `start_wofost()` script that
@@ -18,13 +18,13 @@ crop data and management data for a grid location in South-Spain.
 Initializing PCSE/WOFOST and advancing model state
 ..................................................
 
-Let's start a WOFOST object for modelling winter-wheat (crop=1) on a
-location in South-Spain (grid 31031) for the year 2000 under water-limited
-conditions for a freely draining soil (mode='wlp')::
+Let's start a WOFOST object for modelling winter-wheat on a
+location in South-Spain for the year 2000 under water-limited
+conditions.::
 
-    >>> wofost_object = pcse.start_wofost(grid=31031, crop=1, year=2000, mode='wlp')
+    >>> wofost_object = pcse.start_wofost()
     >>> type(wofost_object)
-    <class 'pcse.models.Wofost72_WLP_FD'>
+    <class 'pcse.models.Wofost72_WLP_CWB'>
 
 You have just successfully initialized a PCSE/WOFOST object in the Python
 interpreter, which is in its initial state and waiting to do some simulation. We
@@ -144,7 +144,7 @@ tries to be backward compatible as much as possible and provides the
 :ref:`CABOFileReader <CABOFileReader>` for reading parameter files in CABO format.
 the CABOFileReader returns a dictionary with the parameter name/value pairs::
 
-    >>> from pcse.fileinput import CABOFileReader
+    >>> from pcse.input import CABOFileReader
     >>> cropfile = os.path.join(data_dir, 'sug0601.crop')
     >>> cropdata = CABOFileReader(cropfile)
     >>> print(cropdata)
@@ -175,11 +175,11 @@ the initial and maximum surface storage (SSI, SSMAX). Also the
 atmospheric CO2 concentration is a typical site parameter.
 For the moment, we can define these parameters directly on the Python commandline
 as a simple python dictionary. However, it is more convenient to use the
-:ref:`WOFOST71SiteDataProvider <WOFOST71SiteDataProvider>` that documents the
+:ref:`WOFOST72SiteDataProvider <WOFOST72SiteDataProvider>` that documents the
 site parameters and provides sensible defaults::
 
-    >>> from pcse.util import WOFOST71SiteDataProvider
-    >>> sitedata = WOFOST71SiteDataProvider(WAV=100, CO2=360)
+    >>> from pcse.util import WOFOST72SiteDataProvider
+    >>> sitedata = WOFOST72SiteDataProvider(WAV=100, CO2=360)
     >>> print(sitedata)
     {'SMLIM': 0.4, 'NOTINF': 0, 'CO2': 360.0, 'SSI': 0.0, 'SSMAX': 0.0, 'IFUNRN': 0, 'WAV': 100.0}
 
@@ -206,7 +206,7 @@ to easily create more complex structures which is needed for defining the agroma
 The agromanagement file for sugar beet in Wageningen `sugarbeet_calendar.agro` can be read with
 the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>`::
 
-    >>> from pcse.fileinput import YAMLAgroManagementReader
+    >>> from pcse.input import YAMLAgroManagementReader
     >>> agromanagement_file = os.path.join(data_dir, 'sugarbeet_calendar.agro')
     >>> agromanagement = YAMLAgroManagementReader(agromanagement_file)
     >>> print(agromanagement)
@@ -237,18 +237,18 @@ We will retrieve the data from the Power database for the location of Wageningen
 Note that it can take around 30 seconds
 to retrieve the weather data from the NASA Power server the first time::
 
-    >>> from pcse.db import NASAPowerWeatherDataProvider
+    >>> from pcse.input import NASAPowerWeatherDataProvider
     >>> wdp = NASAPowerWeatherDataProvider(latitude=52, longitude=5)
     >>> print(wdp)
     Weather data provided by: NASAPowerWeatherDataProvider
     --------Description---------
-    NASA/POWER SRB/FLASHFlux/MERRA2/GEOS 5.12.4 (FP-IT) 0.5 x 0.5 Degree Daily Averaged Data
+    NASA/POWER CERES/MERRA2 Native Resolution Daily Data
     ----Site characteristics----
-    Elevation:    4.7
+    Elevation:    3.5
     Latitude:  52.000
     Longitude:  5.000
-    Data available for 1983-07-01 - 2018-09-16
-    Number of missing days: 8
+    Data available for 1984-01-01 - 2024-03-20
+    Number of missing days: 0
 
 Importing, initializing and running a PCSE model
 ................................................
@@ -263,11 +263,11 @@ data and agromanagement.
 However, as many users of PCSE only need a particular configuration (for
 example the WOFOST model for potential production), preconfigured Engines
 are provided in `pcse.models`. For the sugarbeet example we will import
-the WOFOST model for water-limited simulation under freely draining soil
-conditions::
+the WOFOST model for water-limited simulation using the classic waterbalance.
+The latter simulates the soil water dynamics assuming a freely draining soil::
 
-    >>> from pcse.models import Wofost71_WLP_FD
-    >>> wofsim = Wofost71_WLP_FD(parameters, wdp, agromanagement)
+    >>> from pcse.models import Wofost72_WLP_CWB
+    >>> wofsim = Wofost72_WLP_CWB(parameters, wdp, agromanagement)
 
 We can then run the simulation and show some final results such as the anthesis and
 harvest dates (DOA, DOH), total biomass (TAGP) and maximum LAI (LAIMAX).
@@ -344,7 +344,7 @@ Reading model parameters
 Model parameters can be easily read from the input files using the `PCSEFileReader` as we have seen
 in the previous example::
 
-    >>> from pcse.fileinput import PCSEFileReader
+    >>> from pcse.input import PCSEFileReader
     >>> crop = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.crop"))
     >>> soil = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.soil"))
     >>> site = PCSEFileReader(os.path.join(data_dir, "lintul3_springwheat.site"))
@@ -361,7 +361,7 @@ For reading weather data we will use the ExcelWeatherDataProvider. This WeatherD
 file format as is used for the CABO weather files but stores its data in an MicroSoft Excel file which makes the
 weather files easier to create and update::
 
-    >>> from pcse.fileinput import ExcelWeatherDataProvider
+    >>> from pcse.input import ExcelWeatherDataProvider
     >>> weatherdataprovider = ExcelWeatherDataProvider(os.path.join(data_dir, "nl1.xlsx"))
     >>> print(weatherdataprovider)
     Weather data provided by: ExcelWeatherDataProvider
@@ -424,7 +424,7 @@ Reference Guide (Chapter 3).
 
 Loading the agromanagement definition must by done with the YAMLAgroManagementReader::
 
-    >>> from pcse.fileinput import YAMLAgroManagementReader
+    >>> from pcse.input import YAMLAgroManagementReader
     >>> agromanagement = YAMLAgroManagementReader(os.path.join(data_dir, "lintul3_springwheat.amgt"))
     >>> print(agromanagement)
     !!python/object/new:pcse.fileinput.yaml_agro_loader.YAMLAgroManagementReader

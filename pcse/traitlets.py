@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), April 2014
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 """
 This module is here only to ensure that all PCSE modules can import internally from .traitlets
 while this module loads the actual traitlets modules from the correct location. Moreover,
@@ -58,3 +58,11 @@ class Float(tr.Float):
         except:
             self.error(obj, value)
         return value
+
+
+class Int(tr.Int):
+
+    def __init__(self, *args, **kwargs):
+        if 'allow_none' not in kwargs:
+            kwargs['allow_none'] = True
+        tr.Int.__init__(self, *args, **kwargs)

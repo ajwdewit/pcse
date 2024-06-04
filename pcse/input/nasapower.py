@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2018 Alterra, Wageningen-UR
-# Allard de Wit (allard.dewit@wur.nl), July 2018
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
+# Allard de Wit (allard.dewit@wur.nl), March 2024
 import os
 import datetime as dt
 
@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import requests
 
-from ..base import WeatherDataProvider, WeatherDataContainer
-from ..util import ea_from_tdew, reference_ET, check_angstromAB
-from ..exceptions import PCSEError
-from ..settings import settings
+from pcse.base import WeatherDataProvider, WeatherDataContainer
+from pcse.util import ea_from_tdew, reference_ET, check_angstromAB
+from pcse.exceptions import PCSEError
+from pcse.settings import settings
 
 # Define some lambdas to take care of unit conversions.
 MJ_to_J = lambda x: x * 1e6
@@ -32,18 +32,19 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
 
     The NASA POWER database is a global database of daily weather data
     specifically designed for agrometeorological applications. The spatial
-    resolution of the database is 0.5x0.5 degrees (as of 2018). It is
+    resolution of the database is 0.25x0.25 degrees (as of 2018). It is
     derived from weather station observations in combination with satellite
     data for parameters like radiation.
 
-    The weather data is updated with a delay of about 3 months which makes
+    The weather data is updated with a delay of about 5 days on realtime
+    (depending on the variable) which makes
     the database unsuitable for real-time monitoring, nevertheless the
     POWER database is useful for many other studies and it is a major
     improvement compared to the monthly weather data that were used with
     WOFOST in the past.
 
     For more information on the NASA POWER database see the documentation
-    at: http://power.larc.nasa.gov/common/AgroclimatologyMethodology/Agro_Methodology_Content.html
+    at: https://power.larc.nasa.gov/docs/
 
     The `NASAPowerWeatherDataProvider` retrieves the weather from the
     th NASA POWER API and does the necessary conversions to be compatible
@@ -58,9 +59,9 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     it will fall back to the existing cache file. The update of the cache
     file can be forced by setting `force_update=True`.
 
-    Finally, note that any latitude/longitude within a 0.5x0.5 degrees grid box
+    Finally, note that any latitude/longitude within a 0.25x0.25 degrees grid box
     will yield the same weather data, e.g. there is no difference between
-    lat/lon 5.3/52.1 and lat/lon 5.1/52.4. Nevertheless slight differences
+    lat/lon 5.3/52.1 and lat/lon 5.35/52.2. Nevertheless slight differences
     in PCSE simulations may occur due to small differences in day length.
 
     """

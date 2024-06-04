@@ -11,7 +11,7 @@ import yaml
 
 from ..engine import Engine
 from ..base import ParameterProvider
-from ..fileinput import PCSEFileReader, CABOWeatherDataProvider
+from ..input import PCSEFileReader, CABOWeatherDataProvider
 
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
 

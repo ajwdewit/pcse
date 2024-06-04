@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright (c) 2004-2015 Alterra, Wageningen-UR
+# Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl)
 # and Zacharias Steinmetz (stei4785@uni-landau.de), Aug 2015
 """A weather data provider reading its data from CSV files.
