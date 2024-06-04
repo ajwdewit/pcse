@@ -13,7 +13,7 @@ AUTHOR = "Allard de Wit"
 AUTHOR_EMAIL = 'allard.dewit@wur.nl'
 URL = 'http://github.com/ajwdewit/pcse/'
 LICENSE="EUPL"
-VERSION = "6.0.0"
+VERSION = "6.0.1"
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -43,7 +43,7 @@ setup(
                       'requests>=2.0.0',
                       'pandas>=0.25',
                       'traitlets-pcse==5.0.0.dev',
-                      'dotmap==1.3',
+                      'dotmap>=1.3',
                       ],
     author_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
