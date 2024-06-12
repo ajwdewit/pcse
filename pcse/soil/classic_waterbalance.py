@@ -515,9 +515,7 @@ class WaterbalanceFD(SimulationObject):
         s.TSR += r.DTSR * delt
 
         # amount of water in rooted zone
-        print("before ", day, s.W)
         s.W += r.DW * delt
-        print("after ",day, s.W)
         assert s.W >= 0., "Negative amount of water in root zone on day %s: %s" % (day, s.W)
 
         # total percolation and loss of water by deep leaching
