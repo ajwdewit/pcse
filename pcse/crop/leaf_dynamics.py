@@ -678,10 +678,7 @@ class WOFOST_Leaf_Dynamics_N(SimulationObject):
         # physiologic ageing of leaves per time step
         r.FYSAGE = max(0., (drv.TEMP - p.TBASE)/(35. - p.TBASE))
 
-        ## added IS
-        ## correction SLA due to nutrient stress
-
-        ## specific leaf area of leaves per time step
+        # specific leaf area of leaves per time step
         r.SLAT = p.SLATB(k.DVS)
 
         # leaf area not to exceed exponential growth curve

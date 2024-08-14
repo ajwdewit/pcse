@@ -24,9 +24,13 @@ def totass8(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV
     FORMAL PARAMETERS:  (I=input,O=output,C=control,IN=init,T=time)
     name   type meaning                                    units  class
     ----   ---- -------                                    -----  -----
+    AMAX_LNB   Specific leaf nitrogen below which there is
+               no gross photosynthesis                        Cr      |kg ha-1|
+    AMAX_REF   Maximum leaf CO2 assim. rate under reference   TCr     |kg ha-1 hr-1|
+               conditions and high specific leaf nitrogen.
+    AMAX_SLP   Slope of linear response of AMAX to specific   Cr      |kg hr-1 kg-1|
+               leaf nitrogen content at reference conditions  Cr
     DAYL    R4  Astronomical daylength (base = 0 degrees)     h      I
-    AMAX    R4  Assimilation rate at light saturation      kg CO2/   I
-                                                          ha leaf/h
     EFF     R4  Initial light use efficiency              kg CO2/J/  I
                                                           ha/h m2 s
     KN      R4  Extinction coefficient of N in the canopy     -      I
