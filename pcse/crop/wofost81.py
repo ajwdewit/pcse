@@ -256,6 +256,7 @@ class Wofost81(SimulationObject):
         self._check_carbon_balance(day, r.DMI, r.GASS, r.MRES,
                                    CVF, pf)
 
+        # TODO: move reallocation to separate module that can be shared between 7.3 and 8.1
         # Reallocation from stems/leaves
         if k.DVS < p.REALLOC_DVS:
             r.REALLOC_LV = 0.0
