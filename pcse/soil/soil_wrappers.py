@@ -49,7 +49,7 @@ class BaseSoilWrapper(SimulationObject):
 class SoilModuleWrapper_PP(BaseSoilWrapper):
     """This wraps the soil water balance and soil N balance for potential production.
     """
-    waterbalance_class = WaterBalanceLayered_PP
+    waterbalance_class = WaterbalancePP
     nutrientbalance_class = N_PotentialProduction
 
 

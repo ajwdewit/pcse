@@ -125,6 +125,8 @@ class Wofost73(SimulationObject):
         HI    = Float(-99.)
         DOF = Instance(datetime.date)
         FINISH_TYPE = Unicode(allow_none=True)
+        LV_REALLOCATED = Float(0.)
+        ST_REALLOCATED = Float(0.)
 
     class RateVariables(RatesTemplate):
         GASS  = Float(-99.)
@@ -135,7 +137,8 @@ class Wofost73(SimulationObject):
         REALLOC_LV = Float(0.)
         REALLOC_ST = Float(0.)
         REALLOC_SO = Float(0.)
-
+        RLV_REALLOCATED = Float(0.)
+        RST_REALLOCATED = Float(0.)
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -166,7 +169,7 @@ class Wofost73(SimulationObject):
         self.states = self.StateVariables(kiosk,
                                           publish=["TAGP", "GASST", "MREST", "HI"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0,
-                                          CTRAT=0.0, HI=0.0,
+                                          CTRAT=0.0, HI=0.0, LV_REALLOCATED = 0., ST_REALLOCATED = 0.,
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
@@ -241,11 +244,18 @@ class Wofost73(SimulationObject):
                 self._WST_REALLOC = k.WST * p.REALLOC_STEM_FRACTION
                 self._WLV_REALLOC = k.WLV * p.REALLOC_LEAF_FRACTION
             # Reallocation rate in terms of loss of stem/leaf dry matter
-            r.REALLOC_LV = self._WLV_REALLOC * p.REALLOC_LEAF_RATE
-            r.REALLOC_ST = self._WST_REALLOC * p.REALLOC_STEM_RATE
+            if self.states.LV_REALLOCATED < self._WLV_REALLOC:
+                r.REALLOC_LV = min(self._WLV_REALLOC * p.REALLOC_LEAF_RATE, self._WLV_REALLOC - self.states.LEAF_REALLOCATED)
+            else:
+                r.REALLOC_LV = 0.
+
+            if self.states.ST_REALLOCATED < self._WST_REALLOC:
+                r.REALLOC_ST = min(self._WST_REALLOC * p.REALLOC_STEM_RATE, self._WST_REALLOC - self.states.ST_REALLOCATED)
+            else:
+                r.REALLOC_ST = 0.
             # Reallocation rate in terms of increase in storage organs taking
             # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
-            r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST)  * p.REALLOC_EFFICIENCY
+            r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST) * p.REALLOC_EFFICIENCY
 
         # distribution over plant organ
 

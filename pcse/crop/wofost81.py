@@ -256,6 +256,7 @@ class Wofost81(SimulationObject):
         self._check_carbon_balance(day, r.DMI, r.GASS, r.MRES,
                                    CVF, pf)
 
+        # TODO: move reallocation to separate module that can be shared between 7.3 and 8.1
         # Reallocation from stems/leaves
         if k.DVS < p.REALLOC_DVS:
             r.REALLOC_LV = 0.0
@@ -266,19 +267,18 @@ class Wofost81(SimulationObject):
                 self._WST_REALLOC = k.WST * p.REALLOC_STEM_FRACTION
                 self._WLV_REALLOC = k.WLV * p.REALLOC_LEAF_FRACTION
             # Reallocation rate in terms of loss of stem/leaf dry matter
-            if(self.states.LV_REALLOCATED < self._WLV_REALLOC):
+            if self.states.LV_REALLOCATED < self._WLV_REALLOC:
                 r.REALLOC_LV = min(self._WLV_REALLOC * p.REALLOC_LEAF_RATE, self._WLV_REALLOC - self.states.LEAF_REALLOCATED)
             else:
                 r.REALLOC_LV = 0.
 
-            if(self.states.ST_REALLOCATED < self._WST_REALLOC):
+            if self.states.ST_REALLOCATED < self._WST_REALLOC:
                 r.REALLOC_ST = min(self._WST_REALLOC * p.REALLOC_STEM_RATE, self._WST_REALLOC - self.states.ST_REALLOCATED)
             else:
                 r.REALLOC_ST = 0.
             # Reallocation rate in terms of increase in storage organs taking
             # into account CVL/CVO ratio, CVS/CVO ratio and losses due to respiration
-            r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST)  * p.REALLOC_EFFICIENCY
-
+            r.REALLOC_SO = (r.REALLOC_LV + r.REALLOC_ST) * p.REALLOC_EFFICIENCY
 
         # Calculate N stress indices
         self.n_stress(day, drv)

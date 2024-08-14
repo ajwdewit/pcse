@@ -31,3 +31,4 @@ from .yaml_cropdataprovider import YAMLCropDataProvider
 from .nasapower import NASAPowerWeatherDataProvider
 from .sitedataproviders import WOFOST72SiteDataProvider, WOFOST73SiteDataProvider, \
     WOFOST81SiteDataProvider_Classic, WOFOST81SiteDataProvider_SNOMIN
+from .soildataproviders import DummySoilDataProvider

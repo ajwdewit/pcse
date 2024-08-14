@@ -152,23 +152,18 @@ class N_Crop_Dynamics(SimulationObject):
         self.demand_uptake.calc_rates(day, drv)
 
         # Compute loss of NPK due to death of plant material
-        #rates.RNdeathLV = params.NRESIDLV * k.DRLV
-        #rates.RNdeathST = params.NRESIDST * k.DRST
-        #rates.RNdeathRT = params.NRESIDRT * k.DRRT
-
-        if(k.WLV > 0.):
+        if k.WLV > 0.:
             rates.RNdeathLV = (states.NamountLV / k.WLV) * k.DRLV
         else:
             rates.RNdeathLV = 0.
-        if(k.WLV > 0.):
+        if k.WST > 0.:
             rates.RNdeathST = (states.NamountST / k.WST) * k.DRST
         else:
             rates.RNdeathST = 0.
-        if(k.WRT > 0.):
+        if k.WRT > 0.:
             rates.RNdeathRT = (states.NamountRT / k.WRT) * k.DRRT
         else:
             rates.RNdeathRT= 0.
-
 
         # N rates in leaves, stems, root and storage organs computed as
         # uptake - translocation - death.
@@ -213,5 +208,5 @@ class N_Crop_Dynamics(SimulationObject):
                    (self.NamountLVI, self.NamountSTI, self.NamountRTI, self.NamountSOI)
             msg += "NamountLV: %f, NamountST: %f, NamountRT: %f, NamountSO: %f\n" % \
                    (s.NamountLV, s.NamountST, s.NamountRT, s.NamountSO)
-            msg += "NLOSST: %f\n" % (s.NlossesTotal)
+            msg += "NLOSST: %f\n" % s.NlossesTotal
             raise exc.NutrientBalanceError(msg)

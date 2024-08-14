@@ -821,32 +821,6 @@ def check_date(indate):
             raise KeyError(msg % indate)
 
 
-class DummySoilDataProvider(dict):
-    """This class is to provide some dummy soil parameters for potential production simulation.
-
-    Simulation of potential production levels is independent of the soil. Nevertheless, the model
-    does not some parameter values. This data provider provides some hard coded parameter values for
-    this situation.
-    """
-    _defaults = {"SMFCF":0.3,
-                 "SM0":0.4,
-                 "SMW":0.1,
-                 "RDMSOL":120,
-                 "CRAIRC":0.06,
-                 "K0":10.,
-                 "SOPE":10.,
-                 "KSUB":10.}
-
-    def __init__(self):
-        dict.__init__(self)
-        self.update(self._defaults)
-
-    def copy(self):
-        """
-        Overrides the inherited dict.copy method, which returns a dict.
-        This instead preserves the class and attributes like .header.
-        """
-        return copy.copy(self)
 
 
 def version_tuple(v):
@@ -863,142 +837,6 @@ def version_tuple(v):
     True
     """
     return tuple(map(int, (v.split("."))))
-
-
-class _GenericSiteDataProvider(dict):
-    """Generic Site data provider
-
-    It just checks the values provided as keywords given the _defaults and _required values
-
-    _defaults = {"VARNAME": (default, {maxvalue, minvalue}, type),
-                }
-    _required = ["VARNAME"]
-    """
-
-    def __init__(self, **kwargs):
-        dict.__init__(self)
-
-        for par_name, (default_value, par_range, par_conversion) in self._defaults.items():
-            if par_name not in kwargs:
-                # parameter was not provided, use the default if possible
-                if par_name in self._required:
-                    msg = "Value for parameter '%s' must be provided!" % par_name
-                    raise exc.PCSEError(msg)
-                else:
-                    v = default_value
-            else:
-                # parameter was provided, check value for type and range
-                v = par_conversion(kwargs.pop(par_name))
-                if isinstance(par_range, set):
-                    if v not in par_range:
-                        msg = "Value for parameter '%s' can only have values: %s" % (par_name, par_range)
-                        raise exc.PCSEError(msg)
-                else:
-                    if not (par_range[0] <= v <= par_range[1]):
-                        msg = "Value for parameter '%s' out of range %s-%s" % \
-                              (par_name, par_range[0], par_range[1])
-                        raise exc.PCSEError(msg)
-            self[par_name] = v
-
-        # Check if kwargs is empty
-        if kwargs:
-            msg = "Unknown parameter values provided to WOFOSTSiteDataProvider: %s" % kwargs
-            print(msg)
-
-
-class WOFOST72SiteDataProvider(_GenericSiteDataProvider):
-    """Site data provider for WOFOST 7.2.
-
-    Site specific parameters for WOFOST 7.2 can be provided through this data provider as well as through
-    a normal python dictionary. The sole purpose of implementing this data provider is that the site
-    parameters for WOFOST are documented, checked and that sensible default values are given.
-
-    The following site specific parameter values can be set through this data provider::
-
-        - IFUNRN    Indicates whether non-infiltrating fraction of rain is a function of storm size (1)
-                    or not (0). Default 0
-        - NOTINF    Maximum fraction of rain not-infiltrating into the soil [0-1], default 0.
-        - SSMAX     Maximum depth of water that can be stored on the soil surface [cm]
-        - SSI       Initial depth of water stored on the surface [cm]
-        - WAV       Initial amount of water in total soil profile [cm]
-        - SMLIM     Initial maximum moisture content in initial rooting depth zone [0-1], default 0.4
-
-    Currently only the value for WAV is mandatory to specify.
-    """
-
-    _defaults = {"IFUNRN": (0, {0, 1}, int),
-                 "NOTINF": (0, [0., 1.], float),
-                 "SSI": (0., [0., 100.], float),
-                 "SSMAX": (0., [0., 100.], float),
-                 "WAV": (None, [0., 100.], float),
-                 "SMLIM": (0.4, [0., 1.], float)}
-    _required = ["WAV"]
-
-# This is just to keep old code working
-WOFOST71SiteDataProvider = WOFOST72SiteDataProvider
-
-
-class WOFOST80SiteDataProvider(_GenericSiteDataProvider):
-    """Site data provider for WOFOST 8.0.
-
-    Site specific parameters for WOFOST 8.0 can be provided through this data provider as well as through
-    a normal python dictionary. The sole purpose of implementing this data provider is that the site
-    parameters for WOFOST are documented, checked and that sensible default values are given.
-
-    The following site specific parameter values can be set through this data provider::
-
-        - IFUNRN        Indicates whether non-infiltrating fraction of rain is a function of
-                        storm size (1) or not (0). Default 0
-        - NOTINF        Maximum fraction of rain not-infiltrating into the soil [0-1],
-                        default 0.
-        - SSMAX         Maximum depth of water that can be stored on the soil surface [cm]
-        - SSI           Initial depth of water stored on the surface [cm]
-        - WAV           Initial amount of water in total soil profile [cm]
-        - SMLIM         Initial maximum moisture content in initial rooting depth zone [0-1],
-                        default 0.4
-        - CO2           Atmospheric CO2 level (ppm), default 360.
-        - BG_N_SUPPLY   Background N supply through atmospheric deposition in kg/ha/day. Can be
-                        in the order of 25 kg/ha/year in areas with high N pollution. Default 0.0
-        - NSOILBASE     Base N amount available in the soil. This is often estimated as the nutrient
-                        left over from the previous growth cycle (surplus nutrients, crop residues
-                        or green manure).
-        - NSOILBASE_FR  Daily fraction of soil N coming available through mineralization
-        - BG_P_SUPPLY   Background P supply in kg/ha/day. Usually this is mainly through deposition
-                        of dust and an order of magnitude smaller than N deposition. Default 0.0
-        - PSOILBASE     Base P amount available in the soil.
-        - PSOILBASE_FR  Daily fraction of soil P coming available through mineralization
-        - BG_K_SUPPLY   Background P supply in kg/ha/day. Default 0.0
-        - KSOILBASE     Base K amount available in the soil
-        - KSOILBASE_FR  Daily fraction of soil K coming available through mineralization
-        - NAVAILI       Amount of N available in the pool at initialization of the system [kg/ha]
-        - PAVAILI       Amount of P available in the pool at initialization of the system [kg/ha]
-        - KAVAILI       Amount of K available in the pool at initialization of the system [kg/ha]
-
-    Currently, the parameters for initial water availability (WAV) and initial availability of
-    nutrients (NAVAILI, PAVAILI, KAVAILI) are mandatory to specify.
-    """
-
-    _defaults = {"IFUNRN": (0, {0, 1}, int),
-                 "NOTINF": (0, [0., 1.], float),
-                 "SSI": (0., [0., 100.], float),
-                 "SSMAX": (0., [0., 100.], float),
-                 "WAV": (None, [0., 100.], float),
-                 "SMLIM": (0.4, [0., 1.], float),
-                 "CO2": (360., [300., 1400.], float),
-                 "BG_N_SUPPLY": (0, (0, 0.1), float),
-                 "NSOILBASE": (0, (0, 100), float),
-                 "NSOILBASE_FR": (0.025, (0, 100), float),
-                 "BG_P_SUPPLY": (0, (0, 0.05), float),
-                 "PSOILBASE": (0, (0, 100), float),
-                 "PSOILBASE_FR": (0.025, (0, 100), float),
-                 "BG_K_SUPPLY": (0, (0, 0.05), float),
-                 "KSOILBASE": (0, (0, 100), float),
-                 "KSOILBASE_FR": (0.025, (0, 0.05), float),
-                 "NAVAILI": (None, (0, 250), float),
-                 "PAVAILI": (None, (0, 50), float),
-                 "KAVAILI": (None, (0, 250), float),
-                 }
-    _required = ["WAV", "NAVAILI", "PAVAILI", "KAVAILI"]
 
 
 def get_user_home():
@@ -1032,3 +870,32 @@ class DotMap(dotmap.DotMap):
     def __init__(self, *args, **kwargs):
         kwargs.update(_dynamic=False)
         super().__init__(*args, **kwargs)
+
+
+class DummySoilDataProvider(dict):
+    """This class is to provide some dummy soil parameters for potential production simulation.
+
+    Simulation of potential production levels is independent of the soil. Nevertheless, the model
+    does not some parameter values. This data provider provides some hard coded parameter values for
+    this situation.
+    """
+    _defaults = {"SMFCF":0.3,
+                 "SM0":0.4,
+                 "SMW":0.1,
+                 "RDMSOL":120,
+                 "CRAIRC":0.06,
+                 "K0":10.,
+                 "SOPE":10.,
+                 "KSUB":10.}
+
+    def __init__(self):
+        print("Using this class from pcse.util is deprecated, use pcse.input.DummySoilDataProvider")
+        dict.__init__(self)
+        self.update(self._defaults)
+
+    def copy(self):
+        """
+        Overrides the inherited dict.copy method, which returns a dict.
+        This instead preserves the class and attributes like .header.
+        """
+        return copy.copy(self)
