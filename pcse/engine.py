@@ -446,7 +446,7 @@ class Engine(BaseEngine):
 class CGMSEngine(Engine):
     """Engine to mimic CGMS behaviour.
 
-    The original CGMS did not terminate when the crop cycles was finished but instead continued with its
+    The original CGMS did not terminate when the crop cycle was finished but instead continued with its
     simulation cycle but without altering the crop and soil components. This had the effect that after the
     crop cycle finished, all state variables were kept at the same value while the day counter increased.
     This behaviour is useful for two reasons:

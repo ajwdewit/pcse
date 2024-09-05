@@ -178,10 +178,10 @@ as a simple python dictionary. However, it is more convenient to use the
 :ref:`WOFOST72SiteDataProvider <WOFOST72SiteDataProvider>` that documents the
 site parameters and provides sensible defaults::
 
-    >>> from pcse.util import WOFOST72SiteDataProvider
-    >>> sitedata = WOFOST72SiteDataProvider(WAV=100, CO2=360)
+    >>> from pcse.input import WOFOST72SiteDataProvider
+    >>> sitedata = WOFOST72SiteDataProvider(WAV=100)
     >>> print(sitedata)
-    {'SMLIM': 0.4, 'NOTINF': 0, 'CO2': 360.0, 'SSI': 0.0, 'SSMAX': 0.0, 'IFUNRN': 0, 'WAV': 100.0}
+    {'SMLIM': 0.4, 'NOTINF': 0, 'SSI': 0.0, 'SSMAX': 0.0, 'IFUNRN': 0, 'WAV': 100.0}
 
 Finally, we need to pack the different sets of parameters into one variable
 using the `ParameterProvider`. This is needed because PCSE expects one
