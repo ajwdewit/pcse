@@ -22,7 +22,7 @@ from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
 from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
      Storage_Organ_Dynamics
 
-#-------------------------------------------------------------------------------
+
 class Wofost73(SimulationObject):
     """Top level object organizing the different components of the WOFOST crop
     simulation.
@@ -139,6 +139,7 @@ class Wofost73(SimulationObject):
         REALLOC_SO = Float(0.)
         RLV_REALLOCATED = Float(0.)
         RST_REALLOCATED = Float(0.)
+
     def initialize(self, day, kiosk, parvalues):
         """
         :param day: start date of the simulation
@@ -180,7 +181,7 @@ class Wofost73(SimulationObject):
             
         # assign handler for CROP_FINISH signal
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
-    #---------------------------------------------------------------------------
+
     @staticmethod
     def _check_carbon_balance(day, DMI, GASS, MRES, CVF, pf):
         (FR, FL, FS, FO) = pf
@@ -193,7 +194,6 @@ class Wofost73(SimulationObject):
                    (FR, FL, FS, FO, DMI, CVF)
             raise exc.CarbonBalanceError(msg)
 
-    #---------------------------------------------------------------------------
     @prepare_rates
     def calc_rates(self, day, drv):
         p = self.params
@@ -245,7 +245,7 @@ class Wofost73(SimulationObject):
                 self._WLV_REALLOC = k.WLV * p.REALLOC_LEAF_FRACTION
             # Reallocation rate in terms of loss of stem/leaf dry matter
             if self.states.LV_REALLOCATED < self._WLV_REALLOC:
-                r.REALLOC_LV = min(self._WLV_REALLOC * p.REALLOC_LEAF_RATE, self._WLV_REALLOC - self.states.LEAF_REALLOCATED)
+                r.REALLOC_LV = min(self._WLV_REALLOC * p.REALLOC_LEAF_RATE, self._WLV_REALLOC - self.states.LV_REALLOCATED)
             else:
                 r.REALLOC_LV = 0.
 
@@ -268,7 +268,6 @@ class Wofost73(SimulationObject):
         self.so_dynamics.calc_rates(day, drv)
         self.lv_dynamics.calc_rates(day, drv)
 
-    #---------------------------------------------------------------------------
     @prepare_states
     def integrate(self, day, delt=1.0):
         rates = self.rates
@@ -303,13 +302,16 @@ class Wofost73(SimulationObject):
                       self.kiosk["TWSO"]
 
         # total gross assimilation and maintenance respiration 
-        states.GASST += rates.GASS
-        states.MREST += rates.MRES
+        states.GASST += rates.GASS * delt
+        states.MREST += rates.MRES * delt
         
         # total crop transpiration (CTRAT)
-        states.CTRAT += self.kiosk["TRA"]
-        
-    #---------------------------------------------------------------------------
+        states.CTRAT += self.kiosk.TRA * delt
+
+        # Keep track of amount of reallocated biomass
+        states.LV_REALLOCATED += rates.REALLOC_LV * delt
+        states.ST_REALLOCATED += rates.REALLOC_ST * delt
+
     @prepare_states
     def finalize(self, day):
 
@@ -323,7 +325,6 @@ class Wofost73(SimulationObject):
         
         SimulationObject.finalize(self, day)
 
-    #---------------------------------------------------------------------------
     def _on_CROP_FINISH(self, day, finish_type=None):
         """Handler for setting day of finish (DOF) and reason for
         crop finishing (FINISH).

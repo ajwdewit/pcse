@@ -2,13 +2,10 @@
 # Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2024
 import logging
-from datetime import date
 
 from ..traitlets import (HasTraits, List, Float, Int, Instance, Dict, Bool, All)
-from ..pydispatch import dispatcher
 from ..util import Afgen
 from .. import exceptions as exc
-from ..settings import settings
 from .variablekiosk import VariableKiosk
 
 
@@ -283,7 +280,7 @@ class StatesTemplate(StatesRatesCommon):
         if len(kwargs) > 0:
             msg = ("Initial value given for unknown state variable(s): " +
                    "%s") % kwargs.keys()
-            logging.warn(msg)
+            self.logger.warning(msg)
 
         # Lock the object to prevent further changes at this stage.
         self._locked = True
@@ -414,7 +411,7 @@ class RatesTemplate(StatesRatesCommon):
                 msg = ("Rate variable '%s' not of type Float, Bool or Int. " +
                        "Its zero value cannot be determined and it will " +
                        "not be treated by zerofy().") % name
-                self.logger.warning(msg)
+                self.logger.info(msg)
         return d
 
     def zerofy(self):

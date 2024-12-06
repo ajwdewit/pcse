@@ -134,8 +134,8 @@ class CropCalendar(HasTraits, DispatcherObject):
         if self.crop_end_type == "maturity":
             crop_end_date = self.crop_start_date + timedelta(days=self.max_duration)
         if self.crop_start_date >= crop_end_date:
-            msg = "crop_end_date before or equal to crop_start_date for crop '%s'!"
-            raise exc.PCSEError(msg % (self.crop_start_date, self.crop_end_date))
+            msg = "crop_end_date (%s) before or equal to crop_start_date (%s) for crop '%s'!"
+            raise exc.PCSEError(msg % (self.crop_end_date, self.crop_start_date, self.crop_name))
 
         # check that crop_start_date is within the campaign interval
         r = check_date_range(self.crop_start_date, campaign_start_date, next_campaign_start_date)

@@ -320,7 +320,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
         df_power = {}
         for varname in self.power_variables:
             s = pd.Series(powerdata["properties"]["parameter"][varname])
-            s[s == fill_value] = np.NaN
+            s[s == fill_value] = np.nan
             df_power[varname] = s
         df_power = pd.DataFrame(df_power)
         df_power["DAY"] = pd.to_datetime(df_power.index, format="%Y%m%d")
