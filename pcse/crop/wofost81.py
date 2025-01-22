@@ -268,7 +268,7 @@ class Wofost81(SimulationObject):
                 self._WLV_REALLOC = k.WLV * p.REALLOC_LEAF_FRACTION
             # Reallocation rate in terms of loss of stem/leaf dry matter
             if self.states.LV_REALLOCATED < self._WLV_REALLOC:
-                r.REALLOC_LV = min(self._WLV_REALLOC * p.REALLOC_LEAF_RATE, self._WLV_REALLOC - self.states.LEAF_REALLOCATED)
+                r.REALLOC_LV = min(self._WLV_REALLOC * p.REALLOC_LEAF_RATE, self._WLV_REALLOC - self.states.LV_REALLOCATED)
             else:
                 r.REALLOC_LV = 0.
 
@@ -332,15 +332,15 @@ class Wofost81(SimulationObject):
                       self.kiosk.TWST + \
                       self.kiosk.TWSO
 
-        #
+        # Keep track of amount of reallocated biomass
         states.LV_REALLOCATED += rates.REALLOC_LV * delt
         states.ST_REALLOCATED += rates.REALLOC_ST * delt
 
         # total gross assimilation and maintenance respiration 
-        states.GASST += rates.GASS
-        states.MREST += rates.MRES
-        states.CEVST += self.kiosk.EVS
-        states.CTRAT += self.kiosk.TRA
+        states.GASST += rates.GASS * delt
+        states.MREST += rates.MRES * delt
+        states.CEVST += self.kiosk.EVS * delt
+        states.CTRAT += self.kiosk.TRA * delt
         
     #---------------------------------------------------------------------------
     @prepare_states
