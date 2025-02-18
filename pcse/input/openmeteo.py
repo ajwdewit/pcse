@@ -1,5 +1,11 @@
+# -*- coding: utf-8 -*-
+# Artificial Intelligence Group, WUR
+# Hilmy Baja (hilmy.baja@wur.nl), February 2025
+# A lot of code borrowed from nasapower.py by Allard de Wit
+
 import os
 import datetime
+import time
 
 from typing import Union
 
@@ -30,7 +36,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     at initialization. When you call it with a single date or a date range,
     it fetches and returns the corresponding weather data.
     """
-
+    HTTP_OK = 200
     angstA = 0.29
     angstB = 0.49
 
@@ -50,6 +56,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     }
 
     dict_historical_models = {
+        "best_match": datetime.date(1941, 1, 1),  # global, variable
         "era5": datetime.date(1941, 1, 1),  # global, 0.25deg
         "era5_land": datetime.date(1951, 1, 1),  # global, 0.1deg
         "ecmwf_ifs": datetime.date(2017, 1, 1),  # global, 9km
@@ -57,10 +64,10 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     }
 
     delay_historical_models = {
-        "era5": 5,  # global, 0.25deg
-        "era5_land": 5,  # global, 0.1deg
-        "ecmwf_ifs": 2,  # global, 9km
-        "cerra": 0,
+        "era5": 6,  # global, 0.25deg
+        "era5_land": 6,  # global, 0.1deg
+        "ecmwf_ifs": 3,  # global, 9km
+        "cerra": 1,
     }
 
     def __init__(
@@ -139,8 +146,9 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     def _fetch_data(self, start_date):
         """
         Internal method to fetch and prepare weather data for a given date range.
-        Returns a DataFrame indexed by date.
+        Returns a cache file.
         """
+
         url = self._get_url(previous_runs=True)
         params = {
             "latitude": self.latitude,
@@ -150,19 +158,10 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
             "daily": self.daily_variables,
             "hourly": self.hourly_variables,
             "timezone": self.timezone,
-            "models": self.model,
+            "models": self.get_model,
         }
-        print(params)
-        # Use the client that has caching and retry support.
-        try:
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
-            response_json = response.json()
-        except requests.RequestException as e:
-            print(f"Error fetching weather data: {e}")
-            return None
 
-
+        response_json = self._try_response(url, params)
 
         self.elevation = response_json.get('elevation', 0)
 
@@ -174,6 +173,65 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
 
         cache_filename = self._get_cache_filename(self.latitude, self.longitude)
         self._dump(cache_filename)
+
+    def _request_separately(self, url, start_date):
+        # Split daily and hourly variables into two requests
+        mid_daily = len(self.daily_variables) // 2
+        mid_hourly = len(self.hourly_variables) // 2
+
+        params_first = {
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "start_date": format_date(start_date),
+            "end_date": format_date(self._get_end_date()),
+            "daily": self.daily_variables[:mid_daily],
+            "hourly": self.hourly_variables[:mid_hourly],
+            "timezone": self.timezone,
+            # "models": self.get_model,
+        }
+
+        params_second = {
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "start_date": format_date(start_date),
+            "end_date": format_date(self._get_end_date()),
+            "daily": self.daily_variables[mid_daily:],
+            "hourly": self.hourly_variables[mid_hourly:],
+            "timezone": self.timezone,
+            # "models": self.get_model,
+        }
+
+        response_json_first = self._try_response(url, params_first)
+
+        # pause a bit between requests
+        time.sleep(5)
+
+        response_json_second = self._try_response(url, params_second)
+
+        # Combine specific keys from both responses
+        response_json = response_json_first.copy()
+        for key in ['hourly_units', 'hourly', 'daily_units', 'daily']:
+            if key in response_json_first and key in response_json_second:
+                response_json[key].update(response_json_second[key])
+        return response_json
+
+    # request routine with error checks
+    def _try_response(self, url, params):
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            self._check_response_status(response)
+
+            response_json = response.json()
+            return response_json
+        except requests.RequestException as e:
+            print(f"Error fetching weather data: {e}")
+            return None
+
+    def _check_response_status(self, response):
+        if response.status_code != self.HTTP_OK:
+            msg = ("Failed retrieving OpenMeteo data, server returned HTTP " +
+                   "code: %i on following URL %s") % (response.status_code, response.url)
+            raise PCSEError(msg)
 
     def _find_cache_file(self, latitude, longitude):
         """Try to find a cache file for given latitude/longitude.
@@ -515,15 +573,22 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     @property
     def hourly_variables(self):
         return [
-            "temperature_2m",
             self._variable_wind(),
-            "dewpoint_2m",
+            "temperature_2m",
+            "dewpoint_2m"
         ]
+
+    @property
+    def get_model(self):
+        if self.model in OpenMeteoWeatherProvider.dict_historical_models:
+            return ""
+        else:
+            return self.model
 
 
 if __name__ == '__main__':
     # Example of grabbing weather from Wageningen
-    omwp = OpenMeteoWeatherProvider(51.98, 5.65)
+    omwp = OpenMeteoWeatherProvider(51.98, 5.65, openmeteo_model='era5_land', force_update=True)
 
     # Get weather for a single day.
     single_date = datetime.date(2024, 5, 15)
