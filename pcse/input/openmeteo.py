@@ -20,17 +20,7 @@ from pcse.exceptions import PCSEError
 from pcse.settings import settings
 
 
-def format_date(date: Union[str, datetime.date]):
-    """
-    Converts a date or datetime object to a string in 'YYYY-MM-DD' format.
-    If d is already a string, it is returned unchanged.
-    """
-    if isinstance(date, (datetime.date, datetime)):
-        return date.strftime("%Y-%m-%d")
-    return date
-
-
-class OpenMeteoWeatherProvider(WeatherDataProvider):
+class OpenMeteoWeatherDataProvider(WeatherDataProvider):
     """
     A weather provider that uses the Open Meteo weather API.
     This object only needs a location (latitude and longitude)
@@ -43,14 +33,15 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
 
     To utilize a specific model, call it with the appropriate key argument.
     Be aware that there might be some nuances with using certain models.
+    This hasn't been tested thoroughly, so there might be some issues with the starting
+    date. Please provide an argument for the :start_date parameter if you find any issues.
     More info for each model is documented here: https://open-meteo.com/en/docs
 
-    If you don't specify a specific model, the Open Meteo API will automatically
+    If you don't specify a model, the Open Meteo API will automatically
     choose the best model for your chosen location.
-    It hasn't been tested thoroughly, so there might be some issues with the starting
-    date when using "best_match". Please provide an argument for the :start_date
-    parameter if you find any issues.
     """
+
+    # Some class Variables
     HTTP_OK = 200
     angstA = 0.29
     angstB = 0.49
@@ -171,8 +162,8 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         params = {
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "start_date": format_date(start_date),
-            "end_date": format_date(self._get_end_date()),
+            "start_date": self.format_date(start_date),
+            "end_date": self.format_date(self._get_end_date()),
             "daily": self.daily_variables,
             "hourly": self.hourly_variables,
             "timezone": self.timezone,
@@ -191,47 +182,6 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
 
         cache_filename = self._get_cache_filename(self.latitude, self.longitude)
         self._dump(cache_filename)
-
-    def _request_separately(self, url, start_date):
-        # Split daily and hourly variables into two requests
-        mid_daily = len(self.daily_variables) // 2
-        mid_hourly = len(self.hourly_variables) // 2
-
-        params_first = {
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "start_date": format_date(start_date),
-            "end_date": format_date(self._get_end_date()),
-            "daily": self.daily_variables[:mid_daily],
-            "hourly": self.hourly_variables[:mid_hourly],
-            "timezone": self.timezone,
-            # "models": self.get_model,
-        }
-
-        params_second = {
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "start_date": format_date(start_date),
-            "end_date": format_date(self._get_end_date()),
-            "daily": self.daily_variables[mid_daily:],
-            "hourly": self.hourly_variables[mid_hourly:],
-            "timezone": self.timezone,
-            # "models": self.get_model,
-        }
-
-        response_json_first = self._get_response(url, params_first)
-
-        # pause a bit between requests
-        time.sleep(5)
-
-        response_json_second = self._get_response(url, params_second)
-
-        # Combine specific keys from both responses
-        response_json = response_json_first.copy()
-        for key in ['hourly_units', 'hourly', 'daily_units', 'daily']:
-            if key in response_json_first and key in response_json_second:
-                response_json[key].update(response_json_second[key])
-        return response_json
 
     # request routine with error checks
     def _get_response(self, url, params):
@@ -277,16 +227,6 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         cache_filename = os.path.join(settings.METEO_CACHE_DIR, fname)
         return cache_filename
 
-    def _write_cache_file(self):
-        """Writes the meteo data from OpenMeteo Power to a cache file.
-        """
-        cache_filename = self._get_cache_filename(self.latitude, self.longitude)
-        try:
-            self._dump(cache_filename)
-        except (IOError, EnvironmentError) as e:
-            msg = "Failed to write cache to file '%s' due to: %s" % (cache_filename, e)
-            self.logger.warning(msg)
-
     def _load_cache_file(self):
         """Loads the data from the cache file. Return True if successful.
         """
@@ -316,9 +256,6 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         """
         Converts raw Open-Meteo weather data into a single daily DataFrame
         Currently, it is tailored to the inputs required by PCSE
-
-        Parameters:
-            weather_data (dict): JSON dictionary from Open-Meteo.
 
         Returns:
             DataFrame: Daily weather data with dates as index.
@@ -429,7 +366,10 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         return df_openmeteo
 
     def calculate_toa_radiation(self, day_of_year):
-        """Calculate daily Top-of-Atmosphere shortwave radiation"""
+        """
+        Calculate daily Top-of-Atmosphere shortwave radiation
+        This ToA estimation was taken from the FAO-56 paper.
+        """
         G_sc = 1361  # Solar constant (W/m²)
 
         # Earth-Sun distance correction factor
@@ -455,7 +395,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         return H0
 
     def _estimate_AngstAB(self, df):
-        """Determine Angstrom A/B parameters from Top-of-Atmosphere (ALLSKY_TOA_SW_DWN) and
+        """Determine Angstrom A/B parameters from Top-of-Atmosphere estimation and
         top-of-Canopy (ALLSKY_SFC_SW_DWN) radiation values.
 
         :param df: dataframe with Openmeteo data
@@ -503,54 +443,6 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
 
         return angstrom_a, angstrom_b
 
-    def _extract_weather_data(self, response, params) -> dict:
-        """
-        Extracts daily and hourly weather data from the response object.
-
-        Returns a dictionary with two keys, "daily" and "hourly", each of which is a dict.
-        The expected keys for daily are:
-            - "time"
-            - "temperature_2m_min"
-            - "temperature_2m_max"
-            - "precipitation_sum"
-            - "shortwave_radiation_sum"
-        The expected keys for hourly are:
-            - "time"
-            - "temperature_2m"
-            - "windspeed_10m"
-            - "dewpoint_2m"
-
-        Adjust the method names as required by your client.
-        """
-        # Extract daily data
-        daily = response.Daily()
-        daily_data = {
-            "date": pd.date_range(
-                start=pd.to_datetime(daily.Time(), unit="s", utc=True),
-                end=pd.to_datetime(daily.TimeEnd(), unit="s", utc=True),
-                freq=pd.Timedelta(seconds=daily.Interval()),
-                inclusive="left",
-            ),
-        }
-        daily_data["date"] = daily_data["date"].date
-
-        for i, name in enumerate(params["daily"]):
-            daily_data[name] = daily.Variables(i).ValuesAsNumpy()
-
-        # Extract hourly data.
-        hourly = response.Hourly()
-        hourly_data = {
-            "date": pd.date_range(
-                start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
-                end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
-                freq=pd.Timedelta(seconds=hourly.Interval()),
-                inclusive="left",
-            ),
-        }
-        for i, name in enumerate(params["hourly"]):
-            hourly_data[name] = hourly.Variables(i).ValuesAsNumpy()
-        return {"daily": daily_data, "hourly": hourly_data}
-
 
     def _get_url(self, previous_runs: bool = False) -> str:
         if (self.model in self.dict_forecast_models or self.is_forecast is True) and previous_runs is True:
@@ -581,13 +473,15 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         elif self.start_date is None and self.model == "best_match" and self.is_forecast is True:
             self.start_date = self.dict_forecast_models["icon_seamless"]
 
-    # def _variable_wind(self):
-    #     if self.model in OpenMeteoWeatherProvider.dict_forecast_models:
-    #         return "windspeed_10m"
-    #     elif self.model in OpenMeteoWeatherProvider.dict_historical_models:
-    #         return "wind_speed_10m"
-    #     else:
-    #         raise PCSEError()
+    @staticmethod
+    def format_date(date: Union[str, datetime.date]):
+        """
+        Converts a date or datetime object to a string in 'YYYY-MM-DD' format.
+        If d is already a string, it is returned unchanged.
+        """
+        if isinstance(date, (datetime.date, datetime)):
+            return date.strftime("%Y-%m-%d")
+        return date
 
     @property
     def daily_variables(self):
@@ -606,17 +500,10 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
             "dewpoint_2m"
         ]
 
-    @property
-    def get_model(self):
-        if self.model in OpenMeteoWeatherProvider.dict_historical_models:
-            return ""
-        else:
-            return self.model
-
 
 if __name__ == '__main__':
     # Example of grabbing weather from Wageningen
-    omwp = OpenMeteoWeatherProvider(51.98, 5.65, force_update=True)
+    omwp = OpenMeteoWeatherDataProvider(51.98, 5.65)
 
     # Get weather for a single day.
     single_date = datetime.date(2024, 5, 15)
