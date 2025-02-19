@@ -63,7 +63,7 @@ class OpenMeteoWeatherDataProvider(WeatherDataProvider):
     }
 
     dict_historical_models = {
-        "best_match": datetime.date(1941, 1, 1), # global, 0.25deg
+        "best_match": datetime.date(1951, 1, 1), # global, 0.25deg
         "era5": datetime.date(1941, 1, 1),  # global, 0.25deg
         "era5_land": datetime.date(1951, 1, 1),  # global, 0.1deg
         "ecmwf_ifs": datetime.date(2017, 1, 1),  # global, 9km
@@ -109,6 +109,8 @@ class OpenMeteoWeatherDataProvider(WeatherDataProvider):
         self.latitude = float(latitude)
         self.longitude = float(longitude)
         self.timezone = timezone
+
+        self.description = self._get_description
 
         self._check_cache(force_update)
 
@@ -445,33 +447,34 @@ class OpenMeteoWeatherDataProvider(WeatherDataProvider):
 
 
     def _get_url(self, previous_runs: bool = False) -> str:
-        if (self.model in self.dict_forecast_models or self.is_forecast is True) and previous_runs is True:
+        if self.model in self.dict_forecast_models and self.is_forecast is True and previous_runs is True:
             return "https://previous-runs-api.open-meteo.com/v1/forecast"
-        elif (self.model in self.dict_forecast_models or self.is_forecast is True) and previous_runs is False:
+        elif self.model in self.dict_forecast_models and self.is_forecast is True and previous_runs is False:
             return "https://api.open-meteo.com/v1/forecast"
-        elif self.model in self.dict_historical_models or self.is_forecast is False:
+        elif self.model in self.dict_historical_models and self.is_forecast is False:
             return "https://archive-api.open-meteo.com/v1/archive"
         else:
             raise ValueError("Model not found. Check model availability.")
 
 
     def _get_end_date(self):
-        if self.model in self.dict_forecast_models or self.is_forecast is True:
+        if self.model in self.dict_forecast_models and self.is_forecast is True:
             return datetime.date.today() + datetime.timedelta(days=7)
-        elif self.model in self.dict_historical_models or self.is_forecast is False:
+        elif self.model in self.dict_historical_models and self.is_forecast is False:
             return datetime.date.today() - datetime.timedelta(days=self.delay_historical_models[self.model])
         else:
             raise ValueError("Model not found. Check model availability.")
 
     def _check_start_date(self):
-        if self.start_date is None and self.model in self.dict_forecast_models:
+        if self.start_date is None and self.model in self.dict_forecast_models and self.is_forecast is True:
             self.start_date = self.dict_forecast_models[self.model]
-        elif self.start_date is None and self.model in self.dict_historical_models:
+        elif self.start_date is None and self.model in self.dict_historical_models and self.is_forecast is False:
             self.start_date = self.dict_historical_models[self.model]
-        elif self.start_date is None and self.model == "best_match" and self.is_forecast is False:
-            self.start_date = self.dict_historical_models["era5"]
-        elif self.start_date is None and self.model == "best_match" and self.is_forecast is True:
-            self.start_date = self.dict_forecast_models["icon_seamless"]
+
+    @property
+    def _get_description(self) -> str:
+        return (f"Using a {'historical' if self.is_forecast is not True else 'forecast'} model."
+                f"Specifically, {self.model}. Please check the documentation for the model resolution.")
 
     @staticmethod
     def format_date(date: Union[str, datetime.date]):
