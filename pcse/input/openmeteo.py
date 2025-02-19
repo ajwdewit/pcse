@@ -32,9 +32,24 @@ def format_date(date: Union[str, datetime.date]):
 
 class OpenMeteoWeatherProvider(WeatherDataProvider):
     """
-    A weather provider that only needs a location (latitude and longitude)
-    at initialization. When you call it with a single date or a date range,
-    it fetches and returns the corresponding weather data.
+    A weather provider that uses the Open Meteo weather API.
+    This object only needs a location (latitude and longitude)
+    at initialization.
+    There are two important parameters when constructing the object:
+    :openmeteo_model and :forecast.
+
+    The class variables list possible models to use, either for forecasts
+    or historical data.
+
+    To utilize a specific model, call it with the appropriate key argument.
+    Be aware that there might be some nuances with using certain models.
+    More info for each model is documented here: https://open-meteo.com/en/docs
+
+    If you don't specify a specific model, the Open Meteo API will automatically
+    choose the best model for your chosen location.
+    It hasn't been tested thoroughly, so there might be some issues with the starting
+    date when using "best_match". Please provide an argument for the :start_date
+    parameter if you find any issues.
     """
     HTTP_OK = 200
     angstA = 0.29
@@ -43,6 +58,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     #  List of forecast and historical weather models for OpenMeteo
     #  Comments show coverage and spatial resolution
     dict_forecast_models = {
+        "best_match": datetime.date(2023, 1, 1),  # global, 0.25deg
         "arpae_cosmo_5m": datetime.date(2024, 2, 2),  # europe, 5m
         "bom_access_global": datetime.date(2024, 1, 19),  # global, 0.15deg
         "gem_seamless": datetime.date(2022, 11, 24),  # global, 0.15deg
@@ -56,7 +72,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     }
 
     dict_historical_models = {
-        "best_match": datetime.date(1941, 1, 1),  # global, variable
+        "best_match": datetime.date(1941, 1, 1), # global, 0.25deg
         "era5": datetime.date(1941, 1, 1),  # global, 0.25deg
         "era5_land": datetime.date(1951, 1, 1),  # global, 0.1deg
         "ecmwf_ifs": datetime.date(2017, 1, 1),  # global, 9km
@@ -64,6 +80,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     }
 
     delay_historical_models = {
+        "best_match": 10,
         "era5": 6,  # global, 0.25deg
         "era5_land": 6,  # global, 0.1deg
         "ecmwf_ifs": 3,  # global, 9km
@@ -75,9 +92,10 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         latitude: float,
         longitude: float,
         timezone: str = "UTC",
-        openmeteo_model: str = "gfs_seamless",
+        openmeteo_model: str = "best_match",
         start_date: Union[str, datetime.date] = None,
         ETmodel: str = "PM",
+        forecast: bool = False,
         force_update: bool = False,
     ):
         WeatherDataProvider.__init__(self)
@@ -85,10 +103,10 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         self.model = openmeteo_model
         self.ETmodel = ETmodel
         self.start_date = start_date
-        if self.start_date is None and self.model in self.dict_forecast_models:
-            self.start_date = self.dict_forecast_models[self.model]
-        elif self.start_date is None and self.model in self.dict_historical_models:
-            self.start_date = self.dict_historical_models[self.model]
+        self.is_forecast = forecast
+
+        # update start date if using a specific model
+        self._check_start_date()
 
         if latitude < -90 or latitude > 90:
             msg = "Latitude should be between -90 and 90 degrees."
@@ -158,10 +176,10 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
             "daily": self.daily_variables,
             "hourly": self.hourly_variables,
             "timezone": self.timezone,
-            "models": self.get_model,
+            "model": self.model,
         }
 
-        response_json = self._try_response(url, params)
+        response_json = self._get_response(url, params)
 
         self.elevation = response_json.get('elevation', 0)
 
@@ -201,12 +219,12 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
             # "models": self.get_model,
         }
 
-        response_json_first = self._try_response(url, params_first)
+        response_json_first = self._get_response(url, params_first)
 
         # pause a bit between requests
         time.sleep(5)
 
-        response_json_second = self._try_response(url, params_second)
+        response_json_second = self._get_response(url, params_second)
 
         # Combine specific keys from both responses
         response_json = response_json_first.copy()
@@ -216,7 +234,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         return response_json
 
     # request routine with error checks
-    def _try_response(self, url, params):
+    def _get_response(self, url, params):
         try:
             response = requests.get(url, params=params, timeout=10)
             self._check_response_status(response)
@@ -335,7 +353,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
         df_hourly_daily.index = pd.to_datetime(df_hourly_daily.index)
         df_hourly_daily.rename(columns={
             'temperature_2m': 'TEMP',
-            self._variable_wind(): 'WIND',
+            "wind_speed_10m": 'WIND',
             'dewpoint_2m': 'dewpoint'
         }, inplace=True)
 
@@ -535,31 +553,41 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
 
 
     def _get_url(self, previous_runs: bool = False) -> str:
-        if self.model in self.dict_forecast_models and previous_runs is True:
+        if (self.model in self.dict_forecast_models or self.is_forecast is True) and previous_runs is True:
             return "https://previous-runs-api.open-meteo.com/v1/forecast"
-        elif self.model in self.dict_forecast_models and previous_runs is False:
+        elif (self.model in self.dict_forecast_models or self.is_forecast is True) and previous_runs is False:
             return "https://api.open-meteo.com/v1/forecast"
-        elif self.model in self.dict_historical_models:
+        elif self.model in self.dict_historical_models or self.is_forecast is False:
             return "https://archive-api.open-meteo.com/v1/archive"
         else:
             raise ValueError("Model not found. Check model availability.")
 
 
     def _get_end_date(self):
-        if self.model in self.dict_forecast_models:
+        if self.model in self.dict_forecast_models or self.is_forecast is True:
             return datetime.date.today() + datetime.timedelta(days=7)
-        elif self.model in self.dict_historical_models:
+        elif self.model in self.dict_historical_models or self.is_forecast is False:
             return datetime.date.today() - datetime.timedelta(days=self.delay_historical_models[self.model])
         else:
             raise ValueError("Model not found. Check model availability.")
 
-    def _variable_wind(self):
-        if self.model in OpenMeteoWeatherProvider.dict_forecast_models:
-            return "windspeed_10m"
-        elif self.model in OpenMeteoWeatherProvider.dict_historical_models:
-            return "wind_speed_10m"
-        else:
-            raise PCSEError()
+    def _check_start_date(self):
+        if self.start_date is None and self.model in self.dict_forecast_models:
+            self.start_date = self.dict_forecast_models[self.model]
+        elif self.start_date is None and self.model in self.dict_historical_models:
+            self.start_date = self.dict_historical_models[self.model]
+        elif self.start_date is None and self.model == "best_match" and self.is_forecast is False:
+            self.start_date = self.dict_historical_models["era5"]
+        elif self.start_date is None and self.model == "best_match" and self.is_forecast is True:
+            self.start_date = self.dict_forecast_models["icon_seamless"]
+
+    # def _variable_wind(self):
+    #     if self.model in OpenMeteoWeatherProvider.dict_forecast_models:
+    #         return "windspeed_10m"
+    #     elif self.model in OpenMeteoWeatherProvider.dict_historical_models:
+    #         return "wind_speed_10m"
+    #     else:
+    #         raise PCSEError()
 
     @property
     def daily_variables(self):
@@ -573,7 +601,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
     @property
     def hourly_variables(self):
         return [
-            self._variable_wind(),
+            "wind_speed_10m",
             "temperature_2m",
             "dewpoint_2m"
         ]
@@ -588,7 +616,7 @@ class OpenMeteoWeatherProvider(WeatherDataProvider):
 
 if __name__ == '__main__':
     # Example of grabbing weather from Wageningen
-    omwp = OpenMeteoWeatherProvider(51.98, 5.65, openmeteo_model='era5_land', force_update=True)
+    omwp = OpenMeteoWeatherProvider(51.98, 5.65, force_update=True)
 
     # Get weather for a single day.
     single_date = datetime.date(2024, 5, 15)
