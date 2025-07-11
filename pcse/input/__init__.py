@@ -29,6 +29,7 @@ from .csvweatherdataprovider import CSVWeatherDataProvider
 from .yaml_agro_loader import YAMLAgroManagementReader
 from .yaml_cropdataprovider import YAMLCropDataProvider
 from .nasapower import NASAPowerWeatherDataProvider
+from .openmeteo import OpenMeteoWeatherDataProvider
 from .sitedataproviders import WOFOST72SiteDataProvider, WOFOST73SiteDataProvider, \
     WOFOST81SiteDataProvider_Classic, WOFOST81SiteDataProvider_SNOMIN
 from .soildataproviders import DummySoilDataProvider
