@@ -73,9 +73,9 @@ class CABOFileReader(dict):
     """
 
     # RE patterns for parsing scalar, table and string parameters
-    scpar = "[a-zA-Z0-9_]+[\s]*=[\s]*[a-zA-Z0-9_.\-]+"
-    tbpar = "[a-zA-Z0-9_]+[\s]*=[\s]*[0-9,.\s\-+]+"
-    strpar = "[a-zA-Z0-9_]+[\s]*=[\s]*'.*?'"
+    scpar = r"[a-zA-Z0-9_]+[\s]*=[\s]*[a-zA-Z0-9_.\-]+"
+    tbpar = r"[a-zA-Z0-9_]+[\s]*=[\s]*[0-9,.\s\-+]+"
+    strpar = r"[a-zA-Z0-9_]+[\s]*=[\s]*'.*?'"
 
     def _remove_empty_lines(self, filecontents):
         t = []

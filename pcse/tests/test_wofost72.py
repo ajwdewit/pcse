@@ -39,10 +39,10 @@ class WofostBenchmarkRetriever:
     """
 
     def __init__(self, dsn, crop, grid, mode='pp'):
-        engine = create_engine(dsn)
-        meta = MetaData(engine)
-        self.table_benchm = Table('wofost_unittest_benchmarks',
-                                  meta, autoload=True)
+        self.engine = create_engine(dsn)
+        meta = MetaData()
+        meta.reflect(bind=self.engine)
+        self.table_benchm = meta.tables['wofost_unittest_benchmarks']
         self.crop = crop
         self.grid = grid
         self.mode = mode
@@ -53,12 +53,14 @@ class WofostBenchmarkRetriever:
         t1 = self.table_benchm.alias()
         column_for_retrieval = t1.c[variable]
         if column_for_retrieval is not None:
-            s = select([t1.c.day, column_for_retrieval],
+            s = select(t1.c.day, column_for_retrieval).where(
                        and_(t1.c.crop_no==self.crop,
                             t1.c.grid_no==self.grid,
                             t1.c.simulation_mode==self.mode,
                             t1.c.member_id==self.member_id))
-            rows = s.execute().fetchall()
+            with self.engine.connect() as DBconn:
+                cursor = DBconn.execute(s)
+                rows = cursor.fetchall()
             return rows
         else:
             raise KeyError("Variable not present in sim_results_timeseries table.")
@@ -81,25 +83,30 @@ class WofostOutputRetriever:
     """
 
     def __init__(self, dsn):
-        db_engine = create_engine(dsn)
-        db_metadata = MetaData(db_engine)
-        self.table_pwo = Table('sim_results_timeseries', db_metadata,
-                               autoload=True)
-        s = select([func.max(self.table_pwo.c.day, type_=saDate)])
-        self.maxday = s.execute().fetchone()[0]
+        self.engine = create_engine(dsn)
+        meta = MetaData()
+        meta.reflect(bind=self.engine)
+        self.table_pwo = meta.tables['sim_results_timeseries']
+        s = select(func.max(self.table_pwo.c.day, type_=saDate))
+        with self.engine.connect() as DBconn:
+            cursor = DBconn.execute(s)
+            self.maxday = cursor.fetchone()[0]
     
     def __call__(self, day, variable):
         """Returns the specified WOFOST variable for specified day."""
-        s = select([self.table_pwo], and_(self.table_pwo.c.day==day))
-        row = s.execute().fetchone()
-        #print "day %s" % day
-        return row[variable]
+        s = select(self.table_pwo).where(and_(self.table_pwo.c.day==day))
+        with self.engine.connect() as DBconn:
+            cursor = DBconn.execute(s)
+            row = cursor.fetchone()
+        return getattr(row, variable)
         
     def getWofostOutputLastDay(self, variable):
         """Returns the specified WOFOST variable on the last day."""
-        s = select([self.table_pwo], and_(self.table_pwo.c.day==self.maxday))
-        row = s.execute().fetchone()
-        return row[variable]
+        s = select(self.table_pwo).where(and_(self.table_pwo.c.day==self.maxday))
+        with self.engine.connect() as DBconn:
+            cursor = DBconn.execute(s)
+            row = cursor.fetchone()
+        return getattr(row, variable)
 
 
 class WofostTestingTemplate(unittest.TestCase):
@@ -263,7 +270,8 @@ def suite(dsn=None):
     """
 
     suite = unittest.TestSuite()
-    tests = [TestPotentialWinterWheat('runTest', dsn),
+    tests = [
+             TestPotentialWinterWheat('runTest', dsn),
              TestWaterlimitedWinterWheat('runTest', dsn),
              TestPotentialGrainMaize('runTest', dsn),
              TestWaterlimitedGrainMaize('runTest', dsn),
@@ -274,7 +282,8 @@ def suite(dsn=None):
              TestPotentialWinterRapeseed('runTest', dsn),
              TestWaterlimitedWinterRapeseed('runTest', dsn),
              TestPotentialSunflower('runTest', dsn),
-             TestWaterlimitedSunflower('runTest', dsn)]
+             TestWaterlimitedSunflower('runTest', dsn)
+             ]
     # tests = [TestPotentialWinterWheat('runTest', dsn),
     #         TestWaterlimitedWinterWheat('runTest', dsn),
     #         TestPotentialGrainMaize('runTest', dsn),

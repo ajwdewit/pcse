@@ -60,13 +60,14 @@ class GridWeatherDataProvider(WeatherDataProvider):
             self.end_date = self.check_keydate(end_date)
             self.timeinterval = (end_date - start_date).days + 1
 
-            metadata = MetaData(engine)
+            meta = MetaData()
+            meta.reflect(bind=engine)
 
             # Get location info (lat/lon/elevation)
-            self._fetch_location_from_db(metadata)
+            self._fetch_location_from_db(engine, meta)
 
             # Retrieved meteo data
-            self._fetch_grid_weather_from_db(metadata)
+            self._fetch_grid_weather_from_db(engine, meta)
 
             # Description
             self.description = "Weather data derived for grid_no: %i" % self.grid_no
@@ -97,22 +98,20 @@ class GridWeatherDataProvider(WeatherDataProvider):
         return False
 
     #---------------------------------------------------------------------------
-    def _fetch_location_from_db(self, metadata):
+    def _fetch_location_from_db(self, engine, meta):
         """Retrieves latitude, longitude, elevation from 'grid' table and
         assigns them to self.latitude, self.longitude, self.elevation."""
 
         # Pull Latitude value for grid nr from database
 
-        try:
-            table_grid = Table('grid', metadata, autoload=True)
-            r = select([table_grid.c.latitude, table_grid.c.longitude,
-                        table_grid.c.altitude],
-                       table_grid.c.grid_no==self.grid_no).execute()
-            row = r.fetchone()
-            r.close()
-            if row is None:
-                raise Exception
-        except Exception as e:
+        table_grid = meta.tables['grid']
+        s = select(table_grid.c.latitude, table_grid.c.longitude, table_grid.c.altitude)
+        s = s.where(table_grid.c.grid_no==self.grid_no)
+        with engine.connect() as con:
+            cursor = con.execute(s)
+            row = cursor.fetchone()
+
+        if row is None:
             msg = "Failed deriving location info for grid %s: %s" % (self.grid_no, e)
             raise exc.PCSEError(msg)
 
@@ -124,17 +123,20 @@ class GridWeatherDataProvider(WeatherDataProvider):
               "for grid %s"
         self.logger.info(msg % self.grid_no)
 
-    def _fetch_grid_weather_from_db(self, metadata):
+    def _fetch_grid_weather_from_db(self, engine, metadata):
         """Retrieves the meteo data from table 'grid_weather'.
         """
 
         try:
             table_gw = Table('grid_weather', metadata, autoload=True)
-            r = select([table_gw],and_(table_gw.c.grid_no==self.grid_no,
-                                       table_gw.c.day>=self.start_date,
-                                       table_gw.c.day<=self.end_date)
-                       ).execute()
-            rows = r.fetchall()
+            s = select(table_gw)
+            s = s.where(and_(table_gw.c.grid_no==self.grid_no,
+                             table_gw.c.day>=self.start_date,
+                             table_gw.c.day<=self.end_date)
+                       )
+            with engine.connect() as DBconn:
+                cursor = DBconn.execute(s)
+                rows = cursor.fetchall()
 
             c = len(rows)
             if c < self.timeinterval:

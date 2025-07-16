@@ -19,7 +19,8 @@ from . import test_lintul3
 def make_test_suite(dsn=None):
     """Assemble test suite and return it
     """
-    allsuites = unittest.TestSuite([test_abioticdamage.suite(),
+    allsuites = unittest.TestSuite([
+                                    test_abioticdamage.suite(),
                                     # test_assimilation.suite(),  # skip test because test inputs do not include TMIN
                                     test_partitioning.suite(),
                                     test_evapotranspiration.suite(),
@@ -28,7 +29,6 @@ def make_test_suite(dsn=None):
                                     test_agromanager.suite(),
                                     test_wofost72.suite(dsn),
                                     # test_lintul3.suite(),
-                                    # test_wofost80.suite()
                                     ])
     return allsuites
 

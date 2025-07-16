@@ -66,7 +66,7 @@ class SoildataError(exc.PCSEError):
          return repr(self.value)
 
 #-------------------------------------------------------------------------------
-def fetch_cropdata(metadata, grid, year, crop):
+def fetch_cropdata(engine, meta, grid, year, crop):
     """Retrieve crop parameter values for given grid, year, crop from DB.
     
     Parameter values are pulled from tables 'crop_parameter_value'
@@ -83,24 +83,30 @@ def fetch_cropdata(metadata, grid, year, crop):
     logger = logging.getLogger('PCSE.db_util')
 
     # Create initial dictionary 
-    cropdata={}    
+    cropdata = {}
 
     # Get crop name from crop table;
-    table_cc = Table('crop', metadata, autoload=True)
-    s = select([table_cc], table_cc.c.crop_no==crop)
-    row = s.execute().fetchone()
+    table_cc = meta.tables['crop']
+    s = table_cc.select().where(table_cc.c.crop_no==crop)
+    with engine.connect() as DBconn:
+        r = DBconn.execute(s)
+        row = r.fetchone()
+
     cropdata["CRPNAM"] = row.crop_name
 
     # Get crop variety from crop_calendar;
-    table_cc = Table('crop_calendar', metadata, autoload=True)
-    s = select([table_cc],
-               and_(table_cc.c.grid_no==grid,
-                    table_cc.c.crop_no==crop,
-                    table_cc.c.year==year))
-    r = s.execute()
-    rows = r.fetchall()
-    r.close()
-    if (rows is not None) and (len(rows) == 1):
+    table_cc = meta.tables['crop_calendar']
+    s = (table_cc.select()
+                 .where(and_(table_cc.c.grid_no==grid,
+                             table_cc.c.crop_no==crop,
+                             table_cc.c.year==year)
+                        )
+    )
+    with engine.connect() as DBconn:
+        r = DBconn.execute(s)
+        rows = r.fetchall()
+
+    if rows is not None and len(rows) == 1:
         variety = rows[0].variety_no
     else:
         logger.error(("None or multiple crop definitions found for grid: %7i and crop " + \
@@ -120,108 +126,123 @@ def fetch_cropdata(metadata, grid, year, crop):
                             "TMPFTB")
     
     # Pull single value parameters from CROP_PARAMETER_VALUE first
-    table_crop_pv = Table('crop_parameter_value', metadata, autoload=True)
-    for paramcode in parameter_codes_sngl:
-        s = select([table_crop_pv], and_(table_crop_pv.c.crop_no==crop,
-                                         table_crop_pv.c.parameter_code==paramcode))
-        r = s.execute()
-        rows = r.fetchall()
-        if (len(rows) == 0):
-            logger.error(("No crop parameter value found for:" + \
-                          "crop %s, parameter: %s") % (crop, paramcode))
-            raise CropdataError(("No crop parameter value found for:" + \
-                                "crop %s, parameter: %s") % (crop, paramcode))
-        elif (len(rows) == 1):
-            cropdata[paramcode] = float(rows[0].parameter_xvalue)
-        else:
-            logger.error(("Multiple crop parameter values found for:" + \
-                          "crop %s, parameter: %s") % (crop, paramcode))
-            raise CropdataError(("Multiple crop parameter values found for:" + \
-                                "crop %s, parameter: %s") % (crop, paramcode))
+    table_crop_pv = meta.tables['crop_parameter_value']
+    with engine.connect() as DBconn:
+        for paramcode in parameter_codes_sngl:
+            s = (table_crop_pv.select()
+                              .where(and_(table_crop_pv.c.crop_no==crop,
+                                          table_crop_pv.c.parameter_code==paramcode)
+                                     )
+                 )
+            r = DBconn.execute(s)
+            rows = r.fetchall()
+            if len(rows) == 0:
+                logger.error(("No crop parameter value found for:" + \
+                              "crop %s, parameter: %s") % (crop, paramcode))
+                raise CropdataError(("No crop parameter value found for:" + \
+                                    "crop %s, parameter: %s") % (crop, paramcode))
+            elif len(rows) == 1:
+                cropdata[paramcode] = float(rows[0].parameter_xvalue)
+            else:
+                logger.error(("Multiple crop parameter values found for:" + \
+                              "crop %s, parameter: %s") % (crop, paramcode))
+                raise CropdataError(("Multiple crop parameter values found for:" + \
+                                    "crop %s, parameter: %s") % (crop, paramcode))
+
     logger.debug("Succesfully retrieved single value parameters "+\
                  "from CROP_PARAMETER_VALUE TABLE")
     
     # Pull array parameter values from CROP_PARAMETER_VALUE
     # note the change in the mask value and the use of "LIKE" in the SQL query
-    for paramcode in parameter_codes_mltp:
-        pattern = paramcode + r'%'
-        s = select([table_crop_pv],
-                   and_(table_crop_pv.c.crop_no == crop,
-                        table_crop_pv.c.parameter_code.like(pattern)),
-                   order_by=[table_crop_pv.c.parameter_code])
-        r = s.execute()
-        rows = r.fetchall()
-        c = len(rows)
-        if (c == 0):
-            logger.error(("No crop parameter value found for:" + \
-                          "crop %s, parameter: %s") % (crop, paramcode))
-            raise CropdataError(("No crop parameter value found for:" + \
-                                "crop %s, parameter: %s") % (crop, paramcode))
-        elif (c == 1):
-            logger.error(("Single crop parameter value found for:" + \
-                          "crop %s, parameter: %s") % (crop, paramcode))
-            raise CropdataError(("Single crop parameter value found for:" + \
-                                "crop %s, parameter: %s") % (crop, paramcode))
-        else:
-            value = array.array('d', [0.]*(c*2))
-            for i in range(0,c):
-                value[i*2] = float(rows[i].parameter_xvalue)
-                value[(i*2)+1]= float(rows[i].parameter_yvalue)
-            cropdata[paramcode] = value
+    with engine.connect() as DBconn:
+        for paramcode in parameter_codes_mltp:
+            pattern = paramcode + r'%'
+            s = (table_crop_pv.select()
+                              .where(and_(table_crop_pv.c.crop_no == crop,
+                                          table_crop_pv.c.parameter_code.like(pattern)
+                                          )
+                                     )
+                              .order_by(table_crop_pv.c.parameter_code)
+                 )
+            r = DBconn.execute(s)
+            rows = r.fetchall()
+            if len(rows) == 0:
+                logger.error(("No crop parameter value found for:" + \
+                              "crop %s, parameter: %s") % (crop, paramcode))
+                raise CropdataError(("No crop parameter value found for:" + \
+                                    "crop %s, parameter: %s") % (crop, paramcode))
+            elif len(rows) == 1:
+                logger.error(("Single crop parameter value found for:" + \
+                              "crop %s, parameter: %s") % (crop, paramcode))
+                raise CropdataError(("Single crop parameter value found for:" + \
+                                    "crop %s, parameter: %s") % (crop, paramcode))
+            else:
+                value = []
+                for row in rows:
+                    value.append(float(row.parameter_xvalue))
+                    value.append(float(row.parameter_yvalue))
+                cropdata[paramcode] = value
     logger.debug("Succesfully retrieved array parameters "+\
                  "from CROP_PARAMETER_VALUE TABLE")
 
     # Pull same parameter values from VARIETY_PARAMETER_VALUES
     # if they are defined for that variety.
     # Pull single value parameters first
-    table_var_pv = Table('variety_parameter_value', metadata, autoload=True)
-    for paramcode in parameter_codes_sngl:
-        s = select([table_var_pv],
-                   and_(table_var_pv.c.variety_no==variety,
-                        table_var_pv.c.crop_no==crop,
-                        table_var_pv.c.parameter_code==paramcode))
-        r = s.execute()
-        rows = r.fetchall()
-        c = len(rows)
-        if (c == 0):
-            pass
-        elif (c == 1):
-            cropdata[paramcode] = float(rows[0].parameter_xvalue)
-        else:
-            errstr = "Multiple values found for: crop: %s, variety: %s, " + \
-                     "parameter: %s which is supposed to be a single value."
-            logger.error(errstr % (crop, paramcode))
-            raise CropdataError(errstr % (crop, paramcode))
-    logger.debug("Succesfully retrieved single value parameters "+\
-                 "from VARIETY_PARAMETER_VALUE TABLE")
+    table_var_pv = meta.tables['variety_parameter_value']
+    with engine.connect() as DBconn:
+        for paramcode in parameter_codes_sngl:
+            s = (table_var_pv.select()
+                            .where(and_(table_var_pv.c.variety_no==variety,
+                                        table_var_pv.c.crop_no==crop,
+                                        table_var_pv.c.parameter_code==paramcode)
+                                   )
+                 )
+            r = DBconn.execute(s)
+            rows = r.fetchall()
+            c = len(rows)
+            if c == 0:
+                pass
+            elif c == 1:
+                cropdata[paramcode] = float(rows[0].parameter_xvalue)
+            else:
+                errstr = "Multiple values found for: crop: %s, variety: %s, " + \
+                         "parameter: %s which is supposed to be a single value."
+                logger.error(errstr % (crop, paramcode))
+                raise CropdataError(errstr % (crop, paramcode))
+        logger.debug("Succesfully retrieved single value parameters "+\
+                     "from VARIETY_PARAMETER_VALUE TABLE")
             
     # pull array value parameters - note the change in the mask value and
     # the use of "LIKE" in the SQL query
-    for paramcode in parameter_codes_mltp:
-        pattern = paramcode + r'%'
-        s = select([table_var_pv],
-                   and_(table_var_pv.c.crop_no==crop,
-                        table_var_pv.c.parameter_code.like(pattern),
-                        table_var_pv.c.variety_no==variety),
-                   order_by=[table_var_pv.c.parameter_code])
-        r = s.execute()
-        rows = r.fetchall();
-        c = len(rows)
-        if (c == 0):
-            pass
-        elif (c == 1):
-            errstr = "Single value found for: crop: %s, variety: %s, " + \
-                     "parameter: %s which is supposed to be a single value."
-            logger.error(errstr % (crop, paramcode))
-            raise CropdataError(errstr % (crop, paramcode))
-        else:
-            value = array.array('d', [0.]*(c*2))
-            for i in range(0,c):
-                value[i*2] = float(rows[i].parameter_xvalue)
-                value[(i*2)+1]= float(rows[i].parameter_yvalue)
-            cropdata[paramcode] = value
-    logger.debug("Succesfully retrieved array parameters "+\
-                 "from VARIETY_PARAMETER_VALUE TABLE")
+    with engine.connect() as DBconn:
+        for paramcode in parameter_codes_mltp:
+            pattern = paramcode + r'%'
+            s = (table_var_pv.select()
+                            .where(and_(table_var_pv.c.crop_no==crop,
+                                        table_var_pv.c.parameter_code.like(pattern),
+                                        table_var_pv.c.variety_no==variety)
+                                   )
+                            .order_by(table_var_pv.c.parameter_code)
+            )
+
+            r = DBconn.execute(s)
+            rows = r.fetchall()
+            c = len(rows)
+            if c == 0:
+                pass
+            elif c == 1:
+                errstr = "Single value found for: crop: %s, variety: %s, " + \
+                         "parameter: %s which is supposed to be a single value."
+                logger.error(errstr % (crop, paramcode))
+                raise CropdataError(errstr % (crop, paramcode))
+            else:
+                value = []
+                for row in rows:
+                    value.append(float(row.parameter_xvalue))
+                    value.append(float(row.parameter_yvalue))
+                cropdata[paramcode] = value
+        logger.debug("Succesfully retrieved array parameters "+\
+                     "from VARIETY_PARAMETER_VALUE TABLE")
 
     # Make some specific changes for FORTRAN wofost with regard to variables
     # SSA, KDIF and EFF. This is needed because the FORTRAN code expects a
@@ -230,25 +251,13 @@ def fetch_cropdata(metadata, grid, year, crop):
     
     # SSA convert to SSATB:
     SSA = cropdata["SSA"]
-    SSATB = array.array('d',[0.]*4)
-    SSATB[1] = SSA
-    SSATB[2] = 2.0
-    SSATB[3] = SSA
-    cropdata.update({"SSATB":SSATB})
+    cropdata.update({"SSATB": [0.0, SSA, 2.0, SSA]})
     # KDIF convert to KDIFTB:
     KDIF = cropdata["KDIF"]
-    KDIFTB = array.array('d',[0.]*4)
-    KDIFTB[1] = KDIF
-    KDIFTB[2] = 2.0
-    KDIFTB[3] = KDIF
-    cropdata.update({"KDIFTB":KDIFTB})
+    cropdata.update({"KDIFTB":[0.0, KDIF, 2.0, KDIF]})
     # EFF convert to EFFTB
     EFF = cropdata["EFF"]
-    EFFTB = array.array('d',[0.]*4)
-    EFFTB[1] = EFF
-    EFFTB[2] = 40.0
-    EFFTB[3] = EFF
-    cropdata.update({"EFFTB":EFFTB})
+    cropdata.update({"EFFTB":[0.0, EFF, 40.0, EFF]})
     # DVSI set to 0
     cropdata.update({"DVSI":0})
     
@@ -463,7 +472,7 @@ def fetch_soildata_layered(metadata, grid):
     return soildata
 
 #-------------------------------------------------------------------------------
-def fetch_soildata(metadata, grid):
+def fetch_soildata(engine, meta, grid):
     """Retrieve soil parameters for given grid from DB for a 1-layer soil.
     
     Retrieves soil_type_no from the table SOIL_TYPE and associated soil layers
@@ -477,25 +486,28 @@ def fetch_soildata(metadata, grid):
     
     soildata = {}
     # Select soil from the table SOIL_TYPE
-    table_soiltype = Table('soil_type', metadata, autoload=True)
-    r = select([table_soiltype.c.grid_no,
-                table_soiltype.c.soil_type_no],
-                table_soiltype.c.grid_no==grid).execute()
-    row = r.fetchone()
-    r.close()
+    table_soiltype = meta.tables['soil_type']
+    s = (select(table_soiltype.c.grid_no, table_soiltype.c.soil_type_no)
+         .where(table_soiltype.c.grid_no==grid))
+    with engine.connect() as DBconn:
+        r = DBconn.execute(s)
+        row = r.fetchone()
+
     if row is None:
         raise SoildataError(grid, "No record found!")
     soil_type_no = row.soil_type_no
     
     # Derive layers for given soil_type_no. This should return only one
     # layer, otherwise raise an error.
-    table_soil_layers = Table('soil_layers',metadata, autoload=True)
-    cursor = select([table_soil_layers.c.thickness,
-                     table_soil_layers.c.soil_group_no],
-                     table_soil_layers.c.soil_type_no==soil_type_no,
-                     order_by=[table_soil_layers.c.layer_no]).execute()
-    rows = cursor.fetchall()
-    cursor.close()
+    table_soil_layers = meta.tables['soil_layers']
+    s = (select(table_soil_layers.c.thickness, table_soil_layers.c.soil_group_no)
+         .where(table_soil_layers.c.soil_type_no==soil_type_no)
+         .order_by(table_soil_layers.c.layer_no)
+    )
+    with engine.connect() as DBconn:
+        cursor = DBconn.execute(s)
+        rows = cursor.fetchall()
+
     if len(rows) == 0:
         msg = "No record found."
         raise SoildataError(grid, msg)
@@ -517,16 +529,20 @@ def fetch_soildata(metadata, grid):
                        ("SMFCF", "SOIL_MOISTURE_CONTENT_FC"),
                        ("SM0", "SOIL_MOISTURE_CONTENT_SAT"),
                        ("SMW", "SOIL_MOISTURE_CONTENT_WP")]
-    table_soil_pg = Table('soil_physical_group',metadata, autoload=True)
-    for (wofost_soil_par, db_soil_par) in soil_parameters:
-        r = select([table_soil_pg], 
-                   and_(table_soil_pg.c.soil_group_no==soil_group_no,
-                        table_soil_pg.c.parameter_code==db_soil_par)).execute()
-        row = r.fetchone()
-        if row is None:
-            msg = "Parameter %s not found" % db_soil_par
-            raise SoildataError(grid, msg)
-        soildata[wofost_soil_par] = float(row.parameter_xvalue)
+    table_soil_pg = meta.tables['soil_physical_group']
+    with engine.connect() as DBconn:
+        for wofost_soil_par, db_soil_par in soil_parameters:
+            s = (select(table_soil_pg)
+                 .where(and_(table_soil_pg.c.soil_group_no==soil_group_no,
+                             table_soil_pg.c.parameter_code==db_soil_par)
+                        )
+                 )
+            cursor = DBconn.execute(s)
+            row = cursor.fetchone()
+            if row is None:
+                msg = "Parameter %s not found" % db_soil_par
+                raise SoildataError(grid, msg)
+            soildata[wofost_soil_par] = float(row.parameter_xvalue)
 
     logger.info("Succesfully retrieved soil parameter values from database")
     return soildata
@@ -560,21 +576,25 @@ class AgroManagementDataProvider(list):
                 StateEvents: null
         """
 
-    def __init__(self, engine, grid_no, crop_no, campaign_year):
+    def __init__(self, engine, meta, grid_no, crop_no, campaign_year):
         list.__init__(self)
         self.grid_no = int(grid_no)
         self.crop_no = int(crop_no)
         self.campaign_year = int(campaign_year)
         self.crop_name = "undefined"
 
-        metadata = MetaData(engine)
-        table_cc = Table("crop_calendar", metadata, autoload=True)
+        table_cc = meta.tables["crop_calendar"]
 
-        r = select([table_cc], and_(table_cc.c.grid_no == self.grid_no,
-                                    table_cc.c.crop_no == self.crop_no,
-                                    table_cc.c.year == self.campaign_year)).execute()
-        row = r.fetchone()
-        r.close()
+        s = (table_cc.select()
+                     .where(and_(table_cc.c.grid_no == self.grid_no,
+                                 table_cc.c.crop_no == self.crop_no,
+                                 table_cc.c.year == self.campaign_year)
+                            )
+             )
+        with engine.connect() as DBconn:
+            cursor = DBconn.execute(s)
+            row = cursor.fetchone()
+
         if row is None:
             msg = "Failed deriving crop calendar for grid_no %s, crop_no %s " % (grid_no, crop_no)
             raise exc.PCSEError(msg)
@@ -635,7 +655,7 @@ class AgroManagementDataProvider(list):
 
 
 #-------------------------------------------------------------------------------
-def fetch_sitedata(metadata, grid, year):
+def fetch_sitedata(engine, meta, grid, year):
     """Retrieve site data from DB for given grid, year.
     
     Pulls sitedata from the PCSE database 'SITE' table,
@@ -648,13 +668,18 @@ def fetch_sitedata(metadata, grid, year):
 
     try:
         #Get all settings from table 'SITE'
-        table_site = Table('site', metadata, autoload=True)
-        r = select([table_site],
-                   and_(table_site.c.grid_no==grid,
-                        table_site.c.year==year)
-                   ).execute()
-        row = r.fetchone()
-        r.close()
+        table_site = meta.tables["site"]
+
+        s = (table_site.select()
+                       .where(and_(table_site.c.grid_no==grid,
+                                   table_site.c.year==year)
+                              )
+             )
+
+        with engine.connect() as DBconn:
+            r = DBconn.execute(s)
+            row = r.fetchone()
+
         if row is not None:
             sitedata = {}
             sitedata['IFUNRN'] = float(row.ifunrn)
