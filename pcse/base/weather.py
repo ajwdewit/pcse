@@ -155,8 +155,8 @@ class WeatherDataContainer(SlotPickleMixin):
             if key in self.ranges:
                 vmin, vmax = self.ranges[key]
                 if not vmin <= value <= vmax:
-                    msg = "Value (%s) for meteo variable '%s' outside allowed range (%s, %s)." % (
-                    value, key, vmin, vmax)
+                    msg = "%s: Value (%s) for meteo variable '%s' outside allowed range (%s, %s)." % (
+                    self.DAY, value, key, vmin, vmax)
                     raise exc.PCSEError(msg)
         SlotPickleMixin.__setattr__(self, key, value)
 
