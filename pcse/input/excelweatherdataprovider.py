@@ -196,7 +196,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                 wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude, ELEV=self.elevation, **d)
                 self._store_WeatherDataContainer(wdc, d["DAY"])
 
-            except (ValueError, TypeError) as e:  # strange value in cell
+            except (ValueError, TypeError) as e:  # strange value in cell 
                 msg = "Failed reading row: %i. Skipping..." % (rownum + self.data_start_row)
                 self.logger.warning(msg)
                 print(msg)
