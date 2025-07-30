@@ -91,9 +91,9 @@ class WeatherDataContainer(SlotPickleMixin):
               "TMAX": (-50., 60.),
               "VAP": (0.06, 199.3),  # hPa, computed as sat. vapour pressure at -50, 60 Celsius
               "RAIN": (0, 25),
-              "E0": (0., 2.5),
-              "ES0": (0., 2.5),
-              "ET0": (0., 2.5),
+              "E0": (0., 2.5),  # cm / day
+              "ES0": (0., 2.5),  # cm / day
+              "ET0": (0., 2.5),  # cm / day
               "WIND": (0., 100.),
               "SNOWDEPTH": (0., 250.),
               "TEMP": (-50., 60.),
