@@ -148,7 +148,7 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
     def _read_observations(self, sheet):
 
         # First get the column labels
-        labels = [cell.value for cell in sheet[self.label_row]]
+        labels = [cell.value for cell in sheet[self.label_row] if not cell.value is None]
 
         # Start reading all rows with data
         max_row = min(sheet.max_row, self.max_rows)
@@ -196,22 +196,22 @@ class ExcelWeatherDataProvider(WeatherDataProvider):
                 wdc = WeatherDataContainer(LAT=self.latitude, LON=self.longitude, ELEV=self.elevation, **d)
                 self._store_WeatherDataContainer(wdc, d["DAY"])
 
-            except ValueError as e:  # strange value in cell
+            except (ValueError, TypeError) as e:  # strange value in cell
                 msg = "Failed reading row: %i. Skipping..." % (rownum + self.data_start_row)
                 self.logger.warning(msg)
                 print(msg)
 
     def _load_cache_file(self, xls_fname):
 
-         cache_filename = self._find_cache_file(xls_fname)
-         if cache_filename is None:
-             return False
-         else:
-             try:
-                 self._load(cache_filename)
-                 return True
-             except:
-                 return False
+        cache_filename = self._find_cache_file(xls_fname)
+        if cache_filename is None:
+            return False
+        else:
+            try:
+                self._load(cache_filename)
+                return True
+            except:
+                return False
 
     def _find_cache_file(self, xls_fname):
         """Try to find a cache file for file name
