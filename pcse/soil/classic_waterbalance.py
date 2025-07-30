@@ -441,7 +441,7 @@ class WaterbalanceFD(SimulationObject):
         RINPRE = RINPRE + r.RIRR + s.SS
         if s.SS > 0.1:
             # with surface storage, infiltration limited by SOPE
-            AVAIL = RINPRE - r.EVW
+            AVAIL = RINPRE + r.RIRR - r.EVW
             RINPRE = min(p.SOPE, AVAIL)
             
         RD = self._determine_rooting_depth()
