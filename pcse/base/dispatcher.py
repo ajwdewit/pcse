@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2024
-from ..pydispatch import dispatcher
+from pydispatch import dispatcher
 
 
 class DispatcherObject(object):

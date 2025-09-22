@@ -29,7 +29,7 @@ from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
 __stable__ = True
-__version__ = "6.0.9"
+__version__ = "6.0.10"
 
 
 import sys, os
@@ -72,7 +72,6 @@ import logging.config
 from .settings import settings
 logging.config.dictConfig(settings.LOG_CONFIG)
 
-#from . import db
 from . import input
 from . import tests
 from . import agromanager

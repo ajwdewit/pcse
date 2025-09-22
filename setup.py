@@ -13,7 +13,7 @@ AUTHOR = "Allard de Wit"
 AUTHOR_EMAIL = 'allard.dewit@wur.nl'
 URL = 'http://github.com/ajwdewit/pcse/'
 LICENSE="EUPL"
-VERSION = "6.0.9"
+VERSION = "6.0.10"
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -37,7 +37,7 @@ setup(
     download_url='http://github.com/ajwdewit/pcse/tarball/'+VERSION,
     license='EUPL',
     author=AUTHOR,
-    install_requires=['SQLAlchemy>=1.3.0, <2.0',
+    install_requires=['pydispatcher>=2.0.7',
                       'PyYAML>=5.1',
                       'openpyxl>=3.0.0',
                       'requests>=2.0.0',

@@ -4,7 +4,7 @@
 from __future__ import print_function
 import datetime
 
-from .pydispatch import dispatcher
+from .base import dispatcher
 from .base import AncillaryObject, VariableKiosk
 from .traitlets import HasTraits, Instance, Bool, Int, Enum
 from . import signals
