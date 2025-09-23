@@ -360,6 +360,11 @@ must be provided to the model.
 The database tools
 ------------------
 
+.. note::
+    The dataproviders for CGMS database were removed from PCSE starting with version 6.0.10 because they were forcing
+    a dependency on PCSE (SQLAlchemy) which was generating problems with other packages. Moreover SQLAlchemy is not
+    required for running PCSE and the DB tools were not broadly used anyway.
+
 The database tools contain functions and classes for retrieving agromanagement,
 parameter values and weather variables from database structures implemented for
 different versions of the European `Crop Growth Monitoring System <CGMS>`_.
@@ -370,73 +375,13 @@ done on purpose as writing data can be a complex matter and it is our
 experience that this can be done more easily with dedicated database loader
 tools such as `SQLLoader`_ for ORACLE or the ``load data infile`` syntax of MySQL.
 
+
 .. _SQLLoader: http://www.oracle.com/technetwork/database/enterprise-edition/sql-loader-overview-095816.html
 
 .. _CGMS: https://ec.europa.eu/jrc/en/mars
 
 .. _CGMS8tools:
 
-The CGMS8 database
-..................
-
-The CGMS8 tools are for reading data from a database structure that is used
-by CGMS executable version 9 and 10.
-
-.. autoclass:: pcse.db.cgms8.GridWeatherDataProvider
-    :members:
-
-.. autoclass:: pcse.db.cgms8.SoilDataIterator
-    :members:
-
-.. autoclass:: pcse.db.cgms8.CropDataProvider
-    :members:
-
-.. autoclass:: pcse.db.cgms8.STU_Suitability
-    :members:
-
-.. autoclass:: pcse.db.cgms8.SiteDataProvider
-    :members:
-
-.. _CGMS12tools:
-
-The CGMS12 database
-...................
-
-The CGMS12 tools are for reading data from a CGMS12 database structure that
-is used by CGMS executable version 11 and BioMA 2014.
-
-
-.. automodule:: pcse.db.cgms12
-    :members:
-
-.. autoclass:: WeatherObsGridDataProvider
-    :members:
-
-.. autoclass:: AgroManagementDataProvider
-    :members:
-
-.. autoclass:: SoilDataIterator
-    :members:
-
-.. autoclass:: CropDataProvider
-    :members:
-
-.. autoclass:: STU_Suitability
-    :members:
-
-.. autoclass:: SiteDataProvider
-    :members:
-
-.. _CGMS14tools:
-
-The CGMS14 database
-...................
-
-The CGMS14 database is the database structure that is compatible with the 2015 BioMA implementation
-of WOFOST. Note that the CGMS14 database structure is considerably different
-from CGMS8 and CGMS12.
-
-.. _CGMS14_data_providers:
 
 
 Convenience routines

@@ -2,52 +2,23 @@
 # Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2024
 
-import datetime as dt
-
+import sqlite3
+from collections import namedtuple
 import pandas as pd
-from sqlalchemy import create_engine, MetaData, Table
-import sqlalchemy as sa
 
-from ..db.pcse import fetch_cropdata, fetch_sitedata, fetch_soildata, GridWeatherDataProvider, \
-    AgroManagementDataProvider
+from .db_input import fetch_cropdata, fetch_sitedata, fetch_soildata, AgroManagementDataProvider, GridWeatherDataProvider
 from ..base import ParameterProvider
 from ..models import Wofost72_WLP_CWB, Wofost72_PP
-from .. import exceptions as exc
-from ..util import merge_dict
 
 
-def store_to_database(engine, output, summary_output, runid):
-    """Stores saved variables of the model run in a database table.
+def namedtuple_factory(cursor, row):
+    """Creates an SQLite row factor for named tuples.
 
-    :param meta: An SQLAlchemy metadata object providing access to the
-                     database where the table 'sim_results_timeseries' can be
-                     found.
-    :param runid:    A dictionary providing the values for the database
-                     columns that 'describe' the WOFOST run. For CGMS this
-                     would be the CROP_NO, GRID_NO, YEAR thus the runid
-                     would be for example be:
-                     `runid={'GRID_NO':1000, 'CROP_NO':1, 'YEAR':2000}`
-
-    Note that the records are written directly to this table. No checks on
-    existing records are being carried out.
+    see: https://docs.python.org/3/library/sqlite3.html#how-to-create-and-use-row-factories
     """
-
-    if not isinstance(runid, dict):
-        msg = ("Keyword 'runid' should provide the database columns " +
-               "describing the WOFOST run.")
-        raise exc.PCSEError(msg)
-
-    # Merge records with output ad summary_output variables with the run_id
-    recs_output = [merge_dict(rec, runid) for rec in output]
-    df_output = pd.DataFrame(recs_output)
-    df_output = df_output.drop(columns=["RFTRA", "WWLOW"], errors="ignore")
-    recs_summary_output = [merge_dict(rec, runid) for rec in summary_output]
-    df_summary_output = pd.DataFrame(recs_summary_output)
-    df_summary_output = df_summary_output.drop(columns=["CEVST", "WWLOW"], errors="ignore")
-
-    with engine.begin() as DBconn:
-        df_output.to_sql("sim_results_timeseries", DBconn, if_exists='append', index=False)
-        df_summary_output.to_sql("sim_results_summary", DBconn, if_exists="append", index=False)
+    fields = [column[0] for column in cursor.description]
+    cls = namedtuple("Row", fields)
+    return cls._make(row)
 
 
 def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
@@ -69,27 +40,25 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
     """
 
     # Open database connection and empty output table
-    engine = create_engine(dsn)
-    meta = MetaData()
-    meta.reflect(bind=engine)
-    table_sim_results_ts = meta.tables['sim_results_timeseries']
-    table_sim_results_smry = meta.tables['sim_results_summary']
+    DBconn = sqlite3.connect(dsn)
+    DBconn.row_factory = namedtuple_factory
+    cursor = DBconn.cursor()
     if clear_table is True:
-        with engine.begin() as DBconn:
-            DBconn.execute(table_sim_results_ts.delete())
-            DBconn.execute(table_sim_results_smry.delete())
-    
+        cursor.execute("delete from sim_results_timeseries")
+        cursor.execute("delete from sim_results_summary")
+        cursor.close()
+
     # Get input data from database
-    sited = fetch_sitedata(engine, meta, grid, year)
-    cropd = fetch_cropdata(engine, meta, grid, year, crop)
-    soild = fetch_soildata(engine, meta, grid)
+    sited = fetch_sitedata(DBconn, grid, year)
+    cropd = fetch_cropdata(DBconn, grid, year, crop)
+    soild = fetch_soildata(DBconn, grid)
     parameters = ParameterProvider(sitedata=sited, cropdata=cropd, soildata=soild)
 
     # Get Agromanagement
-    agromanagement = AgroManagementDataProvider(engine, meta, grid, crop, year)
+    agromanagement = AgroManagementDataProvider(DBconn, grid, crop, year)
 
     # Get weather data
-    wdp = GridWeatherDataProvider(engine, grid_no=grid)
+    wdp = GridWeatherDataProvider(DBconn, grid_no=grid)
                              
     # Initialize PCSE/WOFOST
     mode = mode.strip().lower()
@@ -102,11 +71,23 @@ def run_wofost(dsn, crop, grid, year, mode, clear_table=False):
         raise RuntimeError(msg, mode)
 
     wofsim.run_till_terminate()
-    output = wofsim.get_output()
-    df = pd.DataFrame(output)
-    summary_output = wofsim.get_summary_output()
+    df_output = pd.DataFrame(wofsim.get_output())
+    df_summary_output = pd.DataFrame(wofsim.get_summary_output())
     
     runid = {"grid_no":grid, "crop_no":crop, "year":year, "member_id":0,
              "simulation_mode":mode}
-    store_to_database(engine, output, summary_output, runid)
+    for name, value in runid.items():
+        df_output[name] = value
+        df_summary_output[name] = value
+
+    columns = ["grid_no", "crop_no", "year", "day", "simulation_mode", "member_id",
+               "DVS", "LAI", "TAGP", "TWSO", "TWLV", "TWST", "TWRT", "TRA", "RD", "SM"]
+    df_output = df_output[columns]
+    df_output.to_sql("sim_results_timeseries", DBconn, index=False, if_exists='append')
+
+    columns = ["grid_no", "crop_no", "year", "simulation_mode", "member_id",
+               "DVS", "LAIMAX", "TAGP", "TWSO", "TWLV", "TWST", "TWRT", "CTRAT",
+               "RD", "DOS", "DOE", "DOA", "DOM", "DOH", "DOV"]
+    df_summary_output = df_summary_output[columns]
+    df_summary_output.to_sql("sim_results_summary", DBconn, index=False, if_exists='append')
 

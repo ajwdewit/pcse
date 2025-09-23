@@ -27,7 +27,7 @@ def make_test_suite(dsn=None):
                                     test_respiration.suite(),
                                     test_penmanmonteith.suite(),
                                     test_agromanager.suite(),
-                                    test_wofost72.suite(dsn),
+                                    test_wofost72.suite(),
                                     # test_lintul3.suite(),
                                     ])
     return allsuites

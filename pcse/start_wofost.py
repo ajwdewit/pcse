@@ -2,19 +2,28 @@
 # Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2024
 import sys, os
-import datetime as dt
+from collections import namedtuple
+import sqlite3
 
-from sqlalchemy import create_engine, MetaData, Table
-
-from .db.pcse import GridWeatherDataProvider, fetch_soildata, fetch_sitedata, fetch_cropdata, \
+from .tests.db_input import GridWeatherDataProvider, fetch_soildata, fetch_sitedata, fetch_cropdata, \
     AgroManagementDataProvider
 from .base import ParameterProvider
 from .models import Wofost72_PP, Wofost72_WLP_CWB
 from .settings import settings
 
-def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
-                   dsn=None):
-    """Provides a convenient interface for starting a WOFOST instance
+
+def namedtuple_factory(cursor, row):
+    """Creates an SQLite row factor for named tuples.
+
+    see: https://docs.python.org/3/library/sqlite3.html#how-to-create-and-use-row-factories
+    """
+    fields = [column[0] for column in cursor.description]
+    cls = namedtuple("Row", fields)
+    return cls._make(row)
+
+
+def start_wofost(grid=31031, crop=1, year=2000, mode='wlp'):
+    """Provides a convenient interface for starting a WOFOST instance for the internal Demo DB.
     
     If started with no arguments, the routine will connnect to the
     demo database and initialize WOFOST for winter-wheat (cropno=1)
@@ -26,10 +35,7 @@ def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
     :param crop: crop number, defaults to 1 (winter-wheat in the demo database)
     :param year: year to start, defaults to 2000
     :param mode: production mode ('pp' or 'wlp'), defaults to 'wlp'
-    :param dsn: PCSE DB as SQLAlchemy data source name
-           defaults to `None` and in that case a connection to the demo
-           database will be established.
-           
+
     example::
     
         >>> import pcse
@@ -43,24 +49,19 @@ def start_wofost(grid=31031, crop=1, year=2000, mode='wlp',
         15261.752187075261
     """
 
-    installdir = os.path.dirname(os.path.abspath(__file__))
-
-    if dsn is None: # Assume SQlite demo DB
-        db_location = os.path.join(settings.PCSE_USER_HOME, "pcse.db")
-        dsn = "sqlite:///" + db_location
-    
     # Open database connections
-    DBengine = create_engine(dsn)
-    DBmetadata = MetaData(DBengine)
-    
+    db_location = os.path.join(settings.PCSE_USER_HOME, "pcse.db")
+    DBconn = sqlite3.connect(db_location)
+    DBconn.row_factory = namedtuple_factory
+
     # Get input data from database
-    agromanagement = AgroManagementDataProvider(DBengine, grid, crop, year)
-    sited  = fetch_sitedata(DBmetadata, grid, year)
-    cropd = fetch_cropdata(DBmetadata, grid, year, crop)
-    soild = fetch_soildata(DBmetadata, grid)
+    agromanagement = AgroManagementDataProvider(DBconn, grid, crop, year)
+    sited  = fetch_sitedata(DBconn, grid, year)
+    cropd = fetch_cropdata(DBconn, grid, year, crop)
+    soild = fetch_soildata(DBconn, grid)
     parvalues = ParameterProvider(sitedata=sited, soildata=soild, cropdata=cropd)
 
-    wdp = GridWeatherDataProvider(DBengine, grid_no=grid)
+    wdp = GridWeatherDataProvider(DBconn, grid_no=grid)
                              
     # Initialize PCSE/WOFOST
     mode = mode.strip().lower()
