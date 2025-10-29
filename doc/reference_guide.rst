@@ -947,15 +947,22 @@ the :ref:`ExcelWeatherDataProvider <ExcelWeatherDataProvider>` use the structure
 which is easier to handle than the ASCII files of the CABOWeatherDataProvider. Furthermore, a weather data provider
 is available that uses a simple CSV data format, :ref:`CSVWeatherDataProvider <CSVWeatherDataProvider>`.
 
+Furthermore, the `OpenMeteo`_ company provides a free API (with limitations) to retrieve time-series of weather data
+for any given place on Earth. Historical data is based on ERA5, while forecasts are provided from several different
+providers including ECMWF. PCSE now includes the :ref:`OpenMeteoWeatherDataProvider <OpenMeteoWeatherDataProvider>`
+that can pull weather information from their API.
+
 Finally, there is the global weather data provided by the agroclimatology from the
 `NASA Power database`_ at a resolution of 0.25x0.25 degree. PCSE provides the
 :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
 the NASA Power data from the internet for a given latitude and longitude.
 
+
+
 .. _CABO Weather System: http://edepot.wur.nl/43010
 .. _NASA Power database: http://power.larc.nasa.gov
 .. _European Crop Growth Monitoring System: http://marswiki.jrc.ec.europa.eu/agri4castwiki/index.php/Weather_Monitoring
-
+.. _OpenMeteo: https://open-meteo.com/
 
 .. _Data providers for parameter values:
 

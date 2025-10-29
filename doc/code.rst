@@ -308,6 +308,9 @@ parameter files and agromanagement files.
 .. _NASAPowerWeatherDataProvider:
 .. autoclass:: pcse.input.NASAPowerWeatherDataProvider
 
+.. _OpenMeteoWeatherDataProvider:
+.. autoclass:: pcse.input.OpenMeteoWeatherDataProvider
+
 .. _CABOWeatherDataProvider:
 .. autoclass:: pcse.input.CABOWeatherDataProvider
 

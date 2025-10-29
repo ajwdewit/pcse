@@ -21,20 +21,30 @@ from pcse.settings import settings
 
 
 class OpenMeteoWeatherDataProvider(WeatherDataProvider):
-    """
-    A weather provider that uses the Open Meteo weather API.
+    """A weather provider that uses the Open Meteo weather API.
+
+    :param latitude: latitude to request weather data for
+    :param longitude: longitude to request weather data for
+    :param timezone: timezone for day aggregation (str, default 'UTC')
+    :param openmeteo_model: model to use, default 'best_match'
+    :param start_date: Starting date from which to retrieve data (str, default 'UTC')
+    :keyword ETmodel: "PM"|"P" for selecting penman-monteith or Penman
+        method for reference evapotranspiration. Defaults to "PM".
+    :keyword forecast: Include a weather forecast, default False
+    :keyword force_update: Set to True to force to request fresh data from OpenMeteo website.
+
     This object only needs a location (latitude and longitude)
     at initialization.
-    There are two important parameters when constructing the object:
-    :openmeteo_model and :forecast.
 
+    There are two important parameters when constructing the object:
+    `openmeteo_model` and `forecast`.
     The class variables list possible models to use, either for forecasts
     or historical data.
 
     To utilize a specific model, call it with the appropriate key argument.
     Be aware that there might be some nuances with using certain models.
     This hasn't been tested thoroughly, so there might be some issues with the starting
-    date. Please provide an argument for the :start_date parameter if you find any issues.
+    date. Please provide an argument for the `start_date` parameter if you find any issues.
     More info for each model is documented here: https://open-meteo.com/en/docs
 
     If you don't specify a model, the Open Meteo API will automatically

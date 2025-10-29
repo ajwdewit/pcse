@@ -1,4 +1,3 @@
-from __future__ import print_function
 from setuptools import setup, find_packages
 import os
 import io
@@ -11,7 +10,7 @@ DESCRIPTION = 'Framework for developing crop simulation models, ' \
               'the LINGRA grassland simulation model.'
 AUTHOR = "Allard de Wit"
 AUTHOR_EMAIL = 'allard.dewit@wur.nl'
-URL = 'http://github.com/ajwdewit/pcse/'
+URL = 'https://github.com/ajwdewit/pcse/'
 LICENSE="EUPL"
 VERSION = "6.0.10"
 
@@ -34,7 +33,7 @@ setup(
     name=NAME,
     version=VERSION,
     url=URL,
-    download_url='http://github.com/ajwdewit/pcse/tarball/'+VERSION,
+    download_url='https://github.com/ajwdewit/pcse/tarball/'+VERSION,
     license='EUPL',
     author=AUTHOR,
     install_requires=['pydispatcher>=2.0.7',
