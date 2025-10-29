@@ -24,8 +24,7 @@ allowing easy interfacing with databases, graphical user interfaces, visualizati
 tools and numerical/statistical packages. PCSE has several interesting features:
 
 * Implementation in pure python with dependencies only on popular packages available from
-  the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `pandas`, `Openpyxl`, `xlrd`,
-  `requests` and `numpy`)
+  the Python Package Index (PyPI) (`Pydispather`, `PyYAML`, `pandas`, `Openpyxl` and  `requests`)
 
 * Modular design allowing you to add or change components relatively quickly with
   a simple but powerful approach to communicate variables between modules.
@@ -50,7 +49,7 @@ tools and numerical/statistical packages. PCSE has several interesting features:
 
 To contribute to PCSE, you can fork your own copy at https://github.com/ajwdewit/pcse
 
-Full documentation is available on http://pcse.readthedocs.io
+Full documentation is available on https://pcse.readthedocs.io
 
 
 Testing PCSE
@@ -142,8 +141,6 @@ Running the experiments is similar to running the unit tests::
 This will generate figures of simulated vs observed data in order to assess how the model
 performs against experimental data. In the future, this will be extended to include a
 report with error values.
-
-
 
 
 .. _FST: http://models.pps.wur.nl/sites/models.pps.wur.nl/files/FST%203.pdf
