@@ -1,5 +1,5 @@
 # SQL scripts for demo database
-include pcse/db/pcse/pcse_dump.sql
+include pcse/tests/test_data/pcse_dump.sql
 
 # Model configuration files
 include pcse/conf/Alcepas10_PP.conf

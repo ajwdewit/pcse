@@ -24,7 +24,7 @@ dependencies = [
    'PyYAML>=5.1',
    'openpyxl>=3.0',
    'requests>=2.0',
-   'pandas>=1.0',
+   'pandas>=2.0',
    'traitlets-pcse==5.0.0.dev',
    'dotmap>=1.3',
 ]
