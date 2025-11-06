@@ -3,11 +3,11 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["pcse", "pcse.base", "pcse.crop", "pcse.input", "pcse.settings", "pcse.soil", "pcse.tests"]
+packages = ["pcse", "pcse.conf", "pcse.base", "pcse.crop", "pcse.crop.nutrients", "pcse.input", "pcse.settings", "pcse.soil", "pcse.tests", "pcse.tests.test_data"]
 
 [project]
 name = "pcse"
-version = "6.0.11"
+version = "6.0.12"
 authors = [
   { name="Allard de Wit", email="allard.dewit@wur.nl" },
   { name="Herman Berghuijs", email="herman.berghuijs@wur.nl" },
