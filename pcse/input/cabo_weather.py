@@ -227,12 +227,12 @@ class CABOWeatherDataProvider(WeatherDataProvider):
         # array for tracing missing values in the self.tmp_data
         has_data = np.ones_like(self.tmp_data)
         # find indivual missing observations which are equal to self.weather_no_data (e..g -99.),
-        # set them to np.NaN
+        # set them to np.nan
         index = np.where(self.tmp_data == self.weather_no_data)
         has_data[index] = 0
-        self.tmp_data[index] = np.NaN
+        self.tmp_data[index] = np.nan
         # Find missing lines in the CABOWE files, these have not been inserted in tmp_data and
-        # are therefore np.NaN (tmp_data was initialized with np.NaN)
+        # are therefore np.nan (tmp_data was initialized with np.nan)
         index = np.where(np.isnan(self.tmp_data) == True )
         has_data[index] = 0
 
@@ -271,7 +271,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
         """Converts the data in self.tmp_data into WeatherDataContainers which are stored in
         the class dictionary keyed on the date.
         
-        Records that are incomplete (contain np.NaN values) are skipped.
+        Records that are incomplete (contain np.nan values) are skipped.
         Moreover, if the radiation measurements are in sunshine duration, than
         the Angstrom equation is used to estimate global radiation. Finally,
         the evapotranspiration value are calculated for each complete record.
@@ -327,7 +327,7 @@ class CABOWeatherDataProvider(WeatherDataProvider):
             else:
                 self.potential_records += 365
         t_ar = np.empty((6,self.potential_records), dtype=np.float64)
-        t_ar[:] = np.NaN
+        t_ar[:] = np.nan
         
         return t_ar
 

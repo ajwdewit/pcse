@@ -999,7 +999,7 @@ crop has been set. Therefore, we can activate a particular crop and variety:
      ...
      'TSUM2': 1194, 'TSUM1': 543, 'TSUMEM': 120}
 
-In practice it is usually not necessary to activate a crop parameter set manually because the AgroManager
+In practice it is usually **not necessary to activate a crop parameter set manually** because the AgroManager
 can handle this. Defining an agromanagement definition with the proper `crop_name` and `variety_name` will
 automatically activate the crop/variety during the model simulation::
 
