@@ -217,10 +217,10 @@ class N_Demand_Uptake(SimulationObject):
             r.RNuptakeST = 0.
             r.RNuptakeSO = 0.
         else:
-            r.RNuptakeLV = max(0.,min(r.NdemandLV/delt + r.RNtranslocationLV, r.RNuptake * (r.NdemandLV/delt + r.RNtranslocationLV) / r.Ndemand))
-            r.RNuptakeRT = max(0.,min(r.NdemandRT/delt + r.RNtranslocationRT, r.RNuptake * (r.NdemandRT/delt + r.RNtranslocationRT) / r.Ndemand))
-            r.RNuptakeST = max(0.,min(r.NdemandST/delt + r.RNtranslocationST, r.RNuptake * (r.NdemandST/delt + r.RNtranslocationST) / r.Ndemand))
-            r.RNuptakeSO = max(0.,min(r.NdemandSO/delt - r.RNtranslocation,   r.RNuptake * (r.NdemandSO/delt - r.RNtranslocation) / r.Ndemand))
+            r.RNuptakeLV = max(0.,min(r.NdemandLV/delt + r.RNtranslocationLV, (r.RNuptake + r.RNfixation) * (r.NdemandLV/delt + r.RNtranslocationLV) / r.Ndemand))
+            r.RNuptakeRT = max(0.,min(r.NdemandRT/delt + r.RNtranslocationRT, (r.RNuptake + r.RNfixation) * (r.NdemandRT/delt + r.RNtranslocationRT) / r.Ndemand))
+            r.RNuptakeST = max(0.,min(r.NdemandST/delt + r.RNtranslocationST, (r.RNuptake + r.RNfixation) * (r.NdemandST/delt + r.RNtranslocationST) / r.Ndemand))
+            r.RNuptakeSO = max(0.,min(r.NdemandSO/delt - r.RNtranslocation,   (r.RNuptake + r.RNfixation) * (r.NdemandSO/delt - r.RNtranslocation) / r.Ndemand))
 
 
     @prepare_states
