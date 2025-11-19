@@ -3,10 +3,10 @@
 # Allard de Wit (allard.dewit@wur.nl), March 2024
 from copy import deepcopy
 
-from ..traitlets import Float, Int, Instance
-from ..decorators import prepare_rates, prepare_states
-from ..util import limit, merge_dict, AfgenTrait
-from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
+from pcse.traitlets import Float, Int, Instance
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.util import limit, merge_dict, AfgenTrait
+from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
     
 

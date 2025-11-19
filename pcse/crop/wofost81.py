@@ -10,18 +10,18 @@ from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
-from .phenology import DVS_Phenology as Phenology
-from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
-from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
-from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics_N as Leaf_Dynamics
-from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
+from pcse.crop.wofost.phenology import DVS_Phenology as Phenology
+from pcse.crop.wofost.respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
+from pcse.crop.wofost.stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
+from pcse.crop.wofost.root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
+from pcse.crop.wofost.leaf_dynamics import WOFOST_Leaf_Dynamics_N as Leaf_Dynamics
+from pcse.crop.wofost.storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
     Storage_Organ_Dynamics
-from .assimilation import WOFOST81_Assimilation as Assimilation
-from .partitioning import DVS_Partitioning_N as Partitioning
-from .evapotranspiration import EvapotranspirationWrapper as Evapotranspiration
-from .n_dynamics import N_Crop_Dynamics as N_crop
-from .nutrients.n_stress import N_Stress as N_Stress
+from pcse.crop.wofost.assimilation import WOFOST81_Assimilation as Assimilation
+from pcse.crop.wofost.partitioning import DVS_Partitioning_N as Partitioning
+from pcse.crop.wofost.evapotranspiration import EvapotranspirationWrapper as Evapotranspiration
+from pcse.crop.wofost.n_dynamics import N_Crop_Dynamics as N_crop
+from pcse.crop.wofost.n_stress import N_Stress as N_Stress
 
 class Wofost81(SimulationObject):
     """Top level object organizing the different components of the WOFOST crop

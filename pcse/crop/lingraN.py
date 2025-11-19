@@ -12,11 +12,11 @@ models.
 from math import exp, log
 
 from pcse.base import SimulationObject, ParamTemplate, StatesTemplate, RatesTemplate
-from pcse.traitlets import Float, List, Bool, Instance, Integer
+from pcse.traitlets import Float, Bool, Instance, Integer
 from pcse.util import AfgenTrait, limit
 from pcse.decorators import prepare_states, prepare_rates
-from pcse.crop.evapotranspiration import Evapotranspiration
-from pcse.crop.root_dynamics import Simple_Root_Dynamics
+from pcse.crop.wofost.evapotranspiration import Evapotranspiration
+from pcse.crop.wofost.root_dynamics import Simple_Root_Dynamics
 import pcse.signals
 
 from .lingra_ndynamics import N_Crop_Dynamics, N_Stress

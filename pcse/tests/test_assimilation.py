@@ -5,7 +5,7 @@ import unittest
 from datetime import date
 
 from ..base import VariableKiosk
-from ..crop.assimilation import WOFOST72_Assimilation
+from pcse.crop.wofost.assimilation import WOFOST72_Assimilation
 
 #-------------------------------------------------------------------------------
 class Test_WOFOST_Assimilation(unittest.TestCase):

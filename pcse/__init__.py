@@ -25,7 +25,6 @@ See Also
 * http://github.com/ajwdewit/pcse
 * http://pcse.readthedocs.org
 """
-from __future__ import print_function
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
 __stable__ = True

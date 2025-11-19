@@ -16,8 +16,8 @@ from array import array
 import datetime as dt
 
 from ..traitlets import Instance, Float, Enum, Unicode
-from .assimilation import totass7
-from ..util import limit, astro, doy, daylength, AfgenTrait
+from pcse.crop.wofost.assimilation import totass7
+from ..util import limit, astro, daylength, AfgenTrait
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, SimulationObject
 from ..decorators import prepare_rates, prepare_states
 from .. import signals

@@ -4,13 +4,13 @@
 from collections import namedtuple
 from math import exp
 
-from ..traitlets import Float, Int, Instance
-from ..decorators import prepare_rates, prepare_states
-from ..base import ParamTemplate, StatesTemplate, SimulationObject,\
+from pcse.traitlets import Float, Int, Instance
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.base import ParamTemplate, StatesTemplate, SimulationObject,\
      VariableKiosk
-from .. import exceptions as exc
+from pcse import exceptions as exc
 from warnings import warn
-from ..util import AfgenTrait
+from pcse.util import AfgenTrait
 
 
 # Template for namedtuple containing partitioning factors

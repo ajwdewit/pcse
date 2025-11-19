@@ -7,10 +7,10 @@ from __future__ import print_function
 from math import sqrt, exp, cos, pi
 from collections import deque
 
-from ..traitlets import Instance, Float 
+from pcse.traitlets import Instance, Float
 
-from ..util import limit, astro, doy, AfgenTrait
-from ..base import ParamTemplate, SimulationObject, RatesTemplate
+from pcse.util import limit, astro, doy, AfgenTrait
+from pcse.base import ParamTemplate, SimulationObject, RatesTemplate
 
 
 def totass8(AMAX_LNB, AMAX_REF, AMAX_SLP, DAYL, CO2AMAX, TMPF, EFF, KN, LAI, NLV, KDIF, AVRAD, DIFPP, DSINBE, SINLD, COSLD):

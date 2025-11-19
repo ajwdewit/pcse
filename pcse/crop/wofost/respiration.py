@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2024
-from ..traitlets import Float, Int, Instance, Dict
-from ..decorators import prepare_rates, prepare_states
-from ..base import ParamTemplate, SimulationObject, RatesTemplate
-from ..util import AfgenTrait
+from pcse.traitlets import Float, Int, Instance, Dict
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.base import ParamTemplate, SimulationObject, RatesTemplate
+from pcse.util import AfgenTrait
 
 class WOFOST_Maintenance_Respiration(SimulationObject):
     """Maintenance respiration in WOFOST

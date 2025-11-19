@@ -6,12 +6,12 @@ from collections import deque
 from array import array
 import numpy as np
 
-from ..traitlets import Float, Int, Instance
-from ..decorators import prepare_rates, prepare_states
-from ..util import limit, AfgenTrait
-from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
+from pcse.traitlets import Float, Int, Instance
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.util import limit, AfgenTrait
+from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
-from .. import signals
+from pcse import signals
 
 class WOFOST_Leaf_Dynamics(SimulationObject):
     """Leaf dynamics for the WOFOST crop model.

@@ -10,7 +10,6 @@ The following components are available:
   - CERES_WinterKill: models a hardening index to estimate leaf and crop death
 """
 
-#!/usr/bin/env python
 import os
 from math import exp
 

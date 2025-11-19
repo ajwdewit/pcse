@@ -6,11 +6,11 @@ from math import exp
 import array
 import numpy as np
 
-from ..traitlets import Float, Int, Instance, Bool, Instance
-from ..decorators import prepare_rates, prepare_states
-from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
+from pcse.traitlets import Float, Int, Instance, Bool, Instance
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
                          SimulationObject
-from ..util import limit, merge_dict, AfgenTrait
+from pcse.util import limit, merge_dict, AfgenTrait
 
 
 def SWEAF(ET0, DEPNR):

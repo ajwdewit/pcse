@@ -8,9 +8,9 @@ from ..decorators import prepare_rates, prepare_states
 from ..base import StatesTemplate, SimulationObject
 from .. import signals
 
-from .evapotranspiration import Simple_Evapotranspiration as Evapotranspiration
-from .root_dynamics import Simple_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import CSDM_Leaf_Dynamics as Leaf_Dynamics
+from pcse.crop.wofost.evapotranspiration import Simple_Evapotranspiration as Evapotranspiration
+from pcse.crop.wofost.root_dynamics import Simple_Root_Dynamics as Root_Dynamics
+from pcse.crop.wofost.leaf_dynamics import CSDM_Leaf_Dynamics as Leaf_Dynamics
 
 
 class GreenLayerCrop(SimulationObject):

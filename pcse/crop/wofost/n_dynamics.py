@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # Herman Berghuijs (herman.berghuijs@wur.nl) and Allard de Wit (allard.dewit@wur.nl), April 2024
 
-from .. import exceptions as exc
-from ..traitlets import Float, Int, Instance
-from ..decorators import prepare_rates, prepare_states
-from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
+from pcse import exceptions as exc
+from pcse.traitlets import Float, Int, Instance
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
-from ..util import AfgenTrait
-from .nutrients import N_Demand_Uptake
+from pcse.util import AfgenTrait
+from pcse.crop.nutrients import N_Demand_Uptake
 
 
 class N_Crop_Dynamics(SimulationObject):

@@ -4,24 +4,24 @@
 
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Unicode
+from ..traitlets import Float, Instance, Unicode
 from ..decorators import prepare_rates, prepare_states
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject
 from .. import signals
 from .. import exceptions as exc
 
-from .phenology import DVS_Phenology as Phenology
-from .assimilation import WOFOST72_Assimilation as Assimilation
-from .partitioning import DVS_Partitioning as Partitioning
-from .respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
-from .evapotranspiration import Evapotranspiration
+from pcse.crop.wofost.phenology import DVS_Phenology as Phenology
+from pcse.crop.wofost.assimilation import WOFOST72_Assimilation as Assimilation
+from pcse.crop.wofost.partitioning import DVS_Partitioning as Partitioning
+from pcse.crop.wofost.respiration import WOFOST_Maintenance_Respiration as MaintenanceRespiration
+from pcse.crop.wofost.evapotranspiration import Evapotranspiration
 from .abioticdamage import FROSTOL
 from .abioticdamage import CrownTemperature
-from .stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
-from .root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
-from .leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
-from .storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
+from pcse.crop.wofost.stem_dynamics import WOFOST_Stem_Dynamics as Stem_Dynamics
+from pcse.crop.wofost.root_dynamics import WOFOST_Root_Dynamics as Root_Dynamics
+from pcse.crop.wofost.leaf_dynamics import WOFOST_Leaf_Dynamics as Leaf_Dynamics
+from pcse.crop.wofost.storage_organ_dynamics import WOFOST_Storage_Organ_Dynamics as \
      Storage_Organ_Dynamics
 
 #-------------------------------------------------------------------------------

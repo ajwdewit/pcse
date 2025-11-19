@@ -9,14 +9,14 @@ Classes defined here:
 """
 import datetime
 
-from ..traitlets import Float, Int, Instance, Enum, Bool
-from ..decorators import prepare_rates, prepare_states
+from pcse.traitlets import Float, Int, Instance, Enum, Bool
+from pcse.decorators import prepare_rates, prepare_states
 
-from ..util import limit, daylength, AfgenTrait
-from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
+from pcse.util import limit, daylength, AfgenTrait
+from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
-from .. import signals
-from .. import exceptions as exc
+from pcse import signals
+from pcse import exceptions as exc
 
 #-------------------------------------------------------------------------------
 class Vernalisation(SimulationObject):

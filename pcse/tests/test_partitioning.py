@@ -4,7 +4,7 @@
 import unittest
 from datetime import date
 
-from ..crop.partitioning import DVS_Partitioning
+from pcse.crop.wofost.partitioning import DVS_Partitioning
 from ..base import VariableKiosk
 
 #----------------------------------------------------------------------------

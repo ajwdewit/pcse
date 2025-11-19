@@ -6,7 +6,7 @@ import unittest
 from datetime import date
 
 from ..base import VariableKiosk
-from ..crop.respiration import WOFOST_Maintenance_Respiration
+from pcse.crop.wofost.respiration import WOFOST_Maintenance_Respiration
 from .test_data import respiration_testdata
 
 

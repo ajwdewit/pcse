@@ -11,7 +11,7 @@ from ..base import StatesWithImplicitRatesTemplate as StateVariables
 from ..traitlets import Float, Instance, Bool
 from ..decorators import prepare_rates, prepare_states
 from ..util import limit, AfgenTrait
-from ..crop.phenology import DVS_Phenology as Phenology
+from pcse.crop.wofost.phenology import DVS_Phenology as Phenology
 from ..exceptions import CarbonBalanceError, NutrientBalanceError
 from .. import signals
 

@@ -2,10 +2,10 @@
 # Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl) and Herman Berghuijs, January 2024
 
-from ..traitlets import Float, Int, Instance
-from ..decorators import prepare_rates, prepare_states
-from ..util import limit
-from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
+from pcse.traitlets import Float, Int, Instance
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.util import limit
+from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject, VariableKiosk
 
 class WOFOST_Storage_Organ_Dynamics(SimulationObject):

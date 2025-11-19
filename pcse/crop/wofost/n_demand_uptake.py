@@ -3,10 +3,10 @@
 # Allard de Wit (allard.dewit@wur.nl), March 2024
 from collections import namedtuple
 
-from ...base import StatesTemplate, ParamTemplate, SimulationObject, RatesTemplate
-from ...decorators import prepare_rates, prepare_states
-from ...traitlets import HasTraits, Float, Int, Instance
-from ...util import AfgenTrait
+from pcse.base import StatesTemplate, ParamTemplate, SimulationObject, RatesTemplate
+from pcse.decorators import prepare_rates, prepare_states
+from pcse.traitlets import HasTraits, Float, Int, Instance
+from pcse.util import AfgenTrait
 
 MaxNutrientConcentrations = namedtuple("MaxNutrientConcentrations",
                                        ["NMAXLV","NMAXST", "NMAXRT", "NMAXSO"])

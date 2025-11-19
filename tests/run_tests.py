@@ -10,13 +10,13 @@ import glob
 import yaml
 
 from pcse.base.parameter_providers import ParameterProvider
-from pcse.crop.phenology import DVS_Phenology
-from pcse.crop.leaf_dynamics import WOFOST_Leaf_Dynamics
-from pcse.crop.assimilation import WOFOST81_Assimilation, WOFOST72_Assimilation
-from pcse.crop.respiration import WOFOST_Maintenance_Respiration
-from pcse.crop.partitioning import DVS_Partitioning
-from pcse.crop.root_dynamics import WOFOST_Root_Dynamics
-from pcse.crop.evapotranspiration import Evapotranspiration
+from pcse.crop.wofost.phenology import DVS_Phenology
+from pcse.crop.wofost.leaf_dynamics import WOFOST_Leaf_Dynamics
+from pcse.crop.wofost.assimilation import WOFOST72_Assimilation
+from pcse.crop.wofost.respiration import WOFOST_Maintenance_Respiration
+from pcse.crop.wofost.partitioning import DVS_Partitioning
+from pcse.crop.wofost.root_dynamics import WOFOST_Root_Dynamics
+from pcse.crop.wofost.evapotranspiration import Evapotranspiration
 from pcse.crop.wofost72 import Wofost72
 from pcse.crop.lingra import LINGRA
 from pcse.crop.lingraN import LINGRA_N

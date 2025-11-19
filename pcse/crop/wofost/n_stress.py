@@ -6,10 +6,10 @@ Class to calculate nitrogen stress factors:
 
 """
 
-from ...traitlets import Float
-from ...util import limit, AfgenTrait
-from ...base import ParamTemplate, SimulationObject, RatesTemplate
-from ...decorators import prepare_rates
+from pcse.traitlets import Float
+from pcse.util import limit, AfgenTrait
+from pcse.base import ParamTemplate, SimulationObject, RatesTemplate
+from pcse.decorators import prepare_rates
 
 class N_Stress(SimulationObject):
     """Implementation of N stress calculation through [N]nutrition index.
