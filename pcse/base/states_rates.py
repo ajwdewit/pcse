@@ -352,7 +352,8 @@ class StatesWithImplicitRatesTemplate(StatesTemplate):
 
     @classmethod
     def initialValues(cls):
-        return dict((a, 0.0) for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_'))
+        # return dict((a, 0.0) for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_'))
+        return {a: 0.0 for a in cls.__dict__ if isinstance(getattr(cls, a), Float) and not a.startswith('_')}
 
 
 class RatesTemplate(StatesRatesCommon):

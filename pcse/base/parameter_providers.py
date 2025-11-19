@@ -9,6 +9,7 @@ when creating PCSE simulation units.
 import sys
 import logging
 from collections import Counter
+from abc import ABC, abstractmethod
 if sys.version_info > (3, 8):
     from collections.abc import MutableMapping
 else:
@@ -34,12 +35,12 @@ class ParameterProvider(MutableMapping):
 
     See also the `MultiCropDataProvider`
     """
-    _maps = list()
-    _sitedata = dict()
-    _soildata = dict()
-    _cropdata = dict()
-    _timerdata = dict()
-    _override = dict()
+    _maps = []
+    _sitedata = {}
+    _soildata = {}
+    _cropdata = {}
+    _timerdata = {}
+    _override = {}
     _iter = 0  # Counter for iterator
     _ncrops_activated = 0  # Counts the number of times `set_crop_type()` has been called.
 
@@ -99,11 +100,9 @@ class ParameterProvider(MutableMapping):
             self._cropdata.set_active_crop(crop_name, variety_name)
         else:
             # we do not have a MultiCropDataProvider, this means that crop rotations are not supported
-            # At the first call this is OK. However issue a warning with subsequent calls
+            # At the first call this is OK. However issue a warning when subsequent calls
             # to set_crop_type() are done because we cannot change the set of crop parameters
-            if self._ncrops_activated == 0:
-                pass
-            else:
+            if self._ncrops_activated > 0:
                 # has been called multiple times
                 msg = "A second crop was scheduled: however, the CropDataProvider does not " \
                       "support multiple crop parameter sets. This will only work for crop" \
@@ -191,7 +190,7 @@ class ParameterProvider(MutableMapping):
         s = []
         for mapping in self._maps:
             s.extend(mapping.keys())
-        return sorted(list(set(s)))
+        return sorted(set(s))
 
     def __getitem__(self, key):
         """Returns the value of the given parameter (key).
@@ -266,18 +265,19 @@ class ParameterProvider(MutableMapping):
             raise StopIteration
 
 
-class MultiCropDataProvider(dict):
+class MultiCropDataProvider(ABC, dict):
 
     def __init__(self):
         dict.__init__(self)
         self._store = {}
 
+    @abstractmethod
     def set_active_crop(self, crop_name, variety_name):
         """Sets the crop parameters for the crop identified by crop_name and variety_name.
 
         Needs to be implemented by each subclass of MultiCropDataProvider
         """
-        msg = "'set_crop_type' method should be implemented specifically for each" \
+        msg = "'set_crop_type()' method should be implemented specifically for each" \
               "subclass of MultiCropDataProvider."
         raise NotImplementedError(msg)
 

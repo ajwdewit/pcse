@@ -60,7 +60,7 @@ class ConfigurationLoader(object):
                     self.description += "\n"
 
         # Loop through the attributes in the configuration file
-        for key, value in list(loc.items()):
+        for key, value in loc.items():
             if key.isupper():
                 self.defined_attr.append(key)
                 setattr(self, key, value)

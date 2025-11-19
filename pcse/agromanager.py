@@ -276,7 +276,6 @@ class TimedEventsDispatcher(HasTraits, DispatcherObject):
         if not hasattr(signals, event_signal):
             msg = "Signal '%s'  not defined in pcse.signals module."
             raise exc.PCSEError(msg % event_signal)
-        # self.event_signal = getattr(signals, event_signal)
         self.event_signal = getattr(signals, event_signal)
 
         # Build a counter for the days with events.
@@ -465,7 +464,7 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
         :param day: a date object for the current simulation day
         :return: None
         """
-        if not self.event_state in self.kiosk:
+        if self.event_state not in self.kiosk:
             msg = "State variable '%s' not (yet) available in kiosk!" % self.event_state
             self.logger.warning(msg)
             return
@@ -664,11 +663,11 @@ class AgroManager(AncillaryObject):
 
         # Walk through the different campaigns and build crop calendars and
         # timed/state event dispatchers
-        for campaign, campaign_start, next_campaign in \
+        for campaign, this_campaign_start, next_campaign_start in \
                 zip(agromanagement, self.campaign_start_dates[:-1], self.campaign_start_dates[1:]):
 
             # Get the campaign definition for the start date
-            campaign_def = campaign[campaign_start]
+            campaign_def = campaign[this_campaign_start]
 
             if self._is_empty_campaign(campaign_def):  # no campaign definition for this campaign, e.g. fallow
                 self.crop_calendars.append(None)
@@ -680,7 +679,7 @@ class AgroManager(AncillaryObject):
             cc_def = campaign_def['CropCalendar']
             if cc_def is not None:
                 cc = CropCalendar(kiosk, **cc_def)
-                cc.validate(campaign_start, next_campaign)
+                cc.validate(this_campaign_start, next_campaign_start)
                 self.crop_calendars.append(cc)
             else:
                 self.crop_calendars.append(None)
@@ -690,7 +689,7 @@ class AgroManager(AncillaryObject):
             if te_def is not None:
                 te_dsp = self._build_TimedEventDispatchers(kiosk, te_def)
                 for te in te_dsp:
-                    te.validate(campaign_start, next_campaign)
+                    te.validate(this_campaign_start, next_campaign_start)
                 self.timed_event_dispatchers.append(te_dsp)
             else:
                 self.timed_event_dispatchers.append(None)
@@ -709,15 +708,14 @@ class AgroManager(AncillaryObject):
         if campaign_def is None:
             return True
 
-        attrs = ["CropCalendar", "TimedEvents", "StateEvents"]
         r = []
-        for attr in attrs:
+        for attr in ["CropCalendar", "TimedEvents", "StateEvents"]:
             if attr in campaign_def:
                 if campaign_def[attr] is None:
                     r.append(True)
                 else:
                     r.append(False)
-        if r == [True]*3:
+        if all(r):
             return True
 
         return False
@@ -933,9 +931,8 @@ class AgroManager(AncillaryObject):
         3. There are no TimedEvents scheduled after the current date.
         """
 
-
         if self.campaign_start_dates[self._icampaign+1] is not None:
-            return  #  e.g. There is a next campaign defined
+            return  # e.g. There is a next campaign defined
 
         if self.state_event_dispatchers[0] is not None:
             return  # there are state events active that may trigger in the future
