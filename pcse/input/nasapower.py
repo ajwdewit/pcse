@@ -221,7 +221,7 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
                    "end": end_date.strftime("%Y%m%d"),
                    "community": "AG",
                    "format": "JSON",
-                   "user": "anonymous"
+                   "user": "pcse"
                    }
         msg = "Starting retrieval from NASA Power"
         self.logger.debug(msg)
