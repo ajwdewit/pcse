@@ -146,6 +146,7 @@ class evapotranspiration(SimulationObject):
         # evapotranspiration exceeds the amount of water in soil present in excess of air dryness.
         WAAD = p.WCAD * k.RD  # The amount of soil water at air dryness (AD) [cm]
         W_avail = k.SM * k.RD - WAAD # Actual available amount in access of AD [cm]
+        W_avail = max(W_avail, 0.0)  # Ensure W_avail cannot be negative
         W_required = (EVAP + TRAN) * delt  # Amount of evapotranspiration [cm]
         if W_required > W_avail:  # more water is asked than available in the soil -> reduce ET rates.
             AVAILF = W_avail / W_required
