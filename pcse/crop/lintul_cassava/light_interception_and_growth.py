@@ -18,42 +18,42 @@ class light_interception_and_growth(SimulationObject):
     The actual dry matter production is also calculated. This can be smaller than the potential dry matter production
     in case of water stress, nutrient stress or suboptimal temperatures.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
-    =================  ==============================================  ======  ===========================
-    Name               Description                                     Type    Unit
-    =================  ==============================================  ======  ===========================
-    FPAR               Fraction of PAR in global radiation             SCr     MJ PAR MJ-1 radiation
-    K_EXT              Extinction coefficient of light in the canopy   SCr     m2 ground m-2 leaf
+    =================  ================================================  ======  ===========================
+    Name               Description                                       Type    Unit
+    =================  ================================================  ======  ===========================
+    K_EXT              Extinction coefficient of light in the canopy      SCr     m2 ground m-2 leaf
+    FPAR               Fraction of PAR in global radiation                SCr     MJ PAR MJ-1 radiation
     LUE_OPT            Light use efficiency in absence of water or
-                       nutrient stress and under optimal temperatures  SCr     g DM MJ-1 PAR
+                       nutrient stress and under optimal temperatures     SCr     g DM MJ-1 PAR
     TTB                Reduction rate of light use efficiency due to
-                       suboptimal temperatures as a table function of
-                       temperature                                     TCr     -
-    =================  ==============================================  ======  ===========================
+                       suboptimal temperatures as a table function
+                       of temperature                                     TCr     -
+    =================  ================================================  ======  ===========================
 
-   **State variables**
-
-    =================  ==============================================  ======  ===========================
-    Name               Description                                     Pbl     Unit
-    =================  ==============================================  ======  ===========================
-    PAR                Total amount of intercepted PAR                 Y       MJ PAR m-2 ground
-    ================   ==============================================  ======  ===========================
-
-   **Rate variables**
+    **State variables**
 
     =================  ==============================================  ======  ===========================
-    Name               Description                                     Pbl     Unit
+    Name                Description                                     Pbl     Unit
     =================  ==============================================  ======  ===========================
-    RPAR               Daily rate of PAR interception                  N       MJ PAR m-2 ground d-1
-    ================   ==============================================  ======  ===========================
+    PAR                 Total amount of intercepted PAR                 Y       MJ PAR m-2 ground
+    =================  ==============================================  ======  ===========================
 
-   **Auxillary variables**
+    **Rate variables**
 
     =================  ==============================================  ======  ===========================
-    Name               Description                                     Pbl     Unit
+    Name                Description                                     Pbl     Unit
     =================  ==============================================  ======  ===========================
-    GTOTAL             Rate of total dry matter production             Y       g DM m-2 ground d-1
+    RPAR                Daily rate of PAR interception                  N       MJ PAR m-2 ground d-1
+    =================  ==============================================  ======  ===========================
+
+    **Auxillary variables**
+
+    =================  ==============================================  ======  ===========================
+    Name                Description                                     Pbl     Unit
+    =================  ==============================================  ======  ===========================
+    GTOTAL              Rate of total dry matter production             Y       g DM m-2 ground d-1
     =================  ==============================================  ======  ===========================
 
     """

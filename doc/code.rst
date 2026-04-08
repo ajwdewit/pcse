@@ -280,9 +280,9 @@ Process modules for LINTUL-CASSAVA
 
 .. autoclass:: pcse.crop.lintul_cassava.light_interception_and_growth
 
-.. autoclass:: pcse.crop.lintul_cassava.nutrient_dynamics
+.. autoclass:: pcse.crop.lintul_cassava.crop_nutrient_dynamics
 
-.. autoclass:: pcse.crop.lintul_cassava.nutrient_stress
+.. autoclass:: pcse.crop.lintul_cassava.npk_stress
 
 
 .. _BaseClasses:

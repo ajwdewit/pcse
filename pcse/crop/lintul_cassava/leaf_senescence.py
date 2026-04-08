@@ -14,7 +14,7 @@ class leaf_senescence(SimulationObject):
     of the leaf area index. Green leaf tissue can either die due to 1) Ageing, 2) Leaf shedding in case of
     too much self shading, 3) severe drought, or 4) nutrient limitation.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Type     Unit
@@ -44,7 +44,7 @@ class leaf_senescence(SimulationObject):
                        occurs.                                         SCr      cm3 water cm-3 ground
     =================  ==============================================  ======  ===========================
 
-   **State variales**
+    **State variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -56,7 +56,7 @@ class leaf_senescence(SimulationObject):
                        dry matter to storage organs.                   N       g DM m-2 ground
     =================  ==============================================  ======  ===========================
 
-   **Rate variales**
+    **Rate variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -65,7 +65,8 @@ class leaf_senescence(SimulationObject):
     DLV                Death rate of leaf dry matter                   Y       g DM m-2 d-1
     RTSUMCROPLEAFAGE   Rate of increase of crop physiological age      Y       |C|
     RWLVD              Rate of increase of dead leaf dry matter        Y       g DM m-2 d-1
-    RWSOTRANSLSO       Rate of increase of of storage organ dry matter
+    RWSOTRANSLSO       Rate of increase of of storage organ dry
+                       matter
                        produced by translocation of senescenced leaf
                        organ dry matter to storage organs.             Y       g DM m-2 d-1
     =================  ==============================================  ======  ===========================

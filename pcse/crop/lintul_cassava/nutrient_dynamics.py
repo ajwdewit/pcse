@@ -12,7 +12,7 @@ class crop_nutrient_dynamics(SimulationObject):
     This class calculates the daily rates of N, P, and K uptake in the crop and their partitioning over the different
     organs.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Type    Unit
@@ -31,7 +31,7 @@ class crop_nutrient_dynamics(SimulationObject):
     TCNPKT             Time coefficient of N, P, and K translocation   SCr     d
     =================  ==============================================  ======  ===========================
 
-   **State variables**
+    **State variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -53,7 +53,7 @@ class crop_nutrient_dynamics(SimulationObject):
     APST               Amount of phosphorus in stems                   Y       g P m-2 ground
     =================  ==============================================  ======  ===========================
 
-   **Rate variables**
+    **Rate variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -90,7 +90,7 @@ class crop_nutrient_dynamics(SimulationObject):
                        stems                                           N       g P m-2 ground d-1
     =================  ==============================================  ======  ===========================
 
-   **Auxillary variables**
+    **Auxillary variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -101,11 +101,12 @@ class crop_nutrient_dynamics(SimulationObject):
     =================  ==============================================  ======  ===========================
 
     This class is a Python implementation of the calculations related to nutrient uptake and their partitioning
-    in the R function nutrientdyn in the R version of the model LINTUL Cassava NPK (Adiele et al., 2022; Ezui et
-    al., 2018). The original R version also contained calculations related to the soil supply of N, P, and K. For the
+    in the function nutrientdyn in the R version of the model LINTUL Cassava NPK (Adiele et al., 2022; Ezui et
+    al., 2018).
+
+    The original R version also contained calculations related to the soil supply of N, P, and K. For the
     sake of compatibility with other PCSE modules, these calculations are moved to the class
-    pcse.soil.lintul_cassava.lintul_cassava_soil_nutrient_dynamics in
-    .../pcse/soil/lintul_cassava_soil_nutrient_dynamics.py.
+    `pcse.soil.lintul_cassava.lintul_cassava_soil_nutrient_dynamics`.
 
     """
 

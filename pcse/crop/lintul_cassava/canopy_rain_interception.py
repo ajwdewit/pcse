@@ -11,7 +11,7 @@ class canopy_rain_interception(SimulationObject):
     Simulates the daily amount of rain water that is intercepted by the canopy. Depending on the precipitation rate,
     the canopy either intercepts all rain water or it participates a maximum amount per unit of leaf area index.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
     ==============  ==============================================  ======  ===============================
      Name           Description                                     Type     Unit
@@ -21,7 +21,7 @@ class canopy_rain_interception(SimulationObject):
                     area index                                      SCr     cm water m2 ground m-2 leaf d-1
     ==============  ==============================================  ======  ===============================
 
-   **Rate variables**
+    **Rate variables**
 
     ==============  ==============================================  ======  ===============================
      Name           Description                                     Pbl     Unit
@@ -29,11 +29,11 @@ class canopy_rain_interception(SimulationObject):
     RNINTC          Rate of rain interception by the canopy         Y        cm water d-1
     ==============  ==============================================  ======  ===============================
 
-   **Auxillary variables**
+    **Auxillary variables**
 
     None
 
-   **State variables**
+    **State variables**
 
     None
     """

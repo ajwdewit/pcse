@@ -6,27 +6,26 @@ from pcse.traitlets import Float
 from pcse.base import ParamTemplate, RatesTemplate, SimulationObject, StatesTemplate
 
 class phenology(SimulationObject):
-    """
-    Class to simulate phenology
+    """Class to simulate phenology
 
     This class simulates the phenology of the crop from its emergence. Phenology is quantified as a temperature sum.
     The crop emerges if 1) the soil moisture content is above the permanent wilting point and 2) the crop is sown and
     fulfilled the thermal requirement to emergence after it has been planted.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Type    Unit
     =================  ==============================================  ======  ===========================
     OPTEMERGTSUM       Temperature sum from sowing to emergence in
-                       absence of water stress                         SCr     |C| d
+                       absence of water stress                        SCr     |C| d
     TBASE              Temperature below which there is no development
                        possible                                        SCr     |C|
     SMW                Soil moisture content at permanent wilting
                        point.                                          SCr     cm3 water cm-3 soil
     =================  ==============================================  ======  ===========================
 
-   **State variables**
+    **State variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -35,7 +34,7 @@ class phenology(SimulationObject):
     TSUMCROP           Temperature sum from emergence                  Y       |C| d
     =================  ==============================================  ======  ===========================
 
-   **Rate variables**
+    **Rate variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -46,7 +45,7 @@ class phenology(SimulationObject):
                        emergence                                       N       |C|
     =================  ==============================================  ======  ===========================
 
-   **Auxillary variables**
+    **Auxillary variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -55,7 +54,6 @@ class phenology(SimulationObject):
                        has been emerged.                               Y       -
     DTEFF              Effective temperature for development           Y       |C|
     =================  ==============================================  ======  ===========================
-
     """
     class Parameters(ParamTemplate):
         OPTEMERGTSUM = Float()

@@ -12,23 +12,24 @@ class biomass_partitioning(SimulationObject):
     Simulates allocation of newly produced dry weight to the different organs. The fractions are modified for
     water availability. Nutrient limitation is also assumed to affect partitioning to the roots
 
-   **Simulation parameters**
+    **Simulation parameters**
 
     ==============  ==============================================  ======  ===========================
      Name           Description                                     Type     Unit
     ==============  ==============================================  ======  ===========================
-    FLVTB           Partitioning fraction to leaves as a function   TCr
-                    of temperature sum.                                     g DM g-1 DM
-    FLV_CUTT        Fraction of initial cutting allocated to leaves TCr     g DM g-1 DM
-    FRTTB           Partitioning fraction to adventious roots as a
-                    function of temperature sum                     TCr     g DM g-1 DM
+    FLVTB           Partitioning fraction to leaves as a function   TCr     g DM g-1 DM
+                    of temperature sum.
+    FLV_CUTT        Fraction of initial cutting allocated to        TCr     g DM g-1 DM
+                    leaves
+    FRTTB           Partitioning fraction to adventious roots as a  TCr     g DM g-1 DM
+                    function of temperature sum
     FSO_CUTT        Fraction of initial cutting allocated to
                     storage organs.                                 TCr     g DM g-1 DM
     FSOTB           Partitioning fraction to the storage organs as
                     a function of temperature sum                   TCr     g DM g-1 DM
     FST_CUTT        Fraction of initial cutting allocated to stems  TCr     g DM g-1 DM
-    FSTTB           Partitioning fraction to stems as a function of
-                    temperature sum.                                TCr     g DM g-1 DM
+    FSTTB           Partitioning fraction to stems as a function
+                    of temperature sum.                             TCr     g DM g-1 DM
     LAICR           Critical LAI beyond which leaf shedding is
                     simulated                                       SCr     m2 leaf m-2 ground
     NCUTTINGS       Number of cuttings planted per m2               SCr     cuttings m-2 ground
@@ -40,8 +41,7 @@ class biomass_partitioning(SimulationObject):
     WCUTTINGUNIT    Average weight per cutting                      SCr     g DM
     ==============  ==============================================  ======  ===========================
 
-
-   **State variables**
+    **State variables**
 
     ==============  ==============================================  ======  ===========================
      Name           Description                                     Pbl     Unit
@@ -57,7 +57,7 @@ class biomass_partitioning(SimulationObject):
     WRT             Dry weight of fibrous roots                     Y        g DM m-2 ground
     ==============  ==============================================  ======  ===========================
 
-   **Rate variables**
+    **Rate variables**
 
     ==============  ==============================================  ======  ===========================
      Name           Description                                     Pbl     Unit
@@ -77,7 +77,7 @@ class biomass_partitioning(SimulationObject):
     RWST            Rate of change dry weight of stems              N       g DM m-2 ground d-1
     ==============  ==============================================  ======  ===========================
 
-   **Auxillary variables**
+    **Auxillary variables**
 
     ==============  ==============================================  ======  ===========================
      Name           Description                                     Pbl     Unit

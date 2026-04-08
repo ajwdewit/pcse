@@ -11,7 +11,7 @@ class fibrous_root_growth(SimulationObject):
 
     The class calculates the increase in rooting depth from emergence until a maximum rooting depth is reached.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Type     Unit
@@ -23,7 +23,7 @@ class fibrous_root_growth(SimulationObject):
                        point                                           SCr     cm root
     =================  ==============================================  ======  ===========================
 
-   **State variables**
+    **State variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl      Unit
@@ -31,7 +31,7 @@ class fibrous_root_growth(SimulationObject):
     RD                 Rooting depth                                   Y       cm root
     =================  ==============================================  ======  ===========================
 
-   **Rate variables**
+    **Rate variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl      Unit

@@ -18,7 +18,7 @@ class penman(SimulationObject):
 
     This class calculates the reference evapotranspiration rate of a bare soil and a crop according to Penman (1948).
 
-   **Auxillary variables**
+    **Auxillary variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit

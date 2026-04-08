@@ -15,47 +15,47 @@ class npk_stress(SimulationObject):
     This class calculates nutrient stress indices that are used to calculate how deficiencies of N, P, and K affect
     the dry matter production, leaf senescence and the the biomass partitioning.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
-    =================  ==============================================  ======  ===========================
-    Name               Description                                     Type    Unit
-    =================  ==============================================  ======  ===========================
+    =================  ================================================  ======  ===========================
+    Name               Description                                       Type    Unit
+    =================  ================================================  ======  ===========================
     FR_MAX             Fraction of optimal and maximum concentration
                        of nitrogen, potassimu, and phosphorus in
-                       each organ                                      SCr     g nutrient g-1 nutrient
+                       each organ                                         SCr     g nutrient g-1 nutrient
     NMINMAXLV          Minimum and maximum N concentrations in leaves
-                       as a function of temperature sum.               TCr     g N kg-1 DM
+                       as a function of temperature sum.                  TCr     g N kg-1 DM
     NMINMAXRT          Minimum and maximum N concentrations in roots
-                       as a function of temperature sum.               TCr     g N kg-1 DM
+                       as a function of temperature sum.                  TCr     g N kg-1 DM
     NMINMAXSO          Minimum and maximum N concentrations in storage
-                       organs as a function of temperature sum.        TCr     g N kg-1 DM
+                       organs as a function of temperature sum.           TCr     g N kg-1 DM
     NMINMAXST          Minimum and maximum N concentrations in stems
-                       as a function of temperature sum.               TCr     g N kg-1 DM
+                       as a function of temperature sum.                  TCr     g N kg-1 DM
     KMINMAXLV          Minimum and maximum P concentrations in leaves
-                       as a function of temperature sum.               TCr     g K kg-1 DM
-    K_MAX              Maximum value of K in Monod function.           SCr     -
+                       as a function of temperature sum.                  TCr     g K kg-1 DM
+    K_MAX              Maximum value of K in Monod function.              SCr     -
     K_NPK_NI           K value in Monod relationship to reduce
                        influence of slightly lower NI value. A higher
-                       values give quicker stress.                     SCr     -
+                       values give quicker stress.                        SCr     -
     KMINMAXRT          Minimum and maximum K concentrations in roots
-                       as a function of temperature sum.               TCr     g K kg-1 DM
+                       as a function of temperature sum.                  TCr     g K kg-1 DM
     KMINMAXSO          Minimum and maximum K concentrations in storage
-                       organs as a function of temperature sum.        TCr     g K kg-1 DM
+                       organs as a function of temperature sum.           TCr     g K kg-1 DM
     KMINMAXST          Minimum and maximum K concentrations in stems
-                       as a function of temperature sum.               TCr     g K kg-1 DM
+                       as a function of temperature sum.                  TCr     g K kg-1 DM
     PMINMAXLV          Minimum and maximum K concentrations in leaves
-                       as a function of temperature sum.               TCr     g P kg-1 DM
+                       as a function of temperature sum.                  TCr     g P kg-1 DM
     PMINMAXRT          Minimum and maximum P concentrations in roots
-                       as a function of temperature sum.               TCr     g P kg-1 DM
+                       as a function of temperature sum.                  TCr     g P kg-1 DM
     PMINMAXSO          Minimum and maximum P concentrations in storage
-                       organs as a function of temperature sum.        TCr     g P kg-1 DM
+                       organs as a function of temperature sum.           TCr     g P kg-1 DM
     PMINMAXST          Minimum and maximum P concentrations in stems
-                       as a function of temperature sum.               TCr     g P kg-1 DM
+                       as a function of temperature sum.                  TCr     g P kg-1 DM
     TSUM_NPKI          Temperature sum below which there is
-                       no nutrient stress                              SCr     |C| d
-    =================  ==============================================  ======  ===========================
+                       no nutrient stress                                 SCr     |C| d
+    =================  ================================================  ======  ===========================
 
-   **Auxillary variables**
+    **Auxillary variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit

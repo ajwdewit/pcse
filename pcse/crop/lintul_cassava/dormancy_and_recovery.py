@@ -15,33 +15,33 @@ class dormancy_and_recovery(SimulationObject):
     soil water content at severe drought. During this period, storage organ dry matter can be redistributed to the
     leaves. At the end of the recovery period, redistribution stops.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
-    =================  ==============================================  ======  ===========================
-    Name               Description                                     Type     Unit
-    =================  ==============================================  ======  ===========================
-    DELREDIST          Delay for redistribution of dry matter          SCr      |C| d
+    =================  ================================================  ======  ===========================
+    Name               Description                                       Type     Unit
+    =================  ================================================  ======  ===========================
+    DELREDIST          Delay for redistribution of dry matter             SCr      |C| d
     LAI_MIN            Leaf are index below which the dormancy phase
-                       can be entered.                                 SCr      |C| d
+                       can be entered.                                    SCr      |C| d
     RECOV              Fraction of soil moisture content above which
                        the crop recovers from dormancy to the
-                       critical soil moisture content                  SCr      cm water cm-1 water
+                       critical soil moisture content                     SCr      cm water cm-1 water
     RREDISTSO          Relative rate of dry matter redistribution
                        from the storage organs to leaves
-    SMW                Soil moisture content at wilting point          SCr      cm3 water cm-3 soil
+    SMW                Soil moisture content at wilting point             SCr      cm3 water cm-3 soil
     SO2LV              Conversion rate of storage organ dry matter
-                       to leaf dry matter                              SCr      g DM g-1 DM
+                       to leaf dry matter                                 SCr      g DM g-1 DM
     TSUMSBR            Temperature sum at which first branching takes
-                       place                                           SCr      |C| d
+                       place                                              SCr      |C| d
     TSUMREDISTMAX      Temperature sum of duration of dry matter
-                       redistribution                                  SCr      |C| d
+                       redistribution                                     SCr      |C| d
     WSOREDISTFRACMAX   Maximum fraction of storage organ dry matter
-                       that can be redistributed to the leaves.        SCr      |C| d
-    WLVGNEW            Minimum amount of dry matter of new leaves that
-                       can be produced in the redistribution phase.    SCr      g DM m-2 ground
-    =================  ==============================================  ======  ===========================
+                       that can be redistributed to the leaves.           SCr      |C| d
+    WLVGNEW            Minimum amount of dry matter of new leaves that    
+                       can be produced in the redistribution phase.       SCr      g DM m-2 ground
+    =================  ================================================  ======  ===========================
 
-   **State variables**
+    **State variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -59,27 +59,27 @@ class dormancy_and_recovery(SimulationObject):
                        from storage organs to green leaves.                    g DM m-2 ground
     =================  ==============================================  ======  ===========================
 
-   **Rate variables**
+    **Rate variables**
 
-    =================  ==============================================  ======  ===========================
-    Name               Description                                     Pbl     Unit
-    =================  ==============================================  ======  ===========================
-    RDORMTIME          Rate at which the number of days in dormancy
-                       changes                                         N        d d-1
-    RDORMTSUM          Rate of change of temperature sum for the 
-                       cperiod in which the rop is in dormancy         N        (|C| d) d-1
-    RPUSHDORMRECTSUM                                                   N        -
-    RPUSHREDISTSUM                                                     N        -
-    RPUSHREDISTENDTSUM                                                 N        -
-    RREDISTLVG         Rate of change of green leaf dry weight due     N        g DM m-2 ground d-1
-                       to redistribution from storage organs to        Y
-                       green leaves                                    Y        g DM m-2 ground d-1
-    RREDISTSO          Rate of change of storage organdry weight
-                       due to redistribution from storage organs to
-                       green leaves
-    =================  ==============================================  ======  ===========================
+    ===================  ==============================================  ======  ===========================
+    Name                 Description                                     Pbl     Unit
+    ===================  ==============================================  ======  ===========================
+    RDORMTIME            Rate at which the number of days in dormancy    
+                         changes                                          N        d d-1
+    RDORMTSUM            Rate of change of temperature sum for the
+                         cperiod in which the rop is in dormancy          N        (|C| d) d-1
+    RPUSHDORMRECTSUM                                                      N        -
+    RPUSHREDISTSUM                                                        N        -
+    RPUSHREDISTENDTSUM                                                    N        -
+    RREDISTLVG           Rate of change of green leaf dry weight due      N        g DM m-2 ground d-1
+                         to redistribution from storage organs to         Y
+                         green leaves                                     Y        g DM m-2 ground d-1
+    RREDISTSO            Rate of change of storage organdry weight
+                         due to redistribution from storage organs to
+                         green leaves
+    ===================  ==============================================  ======  ===========================
 
-   **Auxillary variables**
+    **Auxillary variables**
     
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit

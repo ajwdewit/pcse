@@ -13,7 +13,7 @@ class green_leaf_area(SimulationObject):
     The class calculates the growth of the leaf area index from crop emergence. Its growth can be reduced
     by both water stress and nutrient stress.
 
-   **Simulation parameters**
+    **Simulation parameters**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Type     Unit
@@ -31,7 +31,7 @@ class green_leaf_area(SimulationObject):
                        growth stage ends                               SCr     |C| d
     =================  ==============================================  ======  ===========================
 
-   **Rate parameters**
+    **Rate parameters**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
@@ -39,7 +39,7 @@ class green_leaf_area(SimulationObject):
     RLAI               Growth rate of leaf area index                  N       m2 leaf m-2 ground d-1
     =================  ==============================================  ======  ===========================
 
-   **State variables**
+    **State variables**
 
     =================  ==============================================  ======  ===========================
     Name               Description                                     Pbl     Unit
