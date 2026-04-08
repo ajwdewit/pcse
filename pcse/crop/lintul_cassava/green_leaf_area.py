@@ -62,6 +62,7 @@ class green_leaf_area(SimulationObject):
 
     class StateVariables(StatesTemplate):
         LAI = Float()
+        LAIMAX = Float()
 
     def initialize(self, day, kiosk, parvalues):
         self.kiosk = kiosk
@@ -69,7 +70,8 @@ class green_leaf_area(SimulationObject):
         LAII = 0.
         self.states = self.StateVariables(kiosk,
                                           publish = ["LAI"],
-                                          LAI = LAII)
+                                          LAI = LAII,
+                                          LAIMAX = LAII)
         self.rates = self.RateVariables(kiosk, publish = [])
 
     def calc_rates(self,  day, drv, delt=1):
@@ -94,7 +96,7 @@ class green_leaf_area(SimulationObject):
             GLAI = p.LAII / delt  # m2 m-2 d-1
 
         # Growth before seedling emergence
-        if (k.TSUMCROP == 0):
+        if k.TSUMCROP == 0:
             GLAI = 0  # m2 m-2 d-1
 
         # Change in LAI due to new growth of leaves
@@ -107,4 +109,5 @@ class green_leaf_area(SimulationObject):
         r = self.rates
         s = self.states
         s.LAI += r.RLAI
+        s.LAIMAX = max(s.LAI, s.LAIMAX)
 

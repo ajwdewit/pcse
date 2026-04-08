@@ -131,6 +131,7 @@ class biomass_partitioning(SimulationObject):
         WST = Float()
         WSO = Float()
         WRT = Float()
+        TAGP = Float()
 
     def initialize(self, day, kiosk, parvalues):
         self.kiosk = kiosk
@@ -170,7 +171,8 @@ class biomass_partitioning(SimulationObject):
                                           WLVG = WLVG,
                                           WRT = WRT,
                                           WSO = WSO,
-                                          WST = WST
+                                          WST = WST,
+                                          TAGP = 0.0
                                           )
 
     def calc_rates(self,  day, drv, delt=1):
@@ -280,3 +282,4 @@ class biomass_partitioning(SimulationObject):
         s.WST += delt * r.RWST
         s.WSO += delt * r.RWSO
         s.WRT += delt * r.RWRT
+        s.TAGP = s.WST + s.WLV + s.WSO
