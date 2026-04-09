@@ -7,7 +7,7 @@ packages = ["pcse", "pcse.conf", "pcse.base", "pcse.crop", "pcse.crop.wofost", "
 
 [project]
 name = "pcse"
-version = "6.1.0"
+version = "6.1.0.dev1"
 authors = [
   { name="Allard de Wit", email="allard.dewit@wur.nl" },
   { name="Herman Berghuijs", email="herman.berghuijs@wur.nl" },

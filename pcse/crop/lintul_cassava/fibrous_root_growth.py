@@ -83,7 +83,7 @@ class fibrous_root_growth(SimulationObject):
 
         r.RRD = RRD
 
-    def integrate(self, day, drv, delt = 1):
+    def integrate(self, day, delt = 1):
         r = self.rates
         s = self.states
         s.RD += r.RRD * delt

@@ -161,7 +161,7 @@ class biomass_partitioning(SimulationObject):
                                             "RWCUTTING"
                                         ])
         self.states = self.StateVariables(kiosk,
-                                          publish = ["WSO", "WLVG", "WRT", "WST", "WSO"],
+                                          publish = ["WSO", "WLVG", "WLV", "WRT", "WST", "WSO"],
                                           NCUTTING = NCUTTING,
                                           PCUTTING = PCUTTING,
                                           KCUTTING = KCUTTING,
@@ -170,7 +170,8 @@ class biomass_partitioning(SimulationObject):
                                           WLVG = WLVG,
                                           WRT = WRT,
                                           WSO = WSO,
-                                          WST = WST
+                                          WST = WST,
+                                          TAGP = 0.0
                                           )
 
     def calc_rates(self,  day, drv, delt=1):

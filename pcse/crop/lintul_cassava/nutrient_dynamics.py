@@ -529,7 +529,7 @@ class crop_nutrient_dynamics(SimulationObject):
         r.RPUPTR = RPUPTR
         r.RKUPTR = RKUPTR
 
-    def integrate(self, day, drv, delt = 1):
+    def integrate(self, day,  delt = 1):
         r = self.rates
         s = self.states
 

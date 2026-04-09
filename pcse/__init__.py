@@ -28,7 +28,7 @@ See Also
 __author__ = "Allard de Wit <allard.dewit@wur.nl>"
 __license__ = "European Union Public License"
 __stable__ = True
-__version__ = "6.1.0"
+__version__ = "6.1.0.dev1"
 
 
 import sys, os

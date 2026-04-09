@@ -65,7 +65,7 @@ class canopy_rain_interception(SimulationObject):
         RNINTC = min(RTRAIN, (p.FRACRNINTC * k.LAI))  # cm d-1
         r.RNINTC = RNINTC
 
-    def integrate(self, day, drv, delt = 1):
+    def integrate(self, day, delt = 1):
         pass
 
 
