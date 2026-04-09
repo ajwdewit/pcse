@@ -15,7 +15,7 @@ from pcse.crop.lintul_cassava.leaf_senescence import leaf_senescence
 from pcse.crop.lintul_cassava.light_interception_and_growth import light_interception_and_growth
 from pcse.crop.lintul_cassava.nutrient_dynamics import crop_nutrient_dynamics
 from pcse.crop.lintul_cassava.nutrient_stress import npk_stress
-from pcse.traitlets import Instance
+from pcse.traitlets import Instance, Float
 
 class LINTUL_CASSAVA(SimulationObject):
     """
@@ -68,7 +68,9 @@ class LINTUL_CASSAVA(SimulationObject):
         pass
 
     class StateVariables(StatesTemplate):
-        pass
+        TAGP = Float()
+        CTRAT = Float()
+        CEVST = Float()
 
     class RateVariables(RatesTemplate):
         pass
@@ -76,8 +78,8 @@ class LINTUL_CASSAVA(SimulationObject):
     def initialize(self, day, kiosk, parvalues):
         self.kiosk = kiosk
         self.params = self.Parameters(parvalues)
-        self.states = self.StateVariables(kiosk, publish = [])
-        self.rates = self.RateVariables(kiosk, publish = [])
+        self.states = self.StateVariables(kiosk, TAGP=0.0, CTRAT=0.0, CEVST=0.0)
+        self.rates = self.RateVariables(kiosk)
 
         self.phenology = phenology(day, kiosk, parvalues)
         self.fibrous_root_growth = fibrous_root_growth(day, kiosk, parvalues)
@@ -104,16 +106,27 @@ class LINTUL_CASSAVA(SimulationObject):
         self.crop_nutrient_dynamics.calc_rates(day, drv)
         self.green_leaf_area.calc_rates(day, drv)
 
-    def integrate(self, day, drv, delt = 1):
+    def integrate(self, day, delt = 1):
         self.phenology.integrate(day, delt)
         self.fibrous_root_growth.integrate(day, delt)
         self.canopy_rain_interception.integrate(day, delt)
         self.dormancy.integrate(day, delt)
-        self.leaf_senescence.integrate(day, drv)
-        self.light_interception_and_growth.integrate(day, drv, delt)
-        self.biomass_partitioning.integrate(day, drv, delt)
-        self.crop_nutrient_dynamics.integrate(day, drv, delt)
-        self.green_leaf_area.integrate(day, drv)
+        self.leaf_senescence.integrate(day, delt)
+        self.light_interception_and_growth.integrate(day, delt)
+        self.biomass_partitioning.integrate(day, delt)
+        self.crop_nutrient_dynamics.integrate(day, delt)
+        self.green_leaf_area.integrate(day, delt)
+
+        k = self.kiosk
+        s = self.states
+
+        # Total above-ground biomass
+        s.TAGP = k.WST + k.WLV + k.WSO
+
+        # total crop transpiration and soil evaporation
+        s.CTRAT += k.TRA * delt
+        s.CEVST += k.EVS * delt
+
 
 class LINTUL_CASSAVA_NO_NUTRIENT_STRESS(LINTUL_CASSAVA):
     """

@@ -102,7 +102,7 @@ class light_interception_and_growth(SimulationObject):
         r.RPAR = RPAR
         r.GTOTAL = GTOTAL
 
-    def integrate(self, day, drv, delt = 1):
+    def integrate(self, day, delt = 1):
         r = self.rates
         s = self.states
         s.PAR += r.RPAR

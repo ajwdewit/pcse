@@ -266,7 +266,7 @@ class dormancy_and_recovery(SimulationObject):
         r.DORMANCY = DORMANCY
         r.PUSHREDIST = PUSHREDIST
 
-    def integrate(self, day, drv, delt = 1):
+    def integrate(self, day, delt = 1):
         r = self.rates
         s = self.states
         s.DORMTSUM += delt * r.RDORMTSUM

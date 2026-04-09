@@ -131,7 +131,6 @@ class biomass_partitioning(SimulationObject):
         WST = Float()
         WSO = Float()
         WRT = Float()
-        TAGP = Float()
 
     def initialize(self, day, kiosk, parvalues):
         self.kiosk = kiosk
@@ -162,7 +161,7 @@ class biomass_partitioning(SimulationObject):
                                             "RWCUTTING"
                                         ])
         self.states = self.StateVariables(kiosk,
-                                          publish = ["WSO", "WLVG", "WRT", "WST", "WSO"],
+                                          publish = ["WSO", "WLVG", "WLV", "WRT", "WST", "WSO"],
                                           NCUTTING = NCUTTING,
                                           PCUTTING = PCUTTING,
                                           KCUTTING = KCUTTING,
@@ -282,4 +281,3 @@ class biomass_partitioning(SimulationObject):
         s.WST += delt * r.RWST
         s.WSO += delt * r.RWSO
         s.WRT += delt * r.RWRT
-        s.TAGP = s.WST + s.WLV + s.WSO

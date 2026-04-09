@@ -121,7 +121,7 @@ class phenology(SimulationObject):
 
         s.EMERG = EMERG
 
-    def integrate(self, day, drv, delt = 1):
+    def integrate(self, day, delt = 1):
         r = self.rates
         s = self.states
         s.TSUM += r.RTSUM

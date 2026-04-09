@@ -105,7 +105,7 @@ class green_leaf_area(SimulationObject):
         # ---------------------------------------------SET RATES----------------------------------------------------#
         r.RLAI = RLAI
 
-    def integrate(self, day, drv, delt = 1):
+    def integrate(self, day, delt = 1):
         r = self.rates
         s = self.states
         s.LAI += r.RLAI
