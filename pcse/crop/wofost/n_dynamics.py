@@ -7,8 +7,7 @@ from pcse.decorators import prepare_rates, prepare_states
 from pcse.base import ParamTemplate, StatesTemplate, RatesTemplate, \
     SimulationObject
 from pcse.util import AfgenTrait
-from pcse.crop.nutrients import N_Demand_Uptake
-
+from pcse.crop.wofost.n_demand_uptake import N_Demand_Uptake
 
 class N_Crop_Dynamics(SimulationObject):
     """Implementation of overall N crop dynamics.
