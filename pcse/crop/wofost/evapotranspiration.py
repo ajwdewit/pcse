@@ -443,6 +443,11 @@ class EvapotranspirationCO2Layered(SimulationObject):
     CO2      Atmospheric CO2 concentration                   S       ppm
     CO2TRATB Reduction factor for TRAMX as function of
              atmospheric CO2 concentration                   T       -
+    OMEGAC   Ratio of actual and potential transpiration
+             rate above which the crop can no longer
+             fully compensate water deficiencies in one
+             layer by extra uptake over the whole rooted
+             soil profile                                    S       -
     ======== ============================================= =======  ============
 
 
