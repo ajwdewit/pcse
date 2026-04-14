@@ -278,6 +278,7 @@ class WaterBalanceLayered(SimulationObject):
         WAV = Float(None)
 
     class StateVariables(StatesTemplate):
+        DSOS = Int(None)
         WTRAT = Float(None)
         EVST = Float(None)
         EVWT = Float(None)
@@ -302,6 +303,7 @@ class WaterBalanceLayered(SimulationObject):
 
 
     class RateVariables(RatesTemplate):
+        RDSOS = Int(None)
         Flow = Instance(np.ndarray)
         RIN = Float(None)
         WTRALY = Instance(np.ndarray)
@@ -425,9 +427,9 @@ class WaterBalanceLayered(SimulationObject):
                   "TOTINF": 0., "TOTIRR": 0., "BOTTOMFLOWT": 0.,
                   "CRT": 0., "RAINT": 0., "WLOW": WLOW, "W": W, "WC": WC, "SM":SM,
                   "SS": p.SSI, "WWLOW": W+WLOW, "WBOT":0., "SM_MEAN": W/self._default_RD,
-                  "WAVUPP": WAVUPP, "WAVLOW": WAVLOW, "WAVBOT":0.
+                  "WAVUPP": WAVUPP, "WAVLOW": WAVLOW, "WAVBOT":0., "DSOS": 0
                   }
-        self.states = self.StateVariables(kiosk, publish=["WC", "SM", "EVST"], **states)
+        self.states = self.StateVariables(kiosk, publish=["DSOS", "WC", "SM", "EVST"], **states)
 
         # Initial values for profile water content
         self._WCI = WC.sum()
@@ -776,6 +778,27 @@ class WaterBalanceLayered(SimulationObject):
         self._RINold = r.RIN
         r.Flow = Flow
 
+        # Accumulate days since oxygen stress
+        layercnt = range(len(self.soil_profile))
+        is_oxygen_stress = False
+        if "TRALY" in self.kiosk:
+            for i, SM, layer in zip(layercnt, k.SM, self.soil_profile):
+                SMAIR = layer.SM0 - layer.CRAIRC
+                if (SM >= SMAIR) & (layer.rooting_status in ["rooted", "partially rooted"]):
+                    is_oxygen_stress = True
+                else:
+                    pass
+
+        if is_oxygen_stress:
+            if s.DSOS < 4:
+                RDSOS = 1
+            else:
+                RDSOS = 0
+        else:
+            RDSOS = - s.DSOS
+        r.DSOS = RDSOS
+
+
     @prepare_states
     def integrate(self, day, delt):
         p = self.params
@@ -856,6 +879,9 @@ class WaterBalanceLayered(SimulationObject):
         self._RDold = RD
 
         s.SM_MEAN = s.W/RD
+
+        # Count number of days with oxygen stress
+        s.DSOS += r.DSOS
 
     @prepare_states
     def finalize(self, day):
