@@ -505,6 +505,7 @@ class EvapotranspirationCO2Layered(SimulationObject):
         KDIFTB  = AfgenTrait()
         IAIRDU  = Float(-99.)
         IOX     = Float(-99.)
+        OMEGAC  = Float(-99.)
         CO2     = Float(-99.)
         CO2TRATB = AfgenTrait()
 
@@ -590,19 +591,38 @@ class EvapotranspirationCO2Layered(SimulationObject):
 
             depth += layer.Thickness
 
-        r.TRA = TRALY.sum()
-        r.TRALY = TRALY
-        r.RFTRA = r.TRA/r.TRAMX if r.TRAMX > 0. else 1.
-        r.RFOS = RFOS
-        r.RFWS = RFWS
+        # Calculate the total transpiration rate and transpiration reduction factor without root water uptake compensation
+        TRA = TRALY.sum()
+        RFTRA = TRA / r.TRAMX if r.TRAMX > 0. else 1.
+
+        # Calculate the transpiration rate per layer with root water uptake compensation
+        TRALYC = np.zeros_like(TRALY)
+        for i, SM, layer in zip(layercnt, k.SM, self.soil_profile):
+            if(TRA == 0.):
+                TRALYC[i] = 0
+            else:
+                TRALYC_layer = TRALY[i] * min(1./ RFTRA, 1./ p.OMEGAC)
+                if TRALYC_layer <= (SM - layer.SMW) * layer.Thickness:
+                    TRALYC[i] = TRALYC_layer
+                else:
+                    TRALYC[i] = (SM - layer.SMW) * layer.Thickness
 
         # Counting stress days
-        if any(r.RFWS < 1.):
+        if any(RFWS < 1.):
             r.IDWS = True
             self._IDWST += 1
-        if any(r.RFOS < 1.):
+        if any(RFOS < 1.):
             r.IDOS = True
             self._IDOST += 1
+
+        # Calculate the total transpiration rate and transpiration reduction factor with root water uptake compensation
+        TRAC = TRALYC.sum()
+        RFTRAC = TRAC / r.TRAMX if r.TRAMX > 0. else 1.
+        r.TRA = TRAC
+        r.TRALY = TRALYC
+        r.RFTRA = RFTRAC
+        r.RFOS = RFOS
+        r.RFWS = RFWS
 
     @prepare_states
     def finalize(self, day):
