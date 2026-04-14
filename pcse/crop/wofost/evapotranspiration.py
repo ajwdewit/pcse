@@ -583,15 +583,10 @@ class EvapotranspirationCO2Layered(SimulationObject):
             # for non-rice crops, and possibly deficient land drainage
             RFOS[i] = 1.
             if p.IAIRDU == 0 and p.IOX == 1:
-                SMAIR = layer.SM0 - layer.CRAIRC
-                if(SM >= SMAIR):
-                    self._DSOS = min((self._DSOS + 1), 4)
-                else:
-                    self._DSOS = 0                
                 RFOSMX = limit(0., 1., (layer.SM0 - SM)/layer.CRAIRC)
-                RFOS[i] = RFOSMX + (1. - min( self._DSOS, 4)/4.)*(1.-RFOSMX)
+                RFOS[i] = RFOSMX + (1. - k.DSOS/4.)*(1.-RFOSMX)
             root_fraction = max(0.0, (min(k.RD, depth + layer.Thickness) - depth)) / k.RD
-            RFTRA_layer = RFOS[i] * RFWS[i]
+            RFTRA_layer = RFWS[i]
             TRALY[i] = r.TRAMX * RFTRA_layer * root_fraction
 
             depth += layer.Thickness
@@ -606,7 +601,7 @@ class EvapotranspirationCO2Layered(SimulationObject):
             if(TRA == 0.):
                 TRALYC[i] = 0
             else:
-                TRALYC_layer = TRALY[i] * min(1./ RFTRA, 1./ p.OMEGAC)
+                TRALYC_layer = RFOS[i] * TRALY[i] * min(1./ RFTRA, 1./ p.OMEGAC)
                 if TRALYC_layer <= (SM - layer.SMW) * layer.Thickness:
                     TRALYC[i] = TRALYC_layer
                 else:
