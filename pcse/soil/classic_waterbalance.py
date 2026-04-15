@@ -32,6 +32,7 @@ class WaterbalancePP(SimulationObject):
         SMFCF = Float(-99.)
 
     class StateVariables(StatesTemplate):
+        DSOS = Int(-99.)
         SM = Float(-99.)
         WTRAT = Float(-99.)
         EVST = Float(-99.)
@@ -53,7 +54,7 @@ class WaterbalancePP(SimulationObject):
         self.params = self.Parameters(parvalues)
         self.rates = self.RateVariables(kiosk, publish="EVS")
         self.states = self.StateVariables(kiosk, SM=self.params.SMFCF,
-                                          publish="SM", EVST=0, WTRAT=0)
+                                          publish=["SM", "DSOS"], DSOS = 0, EVST=0, WTRAT=0)
     
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -92,6 +93,9 @@ class WaterbalancePP(SimulationObject):
 
         # Keep soil moisture on field capacity
         self.states.SM = self.params.SMFCF
+
+        # There is by definition no oxygen stress at potential growth conditions
+        self.states.DSOS = 0
 
         # Accumulated transpiration and soil evaporation amounts
         self.states.EVST += self.rates.EVS * delt
