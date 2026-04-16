@@ -139,10 +139,9 @@ class CropCalendar(HasTraits, DispatcherObject):
 
         # check that crop_start_date is within the campaign interval
         r = check_date_range(self.crop_start_date, campaign_start_date, next_campaign_start_date)
-        if r is not True:
-            msg = "Start date (%s) for crop '%s' vareity '%s' not within campaign window (%s - %s)." % \
-                  (self.crop_start_date, self.crop_name, self.variety_name,
-                   campaign_start_date, next_campaign_start_date)
+        if not r:
+            msg = (f"Start date ({self.crop_start_date}) for crop '{self.crop_name}' variety '{self.variety_name}' "
+                   f"not within campaign window ({campaign_start_date} - {next_campaign_start_date}).")
             raise exc.PCSEError(msg)
 
     def __call__(self, day):
