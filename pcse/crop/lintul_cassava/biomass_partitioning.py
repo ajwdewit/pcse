@@ -170,8 +170,7 @@ class biomass_partitioning(SimulationObject):
                                           WLVG = WLVG,
                                           WRT = WRT,
                                           WSO = WSO,
-                                          WST = WST,
-                                          TAGP = 0.0
+                                          WST = WST
                                           )
 
     def calc_rates(self,  day, drv, delt=1):

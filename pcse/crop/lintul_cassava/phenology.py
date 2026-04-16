@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 # Herman Berghuijs (herman.berghuijs@wur.nl), Allard de Wit (allard.dewit@wur.nl), Tom Schut (tom.schut@wur.nl)
 # February 2026
+import datetime
 
-from pcse.traitlets import Float
+from pcse.traitlets import Float, Instance, Enum
 from pcse.base import ParamTemplate, RatesTemplate, SimulationObject, StatesTemplate
+from pcse import signals
 
 class phenology(SimulationObject):
     """Class to simulate phenology
@@ -59,6 +61,8 @@ class phenology(SimulationObject):
         OPTEMERGTSUM = Float()
         TBASE = Float()
         SMW = Float()
+        CROP_START_TYPE = Enum(["sowing", "emergence"])
+        CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"])
 
     class RateVariables(RatesTemplate):
         RTSUM = Float()
@@ -69,6 +73,9 @@ class phenology(SimulationObject):
         EMERG = Float()
         TSUM = Float()
         TSUMCROP = Float()
+        DOS = Instance(datetime.date) # Day of sowing
+        DOE = Instance(datetime.date) # Day of emergence
+        DOH = Instance(datetime.date) # Day of harvest
 
     def initialize(self, day, kiosk, parameters):
         EMERG = 0.
@@ -84,8 +91,10 @@ class phenology(SimulationObject):
             publish=["EMERG", "TSUM", "TSUMCROP"],
             EMERG = EMERG,
             TSUM = TSUM,
-            TSUMCROP = TSUMCROP
+            TSUMCROP = TSUMCROP,
+            DOS=day, DOE=None, DOH=None
         )
+        self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
 
     def calc_rates(self, day, drv, delt=1):
         k = self.kiosk
@@ -126,3 +135,14 @@ class phenology(SimulationObject):
         s = self.states
         s.TSUM += r.RTSUM
         s.TSUMCROP += r.RTSUMCROP
+        if s.EMERG > 0 and s.DOE is None:
+            s.DOE = day
+
+    #---------------------------------------------------------------------------
+    def _on_CROP_FINISH(self, day, finish_type=None):
+        """Handler for setting day of harvest (DOH). Although DOH is not
+        strictly related to phenology (but to management) this is the most
+        logical place to put it.
+        """
+        if finish_type in ['harvest', 'earliest']:
+            self._for_finalize["DOH"] = day
