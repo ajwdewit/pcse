@@ -11,7 +11,6 @@ from pcse import signals
 from ..traitlets import Float, Int, Instance, Bool
 # from .soiln_profile import SoilNProfile
 
-
 class SNOMIN(SimulationObject):
     """
     SNOMIN (Soil Nitrogen module for Mineral and Inorganic Nitrogen) is a layered soil nitrogen balance. A
@@ -333,6 +332,7 @@ class SNOMIN(SimulationObject):
 
         # Connect module to signal AgroManager
         self._connect_signal(self._on_APPLY_N_SNOMIN, signals.apply_n_snomin)
+        self._connect_signal(self._ON_HARVEST_SNOMIN, signals.crop_finish)
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -483,7 +483,7 @@ class SNOMIN(SimulationObject):
         s.NLOSSCUM = NLOSSCUM
 
     def _on_APPLY_N_SNOMIN(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None,
-                           f_NH4N = None, f_NO3N = None, initial_age =None):
+                           f_NH4N = None, f_NO3N = None, initial_age = None):
         """This function calculates the application rates of organic matter, organic C, organic N, NH4-N, NO3-N
         and the initial apparent age of the applied material at the date of application.
 
@@ -547,6 +547,33 @@ class SNOMIN(SimulationObject):
         self._RNORGAM = np.concatenate(( self._RNORGAM, RNORG_am), axis = 0)
         self._RNH4AM = RNH4_am
         self._RNO3AM = RNO3_am
+
+    def _ON_HARVEST_SNOMIN(self, frac_LV_har = None, frac_ST_har = None, frac_SO_har = None, ploughing_depth = None):
+        k = self.kiosk
+        WLV_residue = (1 - frac_LV_har) * k.WLV
+        WSO_residue = (1 - frac_SO_har) * k.WSO
+        WST_residue = (1 - frac_ST_har) * k.WST
+        NamountLV_residue = (1 - frac_LV_har) * k.NamountLV
+        NamountST_residue = (1 - frac_ST_har) * k.NamountST
+        NamountSO_residue = (1 - frac_SO_har) * k.NamountSO
+
+        W_residue = WLV_residue + WSO_residue + WST_residue
+        frac_C = self.SoilOrganicNModel.MINIP_C.OM_to_C
+        C_residue = W_residue * frac_C
+        Namount_residue = NamountLV_residue + NamountST_residue + NamountSO_residue
+
+        if Namount_residue == 0:
+            CN_ratio = 1e9
+        else:
+            CN_ratio = C_residue / Namount_residue
+
+        self._on_APPLY_N_SNOMIN(amount=W_residue,
+                                application_depth = ploughing_depth,
+                                cnratio=CN_ratio,
+                                f_orgmat=1.0,
+                                f_NH4N = 0.,
+                                f_NO3N = 0.,
+                                initial_age = 3.16)
 
     def get_infiltration_rate(self, k):
         infiltration_rate_m_per_d = k.RIN * self.cm_to_m

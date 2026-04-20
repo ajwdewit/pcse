@@ -103,7 +103,8 @@ class CropCalendar(HasTraits, DispatcherObject):
     in_crop_cycle = Bool(False)
 
     def __init__(self, kiosk, crop_name=None, variety_name=None, crop_start_date=None,
-                 crop_start_type=None, crop_end_date=None, crop_end_type=None, max_duration=None):
+                 crop_start_type=None, crop_end_date=None, crop_end_type=None, max_duration=None ,
+                 frac_LV_har = None, frac_ST_har = None, frac_SO_har = None, ploughing_depth = None):
 
         # set up logging
         loggername = "%s.%s" % (self.__class__.__module__,
@@ -118,6 +119,11 @@ class CropCalendar(HasTraits, DispatcherObject):
         self.crop_end_date = crop_end_date
         self.crop_end_type = crop_end_type
         self.max_duration = max_duration
+
+        self.frac_LV_har = frac_LV_har
+        self.frac_ST_har = frac_ST_har
+        self.frac_SO_har = frac_SO_har
+        self.ploughing_depth = ploughing_depth
 
         self._connect_signal(self._on_CROP_FINISH, signal=signals.crop_finish)
 
@@ -177,11 +183,58 @@ class CropCalendar(HasTraits, DispatcherObject):
             if self.in_crop_cycle and self.duration == self.max_duration:
                 finish_type = "max_duration"
 
+        # Check if any crop residues are left on the field
+        if all([self.frac_LV_har is None,
+                self.frac_ST_har is None,
+                self.frac_SO_har is None,
+                self.ploughing_depth is None]):
+            # If the ploughing depth and the fractions of leaves, stems, and storage organs are not defined, assume
+            # that all crop residues are harvested.
+            self.frac_LV_har = 1.0,
+            self.frac_ST_har = 1.0,
+            self.frac_SO_har = 1.0,
+            self.ploughing_depth = 0
+        elif all([self.frac_LV_har is not None,
+                  self.frac_ST_har is not None,
+                  self.frac_SO_har is not None,
+                  self.ploughing_depth is not None]):
+            # If the ploughing depth and the fractions of leaves, stems, and storage organs are not defined, assume
+            # that a fraction of the crop residues remain of the field
+            pass
+        else:
+            msg_missing_fraction = ("Warning, {var_name} is not defined. It is assumed that the {organ_name} are fully "
+                                    "harvested.")
+            if self.frac_LV_har is None:
+                self.frac_LV_har = 1.0
+                organ_name = "leaves"
+                msg = msg_missing_fraction.format(var_name="frac_LV_har", organ_name=organ_name)
+                print(msg)
+            if self.frac_ST_har is None:
+                self.frac_ST_har = 1.0
+                organ_name = "stems"
+                msg = msg_missing_fraction.format(var_name="frac_ST_har", organ_name=organ_name)
+                print(msg)
+            if self.frac_SO_har is None:
+                self.frac_SO_har = 1.0
+                organ_name = "storage organs"
+                msg = msg_missing_fraction.format(var_name="frac_ST_har", organ_name=organ_name)
+                print(msg)
+            if self.ploughing_depth is None:
+                self.ploughing_depth = 0.0
+                msg_missing_ploughing_depth = (
+                    "Warning, ploughing depth is not defined. It is assumed that all crop residues "
+                    "are incorporated in the top soil layer.")
+                print(msg_missing_ploughing_depth)
+
         # If finish condition is reached send a signal to finish the crop
         if finish_type is not None:
             self.in_crop_cycle = False
             self._send_signal(signal=signals.crop_finish, day=day,
-                              finish_type=finish_type, crop_delete=True)
+                              finish_type=finish_type, crop_delete=True,
+                              frac_LV_har=self.frac_LV_har, frac_ST_har=self.frac_ST_har,
+                              frac_SO_har=self.frac_SO_har, ploughing_depth=self.ploughing_depth)
+
+
 
     def _on_CROP_FINISH(self):
         """Register that crop has reached the end of its cycle.
