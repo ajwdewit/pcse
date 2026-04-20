@@ -557,23 +557,40 @@ class SNOMIN(SimulationObject):
         NamountST_residue = (1 - frac_ST_har) * k.NamountST
         NamountSO_residue = (1 - frac_SO_har) * k.NamountSO
 
-        W_residue = WLV_residue + WSO_residue + WST_residue
+        W_residue_shoot = WLV_residue + WSO_residue + WST_residue
         frac_C = self.SoilOrganicNModel.MINIP_C.OM_to_C
-        C_residue = W_residue * frac_C
-        Namount_residue = NamountLV_residue + NamountST_residue + NamountSO_residue
+        C_residue_shoot  = W_residue_shoot  * frac_C
+        Namount_residue_shoot  = NamountLV_residue + NamountST_residue + NamountSO_residue
 
-        if Namount_residue == 0:
-            CN_ratio = 1e9
+        if Namount_residue_shoot == 0:
+            CN_ratio_shoot = 1e9
         else:
-            CN_ratio = C_residue / Namount_residue
+            CN_ratio_shoot = C_residue_shoot / Namount_residue_shoot
 
-        self._on_APPLY_N_SNOMIN(amount=W_residue,
+        self._on_APPLY_N_SNOMIN(amount=W_residue_shoot ,
                                 application_depth = ploughing_depth,
-                                cnratio=CN_ratio,
+                                cnratio=CN_ratio_shoot,
                                 f_orgmat=1.0,
                                 f_NH4N = 0.,
                                 f_NO3N = 0.,
-                                initial_age = 3.16)
+                                initial_age = 0.99)
+
+        W_residue_root = k.WRT
+        C_residue_root = W_residue_root * frac_C
+        Namount_residue_root = k.NamountRT
+
+        if Namount_residue_shoot == 0:
+            CN_ratio_root = 1e9
+        else:
+            CN_ratio_root = C_residue_root / Namount_residue_root
+
+        self._on_APPLY_N_SNOMIN(amount=W_residue_shoot ,
+                                application_depth = k.RD,
+                                cnratio=CN_ratio_root,
+                                f_orgmat=1.0,
+                                f_NH4N = 0.,
+                                f_NO3N = 0.,
+                                initial_age = 1.57)
 
     def get_infiltration_rate(self, k):
         infiltration_rate_m_per_d = k.RIN * self.cm_to_m
