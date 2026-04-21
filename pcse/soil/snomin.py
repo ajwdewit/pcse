@@ -515,11 +515,6 @@ class SNOMIN(SimulationObject):
         # Initialize amendment rates
         RAGE_am = np.zeros((1, len(self.soiln_profile)))
         AGE0_am = np.zeros_like(RAGE_am)
-        RORGMAT_am = np.zeros_like(RAGE_am)
-        RCORG_am = np.zeros_like(RAGE_am)
-        RNORG_am = np.zeros_like(RAGE_am)
-        RNH4_am = np.zeros_like(s.NH4)
-        RNO3_am = np.zeros_like(s.NO3)
 
         # Prevents that a part of the N is not applied if the application depth is less than thickness of the upper layer
         if application_depth < self.soiln_profile[0].Thickness:
@@ -560,12 +555,8 @@ class SNOMIN(SimulationObject):
         W_residue_shoot = WLV_residue + WSO_residue + WST_residue
         frac_C = self.SoilOrganicNModel.MINIP_C.OM_to_C
         C_residue_shoot  = W_residue_shoot  * frac_C
-        Namount_residue_shoot  = NamountLV_residue + NamountST_residue + NamountSO_residue
-
-        if Namount_residue_shoot == 0:
-            CN_ratio_shoot = 1e9
-        else:
-            CN_ratio_shoot = C_residue_shoot / Namount_residue_shoot
+        Namount_residue_shoot  = max(0.001, NamountLV_residue + NamountST_residue + NamountSO_residue)
+        CN_ratio_shoot = C_residue_shoot / Namount_residue_shoot
 
         self._on_APPLY_N_SNOMIN(amount=W_residue_shoot ,
                                 application_depth = ploughing_depth,
@@ -577,12 +568,8 @@ class SNOMIN(SimulationObject):
 
         W_residue_root = k.WRT
         C_residue_root = W_residue_root * frac_C
-        Namount_residue_root = k.NamountRT
-
-        if Namount_residue_shoot == 0:
-            CN_ratio_root = 1e9
-        else:
-            CN_ratio_root = C_residue_root / Namount_residue_root
+        Namount_residue_root = max(0.001, k.NamountRT)
+        CN_ratio_root = C_residue_root / Namount_residue_root
 
         self._on_APPLY_N_SNOMIN(amount=W_residue_shoot ,
                                 application_depth = k.RD,
