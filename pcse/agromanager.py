@@ -234,8 +234,6 @@ class CropCalendar(HasTraits, DispatcherObject):
                               frac_LV_har=self.frac_LV_har, frac_ST_har=self.frac_ST_har,
                               frac_SO_har=self.frac_SO_har, ploughing_depth=self.ploughing_depth)
 
-
-
     def _on_CROP_FINISH(self):
         """Register that crop has reached the end of its cycle.
         """
