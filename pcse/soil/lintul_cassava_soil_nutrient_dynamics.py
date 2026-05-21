@@ -6,7 +6,6 @@ from pcse.base import ParamTemplate, RatesTemplate, SimulationObject, StatesTemp
 from pcse.traitlets import Float
 
 import pcse.signals
-pcse.signals.apply_npk = 'APPLY_NPK'
 
 kg_to_g = 1000
 ha_to_m2 = 10000
