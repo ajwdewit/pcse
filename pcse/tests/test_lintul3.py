@@ -32,13 +32,13 @@ class TestLINTUL3_SpringWheat(unittest.TestCase):
         if self.write_ref_results:
             self._write_ref_results()
 
-    def _write_ref_results(self):
+    def _write_ref_results(self, fname_results):
         """writes simulation results to CSV file.
 
         Useful only for generating a new reference simulation result
         if you change the set of state variables in conf/lintul3.conf"""
         header = sorted(self.output[0].keys())
-        with open("d:\lintul3_reference_results.csv", "wb") as fp:
+        with open(fname_results, "wb") as fp:
             writer = csv.DictWriter(fp, header)
             writer.writeheader()
             writer.writerows(self.output)
