@@ -94,22 +94,14 @@ class CropCalendar(HasTraits, DispatcherObject):
 
     # system parameters
     kiosk = Instance(VariableKiosk)
-    parameterprovider = Instance(ParameterProvider)
-    mconf = Instance(ConfigurationLoader)
-    logger = Instance(logging.Logger)
 
     # Counter for duration of the crop cycle
     duration = Int(0)
     in_crop_cycle = Bool(False)
 
-    def __init__(self, kiosk, crop_name=None, variety_name=None, crop_start_date=None,
+    def __init__(self, kiosk, *, crop_name=None, variety_name=None, crop_start_date=None,
                  crop_start_type=None, crop_end_date=None, crop_end_type=None, max_duration=None):
 
-        # set up logging
-        loggername = "%s.%s" % (self.__class__.__module__,
-                                self.__class__.__name__)
-
-        self.logger = logging.getLogger(loggername)
         self.kiosk = kiosk
         self.crop_name = crop_name
         self.variety_name = variety_name
@@ -207,6 +199,35 @@ class CropCalendar(HasTraits, DispatcherObject):
         :return: the start date
         """
         return self.crop_start_date
+
+    @property
+    def logger(self):
+        loggername = "%s.%s" % (self.__class__.__module__,
+                                self.__class__.__name__)
+        return logging.getLogger(loggername)
+
+
+class CropCalendarWithCropResidues(CropCalendar):
+    frac_LV_harvested = Float()
+    frac_ST_harvested = Float()
+    frac_SO_harvested = Float()
+    ploughing_depth = Float()
+
+    def __init__(self, kiosk, *, frac_LV_harvested, frac_ST_harvested, frac_SO_harvested,
+                 ploughing_depth, **kwargs):
+        super().__init__(kiosk, **kwargs)
+        self.frac_LV_harvested = frac_LV_harvested
+        self.frac_ST_harvested = frac_ST_harvested
+        self.frac_SO_harvested = frac_SO_harvested
+        self.ploughing_depth = ploughing_depth
+
+    def _on_CROP_FINISH(self):
+        """Register that crop has reached the end of its cycle and send signal for residue management.
+        """
+        self.in_crop_cycle = False
+        self._send_signal(signal=signals.apply_crop_residues_snomin, frac_LV_harvested=self.frac_LV_harvested,
+                          frac_ST_harvested=self.frac_ST_harvested, frac_SO_harvested=self.frac_SO_harvested,
+                          ploughing_depth=self.ploughing_depth)
 
 
 class TimedEventsDispatcher(HasTraits, DispatcherObject):
@@ -634,7 +655,6 @@ class AgroManager(AncillaryObject):
         :param agromanagement: the agromanagement definition, see the example above in YAML.
         """
 
-
         self.kiosk = kiosk
         self.crop_calendars = []
         self.timed_event_dispatchers = []
@@ -675,13 +695,22 @@ class AgroManager(AncillaryObject):
                 continue
 
             # get crop calendar definition for this campaign
-            cc_def = campaign_def['CropCalendar']
-            if cc_def is not None:
-                cc = CropCalendar(kiosk, **cc_def)
-                cc.validate(this_campaign_start, next_campaign_start)
-                self.crop_calendars.append(cc)
-            else:
-                self.crop_calendars.append(None)
+            if "CropCalendar" in campaign_def:
+                cc_def = campaign_def['CropCalendar']
+                if cc_def is not None:
+                    cc = CropCalendar(kiosk, **cc_def)
+                    cc.validate(this_campaign_start, next_campaign_start)
+                    self.crop_calendars.append(cc)
+                else:
+                    self.crop_calendars.append(None)
+            elif "CropCalendarWithCropResidues" in campaign_def:
+                cc_def = campaign_def['CropCalendarWithCropResidues']
+                if cc_def is not None:
+                    cc = CropCalendarWithCropResidues(kiosk, **cc_def)
+                    cc.validate(this_campaign_start, next_campaign_start)
+                    self.crop_calendars.append(cc)
+                else:
+                    self.crop_calendars.append(None)
 
             # Get definition of timed events and build TimedEventsDispatchers
             te_def = campaign_def['TimedEvents']
@@ -708,7 +737,7 @@ class AgroManager(AncillaryObject):
             return True
 
         r = []
-        for attr in ["CropCalendar", "TimedEvents", "StateEvents"]:
+        for attr in ["CropCalendar", "CropCalendarWithCropResidues", "TimedEvents", "StateEvents"]:
             if attr in campaign_def:
                 if campaign_def[attr] is None:
                     r.append(True)

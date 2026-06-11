@@ -132,6 +132,15 @@ class SNOMIN(SimulationObject):
     # placeholder for soil object
     soiln_profile = None
 
+    # Flag indicating that crop residues should be incorporated
+    _flag_include_crop_residues = False
+    # Parameters for residue incorporation
+    _frac_LV_harvested = None
+    _frac_ST_harvested = None
+    _frac_SO_harvested = None
+    _ploughing_dept = None
+
+
     class StateVariables(StatesTemplate):
         AGE0   = Instance(np.ndarray) # Initial age of material (d)
         AGE    = Instance(np.ndarray) # Appearant age of material (d)
@@ -331,8 +340,9 @@ class SNOMIN(SimulationObject):
         self._NH4I = NH4
         self._NO3I = NO3
 
-        # Connect module to signal AgroManager
+        # Connect module to signal from the AgroManager
         self._connect_signal(self._on_APPLY_N_SNOMIN, signals.apply_n_snomin)
+        self._connect_signal(self._APPLY_CROP_RESIDUES, signals.apply_crop_residues_snomin)
 
     @prepare_rates
     def calc_rates(self, day, drv):
@@ -466,6 +476,11 @@ class SNOMIN(SimulationObject):
         s.NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM) / self.m2_to_ha
         self.check_mass_balances(day, delt)
 
+        # Include crop residues if required
+        if self._flag_include_crop_residues:
+            self._flag_include_crop_residues = False
+            self._include_crop_residues()
+
         # Set output variables
         s.ORGMATT = np.sum(s.ORGMAT)  * (1/self.m2_to_ha)
         s.CORGT = np.sum(s.CORG)  * (1/self.m2_to_ha)
@@ -483,7 +498,7 @@ class SNOMIN(SimulationObject):
         s.NLOSSCUM = NLOSSCUM
 
     def _on_APPLY_N_SNOMIN(self, amount=None, application_depth = None, cnratio=None, f_orgmat=None,
-                           f_NH4N = None, f_NO3N = None, initial_age =None):
+                           f_NH4N = None, f_NO3N = None, initial_age = None):
         """This function calculates the application rates of organic matter, organic C, organic N, NH4-N, NO3-N
         and the initial apparent age of the applied material at the date of application.
 
@@ -515,11 +530,6 @@ class SNOMIN(SimulationObject):
         # Initialize amendment rates
         RAGE_am = np.zeros((1, len(self.soiln_profile)))
         AGE0_am = np.zeros_like(RAGE_am)
-        RORGMAT_am = np.zeros_like(RAGE_am)
-        RCORG_am = np.zeros_like(RAGE_am)
-        RNORG_am = np.zeros_like(RAGE_am)
-        RNH4_am = np.zeros_like(s.NH4)
-        RNO3_am = np.zeros_like(s.NO3)
 
         # Prevents that a part of the N is not applied if the application depth is less than thickness of the upper layer
         if application_depth < self.soiln_profile[0].Thickness:
@@ -547,6 +557,64 @@ class SNOMIN(SimulationObject):
         self._RNORGAM = np.concatenate(( self._RNORGAM, RNORG_am), axis = 0)
         self._RNH4AM = RNH4_am
         self._RNO3AM = RNO3_am
+
+    def _APPLY_CROP_RESIDUES(self, frac_LV_harvested, frac_ST_harvested, frac_SO_harvested,
+                             ploughing_depth):
+        """This catches the signal to indicate that crop residues must be incorporated and sets the corresponding
+        flag.
+
+        The actual incorporation is deferred to the end of the integration step in the model cycle, see below
+
+        :param frac_LV_harvested: Fraction of leaves harvested
+        :param frac_ST_harvested: Fraction of stems harvested
+        :param frac_SO_harvested: Fraction of roots harvested
+        :param ploughing_depth: the ploughing depth [cm]
+        """
+        self._flag_include_crop_residues = True
+        self._frac_LV_harvested = frac_LV_harvested
+        self._frac_ST_harvested = frac_ST_harvested
+        self._frac_SO_harvested = frac_SO_harvested
+        self._ploughing_depth = ploughing_depth
+
+    def _include_crop_residues(self):
+        """This implements the inclusion of the actual crop residues in the soil.
+
+        it has to be delayed until all state integrations have been carried out.
+        """
+        k = self.kiosk
+        WLV_residue = (1 - self._frac_LV_harvested) * k.WLV
+        WSO_residue = (1 - self._frac_SO_harvested) * k.WSO
+        WST_residue = (1 - self._frac_ST_harvested) * k.WST
+        NamountLV_residue = WLV_residue * k.NamountLV
+        NamountST_residue = WST_residue * k.NamountST
+        NamountSO_residue = WSO_residue * k.NamountSO
+
+        W_residue_shoot = WLV_residue + WSO_residue + WST_residue
+        frac_C = self.SoilOrganicNModel.MINIP_C.OM_to_C
+        C_residue_shoot  = W_residue_shoot  * frac_C
+        Namount_residue_shoot  = max(0.001, NamountLV_residue + NamountST_residue + NamountSO_residue)
+        CN_ratio_shoot = C_residue_shoot / Namount_residue_shoot
+
+        self._on_APPLY_N_SNOMIN(amount=W_residue_shoot ,
+                                application_depth = self._ploughing_depth,
+                                cnratio=CN_ratio_shoot,
+                                f_orgmat=1.0,
+                                f_NH4N = 0.,
+                                f_NO3N = 0.,
+                                initial_age = 0.99)
+
+        W_residue_root = k.WRT
+        C_residue_root = W_residue_root * frac_C
+        Namount_residue_root = max(0.001, k.NamountRT)
+        CN_ratio_root = C_residue_root / Namount_residue_root
+
+        self._on_APPLY_N_SNOMIN(amount=W_residue_shoot ,
+                                application_depth = k.RD,
+                                cnratio=CN_ratio_root,
+                                f_orgmat=1.0,
+                                f_NH4N = 0.,
+                                f_NO3N = 0.,
+                                initial_age = 1.57)
 
     def get_infiltration_rate(self, k):
         infiltration_rate_m_per_d = k.RIN * self.cm_to_m
@@ -702,6 +770,7 @@ class SNOMIN(SimulationObject):
             return RNH4UP, RNO3UP
 
         class SoilAmmoniumNModel:
+
             def calculate_NH4_deposition_rates(self, soiln_profile, infiltration_rate_m_per_d, NH4, NH4ConcR):
                 RNH4DEPOS = np.zeros_like(NH4)
                 mg_to_kg = 1e-6
@@ -926,7 +995,9 @@ class SNOMIN(SimulationObject):
                 fT = 1/(1+np.exp(-0.26*(T-17)))-1/(1+np.exp(-0.77*(T-41.9)))
                 return fT
 
+
     class SoilOrganicNModel:
+
         def calculate_apparent_age_increase_rate(self, AGE, delt, pF, pH, T):
             RAGEAG = np.zeros_like(AGE)
             janssen = self.Janssen()
@@ -1008,6 +1079,7 @@ class SNOMIN(SimulationObject):
                 ORGMAT_am = 0
             return ORGMAT_am
 
+
         class Janssen:
             m = 1.6
             b = 2.82
@@ -1086,6 +1158,7 @@ class SNOMIN(SimulationObject):
             def calculate_organic_C(self, OM):
                 Corg = OM * self.OM_to_C
                 return Corg
+
 
         class MINIP_N:
 

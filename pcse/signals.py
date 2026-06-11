@@ -201,6 +201,7 @@ output = "OUTPUT"
 summary_output = "SUMMARY_OUTPUT"
 apply_n = "APPLY_N"
 apply_n_snomin = "APPLY_N_SNOMIN"
+apply_crop_residues_snomin = "APPLY_CROP_RESIDUES_SNOMIN"
 irrigate = "IRRIGATE"
 mowing = "MOWING"
 apply_npk = 'APPLY_NPK'
