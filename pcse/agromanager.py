@@ -694,23 +694,26 @@ class AgroManager(AncillaryObject):
                 self.state_event_dispatchers.append(None)
                 continue
 
-            # get crop calendar definition for this campaign
-            if "CropCalendar" in campaign_def:
-                cc_def = campaign_def['CropCalendar']
+            # Available crop calendar types
+            crop_calendar_types = dict(CropCalendar=CropCalendar,
+                                       CropCalendarWithCropResidues=CropCalendarWithCropResidues)
+            # check and process crop calendar types
+            for calendar_type, calendar_class in crop_calendar_types.items():
+                if calendar_type in campaign_def:
+                    cc_def = campaign_def[calendar_type]
+                else:
+                    continue
                 if cc_def is not None:
-                    cc = CropCalendar(kiosk, **cc_def)
+                    cc = calendar_class(kiosk, **cc_def)
                     cc.validate(this_campaign_start, next_campaign_start)
                     self.crop_calendars.append(cc)
                 else:
                     self.crop_calendars.append(None)
-            elif "CropCalendarWithCropResidues" in campaign_def:
-                cc_def = campaign_def['CropCalendarWithCropResidues']
-                if cc_def is not None:
-                    cc = CropCalendarWithCropResidues(kiosk, **cc_def)
-                    cc.validate(this_campaign_start, next_campaign_start)
-                    self.crop_calendars.append(cc)
-                else:
-                    self.crop_calendars.append(None)
+                break
+            else:
+                msg = f"No crop calendar found. Available crop calendar types: {list(crop_calendar_types.keys())}"
+                self.logger.error(msg)
+                raise exc.PCSEError(msg)
 
             # Get definition of timed events and build TimedEventsDispatchers
             te_def = campaign_def['TimedEvents']
