@@ -254,7 +254,7 @@ class ParameterProvider(MutableMapping):
         return len(self._unique_parameters)
 
     def __iter__(self):
-        return self
+        return iter(self._unique_parameters)
 
     def next(self):
         i = self._iter
