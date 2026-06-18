@@ -353,6 +353,11 @@ class SNOMIN(SimulationObject):
 
         delt = 1.0
 
+        # Include crop residues if required
+        if self._flag_include_crop_residues:
+            self._flag_include_crop_residues = False
+            self._include_crop_residues()
+
         # Initialize model components
         sonm = self.SoilOrganicNModel()
         sinm = self.SoilInorganicNModel()
@@ -369,7 +374,7 @@ class SNOMIN(SimulationObject):
         # Get soil pH
         pH = self.get_pH(self.soiln_profile)
 
-        # Collect ammendment rates
+        # Collect amendment rates
         r.RAGEAM = self._RAGEAM
         r.RORGMATAM = self._RORGMATAM
         r.RCORGAM = self._RCORGAM
@@ -377,7 +382,7 @@ class SNOMIN(SimulationObject):
         r.RNH4AM = self._RNH4AM
         r.RNO3AM = self._RNO3AM
 
-        # Reset placeholders for ammendment rates
+        # Reset placeholders for amendment rates
         self._RAGEAM = np.zeros_like(s.AGE)
         self._RORGMATAM = np.zeros_like(r.RORGMATAM)
         self._RCORGAM = np.zeros_like(r.RCORGAM)
@@ -385,7 +390,7 @@ class SNOMIN(SimulationObject):
         self._RNH4AM = np.zeros_like(r.RNH4)
         self._RNO3AM = np.zeros_like(r.RNH4)
 
-        # Calculate increase aparent age of each ammendment
+        # Calculate increase apparent age of each amendment
         r.RAGEAG = sonm.calculate_apparent_age_increase_rate(s.AGE, delt, pF, pH, T)
 
         # Calculate dissimilation rates of each ammendment
@@ -475,11 +480,6 @@ class SNOMIN(SimulationObject):
         # Calculate the amount of N available for root uptake in the next time step
         s.NAVAIL = sinm.calculate_NAVAIL(self.soiln_profile, p.KSORP, s.NH4, s.NO3, RD_m, SM) / self.m2_to_ha
         self.check_mass_balances(day, delt)
-
-        # Include crop residues if required
-        if self._flag_include_crop_residues:
-            self._flag_include_crop_residues = False
-            self._include_crop_residues()
 
         # Set output variables
         s.ORGMATT = np.sum(s.ORGMAT)  * (1/self.m2_to_ha)
