@@ -608,7 +608,7 @@ class SNOMIN(SimulationObject):
         Namount_residue_root = max(0.001, k.NamountRT)
         CN_ratio_root = C_residue_root / Namount_residue_root
 
-        self._on_APPLY_N_SNOMIN(amount=W_residue_shoot ,
+        self._on_APPLY_N_SNOMIN(amount=W_residue_root ,
                                 application_depth = k.RD,
                                 cnratio=CN_ratio_root,
                                 f_orgmat=1.0,
