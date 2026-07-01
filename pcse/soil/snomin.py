@@ -585,9 +585,9 @@ class SNOMIN(SimulationObject):
         WLV_residue = (1 - self._frac_LV_harvested) * k.WLV
         WSO_residue = (1 - self._frac_SO_harvested) * k.WSO
         WST_residue = (1 - self._frac_ST_harvested) * k.WST
-        NamountLV_residue = k.NamountLV
-        NamountST_residue = k.NamountST
-        NamountSO_residue = k.NamountSO
+        NamountLV_residue = k.NamountLV * (1 - self._frac_LV_harvested)
+        NamountST_residue = k.NamountST * (1 - self._frac_ST_harvested)
+        NamountSO_residue = k.NamountSO * (1 - self._frac_SO_harvested)
 
         W_residue_shoot = WLV_residue + WSO_residue + WST_residue
         frac_C = self.SoilOrganicNModel.MINIP_C.OM_to_C
