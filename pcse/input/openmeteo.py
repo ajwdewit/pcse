@@ -4,6 +4,7 @@
 # A lot of code borrowed from nasapower.py by Allard de Wit
 
 import os
+import math
 import datetime
 import time
 
@@ -228,13 +229,17 @@ class OpenMeteoWeatherDataProvider(WeatherDataProvider):
     def _get_cache_filename(self, latitude, longitude):
         """Constructs the filename used for cache files given latitude and longitude
 
-        The latitude and longitude is coded into the filename by truncating on
-        0.1 degree. So the cache filename for a point with lat/lon 52.56/-124.78 and using the
-        "knmi_seamless" model will be: OpenMeteoWeatherDataProvider_LAT00525_LON-1247_knmi_.cache
+        The latitude and longitude are coded into the filename by flooring to
+        0.1 degree with math.floor(). Flooring (instead of truncating toward zero
+        with int()) guarantees that each 0.1 degree grid cell is hemisphere-symmetric
+        and of uniform width, so two distinct locations on opposite sides of the
+        equator or prime meridian never share a cache key. For example, the cache
+        filename for a point with lat/lon 52.56/-124.78 and using the
+        "knmi_seamless" model will be: OpenMeteoWeatherDataProvider_LAT00525_LON-1248_knmi_.cache
         """
 
         fname = "%s_LAT%05i_LON%05i_%s.cache" % (self.__class__.__name__,
-                                                 int(latitude * 10), int(longitude * 10),
+                                                 math.floor(latitude * 10), math.floor(longitude * 10),
                                                  self.model[:5])
         cache_filename = os.path.join(settings.METEO_CACHE_DIR, fname)
         return cache_filename
