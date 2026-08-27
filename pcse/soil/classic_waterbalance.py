@@ -159,43 +159,49 @@ class WaterbalanceFD(SimulationObject):
 
     **State variables:**
 
-    =======  ================================================= ==== ============
-     Name     Description                                      Pbl      Unit
-    =======  ================================================= ==== ============
-    SM        Volumetric moisture content in root zone          Y    -
-    SS        Surface storage (layer of water on surface)       N    cm
-    SSI       Initial urface storage                            N    cm
-    W         Amount of water in root zone                      N    cm
-    WI        Initial amount of water in the root zone          N    cm
-    WLOW      Amount of water in the subsoil (between current   N    cm
-              rooting depth and maximum rootable depth)
-    WLOWI     Initial amount of water in the subsoil                 cm
-    WWLOW     Total amount of water in the  soil profile        N    cm
-              WWLOW = WLOW + W
-    WTRAT     Total water lost as transpiration as calculated   N    cm
-              by the water balance. This can be different 
-              from the CTRAT variable which only counts
-              transpiration for a crop cycle.
-    EVST      Total evaporation from the soil surface           N    cm
-    EVWT      Total evaporation from a water surface            N    cm
-    TSR       Total surface runoff                              N    cm
-    RAINT     Total amount of rainfall (eff + non-eff)          N    cm
-    WDRT      Amount of water added to root zone by increase    N    cm
-              of root growth
-    TOTINF    Total amount of infiltration                      N    cm
-    TOTIRR    Total amount of effective irrigation              N    cm
-    PERCT     Total amount of water percolating from rooted     N    cm
-              zone to subsoil
-    LOSST     Total amount of water lost to deeper soil         N    cm
-    DSOS      Days since oxygen stress, accumulates the number  Y     -
-              of consecutive days of oxygen stress
-    WBALRT    Checksum for root zone waterbalance. Will be      N    cm
-              calculated within `finalize()`, abs(WBALRT) >
-              0.0001 will raise a WaterBalanceError
-    WBALTT    Checksum for total waterbalance. Will be          N    cm
-              calculated within `finalize()`, abs(WBALTT) >
-              0.0001 will raise a WaterBalanceError
-    =======  ================================================= ==== ============
+    =============== ================================================== ==== ============
+     Name            Description                                        Pbl   Unit
+    =============== ================================================== ==== ============
+    SM               Volumetric moisture content in root zone          Y      -
+    SS               Surface storage (layer of water on surface)       N      cm
+    SSI              Initial urface storage                            N      cm
+    W                Amount of water in root zone                      N      cm
+    WI               Initial amount of water in the root zone          N      cm
+    WLOW             Amount of water in the subsoil (between current   N      cm
+                     rooting depth and maximum rootable depth)
+    WLOWI            Initial amount of water in the subsoil                   cm
+    WWLOW            Total amount of water in the  soil profile        N      cm
+                     WWLOW = WLOW + W
+    WTRAT            Total water lost as transpiration as calculated   N      cm
+                     by the water balance. This can be different
+                     from the CTRAT variable which only counts
+                     transpiration for a crop cycle.
+    EVST             Total evaporation from the soil surface           N      cm
+    EVWT             Total evaporation from a water surface            N      cm
+    TSR              Total surface runoff                              N      cm
+    RAINT            Total amount of rainfall (eff + non-eff)          N      cm
+    WDRT             Amount of water added to root zone by increase    N      cm
+                     of root growth
+    TOTINF           Total amount of infiltration                      N      cm
+    TOTIRR           Total amount of effective irrigation              N      cm
+                     TOTIRR is required to close the waterbalance
+    CTOTIRR          Total amount of effective irrigation              Y      cm
+                     for the current crop cycle
+    CTOTIRR_APPlIED  Total amount of irrigation                        Y      cm
+                     (effective + lost) in the current crop cycle
+                     for the current crop cycle
+    PERCT            Total amount of water percolating from rooted     N      cm
+                     zone to subsoil
+    LOSST            Total amount of water lost to deeper soil         N      cm
+    DSOS             Days since oxygen stress, accumulates the number  Y       -
+                     of consecutive days of oxygen stress
+    WBALRT           Checksum for root zone waterbalance. Will be      N      cm
+                     calculated within `finalize()`, abs(WBALRT) >
+                     0.0001 will raise a WaterBalanceError
+    WBALTT           Checksum for total waterbalance. Will be          N      cm
+                     calculated within `finalize()`, abs(WBALTT) >
+                     0.0001 will raise a WaterBalanceError
+    =============== ================================================== ==== ============
 
     **Rate variables:**
 
@@ -208,7 +214,7 @@ class WaterbalanceFD(SimulationObject):
                 is directly derived from the variable "TRA" in
                 the evapotranspiration module
     RAIN_INF    Infiltrating rainfall rate for current day         N    |cmday-1|
-    RAIN_NOTINF Non-infiltrating rainfall rate for current day   N    |cmday-1|
+    RAIN_NOTINF Non-infiltrating rainfall rate for current day     N    |cmday-1|
     RIN         Infiltration rate for current day                  N    |cmday-1|
     RIRR        Effective irrigation rate for current day,         N    |cmday-1|
                 computed as irrigation amount * efficiency.
@@ -260,6 +266,7 @@ class WaterbalanceFD(SimulationObject):
     rooted_layer_needs_reset = Bool(False)
     # placeholder for irrigation
     _RIRR = Float(0.)
+    _RIRR_APPLIED = Float(0.)
     # default depth of upper layer (root zone depth)
     DEFAULT_RD = Float(10.)
     # Increments on WLOW due to state updates
@@ -299,6 +306,8 @@ class WaterbalanceFD(SimulationObject):
         WDRT   = Float(-99.)
         TOTINF = Float(-99.)
         TOTIRR = Float(-99.)
+        CTOTIRR = Float(-99.)
+        CTOTIRR_APPLIED = Float(-99.)
         PERCT  = Float(-99.)
         LOSST  = Float(-99.)
         # Checksums for rootzone (RT) and total system (TT)
@@ -312,6 +321,7 @@ class WaterbalanceFD(SimulationObject):
         WTRA  = Float(-99.)
         RIN   = Float(-99.)
         RIRR  = Float(-99.)
+        RIRR_APPLIED = Float(-99.)
         PERC  = Float(-99.)
         LOSS  = Float(-99.)
         DW    = Float(-99.)
@@ -374,8 +384,8 @@ class WaterbalanceFD(SimulationObject):
         self.states = self.StateVariables(kiosk, publish=["SM", "DSOS"], SM=SM, SS=SS,
                            SSI=p.SSI, W=W, WI=WI, WLOW=WLOW, WLOWI=WLOWI,
                            WWLOW=WWLOW, WTRAT=0., EVST=0., EVWT=0., TSR=0.,
-                           RAINT=0., WDRT=0., TOTINF=0., TOTIRR=0., DSOS=0,
-                           PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
+                           RAINT=0., WDRT=0., TOTINF=0., TOTIRR=0., CTOTIRR=0., CTOTIRR_APPLIED=0.,
+                           DSOS=0, PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
         self.rates = self.RateVariables(kiosk, publish="EVS")
         
         # Connect to CROP_START/CROP_FINISH signals for water balance to
@@ -384,6 +394,8 @@ class WaterbalanceFD(SimulationObject):
         self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
         # signal for irrigation
         self._connect_signal(self._on_IRRIGATE, signals.irrigate)
+        # signal for irrigation from Future Rotation Explorer
+        self._connect_signal(self._on_IRRIGATE_FRE, signals.irrigate_fre)
 
         self._increments_W = []
 
@@ -394,9 +406,11 @@ class WaterbalanceFD(SimulationObject):
         r = self.rates
         k = self.kiosk
 
-        # Rate of irrigation (RIRR)
+        # Rate of effective (RIRR) and applied (RIRR_APPlIED) irrigation
         r.RIRR = self._RIRR
+        r.RIRR_APPLIED = self._RIRR_APPLIED
         self._RIRR = 0.
+        self._RIRR_APPLIED = 0.
 
         # Transpiration and maximum soil and surface water evaporation rates
         # are calculated by the crop evapotranspiration module.
@@ -513,6 +527,8 @@ class WaterbalanceFD(SimulationObject):
         s.RAINT += r.DRAINT * delt
         s.TOTINF += r.RIN * delt
         s.TOTIRR += r.RIRR * delt
+        s.CTOTIRR += r.RIRR * delt
+        s.CTOTIRR_APPLIED += r.RIRR_APPLIED * delt
 
         # Update surface storage and total surface runoff (TSR)
         s.SS += r.DSS * delt
@@ -629,12 +645,27 @@ class WaterbalanceFD(SimulationObject):
         self.in_crop_cycle = True
         self.rooted_layer_needs_reset = True
 
+        # RESET irrigation totals for the new crop
+        self.states.CTOTIRR = 0.0
+        self.states.CTOTIRR_APPLIED = 0.0
+
     def _on_CROP_FINISH(self):
         self.in_crop_cycle = False
         self.rooted_layer_needs_reset = True
 
     def _on_IRRIGATE(self, amount, efficiency):
         self._RIRR = amount * efficiency
+
+    def _on_IRRIGATE_FRE(self, amount, efficiency, total_irrigation_max):
+        """Irrigation options for the Future Rotation Explorer
+
+        :param amount: Amount of irrigation in cm
+        :param efficiency: Efficiency of irrigation
+        :param max_irrigation_amount: Maximum amount of irrigation that can be applied in the current crop cycle
+        """
+        if self.states.CTOTIRR_APPLIED <= total_irrigation_max:
+            self._RIRR_APPLIED = amount
+            self._RIRR = amount * efficiency
 
     def _set_variable_SM(self, nSM):
         """Force the model states based on the given soil moisture value.

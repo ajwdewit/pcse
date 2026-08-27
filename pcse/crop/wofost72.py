@@ -57,23 +57,27 @@ class Wofost72(SimulationObject):
     
     **State variables:**
 
-    =========== ================================================= ==== ===============
-     Name        Description                                      Pbl      Unit
-    =========== ================================================= ==== ===============
-    TAGP        Total above-ground Production                      N    |kg ha-1|
-    GASST       Total gross assimilation                           N    |kg CH2O ha-1|
-    MREST       Total gross maintenance respiration                N    |kg CH2O ha-1|
-    CTRAT       Total crop transpiration accumulated over the
-                crop cycle                                         N    cm
-    CEVST       Total soil evaporation accumulated over the
-                crop cycle                                         N    cm
-    HI          Harvest Index (only calculated during              N    -
-                `finalize()`)
-    DOF         Date representing the day of finish of the crop    N    -
-                simulation. 
-    FINISH_TYPE String representing the reason for finishing the   N    -
-                simulation: maturity, harvest, leave death, etc.
-    =========== ================================================= ==== ===============
+    =============== ================================================= ==== ===============
+     Name            Description                                      Pbl      Unit
+    =============== ================================================= ==== ===============
+    TAGP            Total above-ground Production                      N    |kg ha-1|
+    GASST           Total gross assimilation                           N    |kg CH2O ha-1|
+    MREST           Total gross maintenance respiration                N    |kg CH2O ha-1|
+    CTRAT           Total crop transpiration accumulated over the
+                    crop cycle                                         N    cm
+    CEVST           Total soil evaporation accumulated over the
+                    crop cycle                                         N    cm
+    HI              Harvest Index (only calculated during              N    -
+                    `finalize()`)
+    DOF             Date representing the day of finish of the crop    N    -
+                    simulation.
+    FINISH_TYPE     String representing the reason for finishing the   N    -
+                    simulation: maturity, harvest, leave death, etc.
+    STRESSLEVELTRA  Copies the RFTRA rate variable to indicate         Y    -
+                    water or oxygen stress. RFTRA itself is not
+                    usable for the agromanager as it only works on
+                    state variables.
+    ==============  ================================================= ==== ===============
 
  
      **Rate variables:**
@@ -120,6 +124,7 @@ class Wofost72(SimulationObject):
         HI = Float(-99.)
         DOF = Instance(datetime.date)
         FINISH_TYPE = Unicode(allow_none=True)
+        STRESSLEVELTRA = Float(0.)
 
     class RateVariables(RatesTemplate):
         GASS = Float(-99.)
@@ -157,9 +162,9 @@ class Wofost72(SimulationObject):
         # Initial total (living+dead) above-ground biomass of the crop
         TAGP = self.kiosk.TWLV + self.kiosk.TWST + self.kiosk.TWSO
         self.states = self.StateVariables(kiosk,
-                                          publish=["TAGP", "GASST", "MREST", "HI"],
+                                          publish=["TAGP", "GASST", "MREST", "HI", "STRESSLEVELTRA"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0,
-                                          CTRAT=0.0, CEVST=0.0, HI=0.0,
+                                          CTRAT=0.0, CEVST=0.0, HI=0.0, STRESSLEVELTRA=1.0,
                                           DOF=None, FINISH_TYPE=None)
 
         # Check partitioning of TDWI over plant organs
@@ -276,6 +281,9 @@ class Wofost72(SimulationObject):
         # total crop transpiration and soil evaporation
         states.CTRAT += self.kiosk.TRA
         states.CEVST += self.kiosk.EVS
+
+        # Make RFTRA available as a state to indicate water stress
+        states.STRESSLEVELTRA = self.kiosk.RFTRA
 
     @prepare_states
     def finalize(self, day):

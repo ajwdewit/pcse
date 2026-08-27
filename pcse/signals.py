@@ -204,3 +204,4 @@ apply_n_snomin = "APPLY_N_SNOMIN"
 irrigate = "IRRIGATE"
 mowing = "MOWING"
 apply_npk = 'APPLY_NPK'
+irrigate_fre = "IRRIGATE_FRE"

@@ -470,6 +470,7 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
 
         # Determine if any event should be trigger based on the current state and
         # the event_condition.
+        self.day = day
         current_state = self.kiosk[self.event_state]
         zero_condition_signs = []
         for event, zero_condition_sign in zip(self.events_table, self.previous_signs):
@@ -487,13 +488,13 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
             return sign
 
         if zero_condition_sign == 1 and sign in [-1, 0]:
-            msg = "State event dispatched from '%s' at event_state %s" % (self.name, state)
+            msg = "State event dispatched on %s from '%s' at event_state %s: %s" % (self.day, self.name, state, keywords)
             self.logger.info(msg)
             self._send_signal(signal=self.event_signal, **keywords)
 
         return sign
 
-    def _zero_condition_rising(self, current_state, state, kwargs, zero_condition_sign):
+    def _zero_condition_rising(self, current_state, state, keywords, zero_condition_sign):
         sign = cmp2(current_state - state, 0)
 
         # is None: e.g. called the first time and zero_condition_sign is not yet calculated
@@ -501,9 +502,9 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
             return sign
 
         if zero_condition_sign == -1 and sign in [0, 1]:
-            msg = "State event dispatched from '%s' at model state %s" % (self.name, current_state)
+            msg = "State event dispatched on %s from '%s' at event_state %s: %s" % (self.day, self.name, state, keywords)
             self.logger.info(msg)
-            self._send_signal(signal=self.event_signal, **kwargs)
+            self._send_signal(signal=self.event_signal, **keywords)
 
         return sign
 
@@ -516,7 +517,7 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
 
         if (zero_condition_sign == 1 and sign in [-1, 0]) or \
            (zero_condition_sign == -1 and sign in [0, 1]):
-            msg = "State event dispatched from %s at event_state %s" % (self.name, state)
+            msg = "State event dispatched on %s from '%s' at event_state %s: %s" % (self.day, self.name, state, keywords)
             self.logger.info(msg)
             self._send_signal(signal=self.event_signal, **keywords)
 
@@ -833,7 +834,7 @@ class AgroManager(AncillaryObject):
             # Check if there are state events defined in the last campaign without specifying the end date
             # explicitly with an trailing empty campaign
             if self.state_event_dispatchers[-1] is not None:
-                msg = "In the AgroManagement definition, the last campaign with start date '%s' contains StateEvents. " \
+                msg = "In the AgroManagement definition, the last campaign contains StateEvents. " \
                       "When specifying StateEvents, the end date of the campaign must be explicitly" \
                       "given by a trailing empty campaign."
                 raise exc.PCSEError(msg)
