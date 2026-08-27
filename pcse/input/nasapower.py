@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2024 Wageningen Environmental Research, Wageningen-UR
 # Allard de Wit (allard.dewit@wur.nl), March 2024
 import os
+import math
 import datetime as dt
 
 import numpy as np
@@ -251,13 +252,17 @@ class NASAPowerWeatherDataProvider(WeatherDataProvider):
     def _get_cache_filename(self, latitude, longitude):
         """Constructs the filename used for cache files given latitude and longitude
 
-        The latitude and longitude is coded into the filename by truncating on
-        0.1 degree. So the cache filename for a point with lat/lon 52.56/-124.78 will be:
-        NASAPowerWeatherDataProvider_LAT00525_LON-1247.cache
+        The latitude and longitude are coded into the filename by flooring to
+        0.1 degree with math.floor(). Flooring (instead of truncating toward zero
+        with int()) guarantees that each 0.1 degree grid cell is hemisphere-symmetric
+        and of uniform width, so two distinct locations on opposite sides of the
+        equator or prime meridian never share a cache key. For example, the cache
+        filename for a point with lat/lon 52.56/-124.78 will be:
+        NASAPowerWeatherDataProvider_LAT00525_LON-1248.cache
         """
 
         fname = "%s_LAT%05i_LON%05i.cache" % (self.__class__.__name__,
-                                              int(latitude*10), int(longitude*10))
+                                              math.floor(latitude*10), math.floor(longitude*10))
         cache_filename = os.path.join(settings.METEO_CACHE_DIR, fname)
         return cache_filename
 

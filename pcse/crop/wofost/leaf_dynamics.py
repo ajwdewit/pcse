@@ -253,18 +253,19 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
     @prepare_states
     def integrate(self, day, delt=1.0):
         params = self.params
-        rates = self.rates
-        states = self.states
+        r = self.rates
+        s = self.states
+        k = self.kiosk
 
         # --------- leave death ---------
-        tLV = array('d', states.LV)
-        tSLA = array('d', states.SLA)
-        tLVAGE = array('d', states.LVAGE)
-        tDRLV = rates.DRLV
+        tLV = array('d', s.LV)
+        tSLA = array('d', s.SLA)
+        tLVAGE = array('d', s.LVAGE)
+        tDRLV = r.DRLV
 
         # leaf death is imposed on leaves by removing leave classes from the
         # right side of the deque. 
-        for LVweigth in reversed(states.LV):
+        for LVweigth in reversed(s.LV):
             if tDRLV > 0.:
                 if tDRLV >= LVweigth: # remove complete leaf class from deque
                     tDRLV -= LVweigth
@@ -278,28 +279,36 @@ class WOFOST_Leaf_Dynamics(SimulationObject):
                 break
 
         # Integration of physiological age
-        tLVAGE = deque([age + rates.FYSAGE for age in tLVAGE])
+        tLVAGE = deque([age + r.FYSAGE for age in tLVAGE])
+
+        # Uniformly reduce leaf biomass in case of reallocation
+        if k.REALLOC_LV > 0:
+            sumLV = sum(tLV)
+            if k.REALLOC_LV < sumLV:
+                ReductionFactorLV = (sumLV - k.REALLOC_LV)/sumLV
+                tLV = np.array(tLV) * ReductionFactorLV
+
         tLV = deque(tLV)
         tSLA = deque(tSLA)
 
         # --------- leave growth ---------
         # new leaves in class 1
-        tLV.appendleft(rates.GRLV)
-        tSLA.appendleft(rates.SLAT)
+        tLV.appendleft(r.GRLV)
+        tSLA.appendleft(r.SLAT)
         tLVAGE.appendleft(0.)
 
         # calculation of new leaf area
-        states.LASUM = sum([lv*sla for lv, sla in zip(tLV, tSLA)])
-        states.LAI = self._calc_LAI()
-        states.LAIMAX = max(states.LAI, states.LAIMAX)
+        s.LASUM = sum([lv*sla for lv, sla in zip(tLV, tSLA)])
+        s.LAI = self._calc_LAI()
+        s.LAIMAX = max(s.LAI, s.LAIMAX)
 
         # exponential growth curve
-        states.LAIEXP += rates.GLAIEX
+        s.LAIEXP += r.GLAIEX
 
         # Update leaf biomass states
-        states.WLV  = sum(tLV)
-        states.DWLV += rates.DRLV
-        states.TWLV = states.WLV + states.DWLV
+        s.WLV  = sum(tLV)
+        s.DWLV += r.DRLV
+        s.TWLV = s.WLV + s.DWLV
 
         # Store final leaf biomass deques
         self.states.LV = tLV

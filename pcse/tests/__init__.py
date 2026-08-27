@@ -15,6 +15,7 @@ from . import test_wofost72
 from . import test_penmanmonteith
 from . import test_agromanager
 from . import test_lintul3
+from . import test_weather_cache
 
 def make_test_suite(dsn=None):
     """Assemble test suite and return it
@@ -29,6 +30,7 @@ def make_test_suite(dsn=None):
                                     test_agromanager.suite(),
                                     test_wofost72.suite(),
                                     # test_lintul3.suite(),
+                                    test_weather_cache.suite(),
                                     ])
     return allsuites
 
