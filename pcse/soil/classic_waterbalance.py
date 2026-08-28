@@ -308,6 +308,7 @@ class WaterbalanceFD(SimulationObject):
         TOTIRR = Float(-99.)
         CTOTIRR = Float(-99.)
         CTOTIRR_APPLIED = Float(-99.)
+        CTOTIRR_EVENTS = Int()
         PERCT  = Float(-99.)
         LOSST  = Float(-99.)
         # Checksums for rootzone (RT) and total system (TT)
@@ -384,7 +385,7 @@ class WaterbalanceFD(SimulationObject):
         self.states = self.StateVariables(kiosk, publish=["SM", "DSOS"], SM=SM, SS=SS,
                            SSI=p.SSI, W=W, WI=WI, WLOW=WLOW, WLOWI=WLOWI,
                            WWLOW=WWLOW, WTRAT=0., EVST=0., EVWT=0., TSR=0.,
-                           RAINT=0., WDRT=0., TOTINF=0., TOTIRR=0., CTOTIRR=0., CTOTIRR_APPLIED=0.,
+                           RAINT=0., WDRT=0., TOTINF=0., TOTIRR=0., CTOTIRR=0., CTOTIRR_APPLIED=0., CTOTIRR_EVENTS=0,
                            DSOS=0, PERCT=0., LOSST=0., WBALRT=-999., WBALTT=-999.)
         self.rates = self.RateVariables(kiosk, publish="EVS")
         
@@ -529,6 +530,8 @@ class WaterbalanceFD(SimulationObject):
         s.TOTIRR += r.RIRR * delt
         s.CTOTIRR += r.RIRR * delt
         s.CTOTIRR_APPLIED += r.RIRR_APPLIED * delt
+        if r.RIRR > 0.0:
+            s.CTOTIRR_EVENTS += 1
 
         # Update surface storage and total surface runoff (TSR)
         s.SS += r.DSS * delt
@@ -648,6 +651,7 @@ class WaterbalanceFD(SimulationObject):
         # RESET irrigation totals for the new crop
         self.states.CTOTIRR = 0.0
         self.states.CTOTIRR_APPLIED = 0.0
+        self.states.CTOTIRR_EVENTS = 0
 
     def _on_CROP_FINISH(self):
         self.in_crop_cycle = False
@@ -663,9 +667,10 @@ class WaterbalanceFD(SimulationObject):
         :param efficiency: Efficiency of irrigation
         :param max_irrigation_amount: Maximum amount of irrigation that can be applied in the current crop cycle
         """
-        if self.states.CTOTIRR_APPLIED <= total_irrigation_max:
-            self._RIRR_APPLIED = amount
-            self._RIRR = amount * efficiency
+        remaining_irrigation_amount = max(0.0, total_irrigation_max - self.states.CTOTIRR_APPLIED)
+        actual_amount = min(amount, remaining_irrigation_amount)
+        self._RIRR_APPLIED = actual_amount
+        self._RIRR = actual_amount * efficiency
 
     def _set_variable_SM(self, nSM):
         """Force the model states based on the given soil moisture value.
