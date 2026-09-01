@@ -660,12 +660,13 @@ class WaterbalanceFD(SimulationObject):
     def _on_IRRIGATE(self, amount, efficiency):
         self._RIRR = amount * efficiency
 
-    def _on_IRRIGATE_FRE(self, amount, efficiency, total_irrigation_max):
+    def _on_IRRIGATE_FRE(self, amount, efficiency, total_irrigation_max=1E6):
         """Irrigation options for the Future Rotation Explorer
 
         :param amount: Amount of irrigation in cm
         :param efficiency: Efficiency of irrigation
         :param max_irrigation_amount: Maximum amount of irrigation that can be applied in the current crop cycle
+             Can be omitted, in that case irrigation is assumed to be non-limiting.
         """
         remaining_irrigation_amount = max(0.0, total_irrigation_max - self.states.CTOTIRR_APPLIED)
         actual_amount = min(amount, remaining_irrigation_amount)
