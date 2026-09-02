@@ -177,7 +177,9 @@ Keyword arguments with `signals.irrigate`:
     * amount: Amount of irrigation in cm water applied on this day.
     * efficiency: efficiency of irrigation, meaning that the total amount of water that
       is added to the soil reservoir equals amount * efficiency
-
+    * total_irrigation_max: Optionally one can specify the maximum amount of irrigation
+      that can be applied [cm]. This is useful for cases when irrigation is limited by
+      water availability.
 
 **MOWING**
 
@@ -204,4 +206,3 @@ apply_n_snomin = "APPLY_N_SNOMIN"
 irrigate = "IRRIGATE"
 mowing = "MOWING"
 apply_npk = 'APPLY_NPK'
-irrigate_fre = "IRRIGATE_FRE"

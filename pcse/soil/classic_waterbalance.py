@@ -185,11 +185,13 @@ class WaterbalanceFD(SimulationObject):
     TOTINF           Total amount of infiltration                      N      cm
     TOTIRR           Total amount of effective irrigation              N      cm
                      TOTIRR is required to close the waterbalance
-    CTOTIRR          Total amount of effective irrigation              Y      cm
+    CTOTIRR          Total amount of effective irrigation              N      cm
                      for the current crop cycle
-    CTOTIRR_APPlIED  Total amount of irrigation                        Y      cm
+    CTOTIRR_APPlIED  Total amount of irrigation                        N      cm
                      (effective + lost) in the current crop cycle
                      for the current crop cycle
+    CTOTIRR_EVENTS   Total number of irrigation events                 N      -
+                     in the current crop cycle
     PERCT            Total amount of water percolating from rooted     N      cm
                      zone to subsoil
     LOSST            Total amount of water lost to deeper soil         N      cm
@@ -395,8 +397,6 @@ class WaterbalanceFD(SimulationObject):
         self._connect_signal(self._on_CROP_FINISH, signals.crop_finish)
         # signal for irrigation
         self._connect_signal(self._on_IRRIGATE, signals.irrigate)
-        # signal for irrigation from Future Rotation Explorer
-        self._connect_signal(self._on_IRRIGATE_FRE, signals.irrigate_fre)
 
         self._increments_W = []
 
@@ -657,11 +657,8 @@ class WaterbalanceFD(SimulationObject):
         self.in_crop_cycle = False
         self.rooted_layer_needs_reset = True
 
-    def _on_IRRIGATE(self, amount, efficiency):
-        self._RIRR = amount * efficiency
-
-    def _on_IRRIGATE_FRE(self, amount, efficiency, total_irrigation_max=1E6):
-        """Irrigation options for the Future Rotation Explorer
+    def _on_IRRIGATE(self, amount, efficiency, total_irrigation_max=1E6):
+        """Irrigation options
 
         :param amount: Amount of irrigation in cm
         :param efficiency: Efficiency of irrigation

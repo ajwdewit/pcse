@@ -125,6 +125,7 @@ class Wofost73(SimulationObject):
         HI    = Float(-99.)
         DOF = Instance(datetime.date)
         FINISH_TYPE = Unicode(allow_none=True)
+        STRESSLEVELTRA = Float(0.)
         LV_REALLOCATED = Float(0.)
         ST_REALLOCATED = Float(0.)
 
@@ -149,7 +150,8 @@ class Wofost73(SimulationObject):
         """
         
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk, publish=["DMI","ADMI", "REALLOC_LV", "REALLOC_ST", "REALLOC_SO"])
+        self.rates  = self.RateVariables(kiosk, publish=["DMI","ADMI", "REALLOC_LV", "REALLOC_ST", "REALLOC_SO",
+                                                         "STRESSLEVELTRA"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
@@ -169,7 +171,7 @@ class Wofost73(SimulationObject):
                self.kiosk["TWSO"]
         self.states = self.StateVariables(kiosk,
                                           publish=["TAGP", "GASST", "MREST", "HI"],
-                                          TAGP=TAGP, GASST=0.0, MREST=0.0,
+                                          TAGP=TAGP, GASST=0.0, MREST=0.0, STRESSLEVELTRA=1.0,
                                           CTRAT=0.0, HI=0.0, LV_REALLOCATED = 0., ST_REALLOCATED = 0.,
                                           DOF=None, FINISH_TYPE=None)
 
@@ -311,6 +313,9 @@ class Wofost73(SimulationObject):
         # Keep track of amount of reallocated biomass
         states.LV_REALLOCATED += rates.REALLOC_LV * delt
         states.ST_REALLOCATED += rates.REALLOC_ST * delt
+
+        # Make RFTRA available as a state to indicate water stress
+        states.STRESSLEVELTRA = self.kiosk.RFTRA
 
     @prepare_states
     def finalize(self, day):

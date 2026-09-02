@@ -76,7 +76,9 @@ class Wofost72(SimulationObject):
     STRESSLEVELTRA  Copies the RFTRA rate variable to indicate         Y    -
                     water or oxygen stress. RFTRA itself is not
                     usable for the agromanager as it only works on
-                    state variables.
+                    state variables. This is useful for irrigation
+                    options that work on the crop stress level, not
+                    the soil moisture amount.
     ==============  ================================================= ==== ===============
 
  
