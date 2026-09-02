@@ -150,8 +150,7 @@ class Wofost73(SimulationObject):
         """
         
         self.params = self.Parameters(parvalues)
-        self.rates  = self.RateVariables(kiosk, publish=["DMI","ADMI", "REALLOC_LV", "REALLOC_ST", "REALLOC_SO",
-                                                         "STRESSLEVELTRA"])
+        self.rates  = self.RateVariables(kiosk, publish=["DMI","ADMI", "REALLOC_LV", "REALLOC_ST", "REALLOC_SO"])
         self.kiosk = kiosk
         
         # Initialize components of the crop
@@ -170,7 +169,7 @@ class Wofost73(SimulationObject):
                self.kiosk["TWST"] + \
                self.kiosk["TWSO"]
         self.states = self.StateVariables(kiosk,
-                                          publish=["TAGP", "GASST", "MREST", "HI"],
+                                          publish=["TAGP", "GASST", "MREST", "HI", "STRESSLEVELTRA"],
                                           TAGP=TAGP, GASST=0.0, MREST=0.0, STRESSLEVELTRA=1.0,
                                           CTRAT=0.0, HI=0.0, LV_REALLOCATED = 0., ST_REALLOCATED = 0.,
                                           DOF=None, FINISH_TYPE=None)
