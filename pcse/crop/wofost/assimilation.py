@@ -262,7 +262,7 @@ class WOFOST81_Assimilation(SimulationObject):
 
         # Calculation of CO2 and temperature response factors of AMAX
         CO2AMAX = p.CO2AMAXTB(p.CO2)
-        TMPF = p.TMPFTB(drv.TEMP)
+        TMPF = p.TMPFTB(drv.DTEMP)
 
         # gross assimilation and correction for sub-optimum average day
         # temperature and CO2 concentration
