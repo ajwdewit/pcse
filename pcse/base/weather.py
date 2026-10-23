@@ -296,7 +296,8 @@ class WeatherDataProvider(object):
 
     @property
     def missing(self):
-        missing = (self.last_date - self.first_date).days - len(self.store) + 1
+        available_days = {day for day, _member_id in self.store}
+        missing = (self.last_date - self.first_date).days - len(available_days) + 1
         return missing
 
     @property
