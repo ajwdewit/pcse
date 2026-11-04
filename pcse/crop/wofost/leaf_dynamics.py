@@ -693,15 +693,7 @@ class WOFOST_Leaf_Dynamics_N(SimulationObject):
         # leaf area not to exceed exponential growth curve
         if s.LAIEXP < 6.:
             DTEFF = max(0., drv.TEMP-p.TBASE)
-
-            # added IS
-            # Nutrient and water stress during juvenile stage:
-            if k.DVS < 0.2 and s.LAI < 0.75:
-                factor = k.RFTRA * k.RFRGRL
-            else:
-                factor = 1.
-
-            r.GLAIEX = s.LAIEXP * p.RGRLAI * DTEFF * factor
+            r.GLAIEX = s.LAIEXP * p.RGRLAI * DTEFF
             # source-limited increase in leaf area
             r.GLASOL = r.GRLV * r.SLAT
             # sink-limited increase in leaf area
