@@ -19,6 +19,7 @@ from pcse.crop.wofost.partitioning import DVS_Partitioning
 from pcse.crop.wofost.root_dynamics import WOFOST_Root_Dynamics
 from pcse.crop.wofost.evapotranspiration import Evapotranspiration
 from pcse.crop.wofost72 import Wofost72
+from pcse.crop.wofost81 import Wofost81
 from pcse.crop.lingra import LINGRA
 from pcse.crop.lingraN import LINGRA_N
 from pcse.soil.classic_waterbalance import WaterbalanceFD, WaterbalancePP
@@ -32,14 +33,17 @@ from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvi
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
 lingra_dir = os.path.join(test_data_dir, "lingra")
 wofost72_dir = os.path.join(test_data_dir, "wofost72")
+wofost81_dir = os.path.join(test_data_dir, "wofost81")
 quick_tests = [
+               (wofost81_dir, "test_Wofost81_PP*", Wofost81, WaterbalancePP),
                (wofost72_dir, "test_potentialproduction_wofost72*", Wofost72, WaterbalancePP),
                (wofost72_dir, "test_waterlimitedproduction_wofost72*", Wofost72, WaterbalanceFD),
                (lingra_dir, "test_LINGRA*_PP.yaml", LINGRA, WaterbalancePP),
                (lingra_dir, "test_LINGRA*_WLP.yaml", LINGRA, WaterbalanceFD),
                (lingra_dir, "test_LINGRA*_NWLP.yaml", LINGRA_N, SoilModuleWrapper_NWLP_CWB_CNB),
                ]
-full_tests = [(wofost72_dir, "test_phenology_wofost72*", DVS_Phenology, None),
+full_tests = [
+              (wofost72_dir, "test_phenology_wofost72*", DVS_Phenology, None),
               (wofost72_dir, "test_assimilation_wofost72*", WOFOST72_Assimilation, None),
               (wofost72_dir, "test_partitioning_wofost72*", DVS_Partitioning, None),
               (wofost72_dir, "test_leafdynamics_wofost72*", WOFOST_Leaf_Dynamics, None),

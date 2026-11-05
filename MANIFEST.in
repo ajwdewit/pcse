@@ -21,10 +21,6 @@ include pcse/conf/Wofost81_PP.conf
 include pcse/conf/Wofost81_WLP_CWB.conf
 include pcse/conf/Wofost81_WLP_MLWB.conf
 include pcse/conf/Wofost_winterkill.conf
-include pcse/conf/Lintul_cassava10_PP.conf
-include pcse/conf/Lintul_cassava10_WLP_CWB.conf
-include pcse/conf/Lintul_cassava10_NWLP_CWB_CNB.conf
-
 
 # Test data and input files
 include pcse/tests/test_data/10870_munchen_flughafen.csv

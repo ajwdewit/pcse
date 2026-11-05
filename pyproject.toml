@@ -3,7 +3,9 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["pcse", "pcse.conf", "pcse.base", "pcse.crop", "pcse.crop.wofost", "pcse.crop.lintul_cassava", "pcse.input", "pcse.settings", "pcse.soil", "pcse.tests", "pcse.tests.test_data"]
+packages = ["pcse", "pcse.conf", "pcse.base", "pcse.crop", "pcse.crop.wofost",
+            "pcse.input", "pcse.settings", "pcse.soil", "pcse.tests",
+            "pcse.tests.test_data"]
 
 [project]
 name = "pcse"
