@@ -32,4 +32,5 @@ from .nasapower import NASAPowerWeatherDataProvider
 from .openmeteo import OpenMeteoWeatherDataProvider
 from .sitedataproviders import WOFOST72SiteDataProvider, WOFOST73SiteDataProvider, \
     WOFOST81SiteDataProvider_Classic, WOFOST81SiteDataProvider_SNOMIN
-from .soildataproviders import DummySoilDataProvider
+from .soildataproviders import DummySoilDataProvider, SimpleSoilDataProvider
+from .agera5_weatherdataprovider import AgERA5WeatherDataProvider, AgERA5CHIRPSWeatherDataProvider
