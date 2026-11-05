@@ -30,20 +30,22 @@ from .test_code import TestEngine, TestConfigurationLoader, TestWeatherDataProvi
 # - the crop simobject to be tested
 # - an optional soil simobject to be tested
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
+lingra_dir = os.path.join(test_data_dir, "lingra")
+wofost72_dir = os.path.join(test_data_dir, "wofost72")
 quick_tests = [
-               ("test_potentialproduction_wofost72*", Wofost72, WaterbalancePP),
-               ("test_waterlimitedproduction_wofost72*", Wofost72, WaterbalanceFD),
-               ("test_LINGRA*_PP.yaml", LINGRA, WaterbalancePP),
-               ("test_LINGRA*_WLP.yaml", LINGRA, WaterbalanceFD),
-               ("test_LINGRA*_NWLP.yaml", LINGRA_N, SoilModuleWrapper_NWLP_CWB_CNB),
+               (wofost72_dir, "test_potentialproduction_wofost72*", Wofost72, WaterbalancePP),
+               (wofost72_dir, "test_waterlimitedproduction_wofost72*", Wofost72, WaterbalanceFD),
+               (lingra_dir, "test_LINGRA*_PP.yaml", LINGRA, WaterbalancePP),
+               (lingra_dir, "test_LINGRA*_WLP.yaml", LINGRA, WaterbalanceFD),
+               (lingra_dir, "test_LINGRA*_NWLP.yaml", LINGRA_N, SoilModuleWrapper_NWLP_CWB_CNB),
                ]
-full_tests = [("test_phenology_wofost72*", DVS_Phenology, None),
-              ("test_assimilation_wofost72*", WOFOST72_Assimilation, None),
-              ("test_partitioning_wofost72*", DVS_Partitioning, None),
-              ("test_leafdynamics_wofost72*", WOFOST_Leaf_Dynamics, None),
-              ("test_rootdynamics_wofost72*", WOFOST_Root_Dynamics, None),
-              ("test_respiration_wofost72*", WOFOST_Maintenance_Respiration, None),
-              ("test_transpiration_wofost72*", Evapotranspiration, None),
+full_tests = [(wofost72_dir, "test_phenology_wofost72*", DVS_Phenology, None),
+              (wofost72_dir, "test_assimilation_wofost72*", WOFOST72_Assimilation, None),
+              (wofost72_dir, "test_partitioning_wofost72*", DVS_Partitioning, None),
+              (wofost72_dir, "test_leafdynamics_wofost72*", WOFOST_Leaf_Dynamics, None),
+              (wofost72_dir, "test_rootdynamics_wofost72*", WOFOST_Root_Dynamics, None),
+              (wofost72_dir, "test_respiration_wofost72*", WOFOST_Maintenance_Respiration, None),
+              (wofost72_dir, "test_transpiration_wofost72*", Evapotranspiration, None),
               ]
 full_tests.extend(quick_tests)
 
@@ -100,11 +102,11 @@ class PCSETestCaseYAML(unittest.TestCase):
 def make_test_suite(quick=True):
     suite = unittest.TestSuite()
     test_sets = quick_tests if quick else full_tests
-    for pattern, crop_simobj, soil_simobj in test_sets:
+    for location, pattern, crop_simobj, soil_simobj in test_sets:
         test_class_name = "Wrapped" + crop_simobj.__class__.__name__
         wrapped_simobj = type(test_class_name, (TestSimulationObject,),
                               {"test_class": crop_simobj})
-        fnames = sorted(glob.glob(os.path.join(test_data_dir, pattern)))
+        fnames = sorted(glob.glob(os.path.join(location, pattern)))
         for i, fname in enumerate(fnames):
             if quick and i % 10 != 0:
                     continue
