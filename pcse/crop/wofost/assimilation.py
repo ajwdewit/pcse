@@ -475,6 +475,7 @@ class WOFOST72_Assimilation(SimulationObject):
     
     def __call__(self, day, drv):
         p = self.params
+        r = self.rates
         k = self.kiosk
 
         # 7-day running average of TMIN
@@ -495,9 +496,9 @@ class WOFOST72_Assimilation(SimulationObject):
         DTGA *= p.TMNFTB(TMINRA)
 
         # assimilation in kg CH2O per ha
-        PGASS = DTGA * 30./44.
+        r.PGASS = DTGA * 30./44.
         
-        return PGASS
+        return r.PGASS
 
 
 class WOFOST73_Assimilation(SimulationObject):
