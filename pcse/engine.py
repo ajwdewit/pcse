@@ -15,8 +15,10 @@ This kind of functionality cannot be implemented in the Engine because
 the model details are not known beforehand.
 """
 import os, sys
-import datetime
+import datetime as dt
 import gc
+import socket
+import getpass
 
 from .traitlets import Instance, Bool, List, Dict
 from .base import (VariableKiosk, WeatherDataProvider,
@@ -27,6 +29,7 @@ from .base import ConfigurationLoader
 from .timer import Timer
 from . import signals
 from . import exceptions as exc
+from . import __version__ as pcse_version
 from .settings import settings
 
 
@@ -99,7 +102,7 @@ class Engine(BaseEngine):
     drv = None
     kiosk = Instance(VariableKiosk)
     timer = Instance(Timer)
-    day = Instance(datetime.date)
+    day = Instance(dt.date)
 
     # flags that are being set by signals
     flag_terminate = Bool(False)
@@ -108,7 +111,7 @@ class Engine(BaseEngine):
     flag_crop_delete = Bool(False)
     flag_output = Bool(False)
     flag_summary_output = Bool(False)
-    
+
     # placeholders for variables saved during model execution
     _saved_output = List()
     _saved_summary_output = List()
@@ -298,13 +301,13 @@ class Engine(BaseEngine):
         was received.
         """
         self.flag_terminate = True
-        
+
     def _on_OUTPUT(self):
         """Sets the variable 'flag_output to True' when the signal OUTPUT
         was received.
         """
         self.flag_output = True
-        
+
     def _finish_cropsimulation(self, day):
         """Finishes the CropSimulation object when variable 'flag_crop_finish'
         has been set to True based on the signal 'CROP_FINISH' being
@@ -349,7 +352,7 @@ class Engine(BaseEngine):
         """Get driving variables, compute derived properties and return it.
         """
         drv = self.weatherdataprovider(day)
-        
+
         # average temperature and average daytemperature (if needed)
         if not hasattr(drv, "TEMP"):
             drv.add_variable("TEMP", (drv.TMIN + drv.TMAX)/2., "Celcius")
@@ -441,6 +444,35 @@ class Engine(BaseEngine):
         """
 
         return self._saved_terminal_output
+
+    def get_annotated_output(self):
+        """Returns all output as python dicts including metadata like model version and origin of input data.
+        """
+        annotated_output = dict(
+            versions = dict(
+                pcse_version = pcse_version,
+                crop_model = str(self.mconf.CROP),
+                soil_model = str(self.mconf.SOIL),
+                configuration = str(self.mconf)
+            ),
+            environment = dict(
+                host = socket.getfqdn(),
+                user = getpass.getuser(),
+                timestamp = dt.datetime.today().isoformat(),
+                os = os.uname(),
+                python = sys.version
+            ),
+            input_providers = dict(
+                meteo = str(self.weatherdataprovider),
+                agromanager = str(self.agromanager),
+            ),
+            output = dict(
+                terminal_output = self._saved_terminal_output,
+                summary_output = self._saved_summary_output,
+                output = self._saved_output
+            )
+        )
+        return annotated_output
 
 
 class CGMSEngine(Engine):
