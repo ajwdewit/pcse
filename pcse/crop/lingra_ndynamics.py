@@ -174,7 +174,7 @@ class N_Stress(SimulationObject):
     The stress index (SI) is determined as a simple ratio between those
     concentrations according to:
 
-    :math:`SI = (C_{a) - C_{r})/(C_{c} - C_{r})`
+    :math:`SI = (C_a - C_r)/(C_c - C_r)`
 
     with subscript `a`, `r` and `c` being the actual, residual and critical
     concentration for the nutrient. This results in the nitrogen nutrition index
@@ -285,8 +285,7 @@ class N_Stress(SimulationObject):
 class N_Crop_Dynamics(SimulationObject):
     """Implementation of overall N crop dynamics.
 
-    NPK_Crop_Dynamics implements the overall logic of N book-keeping within the
-    crop.
+    N_Crop_Dynamics implements the overall logic of N book-keeping within the crop.
 
     **Simulation parameters**
 

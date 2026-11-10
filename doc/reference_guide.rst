@@ -952,6 +952,13 @@ for any given place on Earth. Historical data is based on ERA5, while forecasts 
 providers including ECMWF. PCSE now includes the :ref:`OpenMeteoWeatherDataProvider <OpenMeteoWeatherDataProvider>`
 that can pull weather information from their API.
 
+Next, data from `AgERA5 v2 <https://agera5.containers.wur.nl>`_ can be retrieved from the Wageningen-UR API using the
+:ref:`AgERA5WeatherDataProvider <AgERA5WeatherDataProvider>`. This provides access to global AgERA5 v2 data starting
+in 1979 up till the last completed year currently. Although AgERA5 provides high quality data, there are regions
+for which the precipitation estimates are less reliable particularly in the tropics. Therefore, a blended product is
+available that replaces AgERA5 precipitation with the CHIRPSv3 estimates of precipitation. Blended data can be
+accessed through the :ref:`AgERA5CHIRPSWeatherDataProvider <AgERA5CHIRPSWeatherDataProvider>`
+
 Finally, there is the global weather data provided by the agroclimatology from the
 `NASA Power database`_ at a resolution of 0.25x0.25 degree. PCSE provides the
 :ref:`NASAPowerWeatherDataProvider <NASAPowerWeatherDataProvider>` which retrieves
@@ -966,8 +973,8 @@ the NASA Power data from the internet for a given latitude and longitude.
 
 .. _Data providers for parameter values:
 
-Crop parameter values
----------------------
+Crop parameter values and agromanagement
+----------------------------------------
 
 PCSE has a specific data provider for crop parameters: the :ref:`YAMLCropDataprovider <YAMLCropDataprovider>`.
 The difference with the generic data providers is that
@@ -1038,6 +1045,29 @@ be stressed that this is *not* possible when parameters are retrieved from a URL
 and there is a risk that parameters are loaded from an outdated cache file. In that
 case use `force_reload=True` to force loading the parameters from the URL.
 
+Soil data providers
+-------------------
+
+.. _SoilDataProvider_NL:
+
+A dataprovider was developed to provide soil parameters for the classic waterbalance (CWB) based on data
+from the dutch `BOFEK`_ soil database which is available online through `PDOK`_. By providing the coordinates
+of the location for which the simulation has to be executed, the dataprovider will automatically query the
+soil map and derive the appropriate parameters. The dataprovider was not integrated in PCSE because of its additional dependencies.
+
+The soil dataprovider for Dutch soils can be installed using pip:
+
+.. code-block:: doscon
+
+    (py314_pcse) C:\>pip install soil_dataprovider_nl
+
+See also the example `notebook`_ on how to use the dataprovider.
+
+Other soil dataproviders are still under development.
+
+.. _BOFEK: https://doi.org/10.1016/j.geoderma.2022.116123
+.. _PDOK: https://app.pdok.nl/viewer/#x=160000.00&y=455000.00&z=3.0000&background=BRT-A%20standaard&layers=d9cc67ba-5491-4640-86ac-b8d392250270;soilarea;_;1
+.. _notebook: https://github.com/ajwdewit/soil_dataprovider_nl/blob/main/Soildataprovider_examples.ipynb
 
 Generic data providers
 ----------------------
@@ -1106,18 +1136,10 @@ for accessing names and values::
 Data providers for agromanagement
 ---------------------------------
 
-Similar to weather and parameter values, there are several data providers for agromanagement.
-The structure of the inputs for agromanagement is more complex compared to parameter values or weather
-variables.
-
-The most comprehensive way to define agromanagement in PCSE is to use the YAML structure that was
+Agromanagement in PCSE must be defined using a YAML structure that was
 described in the section above on  :ref:`defining agromanagement <refguide_agromanagement>`. For reading
 this datastructure the :ref:`YAMLAgroManagementReader <YAMLAgroManagementReader>` module is available
 which can be provided directly as input into the Engine.
-
-For reading Agromanagement input from a CGMS database see the sections on the database tools CGMS.
-Note that the support for defining agromanagement in CGMS databases is limited to crop calendars only.
-The CGMS database has no support for defining state and timed events yet.
 
 
 Global PCSE settings

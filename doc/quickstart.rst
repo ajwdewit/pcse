@@ -134,12 +134,12 @@ The crop parameters consist of parameter names and the
 corresponding parameter values that are needed to parameterize the
 components of the crop simulation model. These are
 crop-specific values regarding phenology, assimilation, respiration,
-biomass partitioning, etc. The parameter file for sugar beet
-is taken from the crop files in the `WOFOST Control Centre`_.
+biomass partitioning, etc. The latest parameter files are available in YAML format on a
+`github repository <https://github.com/ajwdewit/WOFOST_crop_parameters>`_
+and are the usual place to look for the crop parameters sets for WOFOST.
 
-.. _WOFOST Control Centre: http://www.wageningenur.nl/wofost
-
-The crop parameters for many models in
+The parameter file for sugar beet for this example is taken from the crop files in
+the `WOFOST Control Centre`_. The crop parameters for many legacy models in
 Wageningen are often provided in the CABO format that could be read
 with the `TTUTIL <http://edepot.wur.nl/17847>`_ FORTRAN library. PCSE
 tries to be backward compatible as much as possible and provides the
@@ -153,6 +153,9 @@ the CABOFileReader returns a dictionary with the parameter name/value pairs::
 
 Printing the cropdata dictionary gives you a listing of the header and
 all parameters and their values.
+
+.. _WOFOST Control Centre: http://www.wageningenur.nl/wofost
+
 
 Soil parameters
 ...............
@@ -173,12 +176,11 @@ Site parameters
 The site parameters provide ancillary parameters that are not related to
 the crop or the soil. Examples are the initial conditions of
 the water balance such as the initial soil moisture content (WAV) and
-the initial and maximum surface storage (SSI, SSMAX). Also the
-atmospheric CO2 concentration is a typical site parameter.
+the initial and maximum surface storage (SSI, SSMAX).
 For the moment, we can define these parameters directly on the Python commandline
 as a simple python dictionary. However, it is more convenient to use the
 :ref:`WOFOST72SiteDataProvider <WOFOST72SiteDataProvider>` that documents the
-site parameters and provides sensible defaults::
+site parameters, sets boundaries for parameter values and provides sensible defaults::
 
     >>> from pcse.input import WOFOST72SiteDataProvider
     >>> sitedata = WOFOST72SiteDataProvider(WAV=100)
@@ -233,23 +235,21 @@ Daily weather variables are needed for running the simulation. There are several
 data providers in PCSE for reading weather data, see the section on
 :ref:`weather data providers <Weather data providers>` to get an overview.
 
-For this example we will use the weather data from the NASA Power database
-which provides global weather data with a spatial resolution of 0.5 degree (~50 km).
-We will retrieve the data from the Power database for the location of Wageningen.
-Note that it can take around 30 seconds
-to retrieve the weather data from the NASA Power server the first time::
+For this example we will use the weather data from the AgERA5 through an
+API provide by `Wageningen-UR <https://agera5.containers.wur.nl/>`_. AgERA5 v2.0
+ provides global weather data with a spatial resolution of 0.1 degree (~10 km).
+We will retrieve the data from the AgERA5 database for the location of Wageningen::
 
-    >>> from pcse.input import NASAPowerWeatherDataProvider
-    >>> wdp = NASAPowerWeatherDataProvider(latitude=52, longitude=5)
+    >>> from pcse.input import AgERA5WeatherDataProvider
+    >>> wdp = AgERA5WeatherDataProvider(latitude=52, longitude=5, startdate='20000101', enddate='20201231')
     >>> print(wdp)
-    Weather data provided by: NASAPowerWeatherDataProvider
+    Weather data provided by: AgERA5WeatherDataProvider
     --------Description---------
-    NASA/POWER CERES/MERRA2 Native Resolution Daily Data
     ----Site characteristics----
-    Elevation:    3.5
+    Elevation:    1.7
     Latitude:  52.000
     Longitude:  5.000
-    Data available for 1984-01-01 - 2024-03-20
+    Data available for 2000-01-01 - 2020-12-31
     Number of missing days: 0
 
 Importing, initializing and running a PCSE model

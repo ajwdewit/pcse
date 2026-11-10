@@ -4,16 +4,17 @@ Installing PCSE
 Requirements and dependencies
 -----------------------------
 
-PCSE is being developed on Ubuntu Linux 18.04 and Windows 10 using python 3.9 and python 3.10
+PCSE is being developed on Ubuntu Linux 26.04 and Windows 11 using python 3.12 and python 3.14
 As Python is a platform independent language, PCSE works equally well on Linux, Windows or Mac OSX.
 Before installing PCSE, Python itself must be installed on your system which we will demonstrate
 below. PCSE has a number of dependencies on other python packages which are the following::
 
-- SQLAlchemy<2.0
-- PyYAML>=3.11
+- PyYAML>=5.1
 - openpyxl>=3.0
-- requests>=2.0.0
-- pandas>=0.20
+- requests>=2.0
+- pandas>=2.0
+- dotmap>=1.3
+- pydispatcher>=2.0.7
 - traitlets-pcse==5.0.0.dev
 
 
@@ -30,11 +31,11 @@ Setting up your python environment
 ----------------------------------
 
 A convenient way to set up your python environment for PCSE is through the `Anaconda`_ python distribution.
-In the present PCSE Documentation all examples of installing and using PCSE refer to the Windows 10 platform.
+In the present PCSE Documentation all examples of installing and using PCSE refer to the Windows 11 platform.
 
 First, we suggest you download and install the `MiniConda`_ python distribution which provides a minimum
 python environment that we will use to bootstrap a dedicated environment for PCSE. For the rest
-of this guide we will assume that you use Windows 10 and install the
+of this guide we will assume that you use Windows 11 and install the
 64bit miniconda for python 3 (``Miniconda3-latest-Windows-x86_64.exe``). The environment that
 we will create contains not only the dependencies for PCSE, it also includes many other useful packages
 such as `IPython`_, `Pandas`_ and the `Jupyter notebook`_. These packages will be used in the Getting Started section
@@ -49,82 +50,84 @@ After installing MiniConda you should open a command box and check that conda is
 
 .. code-block:: doscon
 
-    (base) C:\>conda info
+        (base) C:\>conda info
 
-         active environment : base
-        active env location : C:\data\Miniconda3
+        active environment : base
+        active env location : C:\Data\miniconda3
                 shell level : 1
            user config file : C:\Users\wit015\.condarc
-     populated config files : C:\Users\wit015\.condarc
-              conda version : 23.11.0
+     populated config files : C:\data\miniconda3\.condarc
+                              C:\data\miniconda3\condarc.d\anaconda-auth.yml
+                              C:\Users\wit015\.condarc
+              conda version : 26.7.1
         conda-build version : not installed
-             python version : 3.8.18.final.0
+             python version : 3.14.7.final.0
                      solver : libmamba (default)
-           virtual packages : __archspec=1=x86_64
-                              __conda=23.11.0=0
-                              __win=0=0
-           base environment : C:\data\Miniconda3  (writable)
-          conda av data dir : C:\data\Miniconda3\etc\conda
+           virtual packages : __archspec=1=x86_64_v3
+                              __conda=26.7.1=0
+                              __win=10.0.26200=0
+           base environment : C:\data\miniconda3  (writable)
+          conda av data dir : C:\data\miniconda3\etc\conda
       conda av metadata url : None
-               channel URLs : https://conda.anaconda.org/conda-forge/win-64
-                              https://conda.anaconda.org/conda-forge/noarch
-                              https://repo.anaconda.com/pkgs/main/win-64
+               channel URLs : https://repo.anaconda.com/pkgs/main/win-64
                               https://repo.anaconda.com/pkgs/main/noarch
                               https://repo.anaconda.com/pkgs/r/win-64
                               https://repo.anaconda.com/pkgs/r/noarch
                               https://repo.anaconda.com/pkgs/msys2/win-64
                               https://repo.anaconda.com/pkgs/msys2/noarch
-              package cache : C:\data\Miniconda3\pkgs
-                              C:\Users\wit015\.conda\pkgs
-                              C:\Users\wit015\AppData\Local\conda\conda\pkgs
-           envs directories : C:\data\Miniconda3\envs
+              package cache : C:\data\nobackup\conda_pkgs
+              notices cache : C:\Users\wit015\AppData\Local\conda\conda\Cache\notices
+           envs directories : C:\data\miniconda3\envs
                               C:\Users\wit015\.conda\envs
                               C:\Users\wit015\AppData\Local\conda\conda\envs
+        temporary directory : C:\Users\wit015\AppData\Local\Temp
                    platform : win-64
-                 user-agent : conda/23.11.0 requests/2.31.0 CPython/3.8.18 Windows/10 Windows/10.0.19045 solver/libmamba conda-libmamba-solver/23.11.1 libmambapy/1.5.3
+                 user-agent : conda/26.7.1 requests/2.34.2 CPython/3.14.7 Windows/11 Windows/10.0.26200 solver/libmamba conda-libmamba-solver/26.7.0 libmambapy/2.3.2 aau/0.8.1 c/. s/. e/. i/.
               administrator : False
                  netrc file : None
                offline mode : False
 
 
-Now we will use a Conda environment file to recreate the python environment that we use to develop and run
-PCSE. First you should download the conda environment file (:download:`downloads/py3_pcse.yml`).
-The environment include the Jupyter notebook and IPython which are
-needed for running the `getting started` section and the example notebooks. Save the environment file
-on a temporary location such as ``d:\temp\make_env\``. We will now create a dedicated virtual environment
-using the command ``conda env create`` and tell conda to use the environment file  with the
-option ``-f py3_pcse.yml`` as show below:
+Now we will use create a separate Conda environment that we use to develop and run PCSE as show below:
 
 .. code-block:: doscon
 
-    (C:\Miniconda3) D:\temp\make_env>conda env create -f py3_pcse.yml
-    Fetching package metadata .............
-    Solving package specifications: .
-    intel-openmp-2 100% |###############################| Time: 0:00:00   6.39 MB/s
+    (base) C:\>conda create -n py314_pcse python=3.14
 
-    ... Lots of output here
+        3 channel Terms of Service accepted
+        Retrieving notices: done
+        Channels:
+         - defaults
+        Platform: win-64
+        Collecting package metadata (repodata.json): done
+        Solving environment: done
 
-    Installing collected packages: traitlets-pcse
-    Successfully installed traitlets-pcse-5.0.0.dev0
-    #
-    # To activate this environment, use:
-    # > activate py3_pcse
-    #
-    # To deactivate an active environment, use:
-    # > deactivate
-    #
-    # * for power-users using bash, you must source
-    #
+        ... lots of output here
 
-You can then activate your environment (note the addition of ``(py3_pcse)`` on your command prompt):
+        Downloading and Extracting Packages:
+
+        Preparing transaction: done
+        Verifying transaction: done
+        Executing transaction: done
+        #
+        # To activate this environment, use
+        #
+        #     $ conda activate py314_pcse
+        #
+        # To deactivate an active environment, use
+        #
+        #     $ conda deactivate
+
+
+You can then activate your environment (note the addition of ``(py314_pcse)`` on your command prompt):
 
 .. code-block:: doscon
 
-    D:\temp\make_env>conda activate py3_pcse
+    C:>conda activate py314_pcse
     Deactivating environment "C:\Miniconda3"...
-    Activating environment "C:\Miniconda3\envs\py3_pcse"...
+    Activating environment "C:\Miniconda3\envs\py314_pcse"...
 
-    (py3_pcse) D:\temp\make_env>
+    (py314_pcse) c:\>
 
 Installing PCSE
 ---------------
@@ -134,41 +137,26 @@ Installing from PyPI is mostly useful if you are interested in using the functio
 provided by PCSE in your own scripts, but are not interested in modifying or contributing to
 PCSE itself. Installing from PyPI is done using the package installer `pip` which searches
 the python package index for a package, downloads and installs it into your python
-environment (example below for PCSE 6.0.0):
+environment (example below for PCSE 6.0.13):
 
 .. code-block:: doscon
 
-    (py3_pcse) D:\temp\make_env>pip install pcse
+    (py314_pcse) C:\>pip install pcse
 
-    Collecting pcse
-      Downloading https://files.pythonhosted.org/packages/8c/92/d4444cce1c58e5a96f4d6dc9c0e042722f2136df24a2750352e7eb4ab053/PCSE-5.4.0.tar.gz (791kB)
-        100% |¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 798kB 1.6MB/s
-    Requirement already satisfied: numpy>=1.6.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (1.15.1)
-    Requirement already satisfied: SQLAlchemy>=0.8.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (1.2.11)
-    Requirement already satisfied: PyYAML>=3.11 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (3.13)
-    Requirement already satisfied: xlrd>=0.9.3 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (1.1.0)
-    Requirement already satisfied: xlwt>=1.0.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (1.3.0)
-    Requirement already satisfied: requests>=2.0.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (2.19.1)
-    Requirement already satisfied: pandas>=0.20 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (0.23.4)
-    Requirement already satisfied: traitlets-pcse==5.0.0.dev in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pcse) (5.0.0.dev0)
-    Requirement already satisfied: chardet<3.1.0,>=3.0.2 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from requests>=2.0.0->pcse) (3.0.4)
-    Requirement already satisfied: idna<2.8,>=2.5 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from requests>=2.0.0->pcse) (2.7)
-    Requirement already satisfied: certifi>=2017.4.17 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from requests>=2.0.0->pcse) (2018.8.24)
-    Requirement already satisfied: urllib3<1.24,>=1.21.1 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from requests>=2.0.0->pcse) (1.23)
-    Requirement already satisfied: python-dateutil>=2.5.0 in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pandas>=0.20->pcse) (2.7.3)
-    Requirement already satisfied: pytz>=2011k in c:\miniconda3\envs\py3_pcse\lib\site-packages (from pandas>=0.20->pcse) (2018.5)
-    Requirement already satisfied: six in c:\miniconda3\envs\py3_pcse\lib\site-packages (from traitlets-pcse==5.0.0.dev->pcse) (1.11.0)
-    Requirement already satisfied: decorator in c:\miniconda3\envs\py3_pcse\lib\site-packages (from traitlets-pcse==5.0.0.dev->pcse) (4.3.0)
-    Requirement already satisfied: ipython-genutils in c:\miniconda3\envs\py3_pcse\lib\site-packages (from traitlets-pcse==5.0.0.dev->pcse) (0.2.0)
-    Building wheels for collected packages: pcse
-      Running setup.py bdist_wheel for pcse ... done
-      Stored in directory: C:\Users\wit015\AppData\Local\pip\Cache\wheels\2f\e6\2c\3952ff951dffea5ab2483892edcb7f9310faa319d050d3be6c
-    Successfully built pcse
-    twisted 18.7.0 requires PyHamcrest>=1.9.0, which is not installed.
-    mkl-random 1.0.1 requires cython, which is not installed.
-    mkl-fft 1.0.4 requires cython, which is not installed.
-    Installing collected packages: pcse
-    Successfully installed pcse-6.0.0
+        Collecting pcse
+          Using cached pcse-6.0.13-py3-none-any.whl.metadata (9.6 kB)
+        Collecting pydispatcher>=2.0.7 (from pcse)
+          Using cached PyDispatcher-2.0.7-py3-none-any.whl.metadata (2.4 kB)
+        Collecting PyYAML>=5.1 (from pcse)
+          Using cached pyyaml-6.0.3-cp314-cp314-win_amd64.whl.metadata (2.4 kB)
+
+        ... lots of output here
+
+        Installing collected packages: pydispatcher, ipython_genutils, dotmap, urllib3, tzdata, six, PyYAML, numpy, idna, et-xmlfile, decorator, charset_normalizer, certifi, traitlets-pcse, requests, python-dateutil, openpyxl, pandas, pcse
+        Successfully installed PyYAML-6.0.3 certifi-2026.10.23 charset_normalizer-3.5.2 decorator-5.3.1 dotmap-1.3.30 et-xmlfile-2.0.0 idna-3.20 ipython_genutils-0.2.0 numpy-2.5.4 openpyxl-3.1.5 pandas-3.1.1 pcse-6.0.13 pydispatcher-2.0.7 python-dateutil-4.0.0 requests-2.34.2 six-1.17.0 traitlets-pcse-5.0.0.dev0 tzdata-2026.6 urllib3-2.8.0
+
+        (py314_pcse) C:\>
+
 
 If you want to develop with or contribute to PCSE, than you should fork the `PCSE
 repository`_ on GitHub and get a local copy of PCSE using `git clone`. See the help on github_
@@ -200,9 +188,9 @@ For running the internal tests of the PCSE package we need to start python and i
 
 .. code-block:: doscon
 
-    (py3_pcse) C:\>python
-    Python 3.10.14 | packaged by conda-forge | (main, Mar 20 2024, 12:40:08) [MSC v.1938 64 bit (AMD64)]
-    Type 'copyright', 'credits' or 'license' for more information
+    (py314_pcse) C:\>python
+    Python 3.14.10 | packaged by Anaconda, Inc. | (main, Oct 27 2026, 01:09:10) [MSC v.1942 64 bit (AMD64)] on win32
+    Type "help", "copyright", "credits" or "license" for more information.
     >>> import pcse
     Building PCSE demo database at: C:\Users\wit015\.pcse\pcse.db ... OK
     >>>
@@ -252,11 +240,3 @@ If the model output matches the expected output the test will report 'OK',
 otherwise an error will be produced with a detailed traceback on where the
 problem occurred. Note that the results may deviate from the output above
 when tests were added or removed.
-
-Moreover, SQLAlchemy may complain with a warning that can be safely ignored::
-
-    C:\Miniconda3\envs\py3_pcse\lib\site-packages\sqlalchemy\sql\sqltypes.py:603: SAWarning:
-    Dialect sqlite+pysqlite does *not* support Decimal objects natively, and SQLAlchemy must
-    convert from floating point - rounding errors and other issues may occur. Please consider
-    storing Decimal numbers as strings or integers on this platform for lossless storage.
-

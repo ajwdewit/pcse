@@ -27,8 +27,8 @@ interfacing with databases, graphical user interfaces, visualization tools and n
 several interesting features:
 
 * Implementation in pure Python. The core system has a small number of dependencies outside the Python standard
-  library. However many data providers require certain packages to be installed. Most of these can be automatically
-  installed from the Python Package Index (PyPI) (`SQLAlchemy`, `PyYAML`, `openpyxl`, `requests`) and in
+  library. However some data providers require certain packages to be installed. Most of these can be automatically
+  installed from the Python Package Index (PyPI) (such as `PyYAML`, `openpyxl`, `requests`) and in
   processing of the output of models is most easily done with `pandas` DataFrames.
 
 * Modular design allowing you to add or change components relatively quickly with a simple but powerful approach
@@ -47,13 +47,13 @@ several interesting features:
 Why Python
 ----------
 PCSE was first and foremost developed from a scientific need, to be able to quickly adapt models and test ideas.
-In science, Python is quickly becoming a tool for implementing algorithms, visualization and explorative analysis
+In science, Python is an established tool for implementing algorithms, visualization and explorative analysis
 due to its clear syntax and ease of use. An additional advantage is that the C implementation of Python
 can be easily interfaced with routines written in FORTRAN and therefore many FORTRAN routines can be reused by
 simulation models written with PCSE.
 
 Many packages exist for numeric analysis (e.g. NumPy, SciPy),
-visualisation (e.g. MatPlotLib, Chaco), distributed computing (e.g. IPython, pyMPI) and interfacing with databases
+visualisation (e.g. MatPlotLib, Plotly), distributed computing (e.g. IPython, pyMPI) and interfacing with databases
 (e.g. SQLAlchemy). Moreover, for statistical analyses an interface with R-project can be established through
 Rpy or Rserve. Finally, Python is an Open Source interpreted programming language that
 runs on almost any hardware and operating system.
@@ -88,6 +88,14 @@ PCSE also has its limitations, in fact there are several:
   PCSE output can be easily converted to a pandas `DataFrame` which can be used to display charts in an Jupyter
   notebook. See also my collection of notebooks with `examples using PCSE <https://github.com/ajwdewit/pcse_notebooks>`_
 
+Although python is relatively slow compared to compiled languages or a more recent interpreted language
+like Julia, we often find that python is fast enough. Particularly for jobs that can be easily parallelized
+the PCSE implementation usually works fine. Nevertheless, there are specific use case where a faster implementation
+may be beneficial. For example on-line coupling with a high spatial resolution distributed model (like in catchment
+hydrology) may require a different approach. In that sense the relatively small code base of a model like WOFOST
+makes that the model can be relatively easily converted to a different language or framework, the tests integrated
+in the PCSE framework facilitate this.
+
 License
 -------
 
@@ -99,9 +107,6 @@ a copy of the Licence at: https://joinup.ec.europa.eu/community/eupl/og_page/eup
 
 The PCSE package contains some modules that have been taken and/or modified
 from other open source projects:
-
-* the `pydispatch` module obtained from http://pydispatcher.sourceforge.net/
-  which is distributed under a BSD style license.
 
 * The `traitlets` module which was taken and adapted from the
   `IPython` project (https://ipython.org/) which are distributed under a

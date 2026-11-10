@@ -110,10 +110,6 @@ The PCSE distribution provides several waterbalance modules:
 
 .. autoclass:: pcse.soil.SnowMAUS
 
-.. autoclass:: pcse.soil.lintul_cassava_soil.soil_water_dynamics_PP
-
-.. autoclass:: pcse.soil.lintul_cassava_soil.
-
 
 Nitrogen and Carbon modules
 ---------------------------
@@ -246,45 +242,6 @@ Crop simulation processes for LINTUL
 .. ===============================================
 
 
-.. _LINTUL-CASSAVA:
-
-Crop simulation processes for LINTUL-CASSAVA
-============================================
-
-Top level modules for LINTUL-CASSAVA
-------------------------------------
-
-.. autoclass:: pcse.crop.lintul_cassava10.LINTUL_CASSAVA
-
-.. autoclass:: pcse.crop.lintul_cassava10.LINTUL_CASSAVA_NO_NUTRIENT_STRESS
-
-Process modules for LINTUL-CASSAVA
-----------------------------------
-
-.. autoclass:: pcse.crop.lintul_cassava.phenology
-
-
-.. autoclass:: pcse.crop.lintul_cassava.biomass_partitioning
-
-.. autoclass:: pcse.crop.lintul_cassava.canopy_rain_interception
-
-.. autoclass:: pcse.crop.lintul_cassava.dormancy_and_recovery
-
-.. autoclass:: pcse.crop.lintul_cassava.evapotranspiration
-
-.. autoclass:: pcse.crop.lintul_cassava.fibrous_root_growth
-
-.. autoclass:: pcse.crop.lintul_cassava.green_leaf_area
-
-.. autoclass:: pcse.crop.lintul_cassava.leaf_senescence
-
-.. autoclass:: pcse.crop.lintul_cassava.light_interception_and_growth
-
-.. autoclass:: pcse.crop.lintul_cassava.crop_nutrient_dynamics
-
-.. autoclass:: pcse.crop.lintul_cassava.npk_stress
-
-
 .. _BaseClasses:
 
 Base classes
@@ -349,6 +306,15 @@ Data providers
 The module `pcse.input` contains all classes for reading weather files,
 parameter files and agromanagement files.
 
+Weather data
+............
+
+.. _AgERA5WeatherDataProvider:
+.. autoclass:: pcse.input.AgERA5WeatherDataProvider
+
+.. _AgERA5CHIRPSWeatherDataProvider:
+.. autoclass:: pcse.input.AgERA5CHIRPSWeatherDataProvider
+
 .. _NASAPowerWeatherDataProvider:
 .. autoclass:: pcse.input.NASAPowerWeatherDataProvider
 
@@ -364,18 +330,31 @@ parameter files and agromanagement files.
 .. _CSVWeatherDataProvider:
 .. autoclass:: pcse.input.CSVWeatherDataProvider
 
+Agromanagement
+..............
+
+.. _YAMLAgroManagementReader:
+.. autoclass:: pcse.input.YAMLAgroManagementReader
+
+Crop parameters from YAML library
+.................................
+
+.. _YAMLCropDataProvider:
+.. autoclass:: pcse.input.YAMLCropDataProvider
+
+
+General parameter files
+.......................
+
 .. _CABOFileReader:
 .. autoclass:: pcse.input.CABOFileReader
 
 .. _PCSEFileReader:
 .. autoclass:: pcse.input.PCSEFileReader
 
-.. _YAMLAgroManagementReader:
-.. autoclass:: pcse.input.YAMLAgroManagementReader
 
-.. _YAMLCropDataProvider:
-.. autoclass:: pcse.input.YAMLCropDataProvider
-
+Site parameters
+...............
 .. _WOFOST72SiteDataProvider:
 .. autoclass:: pcse.input.WOFOST72SiteDataProvider
 
@@ -400,35 +379,6 @@ must be provided to the model.
 
 .. _DummySoilDataProvider:
 .. autoclass:: pcse.util.DummySoilDataProvider
-
-
-.. _DBtools:
-
-The database tools
-------------------
-
-.. note::
-    The dataproviders for CGMS database were removed from PCSE starting with version 6.0.10 because they were forcing
-    a dependency on PCSE (SQLAlchemy) which was generating problems with other packages. Moreover SQLAlchemy is not
-    required for running PCSE and the DB tools were not broadly used anyway.
-
-The database tools contain functions and classes for retrieving agromanagement,
-parameter values and weather variables from database structures implemented for
-different versions of the European `Crop Growth Monitoring System <CGMS>`_.
-
-Note that the data providers only provide functionality for *reading* data,
-there are no tools here *writing* simulation results to a CGMS database. This was
-done on purpose as writing data can be a complex matter and it is our
-experience that this can be done more easily with dedicated database loader
-tools such as `SQLLoader`_ for ORACLE or the ``load data infile`` syntax of MySQL.
-
-
-.. _SQLLoader: http://www.oracle.com/technetwork/database/enterprise-edition/sql-loader-overview-095816.html
-
-.. _CGMS: https://ec.europa.eu/jrc/en/mars
-
-.. _CGMS8tools:
-
 
 
 Convenience routines

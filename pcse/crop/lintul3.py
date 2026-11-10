@@ -804,7 +804,7 @@ class Lintul3(SimulationObject):
         Unsworth, 1990; Spitters, 1990), and LAI (|m2| leaf |m-2| soil) according
         to Lambert Beer's law:
 
-        :math:`Q = 0.5 Q0 (1 - e^{-k LAI})`
+        :math:`Q = 0.5 Q_0 (1 - e^{-k LAI})`
 
         where *Q* is intercepted PAR |MJm-2d-1|, *Q0* is daily global radiation
         |MJm-2d-1|, and *k* is the attenuation coefficient for PAR in the
