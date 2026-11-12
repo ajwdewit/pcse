@@ -208,6 +208,31 @@ class CropCalendar(HasTraits, DispatcherObject):
 
 
 class CropCalendarWithCropResidues(CropCalendar):
+    """A crop calendar for managing the crop cycle including crop residues
+
+    A `CropCalendarWithCropResidues` acts very similar as the normal `CropCalendar` but it includes
+    the option to include crop residues into the soil profile when the crop cycle is finished.
+    For this option it adds four extras parameters that define the biomass fractions of crop organs
+    that are taken from the field and the depth at which the remains are ploughed into the soil.
+
+    Note that specifying residue management only makes sense in WOFOST 8 in combination with the SNOMIN soil C/N model.
+    For other model versions, the additional parameters will not have an impact.
+
+    :param kiosk: The PCSE VariableKiosk instance
+    :param crop_name: String identifying the crop
+    :param variety_name: String identifying the variety
+    :param crop_start_date: Start date of the crop simulation
+    :param crop_start_type: Start type of the crop simulation ('sowing', 'emergence')
+    :param crop_end_date: End date of the crop simulation
+    :param crop_end_type: End type of the crop simulation ('harvest', 'maturity', 'earliest')
+    :param max_duration: Integer describing the maximum duration of the crop cycle
+    :param frac_LV_harvested: Fraction [0.0-1.0] of total leaf biomass that is harvested
+    :param frac_ST_harvested: Fraction [0.0-1.0] of total stem biomass that is harvested
+    :param frac_SO_harvested: Fraction [0.0-1.0] of total storage organ biomass that is harvested
+    :param ploughing_depth: Depth at which the organic matter is added to the soil.
+
+    :return: A CropCalendarWithCropResidues Instance
+    """
     frac_LV_harvested = Float()
     frac_ST_harvested = Float()
     frac_SO_harvested = Float()
@@ -548,7 +573,8 @@ class StateEventsDispatcher(HasTraits, DispatcherObject):
 class AgroManager(AncillaryObject):
     """Class for continuous AgroManagement actions including crop rotations and events.
 
-    See also the documentation for the classes `CropCalendar`, `TimedEventDispatcher` and `StateEventDispatcher`.
+    See also the documentation for the classes `CropCalendar`, `CropCalendarWithCropResidues`,
+    `TimedEventDispatcher` and `StateEventDispatcher`.
 
     The AgroManager takes care of executing agromanagent actions that typically occur on agricultural
     fields including planting and harvesting of the crop, as well as management actions such as fertilizer
@@ -558,15 +584,17 @@ class AgroManager(AncillaryObject):
     prescribed calendar date and finalize when the next campaign starts. The simulation ends either explicitly by
     provided a trailing empty campaign or by deriving the end date from the crop calendar and timed events in the
     last campaign. See also the section below on `end_date` property.
-
     Each campaign is characterized by zero or one crop calendar, zero or more timed events and zero or more
     state events.
+
     The structure of the data needed as input for AgroManager is most easily understood with the example
     (in YAML) below. The definition consists of three campaigns, the first starting on 1999-08-01, the second
     starting on 2000-09-01 and the last campaign starting on 2001-03-01. The first campaign consists of a crop
     calendar for winter-wheat starting with sowing at the given crop_start_date. During the campaign there are
     timed events for irrigation at 2000-05-25 and 2000-06-30. Moreover, there are state events for  fertilizer
-    application (event_signal: apply_n) given by development stage (DVS) at DVS 0.3, 0.6 and 1.12.
+    application (event_signal: apply_n) given by development stage (DVS) at DVS 0.3, 0.6 and 1.12. Residues from
+    the crop are added to the soil at harvest based on the harvested fractions and the ploughing depth. Note that
+    the residue management only makes sense in WOFOST 8 in combination with the SNOMIN soil C/N model.
 
     The second campaign has no crop calendar, timed events or state events. This means that this is a period of
     bare soil with only the water balance running. The third campaign is for fodder maize sown at 2001-04-15
@@ -577,7 +605,7 @@ class AgroManager(AncillaryObject):
 
         AgroManagement:
         - 1999-08-01:
-            CropCalendar:
+            CropCalendarWithCropResidues:
                 crop_name: wheat
                 variety_name: winter-wheat
                 crop_start_date: 1999-09-15
@@ -585,6 +613,10 @@ class AgroManager(AncillaryObject):
                 crop_end_date:
                 crop_end_type: maturity
                 max_duration: 300
+                frac_LV_harvested: 0.5
+                frac_ST_harvested: 0.7
+                frac_SO_harvested: 1.0
+                ploughing_depth: 15
             TimedEvents:
             -   event_signal: irrigate
                 name:  Timed irrigation events

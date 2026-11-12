@@ -8,20 +8,24 @@ An overview of new features and fixes
 What's new in PCSE 6.1
 **********************
 
-PCSE 6.1 is for most part a clean up of the existing code base, however some new features were added as well:
-- New weather dataproviders for AgERA5 and AgERA5/CHIRPS.
-- A new soil dataprovider for the Dutch BOFEK soil database, this is a separate package on pypi `soil_dataprovider_nl` because of dependencies.
-- the LINTUL-CASSAVA model was implemented to run under PCSE, however it is not included in the source distribution and sits on its own repository.
-- Unit tests were added for WOFOST 8.1 potential production in the `tests/` directory.
-- Some variables were added to improve the handling of irrigation events.
+PCSE 6.1 has several new features although not all are included in the PCSE source distribution:
 
-Furthermore, a bug was discovered in the assimilation routine of WOFOST 8.1: the daily average temperature was used instead of the daytime average temperature. 
+ - New weather dataproviders for AgERA5 and AgERA5/CHIRPS in `pcse.input`.
+ - A new soil dataprovider for the Dutch BOFEK soil database. This is a separate package on PYPI `soil_dataprovider_nl <https://pypi.org/project/soil_dataprovider_nl/>`_ because of dependencies.
+ - Crop residues can now be incorporated into the soil as an organic amendment in SNOMIN. A new CropCalendarWithCropResidues has been added to the agromanager where some additional parameters need to be specified.
+ - the LINTUL-CASSAVA model was implemented to run under PCSE, however it is not included in the source distribution and sits on its `own repository <https://github.com/model-library-pps/lintul-cassava-npk>`_.
+ - Unit tests were added for WOFOST 8.1 potential production in the `tests/` directory.
+ - Some variables were added to improve the handling of irrigation events.
 
-The clean up of the code base consisted of:
-- modules that were not used have been deleted from the source tree such as `taskmanager` and `pcse.db`, `pydispatcher` is now a separate dependency instead of included in the PCSE code itself. As a result the dependency on SQLAlchemy was dropped from the project.
-- Source code files in the crop/ directory were reorganized.
-- The unit tests for LINGRA were regenerated: TMIN/TMAX were switched in the YAML files which had no direct impact as LINGRA uses daily mean temperature only however this was solved. At the same time the number of weather records in the YAML tests were strongly reduced so the LINGRA tests run much faster now.
-- The test suite was fixed for python 3.13+.
+Furthermore, a bug was fixed in the assimilation routine of WOFOST 8.1: the daily average temperature was used instead of the daytime average temperature. 
+
+Finally, a considerable clean up of the code base was done:
+
+ - modules that were not used have been deleted from the source tree such as `taskmanager` and `pcse.db`. As a result the dependency on SQLAlchemy was dropped from the project.
+ - `pydispatcher` is now a separate dependency instead of included in the PCSE code itself.
+ - Source code files in the crop/ directory were reorganized.
+ - The unit tests for LINGRA were regenerated: TMIN/TMAX were switched in the YAML files which had no direct impact as LINGRA uses daily mean temperature only however this was solved. At the same time the number of weather records in the YAML tests were strongly reduced so the LINGRA tests run much faster now.
+ - The test suite was fixed for python 3.13+.
 
 
 **********************
