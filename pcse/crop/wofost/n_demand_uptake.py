@@ -187,7 +187,7 @@ class N_Demand_Uptake(SimulationObject):
         r.RNfixation = (max(0., p.NFIX_FR * r.Ndemand) * NutrientLIMIT)
 
         # Calculate translocatable nitrogen in different organs
-        if(k.DVS < p.DVS_N_TRANSL):
+        if k.DVS < p.DVS_N_TRANSL:
             s.NTranslocatableLV = 0.
             s.NTranslocatableRT = 0.
             s.NTranslocatableST = 0.
@@ -200,7 +200,7 @@ class N_Demand_Uptake(SimulationObject):
 
         r.RNtranslocation = min(r.NdemandSO/delt, s.NTranslocatable / p.TCNT)
 
-        if(s.NTranslocatable == 0):
+        if s.NTranslocatable == 0:
             r.RNtranslocationLV = 0.
             r.RNtranslocationRT = 0.
             r.RNtranslocationST = 0.
