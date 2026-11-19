@@ -24,8 +24,7 @@ allowing easy interfacing with databases, graphical user interfaces, visualizati
 tools and numerical/statistical packages. PCSE has several interesting features:
 
 * Implementation in pure python with dependencies only on popular packages available from
-  the Python Package Index (PyPI) (such as `Pydispather`, `PyYAML`, `pandas`, `Openpyxl` and
-`requests`)
+  the Python Package Index (PyPI) (such as `Pydispather`, `PyYAML`, `pandas`, `Openpyxl` and `requests`)
 
 * Modular design allowing you to add or change components relatively quickly with
   a simple but powerful approach to communicate variables between modules.
