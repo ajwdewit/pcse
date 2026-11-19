@@ -30,6 +30,13 @@ dependencies = [
    'traitlets-pcse==5.0.0.dev',
    'dotmap>=1.3',
 ]
+
+[dependency-groups]
+docs = [
+    "sphinx>=8.1",
+    "sphinx_rtd_theme>3.0.0",
+]
+
 license = "EUPL-1.2"
 license-files = [
     "LICENSE",

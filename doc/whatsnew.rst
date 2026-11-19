@@ -16,6 +16,9 @@ PCSE 6.1 has several new features although not all are included in the PCSE sour
  - the LINTUL-CASSAVA model was implemented to run under PCSE, however it is not included in the source distribution and sits on its `own repository <https://github.com/model-library-pps/lintul-cassava-npk>`_.
  - Unit tests were added for WOFOST 8.1 potential production in the `tests/` directory.
  - Some variables were added to improve the handling of irrigation events.
+ - WOFOST 8.1 can now run for C4 crops like maize, sorghum, millet and sugar cane based on an newly developed
+   relationship between leaf N concentration and leaf assimilation rate. This is a change not in the WOFOST
+   code in PCSE but in the WOFOST 8.1 crop parameter library.
 
 Furthermore, a bug was fixed in the assimilation routine of WOFOST 8.1: the daily average temperature was used instead of the daytime average temperature. 
 

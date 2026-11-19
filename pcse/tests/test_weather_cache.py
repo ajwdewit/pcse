@@ -10,6 +10,7 @@ collide onto the same cache key.
 """
 import os
 import unittest
+makeSuite = unittest.defaultTestLoader.loadTestsFromTestCase
 
 from ..input.nasapower import NASAPowerWeatherDataProvider
 from ..input.openmeteo import OpenMeteoWeatherDataProvider
@@ -77,8 +78,8 @@ class Test_OpenMeteoCacheKey(_CacheKeyTestMixin, unittest.TestCase):
 def suite():
     """This defines all the tests of a module"""
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(Test_NASAPowerCacheKey))
-    suite.addTest(unittest.makeSuite(Test_OpenMeteoCacheKey))
+    suite.addTest(makeSuite(Test_NASAPowerCacheKey))
+    suite.addTest(makeSuite(Test_OpenMeteoCacheKey))
     return suite
 
 
