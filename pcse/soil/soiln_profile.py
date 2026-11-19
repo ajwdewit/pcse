@@ -5,7 +5,7 @@
 from math import sqrt
 import numpy as np
 from ..traitlets import Float, Int, Instance, Enum, Unicode, Bool, HasTraits, List
-from ..util import limit, Afgen, merge_dict, DotMap
+from ..util import Afgen, DotMap
 
 from .. import exceptions as exc
 

@@ -16,7 +16,7 @@ from math import exp
 from ..traitlets import Float, Int, Instance, Enum, Bool
 from ..decorators import prepare_rates, prepare_states
 
-from ..util import limit, merge_dict
+from ..util import limit
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
 from .. import signals

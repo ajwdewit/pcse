@@ -694,30 +694,6 @@ class AfgenTrait(TraitType):
         self.error(obj, value)
 
 
-def merge_dict(d1, d2, overwrite=False):
-    """Merge contents of d1 and d2 and return the merged dictionary
-
-    Note:
-
-    * The dictionaries d1 and d2 are unaltered.
-    * If `overwrite=False` (default), a `RuntimeError` will be raised when
-      duplicate keys exist, else any existing keys in d1 are silently
-      overwritten by d2.
-    """
-    # Note: May  partially be replaced by a ChainMap as of python 3.3
-    if overwrite is False:
-        sd1 = set(d1.keys())
-        sd2 = set(d2.keys())
-        intersect = sd1.intersection(sd2)
-        if len(intersect) > 0:
-            msg = "Dictionaries to merge have overlapping keys: %s"
-            raise RuntimeError(msg % intersect)
-
-    td = copy.deepcopy(d1)
-    td.update(d2)
-    return td
-
-
 def is_a_month(day):
     """Returns True if the date is on the last day of a month."""
 

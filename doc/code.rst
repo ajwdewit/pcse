@@ -68,7 +68,7 @@ on the :ref:`reading file input <FileInput>` and the :ref:`database tools <DBtoo
 .. autoclass:: pcse.agromanager.CropCalendar
     :members:
 
-.. autoclass:: pcse.agromanager.CropCalendarWithResidues
+.. autoclass:: pcse.agromanager.CropCalendarWithCropResidues
     :members:
 
 .. autoclass:: pcse.agromanager.TimedEventsDispatcher
